@@ -1,50 +1,78 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 640" role="img" aria-labelledby="title description">
-  <title id="title">El ciclo de un agente</title>
-  <desc id="description">Un objetivo y el contexto llegan al modelo. El modelo propone una acción; la aplicación valida los permisos y ejecuta la herramienta. La observación vuelve al modelo. El ciclo termina al responder o al alcanzar una condición de parada.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title description">
+  <title id="title">El ciclo de un agente: decidir, actuar y observar</title>
+  <desc id="description">El objetivo y el contexto entran al modelo. El modelo propone una llamada a herramienta; la aplicación valida argumentos, permisos y aprobación antes de ejecutarla. El resultado o error se incorpora al contexto para decidir el siguiente paso. Se termina con una respuesta final o al alcanzar un límite de pasos, tiempo o coste.</desc>
   <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#675f59"/></marker>
-    <marker id="arrow-teal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#17665e"/></marker>
+    <linearGradient id="model" x2="1" y2="1"><stop stop-color="#fff0eb"/><stop offset="1" stop-color="#f8d8d1"/></linearGradient>
+    <linearGradient id="app" x2="1" y2="1"><stop stop-color="#f0edff"/><stop offset="1" stop-color="#ded9f6"/></linearGradient>
+    <linearGradient id="result" x2="1" y2="1"><stop stop-color="#e7f7f3"/><stop offset="1" stop-color="#c9e9e3"/></linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="return" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#087f7a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
     <style>
-      text{font-family:Arial,Helvetica,sans-serif;fill:#252321}
-      .title{font-size:30px;font-weight:700}
-      .subtitle{font-size:20px;fill:#675f59}
-      .label{font-size:23px;font-weight:700}
-      .body{font-size:20px}
-      .small{font-size:18px;fill:#675f59}
-      .white{fill:#fff}
-      .red{fill:#b43d32}
-      .teal{fill:#17665e}
-      .card{fill:#fff;stroke:#d9d0c7;stroke-width:2}
-      .line{fill:none;stroke:#675f59;stroke-width:2.5;marker-end:url(#arrow)}
-      .return{fill:none;stroke:#17665e;stroke-width:2.5;marker-end:url(#arrow-teal)}
+      text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}
+      .kicker{font-size:14px;font-weight:700;letter-spacing:2px;fill:#536078}
+      .title{font-size:34px;font-weight:700;letter-spacing:-.6px}
+      .subtitle{font-size:19px;fill:#536078}.label{font-size:27px;font-weight:700}
+      .body{font-size:21px;fill:#536078}.meta{font-size:16px;font-weight:600;fill:#536078}
+      .line{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}
+      .icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
     </style>
   </defs>
-  <rect width="1000" height="640" fill="#faf8f5"/>
-
-  <text x="40" y="50" class="title">El modelo decide; la aplicación actúa</text>
-  <text x="40" y="86" class="subtitle">Un agente repite el ciclo con observaciones nuevas y límites explícitos.</text>
-  <rect x="40" y="174" width="185" height="134" rx="18" class="card"/>
-  <text x="63" y="215" class="label">Objetivo</text>
-  <text x="63" y="252" class="body"><tspan x="63">Contexto</tspan><tspan x="63" dy="28">y restricciones</tspan></text>
-  <rect x="290" y="133" width="280" height="187" rx="18" fill="#f6e6e1" stroke="#b43d32" stroke-width="2"/>
-  <text x="314" y="176" class="label">1. Modelo</text>
-  <text x="314" y="217" class="body"><tspan x="314">Interpreta el contexto.</tspan><tspan x="314" dy="29">Responde o propone</tspan><tspan x="314" dy="29">una llamada a herramienta.</tspan></text>
-  <rect x="650" y="133" width="310" height="187" rx="18" class="card"/>
-  <text x="674" y="176" class="label">2. Aplicación</text>
-  <text x="674" y="217" class="body"><tspan x="674">Valida argumentos,</tspan><tspan x="674" dy="29">permisos y aprobación.</tspan><tspan x="674" dy="29">Ejecuta la herramienta.</tspan></text>
-  <path d="M 231 240 H 277" class="line"/>
-  <path d="M 577 225 H 637" class="line"/>
-  <text x="601" y="195" text-anchor="middle" class="small">acción</text>
-  <rect x="650" y="390" width="310" height="122" rx="18" fill="#e4eeeb" stroke="#17665e" stroke-width="2"/>
-  <text x="674" y="434" class="label">3. Observación</text>
-  <text x="674" y="474" class="body">Resultado o error de la acción</text>
-  <path d="M 805 326 V 377" class="line"/>
-  <path d="M 640 451 H 429 V 333" class="return"/>
-  <text x="440" y="436" class="small teal">Actualiza el contexto</text>
-  <path d="M 290 282 H 253 V 440 H 228" class="line"/>
-  <rect x="40" y="386" width="185" height="129" rx="18" fill="#17665e"/>
-  <text x="61" y="428" class="label white">Parar</text>
-  <text x="61" y="464" class="body white"><tspan x="61">Respuesta final</tspan><tspan x="61" dy="28">o límite de pasos</tspan></text>
-  <rect x="40" y="555" width="920" height="51" rx="12" fill="#eee9e3"/>
-  <text x="60" y="587" class="body">Límites: pasos, tiempo, coste y condiciones de éxito; nunca un bucle sin control.</text>
+  <rect width="1200" height="760" fill="#f7f8fc"/>
+  <text x="56" y="50" class="kicker">AGENTES DE IA / EL CICLO DE EJECUCIÓN</text>
+  <text x="56" y="98" class="title">Decide. Actúa. Observa.</text>
+  <text x="56" y="134" class="subtitle">El modelo propone la acción. Tu aplicación controla lo que ocurre.</text>
+  <rect x="56" y="179" width="298" height="44" rx="22" fill="#fff" stroke="#dce1ec"/>
+  <circle cx="82" cy="201" r="6" fill="#c74436"/>
+  <text x="100" y="207" class="meta">Entrada: objetivo + contexto</text>
+  <path d="M270 225v28" class="line"/>
+  <path d="M369 342h131" class="line"/>
+  <text x="435" y="319" text-anchor="middle" class="meta">tool call</text>
+  <path d="M699 342h131" class="line"/>
+  <text x="765" y="319" text-anchor="middle" class="meta">resultado</text>
+  <g transform="translate(270 342)">
+    <circle cy="8" r="86" fill="#e9eaf1"/>
+    <circle r="86" fill="url(#model)" stroke="#ebc8bf"/>
+    <rect x="-42" y="-42" width="84" height="84" rx="19" fill="#fff" stroke="#c74436" stroke-width="2.5"/>
+    <g class="icon" stroke="#c74436">
+      <path d="M-22-53v11M0-53v11M22-53v11M-22 42v11M0 42v11M22 42v11M-53-22h11M-53 0h11M-53 22h11M42-22h11M42 0h11M42 22h11"/>
+      <path d="m-20 12 20-28 20 28M-20 12h40M0-16v42"/>
+    </g>
+    <g fill="#fff" stroke="#c74436" stroke-width="2.5"><circle cy="-16" r="6"/><circle cx="-20" cy="12" r="6"/><circle cx="20" cy="12" r="6"/><circle cy="26" r="5"/></g>
+  </g>
+  <g transform="translate(600 342)">
+    <circle cy="8" r="86" fill="#e9eaf1"/>
+    <circle r="86" fill="url(#app)" stroke="#d2cdec"/>
+    <rect x="-55" y="-40" width="101" height="77" rx="10" fill="#fff" stroke="#4f46b8" stroke-width="2.5"/>
+    <path d="M-55-17H46" stroke="#4f46b8" stroke-width="2"/>
+    <g fill="#4f46b8"><circle cx="-41" cy="-29" r="3"/><circle cx="-30" cy="-29" r="3"/><circle cx="-19" cy="-29" r="3"/></g>
+    <path d="m-35-2 13 11-13 11m26 0h16" class="icon" stroke="#4f46b8"/>
+    <path d="m38 4 27 10v19c0 16-13 25-27 32C24 58 11 49 11 33V14Z" fill="#4f46b8" stroke="#fff" stroke-width="4"/>
+    <path d="m25 33 9 9 17-20" class="icon" stroke="#fff"/>
+  </g>
+  <g transform="translate(930 342)">
+    <circle cy="8" r="86" fill="#e9eaf1"/>
+    <circle r="86" fill="url(#result)" stroke="#b9ddd6"/>
+    <rect x="-40" y="-49" width="76" height="97" rx="10" fill="#fff" stroke="#087f7a" stroke-width="2.5"/>
+    <path d="M-23-27h37M-23-12H5M-23 3h21M-23 29h16" class="icon" stroke="#a4cfc6"/>
+    <circle cx="30" cy="26" r="28" fill="#087f7a" stroke="#fff" stroke-width="4"/>
+    <path d="m18 26 8 8 16-17" class="icon" stroke="#fff"/>
+  </g>
+  <g text-anchor="middle">
+    <text x="270" y="467" class="kicker" style="fill:#b23a2f">01 / DECIDIR</text>
+    <text x="600" y="467" class="kicker" style="fill:#4f46b8">02 / EJECUTAR</text>
+    <text x="930" y="467" class="kicker" style="fill:#076762">03 / OBSERVAR</text>
+    <text x="270" y="504" class="label">Modelo</text>
+    <text x="600" y="504" class="label">Aplicación</text>
+    <text x="930" y="504" class="label">Observación</text>
+    <text x="270" y="538" class="body">Propone el siguiente paso</text>
+    <text x="600" y="538" class="body">Valida y usa la herramienta</text>
+    <text x="930" y="538" class="body">Recibe un resultado o error</text>
+  </g>
+  <path d="M930 559v24q0 21-21 21H291q-21 0-21-21v-24" fill="none" stroke="#087f7a" stroke-width="2.5" stroke-linecap="round" marker-end="url(#return)"/>
+  <rect x="402" y="582" width="396" height="42" rx="21" fill="#e4f2ef"/>
+  <text x="600" y="609" text-anchor="middle" font-size="19" font-weight="600" style="fill:#076762">La observación actualiza el contexto</text>
+  <text x="600" y="665" text-anchor="middle" class="body">Salida: respuesta final o límite de pasos, tiempo o coste.</text>
+  <path d="M56 698h1088" stroke="#dce1ec"/>
+  <text x="56" y="731" class="kicker">CERTITIPS / GUÍA VISUAL</text>
+  <text x="1144" y="731" text-anchor="end" class="meta">Una propuesta del modelo todavía no es una acción ejecutada.</text>
 </svg>

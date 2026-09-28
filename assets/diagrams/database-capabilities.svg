@@ -1,52 +1,64 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 680" role="img" aria-labelledby="title description">
-  <title id="title">Capacidades de Oracle AI Database</title>
-  <desc id="description">Cuatro capacidades con propósitos distintos: AI Vector Search recupera por similitud; Select AI usa lenguaje natural para trabajar con datos según el perfil y modo configurados; Private Agent Factory permite crear flujos de agentes en su entorno; el servidor MCP de Autonomous AI Database expone capacidades a clientes MCP. No son nombres intercambiables.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title description">
+  <title id="title">Cuatro capacidades alrededor de Oracle AI Database</title>
+  <desc id="description">Una base de datos central se conecta a cuatro capacidades distintas. AI Vector Search recupera contenido por similitud. Select AI Agent orquesta herramientas, tareas, agentes y equipos. Private Agent Factory permite construir agentes y flujos visualmente. El servidor MCP de Autonomous AI Database expone herramientas a clientes compatibles. El mapa no supone que todas las capacidades estén disponibles en cualquier edición, versión o despliegue. Los controles de datos e identidad siguen aplicando.</desc>
   <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#675f59"/></marker>
-    <marker id="arrow-teal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#17665e"/></marker>
+    <linearGradient id="database-body" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#34356f"/><stop offset=".6" stop-color="#4f46b8"/><stop offset="1" stop-color="#6558bd"/></linearGradient>
     <style>
-      text{font-family:Arial,Helvetica,sans-serif;fill:#252321}
-      .title{font-size:30px;font-weight:700}
-      .subtitle{font-size:20px;fill:#675f59}
-      .label{font-size:23px;font-weight:700}
-      .body{font-size:20px}
-      .small{font-size:18px;fill:#675f59}
-      .white{fill:#fff}
-      .red{fill:#b43d32}
-      .teal{fill:#17665e}
-      .card{fill:#fff;stroke:#d9d0c7;stroke-width:2}
-      .line{fill:none;stroke:#675f59;stroke-width:2.5;marker-end:url(#arrow)}
-      .return{fill:none;stroke:#17665e;stroke-width:2.5;marker-end:url(#arrow-teal)}
+      text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.eyebrow{font-size:14px;font-weight:700;letter-spacing:2px;fill:#536078}.title{font-size:34px;font-weight:700}.subtitle{font-size:19px;fill:#536078}.label{font-size:24px;font-weight:700}.body{font-size:21px}.meta{font-size:16px;fill:#536078}.muted{fill:#536078}.white{fill:#fff}.coral{fill:#c74436}.teal{fill:#087f7a}.indigo{fill:#4f46b8}
     </style>
   </defs>
-  <rect width="1000" height="680" fill="#faf8f5"/>
-
-  <text x="40" y="50" class="title">Cuatro capacidades, cuatro preguntas</text>
-  <text x="40" y="86" class="subtitle">Elige según la tarea; comprueba versión, servicio y configuración disponibles.</text>
-  <rect x="40" y="123" width="446" height="215" rx="20" class="card"/>
-  <rect x="514" y="123" width="446" height="215" rx="20" class="card"/>
-  <rect x="40" y="359" width="446" height="215" rx="20" class="card"/>
-  <rect x="514" y="359" width="446" height="215" rx="20" class="card"/>
-  <rect x="40" y="123" width="9" height="215" rx="4" fill="#b43d32"/>
-  <rect x="514" y="123" width="9" height="215" rx="4" fill="#17665e"/>
-  <rect x="40" y="359" width="9" height="215" rx="4" fill="#17665e"/>
-  <rect x="514" y="359" width="9" height="215" rx="4" fill="#b43d32"/>
-  <text x="68" y="168" class="label">AI Vector Search</text>
-  <text x="68" y="209" class="body red">¿Qué contenido es semánticamente similar?</text>
-  <text x="68" y="254" class="body"><tspan x="68">Compara embeddings y recupera datos.</tspan><tspan x="68" dy="29">Útil para búsqueda semántica y RAG.</tspan></text>
-  <text x="68" y="317" class="small">No redacta por sí solo una respuesta.</text>
-  <text x="543" y="168" class="label">Select AI / Select AI Agent</text>
-  <text x="543" y="209" class="body teal">¿Cómo consultar o actuar con lenguaje?</text>
-  <text x="543" y="254" class="body"><tspan x="543">Consulta datos con lenguaje natural.</tspan><tspan x="543" dy="29">Agent coordina tareas y herramientas.</tspan></text>
-  <text x="543" y="317" class="small">Configura perfiles, herramientas y privilegios.</text>
-  <text x="68" y="405" class="label">Private Agent Factory</text>
-  <text x="68" y="446" class="body teal">¿Cómo construir flujos de agentes?</text>
-  <text x="68" y="491" class="body"><tspan x="68">Entorno visual para crear y operar agentes</tspan><tspan x="68" dy="29">con datos y herramientas del entorno.</tspan></text>
-  <text x="68" y="554" class="small">Verifica el despliegue y la versión soportados.</text>
-  <text x="543" y="405" class="label">Autonomous AI Database MCP</text>
-  <text x="543" y="446" class="body red">¿Cómo conectar un cliente de IA a la BD?</text>
-  <text x="543" y="491" class="body"><tspan x="543">Expone capacidades mediante MCP.</tspan><tspan x="543" dy="29">El cliente las descubre y las invoca.</tspan></text>
-  <text x="543" y="554" class="small">MCP no elimina los controles de acceso.</text>
-  <rect x="40" y="598" width="920" height="52" rx="13" fill="#eee9e3"/>
-  <text x="500" y="631" text-anchor="middle" class="body">Relacionadas, pero diferentes: recuperar · consultar/actuar · construir · conectar</text>
+  <rect width="1200" height="760" fill="#f7f8fc"/>
+  <text x="56" y="50" class="eyebrow">07 / ORACLE AI DATABASE</text>
+  <text x="56" y="98" class="title">Una base de datos. Cuatro trabajos diferentes.</text>
+  <text x="56" y="134" class="subtitle">Elige la capacidad por la tarea: recuperar, orquestar, construir o conectar.</text>
+  <!-- Four purpose-specific branches surround the shared data foundation. -->
+  <path d="M465 348C419 348 434 283 384 283" fill="none" stroke="#4f46b8" stroke-width="3"/>
+  <path d="M735 348C781 348 766 283 816 283" fill="none" stroke="#087f7a" stroke-width="3"/>
+  <path d="M465 430C419 430 434 557 384 557" fill="none" stroke="#c74436" stroke-width="3"/>
+  <path d="M735 430C781 430 766 557 816 557" fill="none" stroke="#4f46b8" stroke-width="3"/>
+  <g fill="#f7f8fc" stroke-width="3"><circle cx="384" cy="283" r="6" stroke="#4f46b8"/><circle cx="816" cy="283" r="6" stroke="#087f7a"/><circle cx="384" cy="557" r="6" stroke="#c74436"/><circle cx="816" cy="557" r="6" stroke="#4f46b8"/></g>
+  <!-- A semantic neighbourhood, not a generic database icon. -->
+  <circle cx="330" cy="265" r="55" fill="#ebe8f9"/>
+  <path d="m311 279 22-26 26 16m-26-16 7 35" stroke="#8e85cb" stroke-width="2"/>
+  <circle cx="311" cy="279" r="7" fill="#4f46b8"/><circle cx="333" cy="253" r="8" fill="#4f46b8"/><circle cx="359" cy="269" r="7" fill="#4f46b8"/><circle cx="340" cy="288" r="7" fill="#4f46b8"/>
+  <circle cx="298" cy="240" r="4" fill="#aaa4d7"/><circle cx="355" cy="232" r="4" fill="#aaa4d7"/><circle cx="307" cy="302" r="4" fill="#aaa4d7"/>
+  <text x="56" y="215" class="meta indigo" font-weight="700">01 / RECUPERAR</text>
+  <text x="56" y="250" class="label">AI Vector</text><text x="56" y="288" class="label">Search</text>
+  <text x="56" y="327" class="body">Busca contenido</text><text x="56" y="355" class="body">por similitud.</text>
+  <!-- A coordinator fans out tasks to two tools. -->
+  <circle cx="870" cy="265" r="55" fill="#dff1eb"/>
+  <path d="M870 254v17m-25 0h50m-50 0v11m50-11v11" fill="none" stroke="#087f7a" stroke-width="3"/>
+  <circle cx="870" cy="240" r="15" fill="#087f7a"/><path d="m864 240 4 4 8-8" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <rect x="831" y="282" width="28" height="21" rx="5" fill="#087f7a"/><rect x="881" y="282" width="28" height="21" rx="5" fill="#087f7a"/>
+  <text x="946" y="215" class="meta teal" font-weight="700">02 / ORQUESTAR</text>
+  <text x="946" y="250" class="label">Select AI</text><text x="946" y="288" class="label">Agent</text>
+  <text x="946" y="327" class="body">Coordina tareas,</text><text x="946" y="355" class="body">tools y equipos.</text>
+  <!-- This cylinder anchors the map; it does not imply LLM weights execute inside the database. -->
+  <ellipse cx="600" cy="508" rx="134" ry="22" fill="#e1e2f0"/>
+  <path d="M465 326v139c0 24 60 43 135 43s135-19 135-43V326Z" fill="url(#database-body)"/>
+  <ellipse cx="600" cy="326" rx="135" ry="43" fill="#8b82d6"/>
+  <ellipse cx="600" cy="321" rx="105" ry="25" fill="#b7afe8"/>
+  <path d="M465 371c0 24 60 43 135 43s135-19 135-43M465 417c0 24 60 43 135 43s135-19 135-43" fill="none" stroke="#a49de1" stroke-width="1.3" opacity=".55"/>
+  <rect x="494" y="371" width="212" height="79" rx="16" fill="#333269"/>
+  <text x="600" y="402" text-anchor="middle" class="label white">Oracle AI</text><text x="600" y="434" text-anchor="middle" class="label white">Database</text>
+  <text x="600" y="554" text-anchor="middle" class="meta">Datos + controles de acceso</text>
+  <!-- A visual editor connects source, model and action blocks. -->
+  <circle cx="330" cy="563" r="55" fill="#fae6e2"/>
+  <path d="M299 532h65v57h-65Z" fill="#fff" stroke="#c74436" stroke-width="2"/>
+  <path d="M299 544h65" stroke="#e3b0a8" stroke-width="2"/>
+  <circle cx="306" cy="538" r="2" fill="#c74436"/><circle cx="313" cy="538" r="2" fill="#c74436"/>
+  <path d="M312 559h36m-18 0v18" fill="none" stroke="#c74436" stroke-width="2"/>
+  <rect x="306" y="552" width="13" height="13" rx="3" fill="#c74436"/><rect x="342" y="552" width="13" height="13" rx="3" fill="#c74436"/><rect x="324" y="571" width="13" height="13" rx="3" fill="#c74436"/>
+  <text x="56" y="492" class="meta coral" font-weight="700">03 / CONSTRUIR</text>
+  <text x="56" y="527" class="label">Private Agent</text><text x="56" y="565" class="label">Factory</text>
+  <text x="56" y="604" class="body">Ensambla agentes</text><text x="56" y="632" class="body">y flujos visuales.</text>
+  <!-- Coupled connectors mark a protocol boundary, not universal permission. -->
+  <circle cx="870" cy="563" r="55" fill="#ebe8f9"/>
+  <path d="M836 549h19v28h-19m68-28h-19v28h19m-49-14h30m-44-14v-10m10 10v-10m38 38v10m10-10v10" fill="none" stroke="#4f46b8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="946" y="492" class="meta indigo" font-weight="700">04 / CONECTAR</text>
+  <text x="946" y="527" class="label">Servidor MCP</text><text x="946" y="555" class="meta">Autonomous AI Database</text>
+  <text x="946" y="604" class="body">Expone tools a</text><text x="946" y="632" class="body">clientes de IA.</text>
+  <path d="M56 698h1088" stroke="#dbe0eb"/>
+  <text x="56" y="730" class="eyebrow">CERTITIPS / GUÍA VISUAL</text>
+  <text x="1144" y="730" text-anchor="end" class="meta">Comprueba versión y despliegue: no son capacidades intercambiables.</text>
 </svg>

@@ -1,47 +1,65 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 640" role="img" aria-labelledby="title description">
-  <title id="title">Tu ruta hacia la certificación</title>
-  <desc id="description">Tres etapas: estudiar los seis temas, practicar y revisar los errores, y rendir el examen oficial de Oracle. La práctica devuelve al estudio los temas que requieren refuerzo; la credencial la emite Oracle.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title description">
+  <title id="title">Una ruta de aprendizaje, tres hitos</title>
+  <desc id="description">Con bases de LLM, Python y OCI, estudia las seis áreas y sus casos, practica con retroalimentación y vuelve a tus temas débiles. Después realiza la evaluación oficial en MyLearn. Solo Oracle otorga la credencial; la práctica no garantiza aprobar.</desc>
   <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#675f59"/></marker>
-    <marker id="arrow-teal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#17665e"/></marker>
-    <style>
-      text{font-family:Arial,Helvetica,sans-serif;fill:#252321}
-      .title{font-size:30px;font-weight:700}
-      .subtitle{font-size:20px;fill:#675f59}
-      .label{font-size:23px;font-weight:700}
-      .body{font-size:20px}
-      .small{font-size:18px;fill:#675f59}
-      .white{fill:#fff}
-      .red{fill:#b43d32}
-      .teal{fill:#17665e}
-      .card{fill:#fff;stroke:#d9d0c7;stroke-width:2}
-      .line{fill:none;stroke:#675f59;stroke-width:2.5;marker-end:url(#arrow)}
-      .return{fill:none;stroke:#17665e;stroke-width:2.5;marker-end:url(#arrow-teal)}
-    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m2 1 6 4-6 4" fill="none" stroke="#087f7a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.eyebrow{font-size:14px;font-weight:700;letter-spacing:2px;fill:#536078}.title{font-size:34px;font-weight:700;letter-spacing:-.7px}.sub{font-size:19px;fill:#536078}.label{font-size:27px;font-weight:700}.body{font-size:21px;fill:#536078}.meta{font-size:16px;fill:#536078}.white{fill:#fff}.teal{fill:#087f7a}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}</style>
   </defs>
-  <rect width="1000" height="640" fill="#faf8f5"/>
-
-  <text x="40" y="50" class="title">De comprender a demostrar</text>
-  <text x="40" y="86" class="subtitle">Una ruta de estudio; la evaluación y la credencial pertenecen a Oracle.</text>
-  <rect x="40" y="132" width="270" height="270" rx="20" class="card"/>
-  <rect x="365" y="132" width="270" height="270" rx="20" class="card"/>
-  <rect x="690" y="132" width="270" height="270" rx="20" class="card"/>
-  <circle cx="79" cy="177" r="24" fill="#b43d32"/><text x="79" y="185" text-anchor="middle" class="label white">1</text>
-  <circle cx="404" cy="177" r="24" fill="#b43d32"/><text x="404" y="185" text-anchor="middle" class="label white">2</text>
-  <circle cx="729" cy="177" r="24" fill="#17665e"/><text x="729" y="185" text-anchor="middle" class="label white">3</text>
-  <text x="64" y="236" class="label">Estudiar</text>
-  <text x="64" y="281" class="body"><tspan x="64">Entiende los seis temas.</tspan><tspan x="64" dy="30">Relaciona cada concepto</tspan><tspan x="64" dy="30">con un caso concreto.</tspan></text>
-  <text x="389" y="236" class="label">Practicar</text>
-  <text x="389" y="281" class="body"><tspan x="389">Responde sin ayuda.</tspan><tspan x="389" dy="30">Explica cada alternativa.</tspan><tspan x="389" dy="30">Refuerza tus errores.</tspan></text>
-  <text x="714" y="236" class="label">Examen oficial</text>
-  <text x="714" y="281" class="body"><tspan x="714">Consulta los requisitos.</tspan><tspan x="714" dy="30">Accede desde MyLearn.</tspan><tspan x="714" dy="30">Demuestra lo aprendido.</tspan></text>
-  <path d="M 317 267 H 353" class="line"/>
-  <path d="M 642 267 H 678" class="line"/>
-  <path d="M 501 405 V 470 H 176 V 417" class="return"/>
-  <rect x="197" y="450" width="282" height="40" rx="20" fill="#e4eeeb"/>
-  <text x="338" y="476" text-anchor="middle" class="body teal">Volver a los temas débiles</text>
-  <path d="M 825 404 V 470" class="line"/>
-  <rect x="690" y="487" width="270" height="64" rx="16" fill="#17665e"/>
-  <text x="825" y="526" text-anchor="middle" class="label white">Credencial de Oracle</text>
-  <text x="40" y="602" class="small">La puntuación de práctica orienta el repaso; no garantiza aprobar el examen.</text>
+  <rect width="1200" height="760" fill="#f7f8fc"/>
+  <text x="56" y="50" class="eyebrow">01 / RUTA DE CERTIFICACIÓN</text>
+  <text x="56" y="98" class="title">Comprender. Practicar. Demostrar.</text>
+  <text x="56" y="134" class="sub">Tres hitos para avanzar con criterio, no solo memorizar respuestas.</text>
+  <rect x="56" y="174" width="500" height="46" rx="23" fill="#e9e8f8"/>
+  <circle cx="81" cy="197" r="6" fill="#4f46b8"/>
+  <text x="100" y="204" class="body">Punto de partida: LLM + Python + OCI</text>
+  <path d="M82 380H1118" fill="none" stroke="#e1e5ef" stroke-width="16" stroke-linecap="round"/>
+  <path d="M82 380H1118" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="5 9"/>
+  <circle cx="82" cy="380" r="6" fill="#536078"/>
+  <circle cx="1118" cy="380" r="6" fill="#536078"/>
+  <g transform="translate(230 292)">
+    <circle r="60" fill="#f8e6e2"/>
+    <g class="icon" stroke="#c74436">
+      <path d="M-39-24q20-9 39 2 19-11 39-2v48q-19-9-39 2-19-11-39-2Z" fill="#fff"/>
+      <path d="M0-22v48M-28-10q10-3 18 0m-18 11q10-3 18 0M12-10q9-3 17 0m-17 11q9-3 17 0"/>
+      <path d="M-39 34q20-7 39 2 19-9 39-2"/>
+    </g>
+  </g>
+  <g transform="translate(600 292)">
+    <circle r="60" fill="#e9e8f8"/>
+    <g class="icon" stroke="#4f46b8">
+      <rect x="-29" y="-37" width="58" height="76" rx="8" fill="#fff"/>
+      <rect x="-14" y="-42" width="28" height="12" rx="5" fill="#e9e8f8"/>
+      <path d="m-18-12 4 4 8-8M5-11h13m-36 19 4 4 8-8M5 9h13m-36 17h12M5 26h13"/>
+      <circle cx="33" cy="30" r="17" fill="#4f46b8" stroke="#f7f8fc" stroke-width="4"/>
+      <path d="m26 30 5 5 9-10" stroke="#fff" stroke-width="2.5"/>
+    </g>
+  </g>
+  <g transform="translate(970 292)">
+    <circle r="60" fill="#e1f2ef"/>
+    <g class="icon" stroke="#087f7a">
+      <path d="M-23 38v-76m0 2c18-10 34 11 56 0v43c-22 11-38-10-56 0" fill="#fff"/>
+      <path d="M-37 38h29m2-46 8 8 14-17"/>
+    </g>
+  </g>
+  <circle cx="230" cy="380" r="24" fill="#c74436" stroke="#f7f8fc" stroke-width="6"/>
+  <circle cx="600" cy="380" r="24" fill="#4f46b8" stroke="#f7f8fc" stroke-width="6"/>
+  <circle cx="970" cy="380" r="24" fill="#087f7a" stroke="#f7f8fc" stroke-width="6"/>
+  <g text-anchor="middle" font-size="21" font-weight="700"><text x="230" y="387" class="white">1</text><text x="600" y="387" class="white">2</text><text x="970" y="387" class="white">3</text></g>
+  <g text-anchor="middle">
+    <text x="230" y="442" class="label">Estudia con casos</text>
+    <text x="230" y="478" class="body"><tspan x="230">Conecta las seis áreas.</tspan><tspan x="230" dy="29">Explica cómo y por qué.</tspan></text>
+    <text x="600" y="442" class="label">Practica y revisa</text>
+    <text x="600" y="478" class="body"><tspan x="600">Responde sin ayuda.</tspan><tspan x="600" dy="29">Comprende cada alternativa.</tspan></text>
+    <text x="970" y="442" class="label">Examen oficial</text>
+    <text x="970" y="478" class="body"><tspan x="970">Consulta requisitos en MyLearn.</tspan><tspan x="970" dy="29">Demuestra lo aprendido.</tspan></text>
+  </g>
+  <path d="M600 535v60q0 14-14 14H244q-14 0-14-14v-43" fill="none" stroke="#087f7a" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <rect x="292" y="588" width="246" height="42" rx="21" fill="#e1f2ef"/>
+  <text x="415" y="615" text-anchor="middle" class="body teal">Refuerza tus errores</text>
+  <path d="M970 535v24" fill="none" stroke="#087f7a" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <rect x="826" y="573" width="288" height="58" rx="14" fill="#17243b"/>
+  <text x="970" y="608" text-anchor="middle" font-size="21" font-weight="600" class="white">Credencial de Oracle</text>
+  <path d="M56 698H1144" stroke="#dce1eb"/>
+  <text x="56" y="730" class="eyebrow">CERTITIPS / GUÍA VISUAL</text>
+  <text x="1144" y="730" text-anchor="end" class="meta">La práctica orienta el repaso; no garantiza aprobar.</text>
 </svg>

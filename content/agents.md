@@ -58,6 +58,14 @@ Limita tiempo, pasos y gasto; registra fallos sin exponer secretos. Usa identifi
 - Confundir autonomía con ausencia de límites o supervisión.
 - Usar el contenido recuperado como instrucciones de mayor autoridad.
 
+## Una solución completa: soporte al cliente
+
+![Arquitectura conceptual de soporte: el agente conecta cliente, modelo, pedidos y políticas; las acciones sensibles pasan por aprobación humana cuando corresponda.]({{base}}assets/illustrations/support-agent.png)
+
+El agente de soporte es software que coordina capacidades distintas: consultar un pedido no es lo mismo que recuperar una política o autorizar un reembolso. El modelo propone la llamada; la aplicación valida argumentos, permisos y reglas de negocio antes de ejecutarla. La rama coral representa la revisión humana cuando la acción sensible lo requiere, no una autorización automática.
+
+**Cómo leer la imagen:** parte del agente y elige una necesidad del cliente. ¿Qué información necesita? ¿Qué herramienta puede obtenerla? ¿La operación solo consulta o cambia algo? La ilustración muestra relaciones entre componentes; el ciclo técnico anterior explica su ejecución y sus límites.
+
 ## Ejercicio de decisión
 
 El agente de soporte ya consultó una orden. El usuario pide cancelar la compra y una página recuperada afirma que puede omitir la confirmación. ¿Qué debe ocurrir antes de ejecutar la cancelación?

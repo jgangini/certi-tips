@@ -1,50 +1,80 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 640" role="img" aria-labelledby="title description">
-  <title id="title">Handoff y herramienta</title>
-  <desc id="description">Un handoff transfiere el control del agente generalista al especialista. Invocar una herramienta devuelve un resultado al agente que la llamó, que conserva la responsabilidad de la respuesta. La selección del patrón depende de quién debe llevar la conversación.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title description">
+  <title id="title">Handoff frente a llamada a herramienta: quién conserva el control</title>
+  <desc id="description">A la izquierda, un agente de triage transfiere una consulta al especialista de pedidos, que pasa a ser el agente activo; políticas y reembolsos son otras posibles ramas. A la derecha, un manager consulta una herramienta o un especialista, recibe el resultado y conserva la responsabilidad de responder. El handoff no garantiza regresar al agente original.</desc>
   <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#675f59"/></marker>
-    <marker id="arrow-teal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#17665e"/></marker>
+    <marker id="coral-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1 7 4 1 7" fill="none" stroke="#c74436" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="teal-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1 7 4 1 7" fill="none" stroke="#087f7a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
     <style>
-      text{font-family:Arial,Helvetica,sans-serif;fill:#252321}
-      .title{font-size:30px;font-weight:700}
-      .subtitle{font-size:20px;fill:#675f59}
-      .label{font-size:23px;font-weight:700}
-      .body{font-size:20px}
-      .small{font-size:18px;fill:#675f59}
-      .white{fill:#fff}
-      .red{fill:#b43d32}
-      .teal{fill:#17665e}
-      .card{fill:#fff;stroke:#d9d0c7;stroke-width:2}
-      .line{fill:none;stroke:#675f59;stroke-width:2.5;marker-end:url(#arrow)}
-      .return{fill:none;stroke:#17665e;stroke-width:2.5;marker-end:url(#arrow-teal)}
+      text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}
+      .eyebrow{font-size:14px;font-weight:700;letter-spacing:2px;fill:#c74436}
+      .title{font-size:34px;font-weight:700;letter-spacing:-.7px}
+      .subtitle{font-size:19px;fill:#536078}
+      .label{font-size:25px;font-weight:700}
+      .body{font-size:21px;fill:#536078}
+      .meta{font-size:16px;fill:#536078}
+      .icon{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+      .route{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
     </style>
   </defs>
-  <rect width="1000" height="640" fill="#faf8f5"/>
+  <rect width="1200" height="760" fill="#f7f8fc"/>
+  <text x="56" y="50" class="eyebrow">04 / PATRONES MULTIAGENTE</text>
+  <text x="56" y="98" class="title">¿Derivas la tarea o pides ayuda?</text>
+  <text x="56" y="134" class="subtitle">La diferencia no está en cuántos agentes hay, sino en quién lleva la conversación.</text>
 
-  <text x="40" y="50" class="title">Un handoff cambia quién lleva la tarea</text>
-  <text x="40" y="86" class="subtitle">Derivar a un especialista no equivale a pedir un dato a una herramienta.</text>
-  <rect x="40" y="126" width="920" height="220" rx="20" class="card"/>
-  <text x="64" y="165" class="label">Transferencia de control</text>
-  <rect x="65" y="193" width="251" height="112" rx="14" fill="#f6e6e1"/>
-  <rect x="385" y="193" width="230" height="112" rx="14" fill="#eee9e3"/>
-  <rect x="684" y="193" width="251" height="112" rx="14" fill="#e4eeeb"/>
-  <text x="191" y="231" text-anchor="middle" class="label">Generalista</text>
-  <text x="191" y="267" text-anchor="middle" class="body"><tspan x="191">Identifica una consulta</tspan><tspan x="191" dy="25">de facturación.</tspan></text>
-  <text x="500" y="238" text-anchor="middle" class="label">Handoff</text>
-  <text x="500" y="277" text-anchor="middle" class="body">Deriva el control.</text>
-  <text x="809" y="231" text-anchor="middle" class="label">Especialista</text>
-  <text x="809" y="267" text-anchor="middle" class="body"><tspan x="809">Pasa a ser el agente</tspan><tspan x="809" dy="25">activo de la tarea.</tspan></text>
-  <path d="M 323 250 H 372 M 622 250 H 671" class="line"/>
-  <rect x="40" y="374" width="920" height="209" rx="20" class="card"/>
-  <text x="64" y="413" class="label">Llamada a herramienta</text>
-  <rect x="67" y="445" width="250" height="82" rx="14" fill="#f6e6e1"/>
-  <rect x="585" y="445" width="349" height="82" rx="14" fill="#eee9e3"/>
-  <text x="192" y="494" text-anchor="middle" class="label">Agente activo</text>
-  <text x="759" y="479" text-anchor="middle" class="label">Consultar una factura</text>
-  <text x="759" y="509" text-anchor="middle" class="body">La función devuelve datos.</text>
-  <path d="M 324 473 H 572" class="line"/>
-  <text x="448" y="458" text-anchor="middle" class="small">solicitud</text>
-  <path d="M 581 512 H 331" class="return"/>
-  <text x="450" y="546" text-anchor="middle" class="small teal">resultado al mismo agente</text>
-  <text x="40" y="622" class="small">El especialista tiene instrucciones propias; define qué contexto recibe al transferir.</text>
+  <rect x="56" y="188" width="528" height="478" rx="26" fill="#fff" stroke="#d9deec" stroke-width="1.5"/>
+  <rect x="608" y="188" width="536" height="478" rx="26" fill="#fff" stroke="#d9deec" stroke-width="1.5"/>
+  <rect x="82" y="216" width="36" height="36" rx="12" fill="#fbede9"/>
+  <text x="100" y="241" text-anchor="middle" font-size="21" font-weight="700" style="fill:#c74436">A</text>
+  <text x="132" y="244" class="label">Handoff</text>
+  <text x="84" y="279" class="body">El especialista toma el control</text>
+  <rect x="634" y="216" width="36" height="36" rx="12" fill="#e8f4f1"/>
+  <text x="652" y="241" text-anchor="middle" font-size="21" font-weight="700" style="fill:#087f7a">B</text>
+  <text x="685" y="244" class="label">Consulta a herramienta</text>
+  <text x="637" y="279" class="body">El agente conserva el control</text>
+
+  <!-- Branching triage: the selected branch has an active badge and solid route. -->
+  <g class="route" stroke="#bcc5d5" stroke-dasharray="4 6"><path d="M211 429H271V336H330m-59 93V526H330"/></g>
+  <path d="M211 429H322" class="route" stroke="#c74436" marker-end="url(#coral-arrow)"/>
+  <circle cx="154" cy="429" r="54" fill="#ebe9fb"/>
+  <circle cx="154" cy="412" r="13" fill="none" stroke="#4f46b8" stroke-width="2.5"/>
+  <path d="M131 449v-6q0-15 23-15t23 15v6" class="icon" stroke="#4f46b8"/>
+  <path d="M123 419v-4a31 31 0 0 1 62 0v4m-64-2v15m66-15v15m0 0q0 13-19 13" class="icon" stroke="#4f46b8"/>
+  <text x="154" y="509" text-anchor="middle" class="label">Triage</text>
+  <text x="154" y="539" text-anchor="middle" class="meta">Identifica la intención</text>
+  <text x="268" y="407" text-anchor="middle" class="meta" style="fill:#c74436">deriva</text>
+  <circle cx="366" cy="336" r="29" fill="#f0f2f7"/>
+  <g class="icon" stroke="#65718a"><path d="M355 322h22v27h-22zM361 330h10m-10 7h10"/></g>
+  <text x="411" y="344" class="body">Políticas</text>
+  <circle cx="366" cy="429" r="40" fill="#fbede9" stroke="#c74436" stroke-width="2"/>
+  <g class="icon" stroke="#c74436"><path d="m350 420 16-9 16 9v20l-16 9-16-9zM350 420l16 9 16-9m-16 9v20m-8-34 16 9"/></g>
+  <text x="423" y="418" class="label">Pedidos</text>
+  <rect x="421" y="432" width="123" height="30" rx="15" fill="#c74436"/>
+  <circle cx="436" cy="447" r="3.5" fill="#fff"/>
+  <text x="449" y="453" font-size="16" font-weight="600" style="fill:#fff">Agente activo</text>
+  <circle cx="366" cy="526" r="29" fill="#f0f2f7"/>
+  <g class="icon" stroke="#65718a"><path d="M354 519a14 14 0 1 1-1 17m1-17h12m-12 0v-10M366 521v13m-5-10h7q6 0 1 4l-7 3h9"/></g>
+  <text x="411" y="534" class="body">Reembolsos</text>
+  <rect x="81" y="595" width="477" height="45" rx="14" fill="#fbede9"/>
+  <text x="320" y="624" text-anchor="middle" font-size="21" font-weight="600" style="fill:#a8372d">El especialista continúa la tarea</text>
+
+  <!-- A curved outward / return path makes the manager's ownership visible. -->
+  <path d="M802 408C860 337 935 337 990 372" class="route" stroke="#087f7a" marker-end="url(#teal-arrow)"/>
+  <text x="898" y="330" text-anchor="middle" class="meta">consulta</text>
+  <path d="M1003 431C956 499 873 504 809 457" class="route" stroke="#087f7a" marker-end="url(#teal-arrow)"/>
+  <text x="909" y="528" text-anchor="middle" class="meta" style="fill:#087f7a">devuelve el resultado</text>
+  <circle cx="754" cy="429" r="54" fill="#e8f4f1" stroke="#087f7a" stroke-width="2"/>
+  <circle cx="754" cy="412" r="13" fill="none" stroke="#087f7a" stroke-width="2.5"/>
+  <path d="M731 449v-6q0-15 23-15t23 15v6" class="icon" stroke="#087f7a"/>
+  <path d="m779 386 5 5 9-11" class="icon" stroke="#087f7a"/>
+  <text x="754" y="509" text-anchor="middle" class="label">Manager</text>
+  <text x="754" y="539" text-anchor="middle" class="meta">Sigue siendo activo</text>
+  <circle cx="1040" cy="399" r="41" fill="#f0f2f7"/>
+  <g class="icon" stroke="#536078"><path d="m1023 397 9-10 9 10-9 10zm20-10h12v20h-12M1032 383v-6m0 30v8m23-27h7m-7 16h7"/></g>
+  <text x="1040" y="468" text-anchor="middle" class="body">Herramienta</text>
+  <text x="1040" y="497" text-anchor="middle" class="body">o especialista</text>
+  <rect x="634" y="595" width="483" height="45" rx="14" fill="#e8f4f1"/>
+  <text x="876" y="624" text-anchor="middle" font-size="21" font-weight="600" style="fill:#086a66">El manager integra y responde</text>
+  <path d="M56 698H1144" stroke="#d9deec"/>
+  <text x="56" y="732" class="meta" font-weight="700" letter-spacing="1.2">CERTITIPS / GUÍA VISUAL</text>
+  <text x="379" y="732" class="meta">Elegir el patrón correcto depende de quién debe asumir la respuesta.</text>
 </svg>

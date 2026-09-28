@@ -1,46 +1,80 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 640" role="img" aria-labelledby="title description">
-  <title id="title">Responses API y Agents SDK</title>
-  <desc id="description">La aplicación define el caso de uso. Agents SDK aporta la coordinación de agentes, handoffs, guardrails y tracing. Responses API permite interactuar con modelos, herramientas y estado de la conversación. La aplicación sigue siendo responsable de permisos y de ejecutar sus funciones.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title description">
+  <title id="title">OpenAI Agent Stack: responsabilidades por nivel</title>
+  <desc id="description">Tres capas de software separan responsabilidades: tu aplicación controla negocio, permisos y funciones; Agents SDK coordina agentes, handoffs y guardrails; Responses API conecta las entradas con modelos y herramientas. Tracing permite inspeccionar pasos y errores. Es posible llamar a Responses directamente sin Agents SDK. Las funciones propias se validan y ejecutan en la aplicación.</desc>
   <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#675f59"/></marker>
-    <marker id="arrow-teal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#17665e"/></marker>
+    <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1 7 4 1 7" fill="none" stroke="#536078" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
     <style>
-      text{font-family:Arial,Helvetica,sans-serif;fill:#252321}
-      .title{font-size:30px;font-weight:700}
-      .subtitle{font-size:20px;fill:#675f59}
-      .label{font-size:23px;font-weight:700}
-      .body{font-size:20px}
-      .small{font-size:18px;fill:#675f59}
-      .white{fill:#fff}
-      .red{fill:#b43d32}
-      .teal{fill:#17665e}
-      .card{fill:#fff;stroke:#d9d0c7;stroke-width:2}
-      .line{fill:none;stroke:#675f59;stroke-width:2.5;marker-end:url(#arrow)}
-      .return{fill:none;stroke:#17665e;stroke-width:2.5;marker-end:url(#arrow-teal)}
+      text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}
+      .eyebrow{font-size:14px;font-weight:700;letter-spacing:2px;fill:#c74436}
+      .title{font-size:34px;font-weight:700;letter-spacing:-.7px}
+      .subtitle{font-size:19px;fill:#536078}
+      .label{font-size:25px;font-weight:700}
+      .body{font-size:21px;fill:#536078}
+      .meta{font-size:16px;fill:#536078}
+      .icon{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+      .route{fill:none;stroke:#536078;stroke-width:2.5;stroke-linejoin:round;marker-end:url(#arrow)}
     </style>
   </defs>
-  <rect width="1000" height="640" fill="#faf8f5"/>
+  <rect width="1200" height="760" fill="#f7f8fc"/>
+  <text x="56" y="50" class="eyebrow">04 / OPENAI AGENT STACK</text>
+  <text x="56" y="98" class="title">Tres niveles. Tres responsabilidades distintas.</text>
+  <text x="56" y="134" class="subtitle">La API conecta con el modelo; el SDK coordina; tu aplicación conserva el control.</text>
 
-  <text x="40" y="50" class="title">API para interactuar; SDK para coordinar</text>
-  <text x="40" y="86" class="subtitle">Cada nivel resuelve una parte del sistema; la aplicación conserva el control.</text>
-  <rect x="40" y="126" width="720" height="96" rx="18" class="card"/>
-  <text x="63" y="166" class="label">Tu aplicación</text>
-  <text x="63" y="199" class="body">Experiencia, reglas de negocio, permisos y funciones propias</text>
-  <path d="M 400 229 V 259" class="line"/>
-  <rect x="40" y="272" width="720" height="126" rx="18" fill="#e4eeeb" stroke="#17665e" stroke-width="2"/>
-  <text x="63" y="312" class="label">Agents SDK</text>
-  <text x="63" y="350" class="body">Agentes · runner · herramientas · handoffs · guardrails</text>
-  <text x="63" y="379" class="small">Coordina la ejecución y permite observar los pasos.</text>
-  <path d="M 400 405 V 435" class="line"/>
-  <rect x="40" y="447" width="720" height="129" rx="18" fill="#f6e6e1" stroke="#b43d32" stroke-width="2"/>
-  <text x="63" y="488" class="label">Responses API</text>
-  <text x="63" y="525" class="body">Entrada → modelo → salida o solicitud de herramienta</text>
-  <text x="63" y="555" class="small">También se puede consumir directamente, sin Agents SDK.</text>
-  <rect x="802" y="272" width="158" height="304" rx="18" fill="#17665e"/>
-  <path d="M 770 335 H 791" class="return"/>
-  <text x="881" y="322" text-anchor="middle" class="label white">Tracing</text>
-  <path d="M 830 353 H 854 V 380 H 881 V 403 H 922 M 854 380 V 432 H 890 V 455 H 920" fill="none" stroke="#fff" stroke-width="2"/>
-  <circle cx="830" cy="353" r="5" fill="#fff"/><circle cx="922" cy="403" r="5" fill="#fff"/><circle cx="920" cy="455" r="5" fill="#fff"/>
-  <text x="881" y="499" text-anchor="middle" class="body white"><tspan x="881">Revisar pasos,</tspan><tspan x="881" dy="28">llamadas</tspan><tspan x="881" dy="28">y errores</tspan></text>
-  <text x="40" y="623" class="small">Function calling solicita una acción; tu aplicación valida y ejecuta sus funciones.</text>
+  <!-- Layered software plates: depth communicates stacking, not cloud ownership. -->
+  <path d="M93 198H819L840 216V304L819 322H93Z" fill="#e1e5f0"/>
+  <rect x="82" y="187" width="734" height="117" rx="19" fill="#fff" stroke="#d9deec" stroke-width="1.5"/>
+  <rect x="82" y="205" width="5" height="81" rx="2.5" fill="#4f46b8"/>
+  <circle cx="145" cy="245" r="34" fill="#ebe9fb"/>
+  <g class="icon" stroke="#4f46b8"><rect x="126" y="229" width="38" height="31" rx="5"/><path d="M126 240h38m-29-5h1m6 0h1m-8 13h10m-10 6h19"/></g>
+  <text x="201" y="231" class="meta" font-weight="700" letter-spacing="1.4">01 / PRODUCTO</text>
+  <text x="201" y="268" class="label">Tu aplicación</text>
+  <path d="M462 211V280" stroke="#d9deec"/>
+  <text x="488" y="237" class="body">Negocio y permisos</text>
+  <text x="488" y="269" class="body">Funciones y despliegue</text>
+  <path d="M382 323V346" class="route"/>
+
+  <path d="M117 369H843L864 387V475L843 493H117Z" fill="#cee7e2"/>
+  <rect x="106" y="358" width="734" height="117" rx="19" fill="#e8f4f1" stroke="#bbdcd5" stroke-width="1.5"/>
+  <rect x="106" y="376" width="5" height="81" rx="2.5" fill="#087f7a"/>
+  <circle cx="169" cy="416" r="34" fill="#fff"/>
+  <g class="icon" stroke="#087f7a"><circle cx="169" cy="404" r="7"/><circle cx="154" cy="428" r="6"/><circle cx="185" cy="428" r="6"/><path d="m165 410-7 12m15-12 8 12m-21 6h19"/></g>
+  <text x="225" y="402" class="meta" font-weight="700" letter-spacing="1.4">02 / ORQUESTACIÓN</text>
+  <text x="225" y="439" class="label">Agents SDK</text>
+  <path d="M486 382V451" stroke="#bbdcd5"/>
+  <text x="512" y="408" class="body">Agentes y handoffs</text>
+  <text x="512" y="440" class="body">Runner y guardrails</text>
+  <path d="M406 494V517" class="route"/>
+
+  <path d="M141 540H867L888 558V646L867 664H141Z" fill="#eed8d5"/>
+  <rect x="130" y="529" width="734" height="117" rx="19" fill="#fbede9" stroke="#e8c8c2" stroke-width="1.5"/>
+  <rect x="130" y="547" width="5" height="81" rx="2.5" fill="#c74436"/>
+  <circle cx="193" cy="587" r="34" fill="#fff"/>
+  <g class="icon" stroke="#c74436"><path d="m181 575-10 12 10 12m24-24 10 12-10 12m-7-29-10 34"/></g>
+  <text x="249" y="573" class="meta" font-weight="700" letter-spacing="1.4">03 / INTERFAZ</text>
+  <text x="249" y="610" class="label">Responses API</text>
+  <path d="M510 553V622" stroke="#e8c8c2"/>
+  <text x="536" y="579" class="body">Modelos y herramientas</text>
+  <text x="536" y="611" class="body">Entrada, contexto y salida</text>
+
+  <!-- The direct route deliberately bypasses only the optional SDK. -->
+  <path d="M82 252H58V591H117" class="route" stroke-dasharray="5 6"/>
+  <rect x="31" y="318" width="47" height="203" rx="20" fill="#f7f8fc"/>
+  <text x="58" y="420" transform="rotate(-90 58 420)" text-anchor="middle" class="meta">Acceso directo a la API</text>
+
+  <!-- Trace illustration is an inspectable execution tree, not hidden reasoning. -->
+  <rect x="939" y="229" width="205" height="344" rx="24" fill="#17243b"/>
+  <circle cx="976" cy="267" r="5" fill="#83e0cb"/>
+  <text x="995" y="275" font-size="24" font-weight="700" style="fill:#fff">Tracing</text>
+  <text x="963" y="312" font-size="16" style="fill:#bdc9db">OBSERVAR EL FLUJO</text>
+  <g fill="none" stroke="#7587a4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M972 350h42v43h67m-67 0v59h67m-67-16h-23"/></g>
+  <g fill="#83e0cb"><circle cx="972" cy="350" r="6"/><circle cx="1081" cy="393" r="6"/><circle cx="1081" cy="452" r="6"/></g>
+  <circle cx="991" cy="436" r="5" fill="#e6a093"/>
+  <text x="963" y="509" font-size="21" style="fill:#fff">Pasos, llamadas</text>
+  <text x="963" y="540" font-size="21" style="fill:#fff">y errores</text>
+  <path d="M866 416H925" class="route" stroke-dasharray="4 5"/>
+  <text x="1042" y="621" text-anchor="middle" class="meta">El SDK no aloja</text>
+  <text x="1042" y="645" text-anchor="middle" class="meta">tu aplicación.</text>
+  <path d="M56 698H1144" stroke="#d9deec"/>
+  <text x="56" y="732" class="meta" font-weight="700" letter-spacing="1.2">CERTITIPS / GUÍA VISUAL</text>
+  <text x="379" y="732" class="meta">Function calling propone; tu aplicación valida y ejecuta sus funciones.</text>
 </svg>

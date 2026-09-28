@@ -1,47 +1,62 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 660" role="img" aria-labelledby="title description">
-  <title id="title">Modelo y runtime empresarial en OCI</title>
-  <desc id="description">Vista conceptual del runtime empresarial: una sesión llega al control de ejecución; este coordina el modelo y las herramientas. Identidad, políticas, trazas y evaluaciones atraviesan el ciclo completo. El modelo no es el runtime ni se encarga por sí solo de despliegue, permisos o escalado.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title description">
+  <title id="title">Dos formas de operar una aplicación de agentes en OCI</title>
+  <desc id="description">A la izquierda, tu equipo mantiene una aplicación en su propio despliegue. A la derecha, una aplicación compatible se empaqueta y se publica en alojamiento gestionado de OCI Generative AI. Ambas pueden consumir OCI Responses API para modelos y herramientas compatibles. Las funciones propias siguen necesitando código y permisos. Identidad, estado, límites y observabilidad deben configurarse en ambos casos. Vista conceptual, no diagrama de servicios o escalado automático.</desc>
   <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#675f59"/></marker>
-    <marker id="arrow-teal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#17665e"/></marker>
+    <linearGradient id="indigo-surface" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6660d0"/><stop offset="1" stop-color="#40399c"/></linearGradient>
+    <linearGradient id="teal-surface" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#12988e"/><stop offset="1" stop-color="#086a67"/></linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
     <style>
-      text{font-family:Arial,Helvetica,sans-serif;fill:#252321}
-      .title{font-size:30px;font-weight:700}
-      .subtitle{font-size:20px;fill:#675f59}
-      .label{font-size:23px;font-weight:700}
-      .body{font-size:20px}
-      .small{font-size:18px;fill:#675f59}
-      .white{fill:#fff}
-      .red{fill:#b43d32}
-      .teal{fill:#17665e}
-      .card{fill:#fff;stroke:#d9d0c7;stroke-width:2}
-      .line{fill:none;stroke:#675f59;stroke-width:2.5;marker-end:url(#arrow)}
-      .return{fill:none;stroke:#17665e;stroke-width:2.5;marker-end:url(#arrow-teal)}
+      text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.eyebrow{font-size:14px;font-weight:700;letter-spacing:2px;fill:#536078}.title{font-size:34px;font-weight:700}.subtitle{font-size:19px;fill:#536078}.label{font-size:24px;font-weight:700}.body{font-size:21px}.meta{font-size:16px;fill:#536078}.white{fill:#fff}.muted{fill:#536078}.teal{fill:#087f7a}.indigo{fill:#4f46b8}.line{fill:none;stroke:#536078;stroke-width:2.4;marker-end:url(#arrow)}
     </style>
   </defs>
-  <rect width="1000" height="660" fill="#faf8f5"/>
-
-  <text x="40" y="50" class="title">Un modelo no es un runtime empresarial</text>
-  <text x="40" y="86" class="subtitle">Vista conceptual: operar agentes exige estado, acceso, herramientas y control.</text>
-  <rect x="40" y="187" width="188" height="119" rx="16" class="card"/>
-  <text x="61" y="229" class="label">Canal de uso</text>
-  <text x="61" y="268" class="body">Inicia una sesión.</text>
-  <path d="M 235 249 H 280" class="line"/>
-  <rect x="293" y="129" width="667" height="378" rx="20" fill="#fff" stroke="#b43d32" stroke-width="2"/>
-  <text x="318" y="171" class="label">Runtime del agente en OCI</text>
-  <rect x="318" y="204" width="281" height="149" rx="14" fill="#f6e6e1"/>
-  <text x="340" y="244" class="label">Control de ejecución</text>
-  <text x="340" y="283" class="body"><tspan x="340">Sesión · contexto · estado</tspan><tspan x="340" dy="29">Pasos, errores y límites</tspan></text>
-  <rect x="683" y="204" width="250" height="149" rx="14" fill="#eee9e3"/>
-  <text x="707" y="245" class="label">Modelo</text>
-  <text x="707" y="283" class="body"><tspan x="707">Razona y propone</tspan><tspan x="707" dy="29">la siguiente acción.</tspan></text>
-  <path d="M 609 272 H 669" fill="none" stroke="#675f59" stroke-width="2.5" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
-  <path d="M 459 359 V 394" class="line"/>
-  <rect x="318" y="407" width="615" height="69" rx="14" fill="#e4eeeb"/>
-  <text x="339" y="436" class="label">Herramientas y conocimiento</text>
-  <text x="339" y="463" class="body">Datos, sistemas y operaciones con acceso autorizado</text>
-  <path d="M 150 308 V 524 M 627 508 V 524" stroke="#17665e" stroke-width="2" stroke-dasharray="5 5"/>
-  <rect x="40" y="538" width="920" height="59" rx="14" fill="#17665e"/>
-  <text x="500" y="575" text-anchor="middle" class="label white">IAM y políticas · trazas · evaluaciones · despliegue y operación</text>
-  <text x="40" y="632" class="small">Confirma en la documentación la disponibilidad y el alcance de cada servicio de OCI.</text>
+  <rect width="1200" height="760" fill="#f7f8fc"/>
+  <text x="56" y="50" class="eyebrow">06 / OCI ENTERPRISE AI</text>
+  <text x="56" y="98" class="title">La API y el alojamiento son decisiones distintas</text>
+  <text x="56" y="134" class="subtitle">Elige dónde opera tu aplicación; después configura cómo accede a modelos y herramientas.</text>
+  <path d="M600 184V502" stroke="#dbe0eb" stroke-dasharray="5 8"/>
+  <circle cx="78" cy="199" r="22" fill="#e9e7fa"/><text x="78" y="207" text-anchor="middle" class="body indigo" font-weight="700">1</text>
+  <text x="113" y="207" class="label">Despliegue propio</text>
+  <text x="113" y="237" class="body muted">Tu equipo opera la aplicación</text>
+  <circle cx="658" cy="199" r="22" fill="#dcefeb"/><text x="658" y="207" text-anchor="middle" class="body teal" font-weight="700">2</text>
+  <text x="693" y="207" class="label">Alojamiento gestionado</text>
+  <text x="693" y="237" class="body muted">Publicas una aplicación compatible</text>
+  <!-- A laptop and service rack share the deployment plane operated by the user's team. -->
+  <ellipse cx="306" cy="430" rx="221" ry="34" fill="#e5e7f1"/>
+  <path d="M100 405 295 366 517 406 322 451Z" fill="#eae9f7" stroke="#ccc8e9" stroke-width="2"/>
+  <rect x="111" y="290" width="169" height="113" rx="12" fill="#17243b"/>
+  <rect x="120" y="300" width="151" height="90" rx="5" fill="#fff"/>
+  <path d="m111 403-20 19h207l-18-19" fill="#aeb5c9"/>
+  <path d="M171 413h46" stroke="#f7f8fc" stroke-width="4" stroke-linecap="round"/>
+  <path d="m160 331-13 14 13 14m69-28 13 14-13 14m-31-25-10 31" fill="none" stroke="#4f46b8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M308 346h30" class="line"/>
+  <path d="m354 289 42-18 83 18-42 19Z" fill="#a7a2e4"/>
+  <path d="M354 289v111l83 21V308Z" fill="url(#indigo-surface)"/>
+  <path d="m437 308 42-19v111l-42 21Z" fill="#353176"/>
+  <path d="m368 318 53 12m-53 20 53 12m-53 20 53 12" stroke="#ada8f0" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="370" cy="307" r="3" fill="#fff"/><circle cx="383" cy="310" r="3" fill="#fff"/>
+  <text x="307" y="477" text-anchor="middle" class="body">Backend, VM o cluster de tu equipo</text>
+  <!-- The boundary denotes managed hosting; multiple instances are conceptual, not an autoscaling promise. -->
+  <rect x="644" y="262" width="500" height="188" rx="24" fill="#edf6f4" stroke="#bddbd6" stroke-width="1.5"/>
+  <path d="M676 423h436M749 395v28m143-28v28m143-28v28" stroke="#a8cfc7" stroke-width="2"/>
+  <g>
+    <path d="m695 304 36-17 84 17-36 17Z" fill="#8fcfc4"/><path d="M695 304v84l84 19v-86Z" fill="url(#teal-surface)"/><path d="m779 321 36-17v84l-36 19Z" fill="#085853"/>
+    <path d="m710 331 52 11m-52 16 52 11" stroke="#9ce0d4" stroke-width="4" stroke-linecap="round"/><circle cx="710" cy="314" r="3" fill="#fff"/>
+    <path d="m838 304 36-17 84 17-36 17Z" fill="#8fcfc4"/><path d="M838 304v84l84 19v-86Z" fill="url(#teal-surface)"/><path d="m922 321 36-17v84l-36 19Z" fill="#085853"/>
+    <path d="m853 331 52 11m-52 16 52 11" stroke="#9ce0d4" stroke-width="4" stroke-linecap="round"/><circle cx="853" cy="314" r="3" fill="#fff"/>
+    <path d="m981 304 36-17 84 17-36 17Z" fill="#8fcfc4"/><path d="M981 304v84l84 19v-86Z" fill="url(#teal-surface)"/><path d="m1065 321 36-17v84l-36 19Z" fill="#085853"/>
+    <path d="m996 331 52 11m-52 16 52 11" stroke="#9ce0d4" stroke-width="4" stroke-linecap="round"/><circle cx="996" cy="314" r="3" fill="#fff"/>
+  </g>
+  <text x="894" y="477" text-anchor="middle" class="body">Imagen · endpoint · configuración</text>
+  <path d="M307 490v43m587-43v43" class="line"/>
+  <rect x="136" y="546" width="928" height="62" rx="18" fill="#17243b"/>
+  <path d="m170 567-9 10 9 10m29-20 9 10-9 10m-12-21-7 22" stroke="#c0baf8" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <text x="228" y="585" class="label white">OCI Responses API</text>
+  <path d="M482 563v28" stroke="#64718a"/>
+  <text x="510" y="584" class="body white">Modelos y herramientas compatibles</text>
+  <g fill="none" stroke="#087f7a" stroke-width="2.6" stroke-linejoin="round"><path d="M85 630 97 635v9q-1 10-12 15-11-5-12-15v-9Z"/><path d="m79 644 4 4 9-10"/></g>
+  <text x="114" y="651" class="body">En ambas vías: identidad, estado, límites y observabilidad</text>
+  <text x="114" y="676" class="meta">Las funciones propias requieren código autorizado. Verifica soporte, región y cuotas.</text>
+  <path d="M56 698h1088" stroke="#dbe0eb"/>
+  <text x="56" y="730" class="eyebrow">CERTITIPS / GUÍA VISUAL</text>
+  <text x="1144" y="730" text-anchor="end" class="meta">Consumir una API no equivale a alojar toda la aplicación.</text>
 </svg>

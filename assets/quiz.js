@@ -5,6 +5,8 @@ const root = document.querySelector('#quiz');
 const course = document.body.dataset.course;
 const base = document.body.dataset.base;
 const key = `certitips:quiz:v1:${course}`;
+const introductoryContent = document.querySelectorAll('[data-practice-intro], [data-nav-page="practice"] li:has(a[href$="#como-aprovechar-tus-resultados"])');
+const resetButton = '<button class="button button-secondary" type="button" data-reset>Reiniciar test</button>';
 const escape = text => String(text).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 let bank;
 let attempt;
@@ -14,9 +16,24 @@ function save() { persisted = writeStored(key, attempt); }
 function reference(question) { return `${base}${course}/${question.reference.module}/#${question.reference.anchor}`; }
 function notice() { return `<p class="quiz-notice">${attempt?.mode === 'review' ? 'Repaso de errores: este resultado no modifica tu intento de práctica anterior.' : 'Práctica educativa · Meta orientativa: 10/12 · No equivale al examen oficial.'}${persisted ? '' : '<br>El almacenamiento está bloqueado. Puedes continuar, pero el avance se perderá al cerrar o recargar.'}</p>`; }
 
-function intro() {
+function intro(moveFocus = false) {
+  introductoryContent.forEach(element => { element.hidden = false; });
   root.innerHTML = `<div class="quiz-shell"><div class="eyebrow">PRACTICA PARA ENTENDER</div><h2>Un paso más cerca de tenerlo claro.</h2><p>Selecciona una alternativa y pulsa <strong>Comprobar</strong>. Verás el resultado, el porqué y qué repasar antes de continuar.</p><div class="quiz-facts"><div><strong>12</strong><span>preguntas por intento</span></div><div><strong>06</strong><span>áreas de estudio</span></div><div><strong>∞</strong><span>sin límite de tiempo</span></div></div><p>Dos preguntas de cada área, elegidas de un banco de 36. No necesitas una cuenta ni compartir datos.</p><button class="button" data-start>Empezar práctica →</button><p class="quiz-notice">Las preguntas son originales de CertiTips; no son preguntas oficiales del examen.</p></div>`;
   root.querySelector('[data-start]').addEventListener('click', start);
+  if (!persisted) root.insertAdjacentHTML('beforeend', '<p class="quiz-notice" role="status">El test se reinició en esta sesión, pero no se pudo borrar el avance guardado. Al recargar podría reaparecer el intento anterior.</p>');
+  if (moveFocus) root.querySelector('[data-start]').focus();
+}
+
+function reset() {
+  if (attempt.index < attempt.ids.length && !globalThis.confirm('¿Reiniciar el test? Se borrarán las respuestas de este intento. Tu progreso de estudio no cambiará.')) return;
+  attempt = null;
+  try {
+    globalThis.localStorage.removeItem(key);
+    persisted = true;
+  } catch {
+    persisted = writeStored(key, null);
+  }
+  intro(true);
 }
 
 function start() {
@@ -27,7 +44,7 @@ function start() {
 
 function questionView(question, selected) {
   const locked = Boolean(selected);
-  return `<div class="quiz-meta"><span class="tag">${escape(domainLabels[question.domain])}</span><span>${attempt.mode === 'review' ? 'Repaso' : 'Pregunta'} ${attempt.index + 1} de ${attempt.ids.length}</span></div><div class="quiz-meter" aria-hidden="true"><span style="width:${100 * attempt.index / attempt.ids.length}%"></span></div><form id="question-form"><fieldset class="quiz-options"><legend class="quiz-question" tabindex="-1">${escape(question.question)}</legend>${question.options.map(option => `<label class="quiz-option ${locked && option.id === question.correctOption ? 'is-correct' : ''} ${locked && option.id === selected && selected !== question.correctOption ? 'is-wrong' : ''}"><input type="radio" name="answer" value="${option.id}" required ${selected === option.id ? 'checked' : ''} ${locked ? 'disabled' : ''}><span><span class="option-letter">${option.id.toUpperCase()}.</span>${escape(option.text)}${locked && option.id === question.correctOption ? '<span class="option-status">✓ Respuesta correcta</span>' : ''}${locked && option.id === selected && selected !== question.correctOption ? '<span class="option-status">Tu respuesta</span>' : ''}</span></label>`).join('')}</fieldset>${!locked ? '<div class="quiz-actions"><button class="button" type="submit">Comprobar respuesta</button></div>' : ''}</form>${locked ? feedback(question, selected) : ''}${notice()}`;
+  return `<div class="quiz-meta"><span class="tag">${escape(domainLabels[question.domain])}</span><span>${attempt.mode === 'review' ? 'Repaso' : 'Pregunta'} ${attempt.index + 1} de ${attempt.ids.length}</span>${resetButton}</div><div class="quiz-meter" aria-hidden="true"><span style="width:${100 * attempt.index / attempt.ids.length}%"></span></div><form id="question-form"><fieldset class="quiz-options"><legend class="quiz-question" tabindex="-1">${escape(question.question)}</legend>${question.options.map(option => `<label class="quiz-option ${locked && option.id === question.correctOption ? 'is-correct' : ''} ${locked && option.id === selected && selected !== question.correctOption ? 'is-wrong' : ''}"><input type="radio" name="answer" value="${option.id}" required ${selected === option.id ? 'checked' : ''} ${locked ? 'disabled' : ''}><span><span class="option-letter">${option.id.toUpperCase()}.</span>${escape(option.text)}${locked && option.id === question.correctOption ? '<span class="option-status">✓ Respuesta correcta</span>' : ''}${locked && option.id === selected && selected !== question.correctOption ? '<span class="option-status">Tu respuesta</span>' : ''}</span></label>`).join('')}</fieldset>${!locked ? '<div class="quiz-actions"><button class="button" type="submit">Comprobar respuesta</button></div>' : ''}</form>${locked ? feedback(question, selected) : ''}${notice()}`;
 }
 
 function feedback(question, selected) {
@@ -40,12 +57,13 @@ function summary() {
   const report = results(attempt, bank);
   const previous = attempt.mode === 'review' ? results(attempt.original, bank) : null;
   const pending = [...new Set(report.wrong.map(id => bank.find(question => question.id === id).domain))];
-  root.innerHTML = `<div class="quiz-shell"><div class="eyebrow">${attempt.mode === 'review' ? 'REPASO COMPLETADO' : 'PRÁCTICA COMPLETADA'}</div><h2 tabindex="-1" id="results-title">${report.correct === report.total ? 'Las piezas están conectadas.' : 'Ya sabes dónde enfocar tu repaso.'}</h2><div class="quiz-score"><div class="score-number">${report.correct}<small> / ${report.total}</small></div><p>${Math.round(100 * report.correct / report.total)}% de aciertos<br><span class="subtle">${attempt.mode === 'practice' && report.correct >= 10 ? 'Alcanzaste la meta orientativa de esta práctica.' : 'Cada intento es una fotografía de tu aprendizaje.'}</span></p></div>${previous ? `<p class="quiz-notice">Tu práctica anterior se mantiene en ${previous.correct}/${previous.total}.</p>` : ''}<h3>Resultado por área</h3><ul class="domain-results">${Object.entries(report.domains).map(([domain, score]) => `<li><span>${escape(domainLabels[domain])}</span><strong>${score.correct} / ${score.total}</strong></li>`).join('')}</ul><p class="quiz-notice">Dos preguntas por área no bastan para medir dominio completo. Usa estos resultados como orientación.</p>${pending.length ? `<h3>Vuelve a estos conceptos</h3><ul>${pending.map(domain => `<li><a href="${base}${course}/${domain}/#conceptos-clave">${escape(domainLabels[domain])}</a></li>`).join('')}</ul>` : '<p>Continúa con la práctica oficial de Oracle y comprueba que también puedes explicar las respuestas sin ver las alternativas.</p>'}<div class="quiz-actions">${report.wrong.length ? '<button class="button" data-review>Repasar mis errores</button>' : ''}<button class="button button-secondary" data-restart>Nuevo intento de 12</button><a class="text-link" href="${base}${course}/exam-checklist/">Ruta al examen oficial →</a></div>${notice()}</div>`;
+  root.innerHTML = `<div class="quiz-shell"><div class="eyebrow">${attempt.mode === 'review' ? 'REPASO COMPLETADO' : 'PRÁCTICA COMPLETADA'}</div><h2 tabindex="-1" id="results-title">${report.correct === report.total ? 'Las piezas están conectadas.' : 'Ya sabes dónde enfocar tu repaso.'}</h2><div class="quiz-score"><div class="score-number">${report.correct}<small> / ${report.total}</small></div><p>${Math.round(100 * report.correct / report.total)}% de aciertos<br><span class="subtle">${attempt.mode === 'practice' && report.correct >= 10 ? 'Alcanzaste la meta orientativa de esta práctica.' : 'Cada intento es una fotografía de tu aprendizaje.'}</span></p></div>${previous ? `<p class="quiz-notice">Tu práctica anterior se mantiene en ${previous.correct}/${previous.total}.</p>` : ''}<h3>Resultado por área</h3><ul class="domain-results">${Object.entries(report.domains).map(([domain, score]) => `<li><span>${escape(domainLabels[domain])}</span><strong>${score.correct} / ${score.total}</strong></li>`).join('')}</ul><p class="quiz-notice">Dos preguntas por área no bastan para medir dominio completo. Usa estos resultados como orientación.</p>${pending.length ? `<h3>Vuelve a estos conceptos</h3><ul>${pending.map(domain => `<li><a href="${base}${course}/${domain}/#conceptos-clave">${escape(domainLabels[domain])}</a></li>`).join('')}</ul>` : '<p>Continúa con la práctica oficial de Oracle y comprueba que también puedes explicar las respuestas sin ver las alternativas.</p>'}<div class="quiz-actions">${report.wrong.length ? '<button class="button" data-review>Repasar mis errores</button>' : ''}<button class="button button-secondary" data-restart>Nuevo intento de 12</button>${resetButton}<a class="text-link" href="${base}${course}/exam-checklist/">Ruta al examen oficial →</a></div>${notice()}</div>`;
   root.querySelector('[data-review]')?.addEventListener('click', () => { attempt = reviewAttempt(attempt, bank); save(); render(true); });
   root.querySelector('[data-restart]').addEventListener('click', start);
 }
 
 function render(moveFocus = false) {
+  introductoryContent.forEach(element => { element.hidden = true; });
   if (attempt.index >= attempt.ids.length) {
     summary();
     if (moveFocus) root.querySelector('#results-title').focus();
@@ -65,6 +83,7 @@ function render(moveFocus = false) {
 }
 
 async function load() {
+  introductoryContent.forEach(element => { element.hidden = true; });
   try {
     const response = await fetch(`${base}assets/questions.json`);
     if (!response.ok) throw new Error('No se pudo cargar el banco.');
@@ -77,3 +96,4 @@ async function load() {
   }
 }
 load();
+root.addEventListener('click', event => { if (event.target.closest('[data-reset]')) reset(); });

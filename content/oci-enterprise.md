@@ -48,6 +48,14 @@ Nuestro asistente debe informar si un pedido está listo y estimar el costo tota
 
 Observa que, para funciones propias, la aplicación sigue ejecutando las operaciones. Usar un servicio gestionado para modelos no convierte automáticamente todo el código en ejecución remota. Conserva una traza mínima con identificadores, tiempos y estados; no publiques pedidos reales para demostrar que funciona.
 
+## Una solución completa: operación empresarial
+
+![Arquitectura conceptual empresarial: una aplicación utiliza el runtime del agente, conectado a modelos y herramientas; las herramientas acceden a datos y la operación incluye permisos y observabilidad.]({{base}}assets/illustrations/enterprise-agent.png)
+
+El runtime coordina sesiones, estado y ejecución. Los modelos y las herramientas son capacidades conectadas, no el runtime mismo. La observabilidad permite inspeccionar el recorrido de una solicitud, mientras los permisos deben verificarse en cada recurso y operación, no únicamente en el acceso inicial.
+
+**Cómo leer la imagen:** sigue una solicitud desde la aplicación, identifica dónde se conserva su estado y qué componentes intervienen si necesita consultar datos. La vista es conceptual: los símbolos de agentes no representan un número de réplicas recomendado, ni el dibujo prescribe una topología OCI, un escalado automático o una disponibilidad de servicio.
+
 ## Desplegar y escalar
 
 En la primera vía, la aplicación vive en tu laptop, una VM, un servicio o un cluster y consume OCI Responses API. Tu equipo sigue operando ese despliegue. En la segunda, preparas una aplicación compatible, la empaquetas y la publicas mediante el alojamiento gestionado de aplicaciones de OCI Generative AI.

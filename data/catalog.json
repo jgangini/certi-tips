@@ -24,7 +24,6 @@
         { "slug": "glossary", "title": "Habla el idioma de los agentes", "short": "Glosario", "description": "Términos técnicos en inglés, explicados en español y con sus diferencias importantes." },
         { "slug": "review", "title": "Repaso antes de practicar", "short": "Repaso final", "description": "Las distinciones que debes poder explicar sin memorizar una lista de respuestas." },
         { "slug": "exam-checklist", "title": "El siguiente paso: tu certificación", "short": "Ruta al examen oficial", "description": "Comprueba tu preparación y sigue los enlaces oficiales para completar la ruta de Oracle." },
-        { "slug": "talk", "title": "Una charla. Una ruta para seguir.", "short": "Charla de 90 minutos", "description": "Guion del facilitador con tiempos, preguntas para el grupo y diagramas para proyectar." },
         { "slug": "practice", "title": "Pon a prueba lo que entiendes", "short": "Práctica explicada", "description": "12 preguntas, seis temas y una explicación en cada respuesta. Aprende también de tus errores." }
       ]
     }

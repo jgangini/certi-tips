@@ -1,5 +1,11 @@
 import { readStored, writeStored } from "./storage.js";
 
+const footer = document.querySelector(".site-footer");
+// Reserve the wrapped height, including zoom and mobile safe-area padding.
+if (footer) new ResizeObserver(() => {
+  document.documentElement.style.setProperty("--footer-height", `${footer.getBoundingClientRect().height}px`);
+}).observe(footer);
+
 const course = document.body.dataset.course;
 const key = `certitips:progress:v1:${course}`;
 const stored = readStored(key, []);
@@ -59,6 +65,12 @@ toggle?.addEventListener("click", () => {
   const open = navigation.classList.toggle("is-open");
   toggle.setAttribute("aria-expanded", String(open));
 });
+navigation?.addEventListener("click", (event) => {
+  if (event.target.closest("a") && navigation.classList.contains("is-open")) {
+    closeMenu();
+    document.querySelector("#main").focus({ preventScroll: true });
+  }
+});
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && navigation?.classList.contains("is-open")) {
     closeMenu();
@@ -91,13 +103,3 @@ dialog.addEventListener("click", (event) => {
   if (event.target === dialog) dialog.close();
 });
 dialog.addEventListener("close", () => opener?.focus());
-
-document
-  .querySelector("[data-talk-mode]")
-  ?.addEventListener("click", (event) => {
-    const enabled = document.body.classList.toggle("talk-mode");
-    event.currentTarget.setAttribute("aria-pressed", String(enabled));
-    event.currentTarget.textContent = enabled
-      ? "Volver al tamaño normal"
-      : "Aumentar texto para proyectar";
-  });

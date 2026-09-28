@@ -17,6 +17,9 @@ const slug = (text) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
+md.renderer.rules.table_open = () => '<div class="table-scroll" role="region" aria-label="Tabla de referencia" tabindex="0"><table>\n';
+md.renderer.rules.table_close = () => "</table></div>\n";
+
 md.renderer.rules.image = (tokens, index) => {
   const token = tokens[index];
   const src = escapeHtml(token.attrGet("src"));
@@ -64,12 +67,14 @@ await cp(
   path.join(output, "assets/questions.json"),
 );
 for (const course of site.courses) {
-  for (const page of [...course.modules, ...course.resources]) {
-    const source = await readFile(
-      path.join(root, "content", `${page.slug}.md`),
-      "utf8",
-    );
-    const { html, toc } = renderMarkdown(source);
+  const pages = [...course.modules, ...course.resources];
+  const rendered = new Map(await Promise.all(pages.map(async (page) => [
+    page.slug,
+    renderMarkdown(await readFile(path.join(root, "content", `${page.slug}.md`), "utf8")),
+  ])));
+  const tocByPage = new Map([...rendered].map(([slug, { toc }]) => [slug, toc]));
+  for (const page of pages) {
+    const { html } = rendered.get(page.slug);
     const index = course.modules.indexOf(page);
     await save(
       `${course.id}/${page.slug}/index.html`,
@@ -78,13 +83,15 @@ for (const course of site.courses) {
         course,
         page,
         body: html,
-        toc,
+        tocByPage,
         previous: course.modules[index - 1],
         next: course.modules[index + 1],
       }),
     );
   }
   const redirect = `${site.base}${course.id}/overview/`;
+  // ponytail: keep the former workshop URL working without a second learning mode.
+  await save(`${course.id}/talk/index.html`, `<!doctype html><html lang="es"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${redirect}"><title>CertiTips</title><link rel="canonical" href="${site.origin}${redirect}"><a href="${redirect}">Continuar en la guía</a></html>`);
   await save(
     `${course.id}/index.html`,
     `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${redirect}"><title>${escapeHtml(course.title)}</title><link rel="canonical" href="${site.origin}${redirect}"></head><body><a href="${redirect}">Abrir la guía</a></body></html>`,

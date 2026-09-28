@@ -41,6 +41,14 @@ Primero, conserva descripción, precio, categoría y embedding de cada producto.
 
 Prueba también una consulta sin coincidencias y un producto que está semánticamente cerca pero supera el precio. La respuesta correcta puede ser “no encontré una opción que cumpla ambas condiciones”. La similitud no autoriza a ignorar restricciones ni inventar stock.
 
+## Una solución completa: responder con evidencia
+
+![Arquitectura conceptual con datos: el agente utiliza búsqueda semántica o consulta SQL como ramas separadas sobre datos autorizados y coordina con el modelo una respuesta respaldada por evidencia.]({{base}}assets/illustrations/grounded-answer.png)
+
+Las dos ramas resuelven necesidades diferentes. La **búsqueda semántica** recupera fragmentos relevantes para fundamentar una respuesta; una **consulta SQL** obtiene resultados estructurados, por ejemplo el estado y el importe de un pedido. Ambas requieren controlar qué datos puede consultar la identidad que ejecuta la operación. Cambiar datos o ejecutar una acción de negocio exige además una herramienta autorizada y sus validaciones.
+
+**Cómo leer la imagen:** para “¿qué política aplica?” elige recuperación documental; para “¿cuánto pagó este cliente?” identifica la consulta estructurada. Los conectores representan relaciones de consulta y respuesta, no una secuencia rígida. El modelo no recibe acceso directo irrestricto a la base, ni esta vista implica que el LLM se ejecute dentro de Oracle AI Database.
+
 ## Private Agent Factory
 
 Agent Factory ofrece agentes preparados y un constructor visual para conectar fuentes, modelos y herramientas. En las notas del curso se trabajan especialmente **Knowledge Agent**, orientado a contenido documental, y **Data Analysis Agent**, orientado a datos estructurados. La documentación de la versión 26.7 también incluye **Deep Data Research Agent**; evita memorizar un número de agentes como si nunca cambiara. Consulta su [introducción oficial](https://docs.oracle.com/en/database/oracle/agent-factory/26.7/paias/introduction.html).
