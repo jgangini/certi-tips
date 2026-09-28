@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 640" role="img" aria-labelledby="title description">
+  <title id="title">Handoff y herramienta</title>
+  <desc id="description">Un handoff transfiere el control del agente generalista al especialista. Invocar una herramienta devuelve un resultado al agente que la llamó, que conserva la responsabilidad de la respuesta. La selección del patrón depende de quién debe llevar la conversación.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#675f59"/></marker>
+    <marker id="arrow-teal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#17665e"/></marker>
+    <style>
+      text{font-family:Arial,Helvetica,sans-serif;fill:#252321}
+      .title{font-size:30px;font-weight:700}
+      .subtitle{font-size:20px;fill:#675f59}
+      .label{font-size:23px;font-weight:700}
+      .body{font-size:20px}
+      .small{font-size:18px;fill:#675f59}
+      .white{fill:#fff}
+      .red{fill:#b43d32}
+      .teal{fill:#17665e}
+      .card{fill:#fff;stroke:#d9d0c7;stroke-width:2}
+      .line{fill:none;stroke:#675f59;stroke-width:2.5;marker-end:url(#arrow)}
+      .return{fill:none;stroke:#17665e;stroke-width:2.5;marker-end:url(#arrow-teal)}
+    </style>
+  </defs>
+  <rect width="1000" height="640" fill="#faf8f5"/>
+
+  <text x="40" y="50" class="title">Un handoff cambia quién lleva la tarea</text>
+  <text x="40" y="86" class="subtitle">Derivar a un especialista no equivale a pedir un dato a una herramienta.</text>
+  <rect x="40" y="126" width="920" height="220" rx="20" class="card"/>
+  <text x="64" y="165" class="label">Transferencia de control</text>
+  <rect x="65" y="193" width="251" height="112" rx="14" fill="#f6e6e1"/>
+  <rect x="385" y="193" width="230" height="112" rx="14" fill="#eee9e3"/>
+  <rect x="684" y="193" width="251" height="112" rx="14" fill="#e4eeeb"/>
+  <text x="191" y="231" text-anchor="middle" class="label">Generalista</text>
+  <text x="191" y="267" text-anchor="middle" class="body"><tspan x="191">Identifica una consulta</tspan><tspan x="191" dy="25">de facturación.</tspan></text>
+  <text x="500" y="238" text-anchor="middle" class="label">Handoff</text>
+  <text x="500" y="277" text-anchor="middle" class="body">Deriva el control.</text>
+  <text x="809" y="231" text-anchor="middle" class="label">Especialista</text>
+  <text x="809" y="267" text-anchor="middle" class="body"><tspan x="809">Pasa a ser el agente</tspan><tspan x="809" dy="25">activo de la tarea.</tspan></text>
+  <path d="M 323 250 H 372 M 622 250 H 671" class="line"/>
+  <rect x="40" y="374" width="920" height="209" rx="20" class="card"/>
+  <text x="64" y="413" class="label">Llamada a herramienta</text>
+  <rect x="67" y="445" width="250" height="82" rx="14" fill="#f6e6e1"/>
+  <rect x="585" y="445" width="349" height="82" rx="14" fill="#eee9e3"/>
+  <text x="192" y="494" text-anchor="middle" class="label">Agente activo</text>
+  <text x="759" y="479" text-anchor="middle" class="label">Consultar una factura</text>
+  <text x="759" y="509" text-anchor="middle" class="body">La función devuelve datos.</text>
+  <path d="M 324 473 H 572" class="line"/>
+  <text x="448" y="458" text-anchor="middle" class="small">solicitud</text>
+  <path d="M 581 512 H 331" class="return"/>
+  <text x="450" y="546" text-anchor="middle" class="small teal">resultado al mismo agente</text>
+  <text x="40" y="622" class="small">El especialista tiene instrucciones propias; define qué contexto recibe al transferir.</text>
+</svg>

@@ -1,0 +1,32 @@
+{
+  "name": "CertiTips",
+  "base": "/certi-tips/",
+  "origin": "https://jgangini.github.io",
+  "repository": "https://github.com/jgangini/certi-tips",
+  "courses": [
+    {
+      "id": "agentic-ai-foundations-2026",
+      "title": "Oracle Agentic AI Foundations",
+      "edition": "Associate · 2026",
+      "description": "De entender un agente a elegir cómo construirlo, conectarlo y operarlo. Una ruta visual con ejemplos, ejercicios y práctica explicada.",
+      "exam": { "code": "1Z0-1157-26", "questions": 40, "minutes": 60, "passingPercent": 65, "verified": "2026-09-28", "source": "https://blogs.oracle.com/oracleuniversity/oracle-agentic-ai-foundations-training-certification-now-available" },
+      "modules": [
+        { "slug": "overview", "title": "Tu punto de partida", "short": "Empieza aquí", "description": "Conoce la ruta, revisa los prerrequisitos y decide cómo vas a estudiar.", "minutes": 8, "type": "orientation" },
+        { "slug": "agents", "title": "Cómo funciona un agente", "short": "Agentes de IA", "description": "Modelo, herramientas y ciclo de ejecución: las piezas que convierten una respuesta en una acción.", "minutes": 18, "type": "module" },
+        { "slug": "langchain", "title": "Construir con LangChain", "short": "LangChain", "description": "Entiende las cadenas y lo que ocurre entre una decisión del modelo y la ejecución de una herramienta.", "minutes": 18, "type": "module" },
+        { "slug": "mcp", "title": "Conectar herramientas con MCP", "short": "Model Context Protocol", "description": "Un protocolo común para descubrir herramientas, acceder a recursos y conectar aplicaciones.", "minutes": 18, "type": "module" },
+        { "slug": "openai", "title": "El OpenAI Agent Stack", "short": "Responses API y Agents SDK", "description": "Elige el nivel de control adecuado y coordina herramientas, agentes especializados y guardrails.", "minutes": 20, "type": "module" },
+        { "slug": "oci-enterprise", "title": "Agentes en OCI Enterprise AI", "short": "OCI Enterprise AI", "description": "Pasa del prototipo al runtime: ejecución, sesiones, permisos, observabilidad y despliegue.", "minutes": 18, "type": "module" },
+        { "slug": "oracle-database", "title": "Agentes cerca de tus datos", "short": "Oracle AI Database", "description": "Relaciona búsqueda vectorial, Select AI Agent, Private Agent Factory y el servidor MCP de Autonomous.", "minutes": 20, "type": "module" }
+      ],
+      "resources": [
+        { "slug": "study-path", "title": "Tu plan de siete sesiones", "short": "Plan de estudio", "description": "Una secuencia de estudio con entregables pequeños para avanzar con intención." },
+        { "slug": "glossary", "title": "Habla el idioma de los agentes", "short": "Glosario", "description": "Términos técnicos en inglés, explicados en español y con sus diferencias importantes." },
+        { "slug": "review", "title": "Repaso antes de practicar", "short": "Repaso final", "description": "Las distinciones que debes poder explicar sin memorizar una lista de respuestas." },
+        { "slug": "exam-checklist", "title": "El siguiente paso: tu certificación", "short": "Ruta al examen oficial", "description": "Comprueba tu preparación y sigue los enlaces oficiales para completar la ruta de Oracle." },
+        { "slug": "talk", "title": "Una charla. Una ruta para seguir.", "short": "Charla de 90 minutos", "description": "Guion del facilitador con tiempos, preguntas para el grupo y diagramas para proyectar." },
+        { "slug": "practice", "title": "Pon a prueba lo que entiendes", "short": "Práctica explicada", "description": "12 preguntas, seis temas y una explicación en cada respuesta. Aprende también de tus errores." }
+      ]
+    }
+  ]
+}

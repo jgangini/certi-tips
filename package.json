@@ -1,0 +1,14 @@
+{
+  "name": "certi-tips",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test --test-isolation=none tests/*.test.mjs",
+    "check": "node scripts/check-site.mjs",
+    "preview": "node scripts/serve.mjs"
+  },
+  "devDependencies": { "markdown-it": "14.3.2" }
+}

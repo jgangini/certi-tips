@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 640" role="img" aria-labelledby="title description">
+  <title id="title">Responses API y Agents SDK</title>
+  <desc id="description">La aplicación define el caso de uso. Agents SDK aporta la coordinación de agentes, handoffs, guardrails y tracing. Responses API permite interactuar con modelos, herramientas y estado de la conversación. La aplicación sigue siendo responsable de permisos y de ejecutar sus funciones.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#675f59"/></marker>
+    <marker id="arrow-teal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#17665e"/></marker>
+    <style>
+      text{font-family:Arial,Helvetica,sans-serif;fill:#252321}
+      .title{font-size:30px;font-weight:700}
+      .subtitle{font-size:20px;fill:#675f59}
+      .label{font-size:23px;font-weight:700}
+      .body{font-size:20px}
+      .small{font-size:18px;fill:#675f59}
+      .white{fill:#fff}
+      .red{fill:#b43d32}
+      .teal{fill:#17665e}
+      .card{fill:#fff;stroke:#d9d0c7;stroke-width:2}
+      .line{fill:none;stroke:#675f59;stroke-width:2.5;marker-end:url(#arrow)}
+      .return{fill:none;stroke:#17665e;stroke-width:2.5;marker-end:url(#arrow-teal)}
+    </style>
+  </defs>
+  <rect width="1000" height="640" fill="#faf8f5"/>
+
+  <text x="40" y="50" class="title">API para interactuar; SDK para coordinar</text>
+  <text x="40" y="86" class="subtitle">Cada nivel resuelve una parte del sistema; la aplicación conserva el control.</text>
+  <rect x="40" y="126" width="720" height="96" rx="18" class="card"/>
+  <text x="63" y="166" class="label">Tu aplicación</text>
+  <text x="63" y="199" class="body">Experiencia, reglas de negocio, permisos y funciones propias</text>
+  <path d="M 400 229 V 259" class="line"/>
+  <rect x="40" y="272" width="720" height="126" rx="18" fill="#e4eeeb" stroke="#17665e" stroke-width="2"/>
+  <text x="63" y="312" class="label">Agents SDK</text>
+  <text x="63" y="350" class="body">Agentes · runner · herramientas · handoffs · guardrails</text>
+  <text x="63" y="379" class="small">Coordina la ejecución y permite observar los pasos.</text>
+  <path d="M 400 405 V 435" class="line"/>
+  <rect x="40" y="447" width="720" height="129" rx="18" fill="#f6e6e1" stroke="#b43d32" stroke-width="2"/>
+  <text x="63" y="488" class="label">Responses API</text>
+  <text x="63" y="525" class="body">Entrada → modelo → salida o solicitud de herramienta</text>
+  <text x="63" y="555" class="small">También se puede consumir directamente, sin Agents SDK.</text>
+  <rect x="802" y="272" width="158" height="304" rx="18" fill="#17665e"/>
+  <path d="M 770 335 H 791" class="return"/>
+  <text x="881" y="322" text-anchor="middle" class="label white">Tracing</text>
+  <path d="M 830 353 H 854 V 380 H 881 V 403 H 922 M 854 380 V 432 H 890 V 455 H 920" fill="none" stroke="#fff" stroke-width="2"/>
+  <circle cx="830" cy="353" r="5" fill="#fff"/><circle cx="922" cy="403" r="5" fill="#fff"/><circle cx="920" cy="455" r="5" fill="#fff"/>
+  <text x="881" y="499" text-anchor="middle" class="body white"><tspan x="881">Revisar pasos,</tspan><tspan x="881" dy="28">llamadas</tspan><tspan x="881" dy="28">y errores</tspan></text>
+  <text x="40" y="623" class="small">Function calling solicita una acción; tu aplicación valida y ejecuta sus funciones.</text>
+</svg>

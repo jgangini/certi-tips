@@ -1,0 +1,373 @@
+[
+  {
+    "lesson": "01-01-01-oracle-agentic-ai-foundations-course-introduction.md",
+    "module": "overview",
+    "anchor": "objetivos-y-examen",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-02-01-module-intro.md",
+    "module": "agents",
+    "anchor": "objetivos-del-modulo",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-02-02-what-is-an-ai-agent.md",
+    "module": "agents",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-02-03-ai-agent-core-components.md",
+    "module": "agents",
+    "anchor": "componentes-y-estado",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-02-04-reasoning-patterns.md",
+    "module": "agents",
+    "anchor": "patrones-de-razonamiento",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-02-05-your-first-ai-agent-walkthrough.md",
+    "module": "agents",
+    "anchor": "ejemplo-paso-a-paso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-02-06-safety-and-guardrails.md",
+    "module": "agents",
+    "anchor": "seguridad-por-capas",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-02-07-summary.md",
+    "module": "agents",
+    "anchor": "fuentes-y-repaso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-01-module-intro.md",
+    "module": "langchain",
+    "anchor": "objetivos-del-modulo",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-02-introduction-to-langchain.md",
+    "module": "langchain",
+    "anchor": "bloques-reutilizables",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-03-demo-langchain-building-blocks.md",
+    "module": "langchain",
+    "anchor": "bloques-reutilizables",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-04-building-your-first-agent-using-langchain.md",
+    "module": "langchain",
+    "anchor": "ejemplo-paso-a-paso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-05-demo-building-your-first-ai-agent.md",
+    "module": "langchain",
+    "anchor": "ejemplo-paso-a-paso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-06-langchain-agent-under-the-hood-part-1.md",
+    "module": "langchain",
+    "anchor": "que-ocurre-bajo-el-capo",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-07-langchain-agent-under-the-hood-part-2.md",
+    "module": "langchain",
+    "anchor": "que-ocurre-bajo-el-capo",
+    "source": "provided-notes",
+    "note": "Se corrigen resultados aritméticos contradictorios y se explica continuidad de contexto sin exigir reenvío literal universal."
+  },
+  {
+    "lesson": "01-03-08-summary.md",
+    "module": "langchain",
+    "anchor": "fuentes-y-repaso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-04-01-module-intro.md",
+    "module": "mcp",
+    "anchor": "objetivos-del-modulo",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-04-02-what-is-model-context-protocol.md",
+    "module": "mcp",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-04-03-mcp-core-components.md",
+    "module": "mcp",
+    "anchor": "tres-capacidades-del-servidor",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-04-04-add-mcp-server-to-your-first-agent.md",
+    "module": "mcp",
+    "anchor": "ejemplo-paso-a-paso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-04-05-demo-mcp-server-with-langchain-client-and-codex.md",
+    "module": "mcp",
+    "anchor": "ejemplo-paso-a-paso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-04-06-real-world-mcp-walkthrough.md",
+    "module": "mcp",
+    "anchor": "del-ejemplo-local-al-caso-oci",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-04-07-demo-real-world-mcp-server.md",
+    "module": "mcp",
+    "anchor": "del-ejemplo-local-al-caso-oci",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-04-08-summary.md",
+    "module": "mcp",
+    "anchor": "fuentes-y-repaso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-01-module-intro.md",
+    "module": "openai",
+    "anchor": "objetivos-del-modulo",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-02-openai-agent-stack.md",
+    "module": "openai",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-03-openai-responses-api.md",
+    "module": "openai",
+    "anchor": "responses-y-contexto",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-04-openai-agents-sdk.md",
+    "module": "openai",
+    "anchor": "agentes-runner-y-herramientas",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-05-demo-responses-api-and-agents-sdk.md",
+    "module": "openai",
+    "anchor": "agentes-runner-y-herramientas",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-06-tools-and-function-calling.md",
+    "module": "openai",
+    "anchor": "agentes-runner-y-herramientas",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-07-multi-agent-system-with-handoffs.md",
+    "module": "openai",
+    "anchor": "handoffs-y-responsabilidad",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-08-guardrails-and-safety.md",
+    "module": "openai",
+    "anchor": "guardrails-y-trazas",
+    "source": "provided-notes",
+    "note": "Se precisa alcance de guardrails y observabilidad; no se atribuye acceso a razonamiento interno completo."
+  },
+  {
+    "lesson": "01-05-09-putting-it-all-together.md",
+    "module": "openai",
+    "anchor": "ejemplo-paso-a-paso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-10-demo-customer-support-agent.md",
+    "module": "openai",
+    "anchor": "ejemplo-paso-a-paso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-11-summary.md",
+    "module": "openai",
+    "anchor": "fuentes-y-repaso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-01-module-intro.md",
+    "module": "oci-enterprise",
+    "anchor": "objetivos-del-modulo",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-02-need-for-agent-lifecycle-and-runtime.md",
+    "module": "oci-enterprise",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-03-introduction-to-oci-enterprise-ai-platform.md",
+    "module": "oci-enterprise",
+    "anchor": "plataforma-y-bloques-de-construccion",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-04-agentic-ai-for-enterprises.md",
+    "module": "oci-enterprise",
+    "anchor": "plataforma-y-bloques-de-construccion",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-05-oci-enterprise-ai-agents-building-blocks.md",
+    "module": "oci-enterprise",
+    "anchor": "plataforma-y-bloques-de-construccion",
+    "source": "provided-notes",
+    "note": "Se distingue Containers para herramientas de despliegue completo de aplicaciones y se matiza compatibilidad."
+  },
+  {
+    "lesson": "01-06-06-getting-started-with-oci-enterprise-ai-agents.md",
+    "module": "oci-enterprise",
+    "anchor": "primeros-pasos-verificados",
+    "source": "official-docs",
+    "note": "Apunte vacío completado con Quick Start oficial de Enterprise AI Agents, verificado 2026-09-28."
+  },
+  {
+    "lesson": "01-06-07-demo-oci-enterprise-ai-agents.md",
+    "module": "oci-enterprise",
+    "anchor": "ejemplo-paso-a-paso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-08-oci-enterprise-ai-agents-deploy-and-scale.md",
+    "module": "oci-enterprise",
+    "anchor": "desplegar-y-escalar",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-09-summary.md",
+    "module": "oci-enterprise",
+    "anchor": "fuentes-y-repaso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-07-01-module-intro.md",
+    "module": "oracle-database",
+    "anchor": "objetivos-del-modulo",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-07-02-agentic-ai-for-oracle-ai-database.md",
+    "module": "oracle-database",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Mapa de cuatro capacidades; Select AI Agent también se desarrolla en su sección dedicada."
+  },
+  {
+    "lesson": "01-07-03-introduction-to-oracle-ai-vector-search.md",
+    "module": "oracle-database",
+    "anchor": "vectores-y-similitud",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-07-04-oracle-ai-vector-search-workflow.md",
+    "module": "oracle-database",
+    "anchor": "workflow-de-busqueda-vectorial",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-07-05-demo-oracle-ai-vector-search.md",
+    "module": "oracle-database",
+    "anchor": "ejemplo-paso-a-paso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-07-06-oracle-ai-database-private-agent-factory.md",
+    "module": "oracle-database",
+    "anchor": "private-agent-factory",
+    "source": "provided-notes",
+    "note": "Se conserva foco didáctico y se actualiza el catálogo prebuilt conforme a documentación 26.7."
+  },
+  {
+    "lesson": "01-07-07-demo-private-agent-factory.md",
+    "module": "oracle-database",
+    "anchor": "private-agent-factory",
+    "source": "provided-notes",
+    "note": "Demo transformada en ejercicio de configuración, ingestión, citas y control de acceso."
+  },
+  {
+    "lesson": "01-07-08-oracle-autonomous-ai-database-mcp-server.md",
+    "module": "oracle-database",
+    "anchor": "mcp-en-autonomous-ai-database",
+    "source": "provided-notes",
+    "note": "Se explican herramientas Select AI Agent y controles del servidor MCP gestionado."
+  },
+  {
+    "lesson": "01-07-09-summary.md",
+    "module": "oracle-database",
+    "anchor": "fuentes-y-repaso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  }
+]

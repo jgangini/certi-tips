@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 640" role="img" aria-labelledby="title description">
+  <title id="title">Pipeline y agente en LangChain</title>
+  <desc id="description">Comparación: un pipeline fijo conecta prompt, modelo y parser en una secuencia predefinida. Un agente decide en ejecución si responde o llama una herramienta y recibe su resultado para continuar.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#675f59"/></marker>
+    <marker id="arrow-teal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#17665e"/></marker>
+    <style>
+      text{font-family:Arial,Helvetica,sans-serif;fill:#252321}
+      .title{font-size:30px;font-weight:700}
+      .subtitle{font-size:20px;fill:#675f59}
+      .label{font-size:23px;font-weight:700}
+      .body{font-size:20px}
+      .small{font-size:18px;fill:#675f59}
+      .white{fill:#fff}
+      .red{fill:#b43d32}
+      .teal{fill:#17665e}
+      .card{fill:#fff;stroke:#d9d0c7;stroke-width:2}
+      .line{fill:none;stroke:#675f59;stroke-width:2.5;marker-end:url(#arrow)}
+      .return{fill:none;stroke:#17665e;stroke-width:2.5;marker-end:url(#arrow-teal)}
+    </style>
+  </defs>
+  <rect width="1000" height="640" fill="#faf8f5"/>
+
+  <text x="40" y="50" class="title">¿Secuencia fija o decisión en ejecución?</text>
+  <text x="40" y="86" class="subtitle">LangChain permite componer componentes y construir agentes con herramientas.</text>
+  <rect x="40" y="124" width="920" height="190" rx="20" class="card"/>
+  <text x="64" y="162" class="label">Pipeline / LCEL</text>
+  <text x="364" y="162" class="small">El desarrollador fija el camino.</text>
+  <rect x="66" y="190" width="230" height="76" rx="14" fill="#eee9e3"/>
+  <rect x="384" y="190" width="230" height="76" rx="14" fill="#f6e6e1"/>
+  <rect x="702" y="190" width="230" height="76" rx="14" fill="#e4eeeb"/>
+  <text x="181" y="237" text-anchor="middle" class="label">Prompt</text>
+  <text x="499" y="237" text-anchor="middle" class="label">Modelo</text>
+  <text x="817" y="237" text-anchor="middle" class="label">Parser</text>
+  <path d="M 302 228 H 371 M 620 228 H 689" class="line"/>
+  <text x="65" y="294" class="small">Ejemplo: resumir un texto y devolver una estructura validada.</text>
+  <rect x="40" y="338" width="920" height="254" rx="20" class="card"/>
+  <text x="64" y="378" class="label">Agente</text>
+  <text x="364" y="378" class="small">El modelo elige el siguiente paso.</text>
+  <rect x="66" y="414" width="230" height="80" rx="14" fill="#f6e6e1"/>
+  <rect x="385" y="414" width="230" height="80" rx="14" fill="#e4eeeb"/>
+  <rect x="703" y="414" width="230" height="80" rx="14" fill="#eee9e3"/>
+  <text x="181" y="462" text-anchor="middle" class="label">Modelo</text>
+  <text x="500" y="462" text-anchor="middle" class="label">Herramienta</text>
+  <text x="818" y="462" text-anchor="middle" class="label">Resultado</text>
+  <path d="M 302 454 H 372 M 621 454 H 690" class="line"/>
+  <path d="M 818 500 V 551 H 181 V 504" class="return"/>
+  <text x="499" y="540" text-anchor="middle" class="small teal">Observar y decidir otra vez, hasta responder</text>
+  <text x="40" y="625" class="small">Tener un LLM en una secuencia no convierte automáticamente esa secuencia en agente.</text>
+</svg>

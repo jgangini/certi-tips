@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 660" role="img" aria-labelledby="title description">
+  <title id="title">Seguridad por capas</title>
+  <desc id="description">La entrada se valida antes del modelo, las acciones requieren autorización antes de ejecutar herramientas y la salida se revisa antes de responder. Trazas y evaluaciones observan el flujo completo; ningún filtro aislado sustituye los permisos.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#675f59"/></marker>
+    <marker id="arrow-teal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#17665e"/></marker>
+    <style>
+      text{font-family:Arial,Helvetica,sans-serif;fill:#252321}
+      .title{font-size:30px;font-weight:700}
+      .subtitle{font-size:20px;fill:#675f59}
+      .label{font-size:23px;font-weight:700}
+      .body{font-size:20px}
+      .small{font-size:18px;fill:#675f59}
+      .white{fill:#fff}
+      .red{fill:#b43d32}
+      .teal{fill:#17665e}
+      .card{fill:#fff;stroke:#d9d0c7;stroke-width:2}
+      .line{fill:none;stroke:#675f59;stroke-width:2.5;marker-end:url(#arrow)}
+      .return{fill:none;stroke:#17665e;stroke-width:2.5;marker-end:url(#arrow-teal)}
+    </style>
+  </defs>
+  <rect width="1000" height="660" fill="#faf8f5"/>
+
+  <text x="40" y="50" class="title">La seguridad acompaña a cada decisión</text>
+  <text x="40" y="86" class="subtitle">Cada capa controla un riesgo diferente: contenido, acceso y efectos reales.</text>
+  <rect x="40" y="137" width="920" height="361" rx="22" fill="#fff" stroke="#d9d0c7" stroke-width="2"/>
+  <text x="65" y="177" class="small">FRONTERA DE LA APLICACIÓN</text>
+  <rect x="66" y="208" width="192" height="228" rx="14" fill="#f6e6e1"/>
+  <rect x="292" y="208" width="192" height="228" rx="14" fill="#eee9e3"/>
+  <rect x="518" y="208" width="192" height="228" rx="14" fill="#e4eeeb"/>
+  <rect x="744" y="208" width="192" height="228" rx="14" fill="#f6e6e1"/>
+  <text x="86" y="248" class="label">1. Entrada</text>
+  <text x="86" y="292" class="body"><tspan x="86">Validar formato.</tspan><tspan x="86" dy="30">Detectar abuso.</tspan><tspan x="86" dy="30">Tratar los datos</tspan><tspan x="86" dy="30">como datos.</tspan></text>
+  <text x="312" y="248" class="label">2. Modelo</text>
+  <text x="312" y="292" class="body"><tspan x="312">Instrucciones</tspan><tspan x="312" dy="30">y contexto.</tspan><tspan x="312" dy="30">Puede proponer</tspan><tspan x="312" dy="30">acciones.</tspan></text>
+  <text x="538" y="248" class="label">3. Acción</text>
+  <text x="538" y="292" class="body"><tspan x="538">Mínimo privilegio.</tspan><tspan x="538" dy="30">Validar llamada.</tspan><tspan x="538" dy="30">Aprobación para</tspan><tspan x="538" dy="30">efectos sensibles.</tspan></text>
+  <text x="764" y="248" class="label">4. Salida</text>
+  <text x="764" y="292" class="body"><tspan x="764">Revisar formato,</tspan><tspan x="764" dy="30">datos sensibles</tspan><tspan x="764" dy="30">y afirmaciones.</tspan><tspan x="764" dy="30">Dar evidencia.</tspan></text>
+  <path d="M 261 321 H 286" class="line"/>
+  <path d="M 487 321 H 512" class="line"/>
+  <path d="M 713 321 H 738" class="line"/>
+  <text x="68" y="470" class="small">Ante un fallo: rechazar, pedir aclaración o escalar; no continuar silenciosamente.</text>
+  <path d="M 162 498 V 527 M 389 498 V 527 M 614 498 V 527 M 840 498 V 527" stroke="#17665e" stroke-width="2" stroke-dasharray="5 5"/>
+  <rect x="40" y="529" width="920" height="64" rx="16" fill="#17665e"/>
+  <text x="500" y="568" text-anchor="middle" class="label white">Trazas + evaluaciones + revisión humana</text>
+  <text x="40" y="625" class="small">Los guardrails complementan la autorización; no sustituyen una política de acceso.</text>
+</svg>

@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 685" role="img" aria-labelledby="title description">
+  <title id="title">Búsqueda vectorial y respuesta fundamentada</title>
+  <desc id="description">Primero se fragmentan los documentos, se generan embeddings y se almacenan vectores con texto y metadatos. Luego la consulta se representa con el mismo modelo de embeddings y la base de datos busca similitud. Los fragmentos recuperados se añaden al prompt de un modelo generativo. La búsqueda por similitud no genera por sí sola una respuesta.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#675f59"/></marker>
+    <marker id="arrow-teal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#17665e"/></marker>
+    <style>
+      text{font-family:Arial,Helvetica,sans-serif;fill:#252321}
+      .title{font-size:30px;font-weight:700}
+      .subtitle{font-size:20px;fill:#675f59}
+      .label{font-size:23px;font-weight:700}
+      .body{font-size:20px}
+      .small{font-size:18px;fill:#675f59}
+      .white{fill:#fff}
+      .red{fill:#b43d32}
+      .teal{fill:#17665e}
+      .card{fill:#fff;stroke:#d9d0c7;stroke-width:2}
+      .line{fill:none;stroke:#675f59;stroke-width:2.5;marker-end:url(#arrow)}
+      .return{fill:none;stroke:#17665e;stroke-width:2.5;marker-end:url(#arrow-teal)}
+    </style>
+  </defs>
+  <rect width="1000" height="685" fill="#faf8f5"/>
+
+  <text x="40" y="50" class="title">Recuperar evidencia antes de responder</text>
+  <text x="40" y="86" class="subtitle">Los vectores permiten comparar significado; el LLM redacta con los fragmentos.</text>
+  <text x="40" y="137" class="label">1. Preparar e indexar</text>
+  <rect x="40" y="162" width="194" height="108" rx="14" class="card"/>
+  <rect x="282" y="162" width="194" height="108" rx="14" class="card"/>
+  <rect x="524" y="162" width="194" height="108" rx="14" fill="#f6e6e1" stroke="#b43d32" stroke-width="2"/>
+  <rect x="766" y="162" width="194" height="108" rx="14" fill="#e4eeeb" stroke="#17665e" stroke-width="2"/>
+  <text x="137" y="209" text-anchor="middle" class="label">Documentos</text>
+  <text x="137" y="242" text-anchor="middle" class="small">Fuentes y permisos</text>
+  <text x="379" y="209" text-anchor="middle" class="label">Fragmentar</text>
+  <text x="379" y="242" text-anchor="middle" class="small">Texto con contexto</text>
+  <text x="621" y="209" text-anchor="middle" class="label">Embeddings</text>
+  <text x="621" y="242" text-anchor="middle" class="small">Texto → vectores</text>
+  <text x="863" y="209" text-anchor="middle" class="label">Base de datos</text>
+  <text x="863" y="242" text-anchor="middle" class="small">Vectores + texto</text>
+  <path d="M 241 217 H 270 M 483 217 H 512 M 725 217 H 754" class="line"/>
+  <text x="40" y="336" class="label">2. Consultar y recuperar</text>
+  <rect x="40" y="361" width="235" height="104" rx="14" class="card"/>
+  <rect x="364" y="361" width="235" height="104" rx="14" fill="#f6e6e1" stroke="#b43d32" stroke-width="2"/>
+  <rect x="688" y="361" width="272" height="104" rx="14" fill="#e4eeeb" stroke="#17665e" stroke-width="2"/>
+  <text x="157" y="403" text-anchor="middle" class="label">Pregunta</text>
+  <text x="157" y="437" text-anchor="middle" class="body">Pregunta del usuario</text>
+  <text x="481" y="403" text-anchor="middle" class="label">Embedding</text>
+  <text x="481" y="437" text-anchor="middle" class="body">El mismo modelo</text>
+  <text x="824" y="403" text-anchor="middle" class="label">Buscar similitud</text>
+  <text x="824" y="437" text-anchor="middle" class="body">Recuperar texto relevante</text>
+  <path d="M 282 412 H 352 M 606 412 H 676 M 863 278 V 348" class="line"/>
+  <text x="885" y="320" class="small">índice</text>
+  <path d="M 824 472 V 522" class="line"/>
+  <rect x="40" y="535" width="920" height="82" rx="17" fill="#17665e"/>
+  <text x="500" y="568" text-anchor="middle" class="label white">3. Generar: pregunta + fragmentos → LLM → respuesta con fuentes</text>
+  <text x="500" y="599" text-anchor="middle" class="body white">Filtrar por permisos y comprobar que la evidencia sostiene la respuesta.</text>
+  <text x="40" y="658" class="small">Oracle AI Vector Search recupera por similitud; no es, por sí solo, un agente o un LLM.</text>
+</svg>

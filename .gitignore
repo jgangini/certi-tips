@@ -1,0 +1,9 @@
+node_modules/
+dist/
+graphify-out/
+.sentrux/
+.semble/
+*.log
+.DS_Store
+.playwright-cli/
+output/
