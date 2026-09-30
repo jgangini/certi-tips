@@ -1,84 +1,62 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 650" role="img" aria-labelledby="title description">
-  <title id="title">MCP: una aplicación, conexiones explícitas</title>
-  <desc id="description">Una aplicación host contiene un modelo y dos clientes MCP. Cada cliente mantiene su propia conexión con un servidor. El primer servidor expone herramientas, recursos y plantillas; el segundo representa otra integración. El protocolo comunica capacidades, pero no concede permisos ni sustituye al modelo.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" role="img" aria-labelledby="title description">
+  <title id="title">MCP conecta capacidades, no concede permisos</title>
+  <desc id="description">Un host contiene un modelo y dos clientes MCP. Cada cliente tiene una conexión independiente. Los servidores exponen herramientas para operar, recursos para aportar contexto y prompts como plantillas. Las solicitudes y los resultados viajan por cada conexión; los permisos siguen siendo responsabilidad de las aplicaciones.</desc>
   <defs>
-    <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M1 1 7 4 1 7" fill="none" stroke="#087f7a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
-    <linearGradient id="host" x2="0" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#f0f2fa"/></linearGradient>
+    <!-- Lucide icons, ISC. See assets/icons/LICENSE-lucide.txt. -->
+    <symbol id="app-window" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4M2 8h20M6 4v4"/></symbol>
+    <symbol id="cpu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v2M12 2v2M17 20v2M17 2v2M2 12h2M2 17h2M2 7h2M20 12h2M20 17h2M20 7h2M7 20v2M7 2v2"/><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/></symbol>
+    <symbol id="plug" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5M15 8V2M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1zM9 8V2"/></symbol>
+    <symbol id="server" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 6h.01M6 18h.01"/></symbol>
+    <symbol id="wrench" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"/></symbol>
+    <symbol id="file-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2zM14 2v5a1 1 0 0 0 1 1h5M10 9H8M16 13H8M16 17H8"/></symbol>
+    <symbol id="messages-square" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2zM20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1"/></symbol>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="m2 1 6 4-6 4" fill="none" stroke="#536078" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
     <style>
       text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}
-      .eyebrow{font-size:14px;font-weight:700;letter-spacing:2px;fill:#4f46b8}
-      .title{font-size:34px;font-weight:700;letter-spacing:-.7px}
-      .subtitle{font-size:19px;fill:#536078}
-      .label{font-size:23px;font-weight:700}
-      .body{font-size:21px;fill:#536078}
-      .meta{font-size:16px;fill:#536078}
-      .icon{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-      .route{fill:none;stroke:#087f7a;stroke-width:2.5;stroke-linejoin:round;marker-start:url(#arrow);marker-end:url(#arrow)}
+      .title{font-size:32px;font-weight:700}.label{font-size:25px;font-weight:700}
+      .body{font-size:22px;fill:#536078}.mono{font-family:Consolas,monospace;font-size:22px;fill:#536078}
+      .card{fill:#fff;stroke:#dce1eb;stroke-width:1.5}
+      .connector{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}
+      .bidirectional{marker-start:url(#arrow)}.divider{stroke:#dce1eb;stroke-width:1.5}
     </style>
   </defs>
-  <rect width="1200" height="650" fill="#f7f8fc"/>
-  <g transform="translate(0 -45)">
-  <text x="56" y="98" class="title">MCP conecta capacidades, no concede permisos</text>
-  <text x="56" y="134" class="subtitle">Un contrato compartido entre tu aplicación y los sistemas que necesita consultar.</text>
-
-  <!-- The host is an application window, not an additional protocol service. -->
-  <rect x="63" y="206" width="366" height="434" rx="24" fill="#e5e8f2"/>
-  <rect x="56" y="195" width="366" height="434" rx="24" fill="url(#host)" stroke="#d9deec" stroke-width="1.5"/>
-  <path d="M56 245H422" stroke="#d9deec" stroke-width="1.5"/>
-  <circle cx="80" cy="220" r="4" fill="#c74436"/><circle cx="97" cy="220" r="4" fill="#d5aa59"/><circle cx="114" cy="220" r="4" fill="#087f7a"/>
-  <text x="396" y="226" text-anchor="end" class="meta">APLICACIÓN HOST</text>
-  <circle cx="132" cy="325" r="43" fill="#ebe9fb"/>
-  <g class="icon" stroke="#4f46b8">
-    <rect x="112" y="305" width="40" height="40" rx="8"/>
-    <path d="M122 305v-8m10 8v-8m10 8v-8m-20 48v8m10-8v8m10-8v8m-30-38h-8m8 10h-8m8 10h-8m48-20h8m-8 10h8m-8 10h8"/>
-    <path d="m122 327 7 7 13-17"/>
-  </g>
-  <text x="194" y="320" class="label">Modelo</text>
-  <text x="194" y="352" class="body">Interpreta y decide</text>
-  <path d="M88 389H390" stroke="#d9deec"/>
-  <text x="87" y="420" class="meta">CONTEXTO · POLÍTICAS · PERMISOS</text>
-  <rect x="86" y="449" width="307" height="64" rx="16" fill="#fff" stroke="#c9c4ef" stroke-width="1.5"/>
-  <g class="icon" stroke="#4f46b8"><path d="M106 472h20v17h-20zM111 472v-7m10 7v-7m-5 24v9"/></g>
-  <text x="146" y="488" class="label">Cliente MCP A</text>
-  <circle cx="393" cy="481" r="5" fill="#087f7a"/>
-  <rect x="86" y="538" width="307" height="64" rx="16" fill="#fff" stroke="#c9c4ef" stroke-width="1.5"/>
-  <g class="icon" stroke="#4f46b8"><path d="M106 561h20v17h-20zM111 561v-7m10 7v-7m-5 24v9"/></g>
-  <text x="146" y="577" class="label">Cliente MCP B</text>
-  <circle cx="393" cy="570" r="5" fill="#087f7a"/>
-  <!-- Each path is an independent one-client / one-server connection. -->
-  <path d="M400 481H478Q492 481 492 467V361Q492 347 506 347H633" class="route"/>
-  <text x="533" y="311" text-anchor="middle" class="label" style="fill:#087f7a">MCP</text>
-  <text x="557" y="396" text-anchor="middle" class="meta">solicitud</text>
-  <text x="557" y="420" text-anchor="middle" class="meta">y resultado</text>
-  <path d="M400 570H476Q490 570 490 584V598Q490 612 504 612H633" class="route"/>
-  <text x="536" y="655" text-anchor="middle" class="meta">otra conexión</text>
-
-  <rect x="644" y="195" width="500" height="343" rx="24" fill="#fff" stroke="#d9deec" stroke-width="1.5"/>
-  <text x="674" y="236" class="label">Servidor MCP A</text>
-  <text x="674" y="266" class="meta">PUBLICA CAPACIDADES</text>
-  <!-- Rack illustration with status indicators and service bus. -->
-  <rect x="675" y="297" width="123" height="176" rx="14" fill="#17243b"/>
-  <rect x="686" y="309" width="101" height="40" rx="7" fill="#304158"/>
-  <rect x="686" y="360" width="101" height="40" rx="7" fill="#304158"/>
-  <rect x="686" y="411" width="101" height="40" rx="7" fill="#304158"/>
-  <g fill="#83e0cb"><circle cx="704" cy="329" r="4"/><circle cx="704" cy="380" r="4"/><circle cx="704" cy="431" r="4"/></g>
-  <g stroke="#a2b0c6" stroke-width="2.5" stroke-linecap="round"><path d="M720 329h46m-46 51h46m-46 51h46"/></g>
-  <path d="M701 473v14m70-14v14m-81 0h92" fill="none" stroke="#17243b" stroke-width="3" stroke-linecap="round"/>
-  <circle cx="644" cy="347" r="5" fill="#087f7a"/>
-  <g class="icon" stroke="#087f7a"><path d="m831 303-8 8 8 8m19-16 8 8-8 8m-6-19-6 22"/></g>
-  <text x="877" y="314" class="label">Tools</text>
-  <text x="826" y="347" class="body">Ejecutar operaciones</text>
-  <path d="M826 365H1112" stroke="#e5e8f0"/>
-  <g class="icon" stroke="#087f7a"><path d="M827 387h23v26h-23zM833 395h11m-11 9h8"/></g>
-  <text x="877" y="406" class="label">Resources</text>
-  <text x="826" y="439" class="body">Aportar contexto</text>
-  <path d="M826 454H1112" stroke="#e5e8f0"/>
-  <g class="icon" stroke="#087f7a"><path d="M827 474h26v19h-16l-10 7zM833 481h14"/></g>
-  <text x="877" y="492" class="label">Prompts</text>
-  <text x="826" y="523" class="body">Reutilizar plantillas</text>
-  <rect x="644" y="563" width="500" height="98" rx="20" fill="#e8f4f1" stroke="#c5e2dc" stroke-width="1.5"/>
-  <g class="icon" stroke="#087f7a"><rect x="674" y="585" width="38" height="20" rx="4"/><rect x="674" y="612" width="38" height="20" rx="4"/><path d="M684 595h17m-17 27h17"/></g>
-  <text x="738" y="605" class="label">Servidor MCP B</text>
-  <text x="738" y="637" class="body">Otro sistema, su propia conexión</text>
-  </g>
+  <rect width="1200" height="680" fill="#f7f8fc"/>
+  <text x="56" y="64" class="title" text-anchor="start">MCP conecta capacidades, no concede permisos</text>
+  <text x="56" y="101" class="body" text-anchor="start">Tu aplicación mantiene una conexión distinta con cada servidor.</text>
+  <rect x="56" y="132" width="430" height="496" rx="22" class="card"/>
+  <text x="86" y="180" class="label" text-anchor="start">Host · tu aplicación</text>
+  <g class="icon-badge" data-icon="app-window"><circle cx="427" cy="173" r="30" fill="#e9e6fa"/><use href="#app-window" x="409" y="155" width="36" height="36" color="#4f46b8"/></g>
+  <g class="icon-badge" data-icon="cpu"><circle cx="125" cy="274" r="44" fill="#e9e6fa"/><use href="#cpu" x="101" y="250" width="48" height="48" color="#4f46b8"/></g>
+  <text x="196" y="258" class="label" text-anchor="start">Modelo</text>
+  <text x="196" y="292" class="body" text-anchor="start">Interpreta y decide</text>
+  <path d="M86 343H456" class="divider"/>
+  <text x="86" y="330" class="body" text-anchor="start">Contexto · políticas · permisos</text>
+  <rect x="86" y="368" width="372" height="80" rx="16" fill="#e9e6fa"/>
+  <g class="icon-badge" data-icon="plug"><circle cx="126" cy="408" r="27" fill="#e9e6fa"/><use href="#plug" x="110" y="392" width="32" height="32" color="#4f46b8"/></g>
+  <text x="175" y="417" class="label" text-anchor="start">Cliente MCP A</text>
+  <rect x="86" y="516" width="372" height="80" rx="16" fill="#e9e6fa"/>
+  <g class="icon-badge" data-icon="plug"><circle cx="126" cy="556" r="27" fill="#e9e6fa"/><use href="#plug" x="110" y="540" width="32" height="32" color="#4f46b8"/></g>
+  <text x="175" y="565" class="label" text-anchor="start">Cliente MCP B</text>
+  <rect x="746" y="132" width="398" height="340" rx="22" class="card"/>
+  <g class="icon-badge" data-icon="server"><circle cx="786" cy="173" r="27" fill="#e1f2ee"/><use href="#server" x="770" y="157" width="32" height="32" color="#087f7a"/></g>
+  <text x="831" y="181" class="label" text-anchor="start">Servidor MCP A</text>
+  <g class="icon-badge" data-icon="wrench"><circle cx="794" cy="246" r="26" fill="#e1f2ee"/><use href="#wrench" x="779" y="231" width="30" height="30" color="#087f7a"/></g>
+  <text x="840" y="237" class="label" text-anchor="start">Tools</text>
+  <text x="840" y="271" class="body" text-anchor="start">Ejecutar operaciones</text>
+  <g class="icon-badge" data-icon="file-text"><circle cx="794" cy="333" r="26" fill="#e1f2ee"/><use href="#file-text" x="779" y="318" width="30" height="30" color="#087f7a"/></g>
+  <text x="840" y="324" class="label" text-anchor="start">Resources</text>
+  <text x="840" y="358" class="body" text-anchor="start">Aportar contexto</text>
+  <g class="icon-badge" data-icon="messages-square"><circle cx="794" cy="420" r="26" fill="#e1f2ee"/><use href="#messages-square" x="779" y="405" width="30" height="30" color="#087f7a"/></g>
+  <text x="840" y="411" class="label" text-anchor="start">Prompts</text>
+  <text x="840" y="445" class="body" text-anchor="start">Reutilizar plantillas</text>
+  <rect x="746" y="516" width="398" height="112" rx="22" class="card"/>
+  <g class="icon-badge" data-icon="server"><circle cx="794" cy="572" r="30" fill="#e1f2ee"/><use href="#server" x="776" y="554" width="36" height="36" color="#087f7a"/></g>
+  <text x="850" y="562" class="label" text-anchor="start">Servidor MCP B</text>
+  <text x="850" y="596" class="body" text-anchor="start">Otra integración</text>
+  <path d="M458 408H746" class="connector bidirectional"/>
+  <text x="602" y="390" class="label" text-anchor="middle">MCP</text>
+  <text x="602" y="439" class="body" text-anchor="middle">Solicitud / resultado</text>
+  <path d="M458 556H746" class="connector bidirectional"/>
+  <text x="602" y="538" class="body" text-anchor="middle">Conexión MCP</text>
+  <text x="602" y="587" class="body" text-anchor="middle">independiente</text>
 </svg>

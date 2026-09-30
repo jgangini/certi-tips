@@ -1,26 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 642" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 702" role="img" aria-labelledby="title description">
 <title id="title">Comparación de CoT, ReAct y Tree-of-Thought</title>
-<desc id="description">CoT organiza pasos intermedios. ReAct conecta decisiones con acciones y observaciones en un loop. Tree-of-Thought explora alternativas antes de elegir. Los patrones no garantizan corrección.</desc>
+<desc id="description">CoT descompone el problema en pasos. ReAct usa el resultado de una herramienta para decidir otra acción. Tree-of-Thought explora alternativas y las compara. Cada flecha señala la dirección del recorrido.</desc>
 <defs>
-  <linearGradient id="coral" x2="1" y2="1"><stop stop-color="#fff0eb"/><stop offset="1" stop-color="#f8d8d1"/></linearGradient>
-  <linearGradient id="indigo" x2="1" y2="1"><stop stop-color="#f0edff"/><stop offset="1" stop-color="#ded9f6"/></linearGradient>
-  <linearGradient id="teal" x2="1" y2="1"><stop stop-color="#e7f7f3"/><stop offset="1" stop-color="#c9e9e3"/></linearGradient>
-  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.7"/></marker>
-  <style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.label{font-size:27px;font-weight:700}.body{font-size:23px;fill:#536078}.small{font-size:21px;fill:#536078}.flow{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.white{fill:#fff}</style>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m2 1 6 4-6 4" fill="none" stroke="#536078" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.label{font-size:27px;font-weight:700}.body{font-size:24px;fill:#536078}.small{font-size:22px;fill:#536078}.flow{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}.card{fill:#fff;stroke:#dce1ec;stroke-width:1.5}.white{fill:#fff}</style>
 </defs>
-<rect width="1200" height="642" fill="#f7f8fc"/>
-<text x="56" y="66" class="title">Tres patrones, tres estructuras</text>
-<g fill="#fff" stroke="#dce1ec"><rect x="48" y="110" width="1104" height="135" rx="20"/><rect x="48" y="264" width="1104" height="168" rx="20"/><rect x="48" y="451" width="1104" height="145" rx="20"/></g>
-<circle cx="102" cy="171" r="27" fill="url(#coral)"/><path d="M90 165h24m-24 12h17" class="icon" stroke="#c74436"/>
-<text x="150" y="161" class="label">CoT</text><text x="150" y="197" class="small">Pasos intermedios</text>
-<path d="M592 173h88M855 173h66" class="flow"/>
-<g text-anchor="middle"><text x="483" y="182" class="body">Descomponer</text><text x="771" y="182" class="body">Resolver</text><text x="1030" y="182" class="body">Conclusión</text></g>
-<circle cx="102" cy="329" r="27" fill="url(#indigo)"/><path d="M86 321a17 17 0 1 1 0 20m-3-23 4 11 10-4" class="icon" stroke="#4f46b8"/>
-<text x="150" y="319" class="label">ReAct</text><text x="150" y="355" class="small">Actuar y observar</text>
-<path d="M565 329h105M853 329h67M1030 355v41H484v-41" class="flow"/>
-<g text-anchor="middle"><text x="484" y="338" class="body">Decisión</text><text x="771" y="338" class="body">Herramienta</text><text x="1030" y="338" class="body">Resultado</text></g>
-<circle cx="102" cy="520" r="27" fill="url(#teal)"/><path d="M88 520h13m0 0 15-13m-15 13 15 13" class="icon" stroke="#087f7a"/>
-<text x="150" y="510" class="label">Tree-of-Thought</text><text x="150" y="546" class="small">Explorar alternativas</text>
-<path d="M570 524h44l52-33M614 524l52 33M852 491h52l40 33M852 557h52l40-33" class="flow"/>
-<text x="499" y="533" text-anchor="middle" class="body">Problema</text><text x="760" y="500" text-anchor="middle" class="body">Opción A</text><text x="760" y="566" text-anchor="middle" class="body">Opción B</text><text x="1040" y="533" text-anchor="middle" class="body">Evaluar</text>
+<rect width="1200" height="702" fill="#f7f8fc"/>
+
+<text x="56" y="66" class="title">Tres patrones, tres recorridos diferentes</text>
+<g class="card"><rect x="48" y="108" width="1104" height="146" rx="24"/><rect x="48" y="274" width="1104" height="178" rx="24"/><rect x="48" y="472" width="1104" height="180" rx="24"/></g>
+<text x="80" y="164" class="label">CoT</text><text x="80" y="204" class="small">Pasos intermedios</text>
+<g fill="#fae6e1"><rect x="378" y="147" width="204" height="66" rx="16"/><rect x="665" y="147" width="175" height="66" rx="16"/><rect x="923" y="147" width="200" height="66" rx="16"/></g>
+<g text-anchor="middle" class="body"><text x="480" y="188">Descomponer</text><text x="752" y="188">Resolver</text><text x="1023" y="188">Conclusión</text></g>
+<path d="M582 180H665" class="flow"/><path d="M840 180H923" class="flow"/>
+<text x="80" y="326" class="label">ReAct</text><text x="80" y="366" class="small">Acción y observación</text>
+<g fill="#e9e8f8"><rect x="378" y="305" width="190" height="66" rx="16"/><rect x="651" y="305" width="190" height="66" rx="16"/><rect x="924" y="305" width="199" height="66" rx="16"/></g>
+<g text-anchor="middle" class="body"><text x="473" y="346">Decisión</text><text x="746" y="346">Herramienta</text><text x="1023" y="346">Resultado</text></g>
+<path d="M568 338H651" class="flow"/><path d="M841 338H924" class="flow"/>
+<path d="M1023 371V394Q1023 416 1001 416H495Q473 416 473 394V371" class="flow"/>
+<text x="80" y="534" class="label">Tree-of-Thought</text><text x="80" y="574" class="small">Compara alternativas</text>
+<g fill="#e1f2ee"><rect x="378" y="530" width="190" height="66" rx="16"/><rect x="672" y="493" width="190" height="54" rx="16"/><rect x="672" y="579" width="190" height="54" rx="16"/><rect x="966" y="530" width="157" height="66" rx="16"/></g>
+<g text-anchor="middle" class="body"><text x="473" y="571">Problema</text><text x="767" y="528">Opción A</text><text x="767" y="614">Opción B</text><text x="1044" y="571">Evaluar</text></g>
+<path d="M568 548H600Q620 548 620 528V526Q620 520 640 520H672" class="flow"/>
+<path d="M568 578H600Q620 578 620 598V600Q620 606 640 606H672" class="flow"/>
+<path d="M862 520H886Q908 520 908 542Q908 548 928 548H966" class="flow"/>
+<path d="M862 606H886Q908 606 908 584Q908 578 928 578H966" class="flow"/>
+
 </svg>

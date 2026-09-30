@@ -1,54 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 650" role="img" aria-labelledby="title description">
-  <title id="title">LangChain: una secuencia fija o un ciclo con decisiones</title>
-  <desc id="description">Arriba, una cadena LCEL conecta prompt, modelo y parser por un camino predefinido. Abajo, el modelo propone una llamada, la aplicación valida y ejecuta una herramienta y devuelve el resultado asociado a la llamada. El ciclo continúa hasta la respuesta final o un límite.</desc>
-  <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m2 1 6 4-6 4" fill="none" stroke="#536078" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></marker>
-    <marker id="return" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m2 1 6 4-6 4" fill="none" stroke="#087f7a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></marker>
-    <style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.eyebrow{font-size:14px;font-weight:700;letter-spacing:2px;fill:#536078}.title{font-size:34px;font-weight:700;letter-spacing:-.7px}.sub{font-size:19px;fill:#536078}.label{font-size:24px;font-weight:700}.body{font-size:21px;fill:#536078}.meta{font-size:16px;fill:#536078}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.flow{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}.teal{fill:#087f7a}.white{fill:#fff}</style>
-  </defs>
-  <rect width="1200" height="650" fill="#f7f8fc"/>
-  <g transform="translate(0 -45)">
-  <text x="56" y="98" class="title">El camino cambia cuando hay decisiones.</text>
-  <text x="56" y="134" class="sub">Una chain compone pasos. Un agente elige acciones dentro de un ciclo controlado.</text>
-  <rect x="56" y="182" width="1088" height="190" rx="22" fill="#fff" stroke="#dce1eb"/>
-  <rect x="56" y="182" width="7" height="190" rx="3.5" fill="#4f46b8"/>
-  <text x="86" y="224" class="eyebrow">CAMINO PREDEFINIDO</text>
-  <text x="86" y="266" class="label">Pipeline / LCEL</text>
-  <text x="86" y="300" class="body"><tspan x="86">La aplicación fija</tspan><tspan x="86" dy="29">la secuencia.</tspan></text>
-  <g transform="translate(434 251)">
-    <rect x="-34" y="-34" width="68" height="68" rx="18" fill="#e9e8f8"/>
-    <g class="icon" stroke="#4f46b8"><path d="M-17-19h34v32H-5l-12 10Z"/><path d="M-8-8h16M-8 2h11"/></g>
-  </g>
-  <g transform="translate(710 251)">
-    <rect x="-34" y="-34" width="68" height="68" rx="18" fill="#f8e6e2"/>
-    <g class="icon" stroke="#c74436"><rect x="-15" y="-15" width="30" height="30" rx="5"/><path d="M-6-24v9M6-24v9M-6 15v9M6 15v9M-24-6h9M-24 6h9M15-6h9M15 6h9"/></g>
-  </g>
-  <g transform="translate(986 251)">
-    <rect x="-34" y="-34" width="68" height="68" rx="18" fill="#e1f2ef"/>
-    <g class="icon" stroke="#087f7a"><path d="M-12-21h-7v42h7m24-42h7v42h-7m-15-22 8 8 12-15"/></g>
-  </g>
-  <path d="M482 251H654M758 251H930" class="flow"/>
-  <text x="434" y="327" text-anchor="middle" class="label">Prompt</text>
-  <text x="710" y="327" text-anchor="middle" class="label">Modelo</text>
-  <text x="986" y="327" text-anchor="middle" class="label">Parser</text>
-  <text x="86" y="423" class="eyebrow">DECISIÓN EN EJECUCIÓN</text>
-  <text x="86" y="465" class="label">Agente</text>
-  <text x="86" y="501" class="body"><tspan x="86">El modelo propone;</tspan><tspan x="86" dy="29">el runtime coordina.</tspan></text>
-  <rect x="348" y="407" width="796" height="255" rx="24" fill="#eef3f5"/>
-  <rect x="376" y="443" width="160" height="132" rx="18" fill="#fff"/>
-  <g transform="translate(456 478)" class="icon" stroke="#c74436"><rect x="-15" y="-15" width="30" height="30" rx="5"/><path d="M-6-24v9M6-24v9M-6 15v9M6 15v9M-24-6h9M-24 6h9M15-6h9M15 6h9"/></g>
-  <text x="456" y="552" text-anchor="middle" class="label">Modelo</text>
-  <rect x="760" y="443" width="348" height="132" rx="18" fill="#fff"/>
-  <path d="M940 469a18 18 0 0 0-22 23l-23 23a7 7 0 0 0 10 10l23-23a18 18 0 0 0 23-22l-12 12-10-10Z" fill="#e1f2ef" stroke="#087f7a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="934" y="552" text-anchor="middle" class="label">Aplicación + tool</text>
-  <path d="M543 490H742" class="flow"/>
-  <text x="642" y="469" text-anchor="middle" class="meta">Llamada + argumentos</text>
-  <text x="642" y="523" text-anchor="middle" class="meta">Validar y ejecutar</text>
-  <path d="M934 583v37H456v-36" fill="none" stroke="#087f7a" stroke-width="2.5" marker-end="url(#return)"/>
-  <rect x="572" y="600" width="270" height="39" rx="19" fill="#eef3f5"/>
-  <text x="707" y="626" text-anchor="middle" class="body teal">Resultado + ID de llamada</text>
-  <path d="M369 553h-43q-17 0-17 17v36h-68" class="flow"/>
-  <rect x="86" y="581" width="156" height="52" rx="12" fill="#17243b"/>
-  <text x="164" y="614" text-anchor="middle" font-size="21" font-weight="600" class="white">Fin o límite</text>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 782" role="img" aria-labelledby="title description">
+<title id="title">LangChain: una secuencia fija o un ciclo con decisiones</title>
+<desc id="description">La composición LCEL sigue prompt, modelo y parser. En un agente, el modelo propone una llamada; la aplicación valida y ejecuta la función, devuelve el resultado con su ID y el loop continúa hasta una respuesta final o un límite.</desc>
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m2 1 6 4-6 4" fill="none" stroke="#536078" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.label{font-size:27px;font-weight:700}.body{font-size:24px;fill:#536078}.small{font-size:22px;fill:#536078}.flow{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}.card{fill:#fff;stroke:#dce1ec;stroke-width:1.5}.white{fill:#fff}</style>
+</defs>
+<rect width="1200" height="782" fill="#f7f8fc"/>
+<text x="56" y="64" class="title">El camino cambia cuando hay decisiones</text>
+<text x="56" y="105" class="small">Una chain compone pasos; un agente decide dentro de un ciclo controlado.</text>
+<rect x="56" y="140" width="1088" height="222" rx="24" class="card"/>
+<text x="82" y="206" class="label">Pipeline / LCEL</text>
+<text x="82" y="252" class="small"><tspan x="82">La aplicación fija</tspan><tspan x="82" dy="30">la secuencia.</tspan></text>
+<g transform="translate(474 225)"><circle r="52" fill="#e9e8f8"/><g fill="none" stroke="#4f46b8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M-26-22H26V18H-9L-26 31Z"/><path d="M-14-8H14M-14 3H7"/></g></g><g transform="translate(757 225)"><circle r="52" fill="#fae6e1"/><g transform="translate(-30 -30) scale(2.5)" fill="none" stroke="#c74436" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v2M12 2v2M17 20v2M17 2v2M2 12h2M2 17h2M2 7h2M20 12h2M20 17h2M20 7h2M7 20v2M7 2v2"/><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/></g></g><g transform="translate(1030 225)"><circle r="52" fill="#e1f2ee"/><g transform="translate(-30 -30) scale(2.5)" fill="none" stroke="#087f7a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5h20M6 12h12M9 19h6"/></g></g>
+<path d="M526 225H705" class="flow"/><path d="M809 225H978" class="flow"/>
+<g text-anchor="middle"><text x="474" y="319" class="label">Prompt</text><text x="757" y="319" class="label">Modelo</text><text x="1030" y="319" class="label">Parser</text></g>
+<rect x="56" y="390" width="1088" height="338" rx="24" fill="#eef3f5" stroke="#dce1ec"/>
+<text x="82" y="451" class="label">Agente</text>
+<text x="82" y="495" class="small"><tspan x="82">El modelo propone;</tspan><tspan x="82" dy="30">el runtime coordina.</tspan></text>
+<rect x="374" y="438" width="190" height="159" rx="20" class="card"/><rect x="835" y="438" width="281" height="159" rx="20" class="card"/>
+<g transform="translate(469 493)"><circle r="44" fill="#fae6e1"/><g transform="translate(-30 -30) scale(2.5)" fill="none" stroke="#c74436" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v2M12 2v2M17 20v2M17 2v2M2 12h2M2 17h2M2 7h2M20 12h2M20 17h2M20 7h2M7 20v2M7 2v2"/><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/></g></g><g transform="translate(975 493)"><circle r="44" fill="#e1f2ee"/><g transform="translate(-30 -30) scale(2.5)" fill="none" stroke="#087f7a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"/></g></g>
+<text x="469" y="570" text-anchor="middle" class="label">Modelo</text><text x="975" y="570" text-anchor="middle" class="label">Aplicación + tool</text>
+<path d="M564 497H835" class="flow"/>
+<text x="700" y="470" text-anchor="middle" class="small">Llamada + argumentos</text>
+<text x="700" y="537" text-anchor="middle" class="small">Validar y ejecutar</text>
+<path d="M975 597V641Q975 663 953 663H491Q469 663 469 641V597" class="flow"/>
+<text x="727" y="704" text-anchor="middle" class="small">Resultado + ID de llamada</text>
+<rect x="82" y="625" width="176" height="58" rx="14" fill="#17243b"/>
+<text x="170" y="662" text-anchor="middle" class="small white">Fin o límite</text>
+<path d="M374 549H341Q319 549 319 571V632Q319 654 297 654H258" class="flow"/>
 </svg>

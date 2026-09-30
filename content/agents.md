@@ -37,15 +37,15 @@ Los razonamientos intermedios pueden orientar el trabajo, pero para comprobar un
 
 ## Ejemplo paso a paso
 
-Una persona pregunta: “Compré tres artículos de 24 soles y cuatro de 18. ¿Cuál es el total?”. El agente dispone de `multiplicar` y `sumar`.
+Una persona pregunta: “Compré tres artículos de 24 dólares y cuatro de 18. ¿Cuál es el total?”. El agente dispone de `multiplicar` y `sumar`.
 
 1. El modelo identifica dos subtotales y solicita `multiplicar(3, 24)`.
 2. El runtime valida los argumentos, ejecuta la función y registra `72` asociado a esa llamada.
 3. El modelo solicita `multiplicar(4, 18)`; recibe `72`.
 4. Solicita `sumar(72, 72)`; recibe `144`.
-5. Presenta “El total es S/ 144” y deja de pedir herramientas.
+5. Presenta “El total es USD 144” y deja de pedir herramientas.
 
-![Dos llamadas a multiplicar producen subtotales de 72 soles; una llamada a sumar devuelve 144 soles.]({{base}}assets/diagrams/agents-example.svg "El agente encadena dos multiplicaciones y una suma verificable.")
+![Dos llamadas a multiplicar producen subtotales de 72 dólares; una llamada a sumar devuelve 144 dólares.]({{base}}assets/diagrams/agents-example.svg "El agente encadena dos multiplicaciones y una suma verificable.")
 
 Aquí las operaciones son deterministas; la elección de los pasos la propone el modelo. Para una calculadora comercial con reglas fijas, programar directamente esa suma sería más simple. El ejemplo sirve para observar el loop, no para justificar agentes en cualquier tarea. Si una herramienta falla, el agente debe distinguir un reintento seguro de un error que requiere corregir datos o pedir ayuda.
 
@@ -70,17 +70,13 @@ Limita tiempo, pasos y gasto; registra fallos sin exponer secretos. Usa identifi
 
 ## Una solución completa: soporte al cliente
 
-![Arquitectura conceptual de soporte: el agente conecta cliente, modelo, pedidos y políticas; las acciones sensibles pasan por aprobación humana cuando corresponda.]({{base}}assets/illustrations/support-agent.png "El agente consulta pedidos y políticas, con revisión humana para acciones sensibles.")
+Este único caso lleva el ciclo del agente a **Oracle Cloud Infrastructure**. Una aplicación de soporte en **OCI Compute** conecta al cliente con el modelo, los documentos de políticas y los pedidos. Consultar un pedido no es lo mismo que recuperar una política o autorizar un reembolso: cada herramienta tiene argumentos, permisos y reglas de negocio propios. El esquema es didáctico; no representa una arquitectura de producción completa.
 
-El agente de soporte es software que coordina capacidades distintas: consultar un pedido no es lo mismo que recuperar una política o autorizar un reembolso. El modelo propone la llamada; la aplicación valida argumentos, permisos y reglas de negocio antes de ejecutarla. La rama coral representa la revisión humana cuando la acción sensible lo requiere, no una autorización automática.
-
-**Cómo leer la imagen:** parte del agente y elige una necesidad del cliente. ¿Qué información necesita? ¿Qué herramienta puede obtenerla? ¿La operación solo consulta o cambia algo? La ilustración muestra relaciones entre componentes; el ciclo técnico anterior explica su ejecución y sus límites.
-
-### Ejemplo en Oracle Cloud
-
-Podemos llevar este caso a OCI con una aplicación de soporte en **OCI Compute** que coordina tres servicios. Este es un esquema didáctico propio, no una arquitectura de producción completa.
+<span id="ejemplo-en-oracle-cloud"></span>
 
 ![Una aplicación de soporte en OCI Compute se conecta con OCI Generative AI para el modelo, Object Storage para las políticas y Autonomous AI Database para los pedidos.]({{base}}assets/diagrams/oci-support.svg "Una aplicación en OCI conecta el modelo, las políticas y los pedidos.")
+
+**Cómo leer la arquitectura:** sigue la consulta del cliente hasta la aplicación. El modelo propone qué consultar; la aplicación comprueba los argumentos y la autorización, llama al servicio indicado y devuelve la evidencia al modelo para preparar la respuesta. Para una acción sensible, exige la aprobación humana que corresponda antes de ejecutar; conectar servicios no concede permisos automáticamente.
 
 - **OCI Generative AI:** interpreta la consulta y puede proponer una llamada a herramienta. La aplicación valida y ejecuta la función, no el modelo; así funciona el [function calling de OCI](https://docs.oracle.com/en-us/iaas/Content/generative-ai/get-started-agents.htm).
 - **Object Storage:** conserva las políticas como documentos. Una herramienta de la aplicación [recupera el objeto correspondiente](https://docs.oracle.com/en-us/iaas/Content/Object/Concepts/objectstorageoverview.htm); el bucket no aporta búsqueda semántica por sí solo.

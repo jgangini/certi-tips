@@ -1,25 +1,73 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 654" role="img" aria-labelledby="title description">
   <title id="title">Cuatro límites que conviene distinguir</title>
   <desc id="description">Un embedding es una representación numérica, no una copia legible. Una búsqueda aproximada requiere evaluar recuperación frente a una exacta. Generar SQL no autoriza su ejecución. Un modelo local evita ciertos viajes de red, pero todavía consume cómputo y tiempo.</desc>
-  <defs><linearGradient id="warn" x2="1" y2="1"><stop stop-color="#fae7e2"/><stop offset="1" stop-color="#ecc6bd"/></linearGradient><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.label{font-size:24px;font-weight:700}.body{font-size:22px;fill:#536078}</style></defs>
-  <rect width="1200" height="600" fill="#f7f8fc"/>
-  <text x="48" y="61" class="title">No confundas una capacidad con una garantía</text>
-  <text x="179" y="122" class="label">Confusión</text><text x="663" y="122" class="label">Qué comprobar</text>
-  <g stroke="#dbe0eb"><path d="M48 150h1104M48 250h1104M48 350h1104M48 450h1104M48 550h1104"/></g>
-  <g transform="translate(97 201)"><circle cx="4" cy="5" r="33" fill="#ebd4ce"/><circle r="33" fill="url(#warn)"/><path d="M-17 13v-15m11 24v-42m12 42v-32m11 23v-15" fill="none" stroke="#c74436" stroke-width="4" stroke-linecap="round"/></g>
-  <text x="179" y="209" class="body">Embedding = documento legible</text>
-  <text x="598" y="209" class="label">≠</text>
-  <text x="663" y="193" class="label">Representación numérica</text><text x="663" y="225" class="body">Conserva texto y origen por separado.</text>
-  <g transform="translate(97 301)"><circle cx="4" cy="5" r="33" fill="#ebd4ce"/><circle r="33" fill="url(#warn)"/><path d="m-18 12 18-29 20 29M0-17l1 35" stroke="#c74436" stroke-width="2" fill="none"/><g fill="#c74436"><circle cx="-18" cy="12" r="5"/><circle cy="-17" r="5"/><circle cx="20" cy="12" r="5"/></g></g>
-  <text x="179" y="309" class="body">Aproximado = idéntico a exacto</text>
-  <text x="598" y="309" class="label">≠</text>
-  <text x="663" y="293" class="label">Evalúa la recuperación</text><text x="663" y="325" class="body">Compara resultados y recursos.</text>
-  <g transform="translate(97 401)"><circle cx="4" cy="5" r="33" fill="#ebd4ce"/><circle r="33" fill="url(#warn)"/><rect x="-17" y="-1" width="34" height="26" rx="5" fill="#fff" stroke="#c74436" stroke-width="2.5"/><path d="M-10-1v-12a10 10 0 0 1 20 0v12" stroke="#c74436" stroke-width="3" fill="none"/></g>
-  <text x="179" y="409" class="body">SQL generado = permiso concedido</text>
-  <text x="598" y="409" class="label">≠</text>
-  <text x="663" y="393" class="label">Autoriza la operación</text><text x="663" y="425" class="body">Identidad, roles y datos permitidos.</text>
-  <g transform="translate(97 501)"><circle cx="4" cy="5" r="33" fill="#ebd4ce"/><circle r="33" fill="url(#warn)"/><circle r="21" fill="#fff" stroke="#c74436" stroke-width="3"/><path d="M0-14v14l12 7" stroke="#c74436" stroke-width="3" fill="none"/></g>
-  <text x="179" y="509" class="body">Modelo local = latencia cero</text>
-  <text x="598" y="509" class="label">≠</text>
-  <text x="663" y="493" class="label">Mide el tiempo real</text><text x="663" y="525" class="body">El cómputo también tarda.</text>
+  <defs>
+    <style>
+      text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:24px}
+      .title{font-size:34px;font-weight:700}
+      .label{font-size:26px;font-weight:700}
+      .mistake rect{fill:#fae6e1;stroke:#efc7be;stroke-width:1.5}
+      .correction rect{fill:#e1f2ee;stroke:#b7ddd5;stroke-width:1.5}
+      .arrow{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+      .icon{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+    </style>
+  </defs>
+  <rect width="1200" height="654" fill="#f7f8fc"/>
+  <text x="56" y="64" class="title">No confundas una capacidad con una garantía</text>
+  <g class="column-headings">
+    <circle cx="80" cy="118" r="16" fill="#fae6e1"/>
+    <path d="m75 113 10 10m0-10-10 10" class="icon" stroke="#c74436"/>
+    <text x="108" y="127" class="label">Error o confusión</text>
+    <circle cx="648" cy="118" r="16" fill="#e1f2ee"/>
+    <path d="m641 118 5 5 9-10" class="icon" stroke="#087f7a"/>
+    <text x="676" y="127" class="label">Qué comprobar</text>
+  </g>
+  <g class="comparison-row" transform="translate(0 154)">
+    <g class="mistake">
+      <rect x="56" width="480" height="96" rx="16"/>
+      <text x="82" y="57">Embedding = documento legible</text>
+    </g>
+    <path d="M553 48h50m-13-9 13 9-13 9" class="arrow"/>
+    <g class="correction">
+      <rect x="624" width="520" height="96" rx="16"/>
+      <text x="650" y="40">Es una representación numérica.</text>
+      <text x="650" y="74">Conserva texto y origen por separado.</text>
+    </g>
+  </g>
+  <g class="comparison-row" transform="translate(0 270)">
+    <g class="mistake">
+      <rect x="56" width="480" height="96" rx="16"/>
+      <text x="82" y="57">Aproximado = idéntico a exacto</text>
+    </g>
+    <path d="M553 48h50m-13-9 13 9-13 9" class="arrow"/>
+    <g class="correction">
+      <rect x="624" width="520" height="96" rx="16"/>
+      <text x="650" y="40">Evalúa la recuperación.</text>
+      <text x="650" y="74">Compara resultados y recursos.</text>
+    </g>
+  </g>
+  <g class="comparison-row" transform="translate(0 386)">
+    <g class="mistake">
+      <rect x="56" width="480" height="96" rx="16"/>
+      <text x="82" y="57">SQL generado = permiso concedido</text>
+    </g>
+    <path d="M553 48h50m-13-9 13 9-13 9" class="arrow"/>
+    <g class="correction">
+      <rect x="624" width="520" height="96" rx="16"/>
+      <text x="650" y="40">Autoriza la operación:</text>
+      <text x="650" y="74">identidad, roles y datos permitidos.</text>
+    </g>
+  </g>
+  <g class="comparison-row" transform="translate(0 502)">
+    <g class="mistake">
+      <rect x="56" width="480" height="96" rx="16"/>
+      <text x="82" y="57">Modelo local = latencia cero</text>
+    </g>
+    <path d="M553 48h50m-13-9 13 9-13 9" class="arrow"/>
+    <g class="correction">
+      <rect x="624" width="520" height="96" rx="16"/>
+      <text x="650" y="40">Mide el tiempo real.</text>
+      <text x="650" y="74">El cómputo también tarda.</text>
+    </g>
+  </g>
 </svg>

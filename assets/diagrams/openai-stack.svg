@@ -1,78 +1,36 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 690" role="img" aria-labelledby="title description">
   <title id="title">OpenAI Agent Stack: responsabilidades por nivel</title>
-  <desc id="description">Tres capas de software separan responsabilidades: tu aplicación controla negocio, permisos y funciones; Agents SDK coordina agentes, handoffs y guardrails; Responses API conecta las entradas con modelos y herramientas. Tracing permite inspeccionar pasos y errores. Es posible llamar a Responses directamente sin Agents SDK. Las funciones propias se validan y ejecutan en la aplicación.</desc>
+  <desc id="description">Tres tarjetas alineadas separan tu aplicación, Agents SDK y Responses API. La aplicación conserva negocio, permisos, funciones y despliegue; el SDK coordina el loop; Responses conecta con modelos y herramientas. También puedes llamar directamente a la API. Tracing registra pasos, llamadas y errores.</desc>
+  <!-- Lucide icons adapted; license: ../icons/LICENSE-lucide.txt -->
   <defs>
-    <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1 7 4 1 7" fill="none" stroke="#536078" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
-    <style>
-      text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}
-      .eyebrow{font-size:14px;font-weight:700;letter-spacing:2px;fill:#c74436}
-      .title{font-size:34px;font-weight:700;letter-spacing:-.7px}
-      .subtitle{font-size:19px;fill:#536078}
-      .label{font-size:25px;font-weight:700}
-      .body{font-size:21px;fill:#536078}
-      .meta{font-size:16px;fill:#536078}
-      .icon{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-      .route{fill:none;stroke:#536078;stroke-width:2.5;stroke-linejoin:round;marker-end:url(#arrow)}
-    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m2 2 6 3-6 3" fill="none" stroke="#536078" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:22px}.h{font-size:34px;font-weight:700}.label{font-size:27px;font-weight:700}.muted{fill:#536078}.icon{fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.route{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}.white{fill:#fff}</style>
   </defs>
-  <rect width="1200" height="640" fill="#f7f8fc"/>
-  <text x="56" y="60" class="title">Tres niveles. Tres responsabilidades distintas.</text>
-  <text x="56" y="96" class="subtitle">La API conecta con el modelo; el SDK coordina; tu aplicación conserva el control.</text>
-
-  <g transform="translate(0 -60)">
-  <!-- Layered software plates: depth communicates stacking, not cloud ownership. -->
-  <path d="M93 198H819L840 216V304L819 322H93Z" fill="#e1e5f0"/>
-  <rect x="82" y="187" width="734" height="117" rx="19" fill="#fff" stroke="#d9deec" stroke-width="1.5"/>
-  <rect x="82" y="205" width="5" height="81" rx="2.5" fill="#4f46b8"/>
-  <circle cx="145" cy="245" r="34" fill="#ebe9fb"/>
-  <g class="icon" stroke="#4f46b8"><rect x="126" y="229" width="38" height="31" rx="5"/><path d="M126 240h38m-29-5h1m6 0h1m-8 13h10m-10 6h19"/></g>
-  <text x="201" y="231" class="meta" font-weight="700" letter-spacing="1.4">01 / PRODUCTO</text>
-  <text x="201" y="268" class="label">Tu aplicación</text>
-  <path d="M462 211V280" stroke="#d9deec"/>
-  <text x="488" y="237" class="body">Negocio y permisos</text>
-  <text x="488" y="269" class="body">Funciones y despliegue</text>
-  <path d="M382 323V346" class="route"/>
-
-  <path d="M117 369H843L864 387V475L843 493H117Z" fill="#cee7e2"/>
-  <rect x="106" y="358" width="734" height="117" rx="19" fill="#e8f4f1" stroke="#bbdcd5" stroke-width="1.5"/>
-  <rect x="106" y="376" width="5" height="81" rx="2.5" fill="#087f7a"/>
-  <circle cx="169" cy="416" r="34" fill="#fff"/>
-  <g class="icon" stroke="#087f7a"><circle cx="169" cy="404" r="7"/><circle cx="154" cy="428" r="6"/><circle cx="185" cy="428" r="6"/><path d="m165 410-7 12m15-12 8 12m-21 6h19"/></g>
-  <text x="225" y="402" class="meta" font-weight="700" letter-spacing="1.4">02 / ORQUESTACIÓN</text>
-  <text x="225" y="439" class="label">Agents SDK</text>
-  <path d="M486 382V451" stroke="#bbdcd5"/>
-  <text x="512" y="408" class="body">Agentes y handoffs</text>
-  <text x="512" y="440" class="body">Runner y guardrails</text>
-  <path d="M406 494V517" class="route"/>
-
-  <path d="M141 540H867L888 558V646L867 664H141Z" fill="#eed8d5"/>
-  <rect x="130" y="529" width="734" height="117" rx="19" fill="#fbede9" stroke="#e8c8c2" stroke-width="1.5"/>
-  <rect x="130" y="547" width="5" height="81" rx="2.5" fill="#c74436"/>
-  <circle cx="193" cy="587" r="34" fill="#fff"/>
-  <g class="icon" stroke="#c74436"><path d="m181 575-10 12 10 12m24-24 10 12-10 12m-7-29-10 34"/></g>
-  <text x="249" y="573" class="meta" font-weight="700" letter-spacing="1.4">03 / INTERFAZ</text>
-  <text x="249" y="610" class="label">Responses API</text>
-  <path d="M510 553V622" stroke="#e8c8c2"/>
-  <text x="536" y="579" class="body">Modelos y herramientas</text>
-  <text x="536" y="611" class="body">Entrada, contexto y salida</text>
-
-  <!-- The direct route deliberately bypasses only the optional SDK. -->
-  <path d="M82 252H58V591H117" class="route" stroke-dasharray="5 6"/>
-  <rect x="31" y="318" width="47" height="203" rx="20" fill="#f7f8fc"/>
-  <text x="58" y="420" transform="rotate(-90 58 420)" text-anchor="middle" class="meta">Acceso directo a la API</text>
-
-  <!-- Trace illustration is an inspectable execution tree, not hidden reasoning. -->
-  <rect x="939" y="229" width="205" height="344" rx="24" fill="#17243b"/>
-  <circle cx="976" cy="267" r="5" fill="#83e0cb"/>
-  <text x="995" y="275" font-size="24" font-weight="700" style="fill:#fff">Tracing</text>
-  <text x="963" y="312" font-size="16" style="fill:#bdc9db">OBSERVAR EL FLUJO</text>
-  <g fill="none" stroke="#7587a4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M972 350h42v43h67m-67 0v59h67m-67-16h-23"/></g>
-  <g fill="#83e0cb"><circle cx="972" cy="350" r="6"/><circle cx="1081" cy="393" r="6"/><circle cx="1081" cy="452" r="6"/></g>
-  <circle cx="991" cy="436" r="5" fill="#e6a093"/>
-  <text x="963" y="509" font-size="21" style="fill:#fff">Pasos, llamadas</text>
-  <text x="963" y="540" font-size="21" style="fill:#fff">y errores</text>
-  <path d="M866 416H925" class="route" stroke-dasharray="4 5"/>
-  <text x="1042" y="621" text-anchor="middle" class="meta">El SDK no aloja</text>
-  <text x="1042" y="645" text-anchor="middle" class="meta">tu aplicación.</text>
-  </g>
+  <rect width="1200" height="690" fill="#f7f8fc"/>
+  <text x="56" y="62" class="h">Tres niveles, tres responsabilidades distintas</text>
+  <text x="56" y="101" class="muted">La API conecta con el modelo; el SDK coordina; tu aplicación conserva el control.</text>
+  <rect x="120" y="142" width="710" height="140" rx="22" fill="#fff" stroke="#dce1ec"/>
+  <circle cx="178" cy="212" r="36" fill="#e9e6fa"/>
+  <g transform="translate(156 190) scale(1.83)" class="icon" stroke="#4f46b8"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M9 21V9"/></g>
+  <text x="236" y="186" class="label">Tu aplicación</text>
+  <text x="236" y="223">Negocio · permisos · funciones · despliegue</text>
+  <text x="236" y="259" class="muted">El SDK no aloja tu aplicación.</text>
+  <path d="M475 282V325" class="route"/>
+  <rect x="120" y="325" width="710" height="118" rx="22" fill="#e9e6fa" stroke="#d4cef2"/>
+  <circle cx="178" cy="384" r="36" fill="#fff"/>
+  <g transform="translate(156 362) scale(1.83)" class="icon" stroke="#4f46b8"><path d="m2 9 3-3 3 3M13 18H7a2 2 0 0 1-2-2V6m17 9-3 3-3-3M11 6h6a2 2 0 0 1 2 2v10"/></g>
+  <text x="236" y="371" class="label">Agents SDK</text><text x="236" y="408">Runner · herramientas · handoffs · guardrails</text>
+  <path d="M475 443V486" class="route"/>
+  <rect x="120" y="486" width="710" height="118" rx="22" fill="#fae6e1" stroke="#ebcec7"/>
+  <circle cx="178" cy="545" r="36" fill="#fff"/>
+  <g fill="none" stroke="#c74436" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m165 530-13 15 13 15M191 530l13 15-13 15m-9-34-8 38"/></g>
+  <text x="236" y="532" class="label">Responses API</text><text x="236" y="569">Entrada y contexto → modelos y herramientas</text>
+  <path d="M120 212H90Q70 212 70 232V525Q70 545 90 545H120" class="route" stroke-dasharray="6 6"/>
+  <text x="120" y="651" class="muted">También puedes llamar a Responses directamente, sin Agents SDK.</text>
+  <rect x="886" y="325" width="258" height="279" rx="22" fill="#17243b"/>
+  <text x="915" y="370" class="label white">Tracing</text>
+  <text x="915" y="411" class="white">1. Invocación</text><text x="915" y="458" class="white">2. Herramienta</text><text x="915" y="505" class="white">3. Resultado</text>
+  <path d="M915 529H1115" stroke="#65718a"/>
+  <text x="915" y="566" class="white">Tiempos y errores</text>
+  <path d="M830 384H886" class="route" stroke-dasharray="6 6"/>
 </svg>

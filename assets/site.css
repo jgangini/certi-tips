@@ -8,6 +8,7 @@
   --accent: #c74634;
   --selected-surface: #59616e;
   --selected-ink: #fff;
+  --completed-surface: #245e91;
   --red: #c74634;
   --red-dark: #a6382b;
   --tint: #f8eeea;
@@ -29,6 +30,7 @@
 html[data-theme="dark"] {
   color-scheme: dark;
   --selected-surface: #414653;
+  --completed-surface: #234f78;
   --paper: #0e1117;
   --white: #262730;
   --ink: #fafafa;
@@ -740,11 +742,15 @@ progress::-webkit-progress-value {
 .nav-link[aria-current="page"] .nav-number {
   opacity: 1;
 }
-.nav-link[aria-current="page"] .completion-dot {
-  color: inherit;
-}
 .nav-link[aria-current="page"] + .nav-branch .nav-toggle {
   color: var(--selected-ink);
+}
+.nav-link.is-complete {
+  background: var(--completed-surface);
+  color: #fff;
+}
+.nav-link.is-complete + .nav-branch .nav-toggle {
+  color: #fff;
 }
 .nav-title {
   flex: 1;
@@ -788,14 +794,6 @@ progress::-webkit-progress-value {
   min-width: 17px;
   flex-shrink: 0;
   opacity: 0.85;
-}
-.completion-dot {
-  flex-shrink: 0;
-  color: var(--blue);
-  font-size: 14px;
-}
-.completion-dot:empty {
-  display: none;
 }
 .course-main {
   margin-left: var(--sidebar);

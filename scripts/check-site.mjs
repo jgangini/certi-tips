@@ -98,10 +98,11 @@ function validateFiles(context) {
 }
 
 function validateSvgElement(file, tag, attributes, error) {
-  if (['script', 'foreignobject', 'image', 'iframe'].includes(tag)) error(file, `active or embedded SVG element <${tag}> is not allowed`);
+  const png = tag === 'image' && /^data:image\/png;base64,iVBORw0KGgo[A-Za-z0-9+/]*={0,2}$/.test(attributes.href || '');
+  if (['script', 'foreignobject', 'iframe'].includes(tag) || (tag === 'image' && !png)) error(file, `active or embedded SVG element <${tag}> is not allowed`);
   for (const [key, value] of Object.entries(attributes)) {
     if (/^on/i.test(key)) error(file, `SVG event handler ${key} is not allowed`);
-    if ((key === 'href' || key === 'xlink:href') && !value.startsWith('#')) error(file, `external SVG resource ${value}`);
+    if ((key === 'href' || key === 'xlink:href') && !value.startsWith('#') && !(png && key === 'href')) error(file, `external SVG resource ${value.slice(0, 120)}`);
   }
 }
 

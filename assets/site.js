@@ -42,8 +42,10 @@ function showProgress() {
   document.querySelectorAll("[data-progress]").forEach((bar) => {
     bar.value = count;
   });
-  document.querySelectorAll("[data-completion]").forEach((dot) => {
-    dot.textContent = completed.has(dot.dataset.completion) ? "✓" : "";
+  document.querySelectorAll("[data-completion]").forEach((link) => {
+    const done = completed.has(link.dataset.completion);
+    link.classList.toggle("is-complete", done);
+    link.setAttribute("aria-description", done ? "Módulo completado" : "Módulo pendiente");
   });
   document.querySelectorAll("[data-mark-complete]").forEach((button) => {
     const done = completed.has(button.dataset.markComplete);

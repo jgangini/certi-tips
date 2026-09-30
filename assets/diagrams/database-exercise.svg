@@ -1,21 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 570" role="img" aria-labelledby="title description">
   <title id="title">Compartir lectura de inventario mediante MCP gestionado</title>
   <desc id="description">Dos aplicaciones compatibles se conectan al MCP Server gestionado de Autonomous AI Database. Tras comprobar identidad y permisos, invocan una herramienta de consulta de inventario. La autorización de lectura no permite modificar existencias. Esta es la solución del ejercicio, condicionada a versión y configuración compatibles.</desc>
-  <defs><linearGradient id="check" x2="1" y2="1"><stop stop-color="#dbf1e9"/><stop offset="1" stop-color="#b5deda"/></linearGradient><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.6"/></marker><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.label{font-size:24px;font-weight:700}.body{font-size:22px;fill:#536078}.line{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}</style></defs>
+  <defs><linearGradient id="check" x2="1" y2="1"><stop stop-color="#dbf1e9"/><stop offset="1" stop-color="#b5deda"/></linearGradient><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.label{font-size:24px;font-weight:700}.body{font-size:22px;fill:#536078}.line{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}</style></defs>
   <rect width="1200" height="570" fill="#f7f8fc"/>
   <text x="48" y="61" class="title">Dos clientes, una herramienta, un permiso concreto</text>
   <rect x="52" y="142" width="176" height="75" rx="15" fill="#fae6e2"/><text x="140" y="188" text-anchor="middle" class="label">Aplicación A</text>
   <rect x="52" y="327" width="176" height="75" rx="15" fill="#fae6e2"/><text x="140" y="373" text-anchor="middle" class="label">Aplicación B</text>
-  <path d="M246 180h37v185h-37" fill="none" stroke="#536078" stroke-width="2.5"/><path d="M283 272h57" class="line"/>
-  <rect x="364" y="204" width="252" height="134" rx="21" fill="#eae7fa"/>
-  <text x="490" y="249" text-anchor="middle" class="label">MCP Server</text><text x="490" y="281" text-anchor="middle" class="label">gestionado</text><text x="490" y="315" text-anchor="middle" class="body">Autonomous AI Database</text>
-  <path d="M634 272h42" class="line"/>
+  <path d="M228 180H261Q283 180 283 202V250Q283 272 305 272" fill="none" stroke="#536078" stroke-width="2.5" stroke-linecap="round"/><path d="M228 365H261Q283 365 283 343V294Q283 272 305 272" fill="none" stroke="#536078" stroke-width="2.5" stroke-linecap="round"/><path d="M305 272H346" class="line"/>
+  <rect x="346" y="184" width="280" height="178" rx="21" fill="#eae7fa"/>
+  <text x="490" y="249" text-anchor="middle" class="label">MCP Server</text><text x="490" y="281" text-anchor="middle" class="label">gestionado</text><text x="490" y="316" text-anchor="middle" class="body"><tspan x="490">Autonomous</tspan><tspan x="490" dy="29">AI Database</tspan></text>
+  <path d="M626 272H684" class="line"/>
   <circle cx="743" cy="280" r="54" fill="#c8e2dd"/><circle cx="738" cy="272" r="54" fill="url(#check)"/>
-  <path d="M738 237 764 249v28c0 18-26 33-26 33s-26-15-26-33v-28Z" fill="#fff" stroke="#087f7a" stroke-width="3"/><path d="m725 273 10 10 18-22" stroke="#087f7a" stroke-width="4" fill="none"/>
+  <g transform="translate(738 272)"><g transform="translate(-28 -28) scale(2.3333333333333335)" fill="none" stroke="#087f7a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></g></g>
   <text x="738" y="372" text-anchor="middle" class="label">Identidad y permisos</text>
-  <path d="M808 272h44" class="line"/>
+  <path d="M792 272H878" class="line"/>
   <rect x="878" y="220" width="266" height="105" rx="18" fill="#dff1ee"/><text x="1011" y="260" text-anchor="middle" class="label">Consultar inventario</text><text x="1011" y="298" text-anchor="middle" class="body">Herramienta de lectura</text>
-  <path d="M738 392v81h140" fill="none" stroke="#c74436" stroke-width="2.5" stroke-dasharray="7 6"/>
+  <path d="M738 392V451Q738 473 760 473H878" fill="none" stroke="#c74436" stroke-width="2.5" stroke-dasharray="7 6" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="899" cy="473" r="21" fill="#fae6e2" stroke="#c74436" stroke-width="2"/><path d="m890 464 18 18m0-18-18 18" stroke="#c74436" stroke-width="3"/>
   <text x="940" y="465" class="label">Modificar stock</text><text x="940" y="499" class="body">No autorizado</text>
 </svg>

@@ -1,15 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 570" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" role="img" aria-labelledby="title description">
   <title id="title">Un manager combina los resultados de dos especialistas</title>
-  <desc id="description">El manager consulta un especialista de pedidos y otro de políticas como herramientas. Ambos devuelven resultados al manager, que conserva la responsabilidad de sintetizar un informe único.</desc>
-  <defs><linearGradient id="surface" x2="1" y2="1"><stop stop-color="#f1eeff"/><stop offset="1" stop-color="#d7d2f4"/></linearGradient><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.6"/></marker><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:22px}.h{font-size:34px;font-weight:700}.label{font-size:25px;font-weight:700}.line{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}</style></defs>
-  <rect width="1200" height="570" fill="#f7f8fc"/><text x="56" y="65" class="h">Consultar a dos especialistas, responder una sola vez</text>
-  <rect x="56" y="167" width="300" height="105" rx="20" fill="#fae6e1"/><text x="82" y="209" class="label">Pedidos</text><text x="82" y="247">Estado y artículos</text>
-  <rect x="56" y="344" width="300" height="105" rx="20" fill="#e1f2ee"/><text x="82" y="386" class="label">Políticas</text><text x="82" y="424">Reglas aplicables</text>
-  <path d="M537 255 371 209" class="line"/><path d="M371 249 513 290" class="line"/><path d="M513 350 371 379" class="line"/><path d="M371 421 528 385" class="line"/>
-  <circle cx="616" cy="329" r="89" fill="#ddd8f1"/><circle cx="608" cy="320" r="89" fill="url(#surface)"/>
-  <g class="icon" stroke="#4f46b8"><circle cx="608" cy="292" r="18"/><path d="M574 348v-7q0-24 34-24t34 24v7"/></g>
-  <text x="608" y="456" text-anchor="middle" class="label">Manager</text><text x="608" y="493" text-anchor="middle">Integra ambos resultados</text>
-  <path d="M716 320h112" class="line"/>
-  <rect x="852" y="221" width="268" height="200" rx="20" fill="#fff" stroke="#badbd4" stroke-width="2"/>
-  <g class="icon" stroke="#087f7a"><path d="M897 261h135m-135 24h161m-161 24h115m-115 24h153"/></g><text x="986" y="381" text-anchor="middle" class="label">Informe único</text>
+  <desc id="description">El manager consulta dos especialistas como herramientas. Pedidos devuelve estado y artículos; políticas devuelve reglas aplicables. El manager recibe ambos resultados, los contrasta y redacta un solo informe. El principal conserva el control, sin handoff.</desc>
+  <!-- Lucide bot, package, clipboard-list, file-check adapted; license: ../icons/LICENSE-lucide.txt -->
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m2 2 6 3-6 3" fill="none" stroke="#536078" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:22px}.h{font-size:34px;font-weight:700}.label{font-size:26px;font-weight:700}.muted{fill:#536078}.line{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}.icon{fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}</style>
+  </defs>
+  <rect width="1200" height="700" fill="#f7f8fc"/><text x="56" y="62" class="h">Dos especialistas aportan; un manager integra y responde</text>
+  <text x="56" y="104" class="muted">Pregunta: «¿En qué estado está mi pedido y qué política se aplica?»</text>
+  <rect x="56" y="220" width="292" height="245" rx="22" fill="#e9e6fa" stroke="#d4cef2"/>
+  <circle cx="202" cy="288" r="42" fill="#fff"/>
+  <g transform="translate(177 263) scale(2.08)" class="icon" stroke="#4f46b8"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></g>
+  <text x="202" y="370" text-anchor="middle" class="label">Manager</text><text x="202" y="408" text-anchor="middle">Conserva el control</text><text x="202" y="443" text-anchor="middle" class="muted">Pide datos concretos</text>
+  <rect x="536" y="163" width="608" height="142" rx="22" fill="#fae6e1"/>
+  <circle cx="593" cy="223" r="34" fill="#fff"/>
+  <g transform="translate(571 201) scale(1.83)" class="icon" stroke="#c74436"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73zM12 22V12"/><polyline points="3.29 7 12 12 20.71 7"/><path d="m7.5 4.27 9 5.15"/></g>
+  <text x="649" y="208" class="label">Especialista de pedidos</text><text x="649" y="245">Consulta el estado y los artículos</text><text x="649" y="280" class="muted">Resultado: pedido «en preparación»</text>
+  <rect x="536" y="374" width="608" height="142" rx="22" fill="#e1f2ee"/>
+  <circle cx="593" cy="434" r="34" fill="#fff"/>
+  <g transform="translate(571 412) scale(1.83)" class="icon" stroke="#087f7a"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M12 11h4M12 16h4M8 11h.01M8 16h.01"/></g>
+  <text x="649" y="419" class="label">Especialista de políticas</text><text x="649" y="456">Recupera la regla aplicable al caso</text><text x="649" y="491" class="muted">Resultado: condiciones de devolución</text>
+  <path d="M348 270H400Q416 270 416 254V219Q416 203 432 203H536" class="line"/><text x="448" y="184" text-anchor="middle" class="muted">Consulta</text>
+  <path d="M536 280H470Q454 280 454 296V305Q454 321 438 321H348" class="line"/><text x="432" y="351" text-anchor="middle" class="muted">Resultado</text>
+  <path d="M348 389H400Q416 389 416 405V411Q416 427 432 427H536" class="line"/>
+  <path d="M536 490H400Q380 490 380 470V457Q380 441 364 441H348" class="line"/>
+  <path d="M202 465V551" class="line"/>
+  <rect x="56" y="551" width="1088" height="108" rx="22" fill="#fff" stroke="#dce1ec"/>
+  <g transform="translate(88 577) scale(2)" class="icon" stroke="#087f7a"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2zM14 2v5a1 1 0 0 0 1 1h5m-11 7 2 2 4-4"/></g>
+  <text x="169" y="594" class="label">Informe único del manager</text><text x="169" y="632">Integra el estado del pedido y la política, sin transferir la conversación.</text>
 </svg>

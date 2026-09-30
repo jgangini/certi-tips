@@ -1,15 +1,63 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title description">
-  <title id="title">Proyecto, herramientas y memoria en OCI Generative AI</title>
-  <desc id="description">Un proyecto agrupa recursos relacionados. Responses API se conecta con herramientas, memoria y APIs de apoyo. File Search recupera documentos, Code Interpreter usa un sandbox, Function Calling ejecuta funciones mediante la aplicación y MCP accede a servidores externos. La memoria separa conversación, persistencia y compactación.</desc>
-  <defs><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:22px}.h{font-size:34px;font-weight:700}.label{font-size:25px;font-weight:700}.muted{fill:#536078}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}</style></defs>
-  <rect width="1200" height="630" fill="#f7f8fc"/><text x="56" y="65" class="h">Un proyecto conecta recursos, no sustituye tu aplicación</text>
-  <rect x="56" y="111" width="1088" height="463" rx="24" fill="#fff" stroke="#ccd2e2" stroke-width="2"/>
-  <rect x="79" y="133" width="1042" height="65" rx="14" fill="#17243b"/><text x="105" y="174" style="fill:#fff;font-size:25px;font-weight:700">Proyecto OCI Generative AI</text><text x="683" y="174" style="fill:#fff">OCI Responses API</text>
-  <rect x="79" y="222" width="510" height="322" rx="17" fill="#fae6e1"/><text x="106" y="264" class="label">Herramientas</text>
-  <text x="106" y="316">File Search</text><text x="310" y="316" class="muted">Recupera documentos</text><path d="M105 335h458" stroke="#e8c7c0"/>
-  <text x="106" y="372">Code Interpreter</text><text x="310" y="372" class="muted">Sandbox gestionado</text><path d="M105 391h458" stroke="#e8c7c0"/>
-  <text x="106" y="428">Function Calling</text><text x="310" y="428" class="muted">Ejecuta tu aplicación</text><path d="M105 447h458" stroke="#e8c7c0"/>
-  <text x="106" y="484">MCP Calling</text><text x="310" y="484" class="muted">Servidor externo</text>
-  <rect x="615" y="222" width="506" height="177" rx="17" fill="#e9e6fa"/><text x="641" y="263" class="label">Memoria</text><text x="641" y="309">Conversación · entre sesiones</text><text x="641" y="352" class="muted">Compaction: resume el contexto</text>
-  <rect x="615" y="420" width="506" height="124" rx="17" fill="#e1f2ee"/><text x="641" y="461" class="label">APIs de apoyo</text><text x="641" y="506">Files · Vector Stores · Containers</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 816" role="img" aria-labelledby="title description">
+  <title id="title">Un proyecto organiza recursos; la API da acceso a ellos</title>
+  <desc id="description">La aplicación llama a OCI Responses API usando el OCID del proyecto. La API es una interfaz; el proyecto es un recurso que organiza artefactos, retención y memoria, no un runtime que aloje la aplicación. El proyecto vincula herramientas, configuración de memoria y recursos de apoyo. Las funciones propias siguen ejecutándose en la aplicación y MCP comunica con servidores externos.</desc>
+  <defs>
+    <!-- Lucide icons, ISC. See assets/icons/LICENSE-lucide.txt. -->
+    <symbol id="app-window" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4M2 8h20M6 4v4"/></symbol>
+    <symbol id="plug" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5M15 8V2M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1zM9 8V2"/></symbol>
+    <symbol id="folder-cog" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 20H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.98a2 2 0 0 1 1.69.9l.66 1.2A2 2 0 0 0 12 6h8a2 2 0 0 1 2 2v3.3"/><path d="m14.305 19.53.923-.382"/><path d="m15.228 16.852-.923-.383"/><path d="m16.852 15.228-.383-.923"/><path d="m16.852 20.772-.383.924"/><path d="m19.148 15.228.383-.923"/><path d="m19.53 21.696-.382-.924"/><path d="m20.772 16.852.924-.383"/><path d="m20.772 19.148.924.383"/><circle cx="18" cy="18" r="3"/></symbol>
+    <symbol id="wrench" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"/></symbol>
+    <symbol id="brain-circuit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18ZM9 13a4.5 4.5 0 0 0 3-4M6.003 5.125A3 3 0 0 0 6.401 6.5M3.477 10.896a4 4 0 0 1 .585-.396M6 18a4 4 0 0 1-1.967-.516M12 13h4M12 18h6a2 2 0 0 1 2 2v1M12 8h8M16 8V5a2 2 0 0 1 2-2"/><circle cx="16" cy="13" r=".5"/><circle cx="18" cy="3" r=".5"/><circle cx="20" cy="21" r=".5"/><circle cx="20" cy="8" r=".5"/></symbol>
+    <symbol id="boxes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42ZM7 16.5l-4.74-2.85M7 16.5l5-3M7 16.5v5.17M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3ZM17 16.5l-5-3M17 16.5l4.74-2.85M17 16.5v5.17M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8ZM12 8 7.26 5.15M12 8l4.74-2.85M12 13.5V8"/></symbol>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="m2 1 6 4-6 4" fill="none" stroke="#536078" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <style>
+      text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}
+      .title{font-size:32px;font-weight:700}.label{font-size:25px;font-weight:700}
+      .body{font-size:22px;fill:#536078}.mono{font-family:Consolas,monospace;font-size:22px;fill:#536078}
+      .card{fill:#fff;stroke:#dce1eb;stroke-width:1.5}
+      .connector{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}
+      .bidirectional{marker-start:url(#arrow)}.divider{stroke:#dce1eb;stroke-width:1.5}
+    </style>
+  </defs>
+  <rect width="1200" height="816" fill="#f7f8fc"/>
+  <text x="56" y="64" class="title" text-anchor="start">Un proyecto organiza recursos; la API da acceso a ellos</text>
+  <rect x="56" y="119" width="340" height="118" rx="22" class="card"/>
+  <g class="icon-badge" data-icon="app-window"><circle cx="110" cy="178" r="32" fill="#e9e6fa"/><use href="#app-window" x="91" y="159" width="38" height="38" color="#4f46b8"/></g>
+  <text x="165" y="164" class="label" text-anchor="start">Tu aplicación</text>
+  <text x="165" y="203" class="body" text-anchor="start">Lógica y funciones</text>
+  <rect x="676" y="119" width="468" height="118" rx="22" class="card"/>
+  <g class="icon-badge" data-icon="plug"><circle cx="730" cy="178" r="32" fill="#e1f2ee"/><use href="#plug" x="711" y="159" width="38" height="38" color="#087f7a"/></g>
+  <text x="785" y="164" class="label" text-anchor="start">OCI Responses API</text>
+  <text x="785" y="202" class="body" text-anchor="start">Interfaz del servicio</text>
+  <path d="M396 178H676" class="connector bidirectional"/>
+  <text x="536" y="159" class="body" text-anchor="middle">Solicitud + OCID</text>
+  <rect x="56" y="302" width="1088" height="466" rx="24" fill="#fff" stroke="#c5ccdc" stroke-width="2"/>
+  <path d="M910 237V302" class="connector"/>
+  <text x="934" y="279" class="body" text-anchor="start">Usa el proyecto</text>
+  <g class="icon-badge" data-icon="folder-cog"><circle cx="103" cy="350" r="30" fill="#e9e6fa"/><use href="#folder-cog" x="85" y="332" width="36" height="36" color="#4f46b8"/></g>
+  <text x="150" y="344" class="label" text-anchor="start">Proyecto OCI Generative AI</text>
+  <text x="150" y="382" class="body" text-anchor="start">Organiza artefactos, retención y memoria; no aloja tu aplicación.</text>
+  <rect x="80" y="412" width="512" height="332" rx="18" fill="#fae6e1"/>
+  <g class="icon-badge" data-icon="wrench"><circle cx="126" cy="454" r="28" fill="#fae6e1"/><use href="#wrench" x="110" y="438" width="32" height="32" color="#c74436"/></g>
+  <text x="172" y="463" class="label" text-anchor="start">Herramientas</text>
+  <text x="107" y="511" class="body" text-anchor="start">File Search</text>
+  <text x="320" y="511" class="body" text-anchor="start">Busca documentos</text>
+  <path d="M106 533H566" fill="none" stroke="#e8c7c0" stroke-width="1.5"/>
+  <text x="107" y="568" class="body" text-anchor="start">Code Interpreter</text>
+  <text x="320" y="568" class="body" text-anchor="start">Sandbox gestionado</text>
+  <path d="M106 590H566" fill="none" stroke="#e8c7c0" stroke-width="1.5"/>
+  <text x="107" y="625" class="body" text-anchor="start">Function Calling</text>
+  <text x="320" y="625" class="body" text-anchor="start">Ejecuta tu aplicación</text>
+  <path d="M106 647H566" fill="none" stroke="#e8c7c0" stroke-width="1.5"/>
+  <text x="107" y="682" class="body" text-anchor="start">MCP Calling</text>
+  <text x="320" y="682" class="body" text-anchor="start">Servidor externo</text>
+  <rect x="616" y="412" width="504" height="189" rx="18" fill="#e9e6fa"/>
+  <g class="icon-badge" data-icon="brain-circuit"><circle cx="662" cy="454" r="28" fill="#e9e6fa"/><use href="#brain-circuit" x="646" y="438" width="32" height="32" color="#4f46b8"/></g>
+  <text x="708" y="463" class="label" text-anchor="start">Memoria</text>
+  <text x="642" y="513" class="body" text-anchor="start">Conversación · entre sesiones</text>
+  <text x="642" y="553" class="body" text-anchor="start">Compaction condensa el contexto</text>
+  <rect x="616" y="620" width="504" height="124" rx="18" fill="#e1f2ee"/>
+  <g class="icon-badge" data-icon="boxes"><circle cx="662" cy="662" r="28" fill="#e1f2ee"/><use href="#boxes" x="646" y="646" width="32" height="32" color="#087f7a"/></g>
+  <text x="708" y="671" class="label" text-anchor="start">APIs de apoyo</text>
+  <text x="642" y="718" class="body" text-anchor="start">Files · Vector Stores · Containers</text>
 </svg>

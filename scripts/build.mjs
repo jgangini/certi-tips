@@ -1,4 +1,4 @@
-import { readFile, mkdir, writeFile, cp, realpath, rm } from "node:fs/promises";
+import { readFile, readdir, mkdir, writeFile, cp, realpath, rm } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import MarkdownIt from "markdown-it";
@@ -64,6 +64,19 @@ await mkdir(output, { recursive: true });
 await cp(path.join(root, "assets"), path.join(output, "assets"), {
   recursive: true,
 });
+// SVGs loaded through <img> cannot fetch sibling images; embed local PNG illustrations at build time.
+const diagramDirectory = path.join(output, "assets/diagrams");
+for (const file of await readdir(diagramDirectory)) {
+  if (!file.endsWith(".svg")) continue;
+  const destination = path.join(diagramDirectory, file);
+  const source = await readFile(destination, "utf8");
+  let embedded = source;
+  for (const [reference, name] of source.matchAll(/href="\.\.\/illustrations\/([a-z0-9-]+\.png)"/g)) {
+    const png = await readFile(path.join(root, "assets/illustrations", name));
+    embedded = embedded.replace(reference, `href="data:image/png;base64,${png.toString("base64")}"`);
+  }
+  if (embedded !== source) await writeFile(destination, embedded);
+}
 await cp(
   path.join(root, "data/questions.json"),
   path.join(output, "assets/questions.json"),

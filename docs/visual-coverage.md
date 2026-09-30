@@ -16,10 +16,13 @@ Los seis módulos técnicos conservan sus explicaciones, ejemplos, encabezados y
 - Los gráficos son SVG originales y editables: texto seleccionable, `title` y `desc`, sin scripts ni dependencias externas.
 - Se reutiliza el estilo del portal: fondo claro, texto azul marino, coral para solicitudes/decisiones, índigo para ejecución/control y verde azulado para datos/resultados. El significado también se expresa con palabras, iconos y flechas.
 - Se elige comparación, secuencia, relación o decisión según la lección; no se repite un flujo genérico en todos los apartados.
+- Los seis gráficos de «Errores frecuentes» usan una misma comparación: «Error o confusión → Qué comprobar», tarjetas coral y verde azulado, iconos de cruz y comprobación, y la misma tipografía y geometría. Solo varían el contenido y el número de filas; la altura crece sin comprimir el texto.
 - No se incluyen kickers decorativos, numeración editorial ni branding en el pie de los gráficos. Los controles técnicos necesarios sí permanecen.
 - La frase debajo del gráfico describe su contenido. El control conserva su nombre accesible para ampliar, navegación de teclado y cierre con Escape.
 - Los diagramas que revelan soluciones se mantienen dentro del desplegable de respuesta.
-- Las ilustraciones conceptuales existentes se conservan. Los esquemas de OCI son didácticos, no planos de despliegue de producción.
+- El caso de soporte usa una sola arquitectura OCI: aplicación en Compute, modelo en Generative AI, políticas en Object Storage y pedidos en Autonomous AI Database. Se conserva el ancla anterior para los enlaces existentes.
+- El alojamiento propio y gestionado incorpora dos ilustraciones 3D generadas con IA, con texto y conexiones SVG editables. La recuperación de evidencia usa una nueva ilustración secuencial sin flechas bidireccionales duplicadas. Los esquemas de OCI son didácticos, no planos de despliegue de producción.
+- Los conectores con punta son trazos independientes; los cambios de dirección usan curvas reales. Los iconos Lucide incorporados conservan su licencia en `assets/icons/LICENSE-lucide.txt`; otros símbolos nativos y los iconos OCI existentes mantienen su procedencia.
 
 ## Fuentes y límites
 

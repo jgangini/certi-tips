@@ -1,13 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 570" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-labelledby="title description">
   <title id="title">Tres estrategias para aportar contexto a Responses</title>
-  <desc id="description">La aplicación puede enviar el historial necesario, enlazar una respuesta anterior mediante previous_response_id o usar una conversación. Son estrategias diferentes de continuidad; ninguna elimina el límite de contexto o los costos.</desc>
-  <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.6"/></marker><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:22px}.h{font-size:34px;font-weight:700}.label{font-size:25px;font-weight:700}.muted{fill:#536078}.line{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}</style></defs>
-  <rect width="1200" height="570" fill="#f7f8fc"/><text x="56" y="65" class="h">¿Cómo llega el contexto al siguiente turno?</text>
-  <g fill="#fff" stroke="#dce1ec"><rect x="56" y="118" width="344" height="382" rx="24"/><rect x="428" y="118" width="344" height="382" rx="24"/><rect x="800" y="118" width="344" height="382" rx="24"/></g>
-  <g text-anchor="middle"><text x="228" y="167" class="label">Historial propio</text><text x="600" y="167" class="label">Cadena de respuestas</text><text x="972" y="167" class="label">Conversations</text></g>
-  <rect x="99" y="207" width="258" height="48" rx="12" fill="#fae6e1"/><rect x="115" y="266" width="242" height="48" rx="12" fill="#e9e6fa"/>
-  <text x="120" y="239">Usuario: pedido P-204</text><text x="132" y="298">Respuesta anterior</text><path d="M228 326v36" class="line"/><rect x="99" y="376" width="258" height="52" rx="13" fill="#17243b"/><text x="228" y="410" text-anchor="middle" style="fill:#fff">Nueva solicitud</text><text x="228" y="469" text-anchor="middle" class="muted">Tu código elige qué enviar</text>
-  <rect x="482" y="218" width="236" height="66" rx="15" fill="#e9e6fa"/><text x="600" y="259" text-anchor="middle">Respuesta A · id</text><path d="M600 297v56" class="line"/><rect x="466" y="369" width="268" height="60" rx="15" fill="#e1f2ee"/><text x="600" y="407" text-anchor="middle">Nueva entrada + id de A</text><text x="600" y="469" text-anchor="middle" class="muted">previous_response_id</text>
-  <path d="M853 239v154q119 47 238 0V239" fill="#e1f2ee" stroke="#9fccc6" stroke-width="2"/><ellipse cx="972" cy="239" rx="119" ry="32" fill="#eef9f6" stroke="#9fccc6" stroke-width="2"/>
-  <text x="972" y="247" text-anchor="middle">conversation.id</text><text x="972" y="311" text-anchor="middle">Entradas y salidas</text><text x="972" y="350" text-anchor="middle">de la conversación</text><text x="972" y="469" text-anchor="middle" class="muted">Referencia a sus elementos</text>
+  <desc id="description">En el historial propio, tu aplicación conserva y envía mensajes relevantes. En la cadena de respuestas, conservas el identificador de la respuesta anterior y lo envías con la nueva entrada. En Conversations, el servicio conserva elementos de una conversación y tu aplicación referencia su identificador. Ninguna estrategia elimina límites de contexto, costos o decisiones de retención.</desc>
+  <!-- Lucide messages-square adapted; license: ../icons/LICENSE-lucide.txt -->
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m2 2 6 3-6 3" fill="none" stroke="#536078" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:22px}.h{font-size:34px;font-weight:700}.label{font-size:25px;font-weight:700}.muted{fill:#536078}.small{font-size:20px}.line{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}.icon{fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}</style>
+  </defs>
+  <rect width="1200" height="720" fill="#f7f8fc"/><text x="56" y="62" class="h">El siguiente turno necesita contexto: elige cómo enviarlo</text>
+  <text x="56" y="102" class="muted">Mismo caso: «Mi pedido es P-204» → «¿Cuándo llega?»</text>
+  <g fill="#fff" stroke="#dce1ec"><rect x="56" y="138" width="344" height="486" rx="22"/><rect x="428" y="138" width="344" height="486" rx="22"/><rect x="800" y="138" width="344" height="486" rx="22"/></g>
+  <g text-anchor="middle">
+    <circle cx="228" cy="201" r="36" fill="#fae6e1"/><circle cx="600" cy="201" r="36" fill="#e9e6fa"/><circle cx="972" cy="201" r="36" fill="#e1f2ee"/>
+    <text x="228" y="274" class="label">Historial propio</text><text x="600" y="274" class="label">Cadena de respuestas</text><text x="972" y="274" class="label">Conversations</text>
+  </g>
+  <g transform="translate(206 179) scale(1.83)" class="icon" stroke="#c74436"><path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2zM20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1"/></g>
+  <g fill="none" stroke="#4f46b8" stroke-width="3" stroke-linecap="round"><rect x="579" y="183" width="22" height="18" rx="5"/><rect x="599" y="203" width="22" height="18" rx="5"/><path d="m595 197 11 11"/></g>
+  <g fill="none" stroke="#087f7a" stroke-width="3"><ellipse cx="972" cy="186" rx="21" ry="8"/><path d="M951 186v28c0 11 42 11 42 0v-28m-42 14c0 11 42 11 42 0"/></g>
+  <text x="80" y="320" font-weight="700">Quién conserva el contexto</text><text x="80" y="355" class="muted">Tu aplicación guarda</text><text x="80" y="387" class="muted">y selecciona los mensajes.</text>
+  <text x="452" y="320" font-weight="700">Qué referencia tu aplicación</text><text x="452" y="355" class="muted">El ID de la respuesta</text><text x="452" y="387" class="muted">previa conservada.</text>
+  <text x="824" y="320" font-weight="700">Quién conserva el contexto</text><text x="824" y="355" class="muted">El servicio conserva los</text><text x="824" y="387" class="muted">elementos de la conversación.</text>
+  <path d="M228 408V450" class="line"/><path d="M600 408V450" class="line"/><path d="M972 408V450" class="line"/>
+  <rect x="80" y="450" width="296" height="146" rx="16" fill="#fae6e1"/><rect x="452" y="450" width="296" height="146" rx="16" fill="#e9e6fa"/><rect x="824" y="450" width="296" height="146" rx="16" fill="#e1f2ee"/>
+  <g text-anchor="middle"><text x="228" y="484" font-weight="700">En el siguiente turno</text><text x="228" y="525">Mensajes relevantes</text><text x="228" y="559">+ nueva entrada</text><text x="600" y="484" font-weight="700">En el siguiente turno</text><text x="600" y="525" class="small">previous_response_id</text><text x="600" y="559">+ nueva entrada</text><text x="972" y="484" font-weight="700">En el siguiente turno</text><text x="972" y="525">ID de conversación</text><text x="972" y="559">+ nueva entrada</text></g>
+  <text x="600" y="675" text-anchor="middle" class="muted">Comprueba límites de contexto, costos y política de retención en las tres opciones.</text>
 </svg>

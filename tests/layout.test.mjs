@@ -38,7 +38,7 @@ test("sidebar has native module and resource disclosures with only the active br
   assert.match(branches[1][1], /data-nav-page="agents" open/);
   assert.equal((html.match(/<summary class="nav-toggle"/g) || []).length, 3);
   assert.equal((html.match(/aria-current="page"/g) || []).length, 1);
-  assert.match(html, /<a class="nav-link" href="\/certi-tips\/EXAM-1\/agents\/" aria-current="page">/);
+  assert.match(html, /<a class="nav-link" href="\/certi-tips\/EXAM-1\/agents\/" data-completion="agents" aria-current="page">/);
   assert.match(branches[1][2], /<summary class="nav-toggle" aria-label="Secciones de Agentes de IA"><\/summary>/);
   assert.doesNotMatch(html, /Ver módulo/);
   assert.match(html, /href="\/certi-tips\/EXAM-1\/review\/"/);
@@ -50,6 +50,9 @@ test("sidebar has native module and resource disclosures with only the active br
   assert.match(html, /<span class="exam-code">EXAM-1<\/span><strong>Curso de prueba 2026<\/strong>/);
   assert.match(html, /<nav aria-label="Contenido de la guía" tabindex="0">/);
   assert.match(html, /data-completion="agents"/);
+  assert.match(html, /<a class="nav-link"[^>]*data-completion="agents"/);
+  assert.doesNotMatch(html, /completion-dot/);
+  assert.doesNotMatch(branches[2][0], /data-completion=/);
 });
 
 test("retired resources stay unpublished and overview contains only its retained sections", () => {
@@ -198,6 +201,15 @@ test("the certification breadcrumb identifies LangChain by its module label", ()
   const html = layout({ site: catalog, course: currentCourse, page: currentCourse.modules.find((item) => item.slug === "langchain"), body: "" });
   assert.match(html, /<nav class="breadcrumb"[^>]*><a href="\/certi-tips\/1Z0-1157-26\/overview\/">Oracle Agentic AI Foundations Associate 2026<\/a><span aria-hidden="true">\/<\/span><span aria-current="page">LangChain<\/span>/);
   assert.match(html, /<body data-course="agentic-ai-foundations-2026"/);
+});
+
+test("completed modules use a blue block without adding a width-consuming badge", () => {
+  const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
+  const script = readFileSync(new URL("../assets/site.js", import.meta.url), "utf8");
+  assert.match(css, /\.nav-link\.is-complete\s*\{\s*background:\s*var\(--completed-surface\);\s*color:\s*#fff;/);
+  assert.match(script, /link\.classList\.toggle\("is-complete", done\)/);
+  assert.match(script, /aria-description/);
+  assert.doesNotMatch(css, /completion-dot/);
 });
 
 test("search lists certifications before typing and keeps study topics available for filtering", () => {

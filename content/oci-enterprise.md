@@ -33,7 +33,7 @@ Los bloques estudiados incluyen **File Search** para recuperación documental; *
 
 Un **proyecto** organiza recursos relacionados. La memoria de conversación mantiene contexto de una interacción; la memoria a largo plazo permite recuperar información entre interacciones cuando se configura; y la **compaction** condensa contexto. Resumir puede perder detalles: comprueba que las decisiones y restricciones importantes sobrevivan. Define retención y acceso antes de almacenar datos personales. Estas capacidades se documentan en [Enterprise AI Agents en OCI Generative AI](https://docs.oracle.com/en-us/iaas/Content/generative-ai/agents.htm).
 
-![Un proyecto agrupa Responses API, herramientas, memoria y APIs de apoyo; se distingue el sandbox administrado de las funciones ejecutadas por la aplicación y de los servidores MCP externos.]({{base}}assets/diagrams/oci-building-blocks.svg "Herramientas, memoria y recursos se organizan dentro del proyecto.")
+![Tu aplicación llama a OCI Responses API con el OCID del proyecto. El proyecto organiza herramientas, memoria y artefactos; no aloja por sí mismo el runtime de tu aplicación.]({{base}}assets/diagrams/oci-building-blocks.svg "La API es la interfaz; el proyecto organiza los recursos del agente.")
 
 ## Primeros pasos verificados
 

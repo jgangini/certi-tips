@@ -1,15 +1,88 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 770" role="img" aria-labelledby="title description">
   <title id="title">Diagnóstico de errores comunes al integrar OCI</title>
   <desc id="description">Cinco señales guían una revisión concreta: modelo no disponible a región, endpoint cambiado a compatibilidad, proyecto confundido a identidad del recurso, acceso denegado a permisos mínimos y memoria activada a política de retención.</desc>
-  <defs><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:23px}.h{font-size:34px;font-weight:700}.label{font-size:25px;font-weight:700}.arrow{fill:none;stroke:#8f98ae;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}</style></defs>
-  <rect width="1200" height="620" fill="#f7f8fc"/><text x="56" y="65" class="h">Antes de cambiar código, localiza la causa</text>
-  <text x="82" y="124" class="label" style="fill:#c74436">Señal de problema</text><text x="650" y="124" class="label" style="fill:#087f7a">Primera comprobación</text>
-  <g fill="#fae6e1"><rect x="56" y="147" width="480" height="71" rx="15"/><rect x="56" y="235" width="480" height="71" rx="15"/><rect x="56" y="323" width="480" height="71" rx="15"/><rect x="56" y="411" width="480" height="71" rx="15"/><rect x="56" y="499" width="480" height="71" rx="15"/></g>
-  <g fill="#e1f2ee"><rect x="624" y="147" width="520" height="71" rx="15"/><rect x="624" y="235" width="520" height="71" rx="15"/><rect x="624" y="323" width="520" height="71" rx="15"/><rect x="624" y="411" width="520" height="71" rx="15"/><rect x="624" y="499" width="520" height="71" rx="15"/></g>
-  <g class="arrow"><path d="M553 183h50m-13-10 13 10-13 10M553 271h50m-13-10 13 10-13 10M553 359h50m-13-10 13 10-13 10M553 447h50m-13-10 13 10-13 10M553 535h50m-13-10 13 10-13 10"/></g>
-  <text x="82" y="191">El modelo del ejemplo no responde</text><text x="650" y="191">Disponibilidad del modelo en esa región</text>
-  <text x="82" y="279">Cambiar solo la URL rompe una función</text><text x="650" y="279">Soporte de la API y de esa herramienta</text>
-  <text x="82" y="367">Proyecto y compartment se mezclan</text><text x="650" y="367">Tipo de recurso y OCID que se solicita</text>
-  <text x="82" y="455">La llamada devuelve acceso denegado</text><text x="650" y="455">Identidad y política mínima necesaria</text>
-  <text x="82" y="543">Se guarda más contexto del esperado</text><text x="650" y="543">Retención, datos personales y acceso</text>
+  <defs>
+    <style>
+      text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:24px}
+      .title{font-size:34px;font-weight:700}
+      .label{font-size:26px;font-weight:700}
+      .mistake rect{fill:#fae6e1;stroke:#efc7be;stroke-width:1.5}
+      .correction rect{fill:#e1f2ee;stroke:#b7ddd5;stroke-width:1.5}
+      .arrow{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+      .icon{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+    </style>
+  </defs>
+  <rect width="1200" height="770" fill="#f7f8fc"/>
+  <text x="56" y="64" class="title">Antes de cambiar código, localiza la causa</text>
+  <g class="column-headings">
+    <circle cx="80" cy="118" r="16" fill="#fae6e1"/>
+    <path d="m75 113 10 10m0-10-10 10" class="icon" stroke="#c74436"/>
+    <text x="108" y="127" class="label">Error o confusión</text>
+    <circle cx="648" cy="118" r="16" fill="#e1f2ee"/>
+    <path d="m641 118 5 5 9-10" class="icon" stroke="#087f7a"/>
+    <text x="676" y="127" class="label">Qué comprobar</text>
+  </g>
+  <g class="comparison-row" transform="translate(0 154)">
+    <g class="mistake">
+      <rect x="56" width="480" height="96" rx="16"/>
+      <text x="82" y="57">El modelo del ejemplo no responde</text>
+    </g>
+    <path d="M553 48h50m-13-9 13 9-13 9" class="arrow"/>
+    <g class="correction">
+      <rect x="624" width="520" height="96" rx="16"/>
+      <text x="650" y="40">Disponibilidad del modelo</text>
+      <text x="650" y="74">en esa región</text>
+    </g>
+  </g>
+  <g class="comparison-row" transform="translate(0 270)">
+    <g class="mistake">
+      <rect x="56" width="480" height="96" rx="16"/>
+      <text x="82" y="40">Cambiar solo la URL</text>
+      <text x="82" y="74">rompe una función</text>
+    </g>
+    <path d="M553 48h50m-13-9 13 9-13 9" class="arrow"/>
+    <g class="correction">
+      <rect x="624" width="520" height="96" rx="16"/>
+      <text x="650" y="40">Soporte de la API</text>
+      <text x="650" y="74">y de esa herramienta</text>
+    </g>
+  </g>
+  <g class="comparison-row" transform="translate(0 386)">
+    <g class="mistake">
+      <rect x="56" width="480" height="96" rx="16"/>
+      <text x="82" y="40">Proyecto y compartment</text>
+      <text x="82" y="74">se mezclan</text>
+    </g>
+    <path d="M553 48h50m-13-9 13 9-13 9" class="arrow"/>
+    <g class="correction">
+      <rect x="624" width="520" height="96" rx="16"/>
+      <text x="650" y="40">Tipo de recurso y OCID</text>
+      <text x="650" y="74">que se solicita</text>
+    </g>
+  </g>
+  <g class="comparison-row" transform="translate(0 502)">
+    <g class="mistake">
+      <rect x="56" width="480" height="96" rx="16"/>
+      <text x="82" y="40">La llamada devuelve</text>
+      <text x="82" y="74">acceso denegado</text>
+    </g>
+    <path d="M553 48h50m-13-9 13 9-13 9" class="arrow"/>
+    <g class="correction">
+      <rect x="624" width="520" height="96" rx="16"/>
+      <text x="650" y="40">Identidad y política</text>
+      <text x="650" y="74">mínima necesaria</text>
+    </g>
+  </g>
+  <g class="comparison-row" transform="translate(0 618)">
+    <g class="mistake">
+      <rect x="56" width="480" height="96" rx="16"/>
+      <text x="82" y="40">Se guarda más contexto</text>
+      <text x="82" y="74">del esperado</text>
+    </g>
+    <path d="M553 48h50m-13-9 13 9-13 9" class="arrow"/>
+    <g class="correction">
+      <rect x="624" width="520" height="96" rx="16"/>
+      <text x="650" y="57">Retención, datos personales y acceso</text>
+    </g>
+  </g>
 </svg>

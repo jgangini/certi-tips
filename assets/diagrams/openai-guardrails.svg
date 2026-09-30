@@ -1,14 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-labelledby="title description">
   <title id="title">Controles de entrada, acción y salida con trazas</title>
-  <desc id="description">El control de entrada corresponde al primer agente; las validaciones de la operación están junto a la herramienta; el control de salida corresponde al agente final. Una traza registra tiempos y estados de las etapas, sin revelar razonamiento interno completo.</desc>
-  <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.6"/></marker><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:22px}.h{font-size:34px;font-weight:700}.label{font-size:25px;font-weight:700}.muted{fill:#536078}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}</style></defs>
-  <rect width="1200" height="600" fill="#f7f8fc"/><text x="56" y="65" class="h">Cada control protege una parte del recorrido</text>
-  <path d="M278 225H522" fill="none" stroke="#536078" stroke-width="2.5" marker-end="url(#arrow)"/><path d="M678 225H922" fill="none" stroke="#536078" stroke-width="2.5" marker-end="url(#arrow)"/>
-  <circle cx="206" cy="233" r="65" fill="#efd8d2"/><circle cx="200" cy="225" r="65" fill="#fae6e1"/><g class="icon" stroke="#c74436"><path d="M167 203h66l-25 28v29l-16-9v-20Z"/></g>
-  <circle cx="606" cy="233" r="65" fill="#dad5f0"/><circle cx="600" cy="225" r="65" fill="#e9e6fa"/><g class="icon" stroke="#4f46b8"><rect x="575" y="217" width="50" height="40" rx="7"/><path d="M586 216v-17a14 14 0 0 1 28 0v17m-14 14v11"/></g>
-  <circle cx="1006" cy="233" r="65" fill="#cde5df"/><circle cx="1000" cy="225" r="65" fill="#e1f2ee"/><g class="icon" stroke="#087f7a"><path d="M977 195h46v55h-46zm9 19 8 8 19-19m-27 30h25"/></g>
-  <g text-anchor="middle"><text x="200" y="334" class="label">Entrada</text><text x="200" y="372">Primer agente de la cadena</text><text x="600" y="334" class="label">Acción sensible</text><text x="600" y="372">Permisos junto a la herramienta</text><text x="1000" y="334" class="label">Salida</text><text x="1000" y="372">Agente que responde al final</text></g>
-  <path d="M200 394v36m400-36v36m400-36v36" stroke="#c2c8d7" stroke-width="2" stroke-dasharray="5 5"/>
-  <rect x="56" y="444" width="1088" height="100" rx="20" fill="#17243b"/><text x="84" y="484" style="fill:#fff;font-size:25px;font-weight:700">Traza de la ejecución</text><text x="84" y="520" style="fill:#d1d8e7">Etapas · llamadas · tiempos · estados</text>
-  <g stroke-width="12" stroke-linecap="round"><path d="M661 482h122" stroke="#e59b90"/><path d="M805 482h208" stroke="#aaa2ed"/><path d="M840 515h56" stroke="#77d4c7"/></g>
+  <desc id="description">Tres controles explícitos: validar la entrada en el primer agente, autorizar la operación junto a la herramienta y revisar la salida en el agente final. Una traza de ejemplo relaciona cada etapa con su estado y duración; no representa razonamiento interno completo.</desc>
+  <!-- Lucide file-input, shield-check, file-check adapted; license: ../icons/LICENSE-lucide.txt -->
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m2 2 6 3-6 3" fill="none" stroke="#536078" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:22px}.h{font-size:34px;font-weight:700}.label{font-size:26px;font-weight:700}.muted{fill:#536078}.icon{fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.route{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}.white{fill:#fff}</style>
+  </defs>
+  <rect width="1200" height="720" fill="#f7f8fc"/><text x="56" y="62" class="h">Cada control protege una parte del recorrido</text>
+  <g fill="#fff" stroke="#dce1ec"><rect x="56" y="118" width="304" height="269" rx="22"/><rect x="448" y="118" width="304" height="269" rx="22"/><rect x="840" y="118" width="304" height="269" rx="22"/></g>
+  <path d="M360 237H448" class="route"/><path d="M752 237H840" class="route"/>
+  <circle cx="208" cy="188" r="44" fill="#fae6e1"/><circle cx="600" cy="188" r="44" fill="#e9e6fa"/><circle cx="992" cy="188" r="44" fill="#e1f2ee"/>
+  <g transform="translate(182 162) scale(2.17)" class="icon" stroke="#c74436"><path d="M4 11V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1M14 2v5a1 1 0 0 0 1 1h5M2 15h10m-3 3 3-3-3-3"/></g>
+  <g transform="translate(574 162) scale(2.17)" class="icon" stroke="#4f46b8"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></g>
+  <g transform="translate(966 162) scale(2.17)" class="icon" stroke="#087f7a"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2zM14 2v5a1 1 0 0 0 1 1h5m-11 7 2 2 4-4"/></g>
+  <g text-anchor="middle"><text x="208" y="275" class="label">Entrada</text><text x="208" y="315">Alcance y formato</text><text x="208" y="352" class="muted">Primer agente</text><text x="600" y="275" class="label">Acción sensible</text><text x="600" y="315">Identidad y permisos</text><text x="600" y="352" class="muted">Junto a la herramienta</text><text x="992" y="275" class="label">Salida</text><text x="992" y="315">Datos y afirmaciones</text><text x="992" y="352" class="muted">Agente que responde</text></g>
+  <rect x="56" y="436" width="1088" height="228" rx="22" fill="#17243b"/><text x="84" y="478" class="label white">Traza: qué ocurrió, cuánto tardó y cómo terminó</text>
+  <text x="84" y="516" class="white">Ejemplo ilustrativo · tiempos ficticios</text>
+  <g fill="#263952"><rect x="84" y="544" width="304" height="92" rx="14"/><rect x="448" y="544" width="304" height="92" rx="14"/><rect x="812" y="544" width="304" height="92" rx="14"/></g>
+  <g text-anchor="middle"><text x="236" y="579" class="white">Entrada validada</text><text x="236" y="614" class="white">12 ms · aceptada</text><text x="600" y="579" class="white">Consulta autorizada</text><text x="600" y="614" class="white">85 ms · completada</text><text x="964" y="579" class="white">Salida revisada</text><text x="964" y="614" class="white">10 ms · aprobada</text></g>
+  <path d="M388 590H448" stroke="#9babc2" stroke-width="2.5"/><path d="M752 590H812" stroke="#9babc2" stroke-width="2.5"/>
 </svg>

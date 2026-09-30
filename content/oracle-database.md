@@ -63,7 +63,7 @@ Prueba también una consulta sin coincidencias y un producto que está semántic
 
 ## Una solución completa: responder con evidencia
 
-![Arquitectura conceptual con datos: el agente utiliza búsqueda semántica o consulta SQL como ramas separadas sobre datos autorizados y coordina con el modelo una respuesta respaldada por evidencia.]({{base}}assets/illustrations/grounded-answer.png "Documentos y datos estructurados aportan evidencias diferentes.")
+![De la pregunta a una respuesta con evidencia: la aplicación valida el acceso, recupera documentos mediante búsqueda vectorial o datos mediante SQL, y entrega el contexto al modelo antes de responder.]({{base}}assets/illustrations/grounded-answer-v2.png "La recuperación usa documentos o SQL según la pregunta y los permisos.")
 
 Las dos ramas resuelven necesidades diferentes. La **búsqueda semántica** recupera fragmentos relevantes para fundamentar una respuesta; una **consulta SQL** obtiene resultados estructurados, por ejemplo el estado y el importe de un pedido. Ambas requieren controlar qué datos puede consultar la identidad que ejecuta la operación. Cambiar datos o ejecutar una acción de negocio exige además una herramienta autorizada y sus validaciones.
 

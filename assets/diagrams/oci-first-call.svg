@@ -1,12 +1,56 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" role="img" aria-labelledby="title description">
-  <title id="title">Seis comprobaciones antes de la primera respuesta en OCI</title>
-  <desc id="description">La ruta de inicio verifica permisos y compartment, proyecto, autenticación, endpoint regional, modelo compatible y una solicitud de texto. Las herramientas se añaden después de confirmar la llamada básica.</desc>
-  <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.6"/></marker><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:22px}.h{font-size:34px;font-weight:700}.label{font-size:25px;font-weight:700}.muted{fill:#536078}.line{fill:none;stroke:#a5afc1;stroke-width:2.5;marker-end:url(#arrow)}</style></defs>
-  <rect width="1200" height="600" fill="#f7f8fc"/><text x="56" y="65" class="h">Primero una respuesta; después, las herramientas</text>
-  <path d="M378 240h31m350 0h31M977 320v32H218v30M378 461h31m350 0h31" class="line"/>
-  <g fill="#fff" stroke="#dce1ec"><rect x="56" y="124" width="322" height="195" rx="20"/><rect x="435" y="124" width="322" height="195" rx="20"/><rect x="814" y="124" width="330" height="195" rx="20"/><rect x="56" y="383" width="322" height="163" rx="20"/><rect x="435" y="383" width="322" height="163" rx="20"/><rect x="814" y="383" width="330" height="163" rx="20"/></g>
-  <g fill="#fae6e1"><circle cx="101" cy="168" r="25"/><circle cx="480" cy="168" r="25"/><circle cx="859" cy="168" r="25"/></g><g fill="#e1f2ee"><circle cx="101" cy="428" r="25"/><circle cx="480" cy="428" r="25"/><circle cx="859" cy="428" r="25"/></g>
-  <g text-anchor="middle" font-weight="700"><text x="101" y="176">1</text><text x="480" y="176">2</text><text x="859" y="176">3</text><text x="101" y="436">4</text><text x="480" y="436">5</text><text x="859" y="436">6</text></g>
-  <text x="78" y="232" class="label">Permisos IAM</text><text x="78" y="268">Compartment de práctica</text><text x="457" y="232" class="label">Proyecto</text><text x="457" y="268">OCID y memoria revisados</text><text x="836" y="232" class="label">Autenticación</text><text x="836" y="268">Credenciales protegidas</text>
-  <text x="146" y="438" class="label">Endpoint</text><text x="78" y="493">Cliente y región correctos</text><text x="525" y="438" class="label">Modelo</text><text x="457" y="493">Disponible y compatible</text><text x="904" y="438" class="label">Texto</text><text x="836" y="493">Respuesta básica recibida</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 664" role="img" aria-labelledby="title description">
+<title id="title">Seis comprobaciones antes de la primera respuesta en OCI</title>
+<desc id="description">La ruta de inicio verifica permisos y compartment, proyecto, autenticación, endpoint regional, modelo compatible y una solicitud de texto. Las herramientas se añaden después de confirmar la llamada básica.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m2 2 6 3-6 3" fill="none" stroke="#536078" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:23px}.h{font-size:34px;font-weight:700}.label{font-size:26px;font-weight:700}.muted{fill:#536078}.white{fill:#fff}.edge{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}.card{fill:#fff;stroke:#dce1ec;stroke-width:1.5}</style></defs>
+<rect width="1200" height="664" fill="#f7f8fc"/>
+<text x="56" y="65" class="h">Primero una respuesta; después, las herramientas</text>
+<path d="M376 220H440" class="edge"/>
+<path d="M760 220H824" class="edge"/>
+<path d="M984 312V333Q984 350 967 350H233Q216 350 216 367V388" class="edge"/>
+<path d="M376 480H440" class="edge"/>
+<path d="M760 480H824" class="edge"/>
+<g class="step-card" transform="translate(56 128)">
+  <rect width="320" height="184" rx="20" class="card"/>
+  <circle cx="45" cy="42" r="22" fill="#4f46b8"/>
+  <text x="45" y="50" text-anchor="middle" class="white" font-weight="700">1</text>
+  <text x="26" y="111" class="label">Permisos IAM</text>
+  <text x="26" y="151">Compartment de práctica</text>
+</g>
+<g class="step-card" transform="translate(440 128)">
+  <rect width="320" height="184" rx="20" class="card"/>
+  <circle cx="45" cy="42" r="22" fill="#4f46b8"/>
+  <text x="45" y="50" text-anchor="middle" class="white" font-weight="700">2</text>
+  <text x="26" y="111" class="label">Proyecto</text>
+  <text x="26" y="151">OCID y memoria revisados</text>
+</g>
+<g class="step-card" transform="translate(824 128)">
+  <rect width="320" height="184" rx="20" class="card"/>
+  <circle cx="45" cy="42" r="22" fill="#4f46b8"/>
+  <text x="45" y="50" text-anchor="middle" class="white" font-weight="700">3</text>
+  <text x="26" y="111" class="label">Autenticación</text>
+  <text x="26" y="151">Credenciales protegidas</text>
+</g>
+<g class="step-card" transform="translate(56 388)">
+  <rect width="320" height="184" rx="20" class="card"/>
+  <circle cx="45" cy="42" r="22" fill="#087f7a"/>
+  <text x="45" y="50" text-anchor="middle" class="white" font-weight="700">4</text>
+  <text x="26" y="111" class="label">Endpoint</text>
+  <text x="26" y="151">Cliente y región correctos</text>
+</g>
+<g class="step-card" transform="translate(440 388)">
+  <rect width="320" height="184" rx="20" class="card"/>
+  <circle cx="45" cy="42" r="22" fill="#087f7a"/>
+  <text x="45" y="50" text-anchor="middle" class="white" font-weight="700">5</text>
+  <text x="26" y="111" class="label">Modelo</text>
+  <text x="26" y="151">Disponible y compatible</text>
+</g>
+<g class="step-card" transform="translate(824 388)">
+  <rect width="320" height="184" rx="20" class="card"/>
+  <circle cx="45" cy="42" r="22" fill="#087f7a"/>
+  <text x="45" y="50" text-anchor="middle" class="white" font-weight="700">6</text>
+  <text x="26" y="111" class="label">Texto</text>
+  <text x="26" y="151">Respuesta básica recibida</text>
+</g>
+<path d="M56 606H1144" stroke="#dce1ec"/>
+<text x="600" y="640" text-anchor="middle" class="muted">Añade herramientas cuando la llamada básica ya funcione.</text>
 </svg>

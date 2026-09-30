@@ -1,13 +1,56 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" role="img" aria-labelledby="title description">
-  <title id="title">Publicación de una aplicación compatible en OCI Generative AI</title>
-  <desc id="description">La aplicación probada se empaqueta como imagen, se sube a OCI Container Registry, se configura una aplicación, se crea su deployment y se atienden solicitudes por el endpoint. La evaluación y la versión anterior permiten detectar regresiones y volver atrás.</desc>
-  <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.6"/></marker><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:22px}.h{font-size:34px;font-weight:700}.label{font-size:25px;font-weight:700}.line{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}</style></defs>
-  <rect width="1200" height="620" fill="#f7f8fc"/><text x="56" y="65" class="h">Publicar el runtime, no solo llamar al modelo</text>
-  <path d="M388 222h40" class="line"/><path d="M772 222h40" class="line"/><path d="M984 303v40H216v28" class="line"/><path d="M388 449h40" class="line"/><path d="M772 449h40" class="line"/>
-  <g fill="#fff" stroke="#dce1ec"><rect x="56" y="131" width="320" height="160" rx="21"/><rect x="440" y="131" width="320" height="160" rx="21"/><rect x="824" y="131" width="320" height="160" rx="21"/><rect x="56" y="383" width="320" height="131" rx="21"/><rect x="440" y="383" width="320" height="131" rx="21"/><rect x="824" y="383" width="320" height="131" rx="21"/></g>
-  <circle cx="101" cy="177" r="27" fill="#fae6e1"/><circle cx="485" cy="177" r="27" fill="#e9e6fa"/><circle cx="869" cy="177" r="27" fill="#e9e6fa"/><circle cx="101" cy="427" r="27" fill="#e9e6fa"/><circle cx="485" cy="427" r="27" fill="#e1f2ee"/><circle cx="869" cy="427" r="27" fill="#e1f2ee"/>
-  <g text-anchor="middle" font-weight="700"><text x="101" y="185">1</text><text x="485" y="185">2</text><text x="869" y="185">3</text><text x="101" y="435">4</text><text x="485" y="435">5</text><text x="869" y="435">6</text></g>
-  <text x="147" y="186" class="label">Desarrollar</text><text x="81" y="249">Probar lógica y límites</text><text x="531" y="186" class="label">Empaquetar</text><text x="465" y="249">Imagen con dependencias</text><text x="915" y="186" class="label">OCIR</text><text x="849" y="249">Publicar la imagen</text>
-  <text x="147" y="436" class="label">Aplicación</text><text x="81" y="485">Red, identidad y capacidad</text><text x="531" y="436" class="label">Deployment</text><text x="465" y="485">Ejecutar esa imagen</text><text x="915" y="436" class="label">Endpoint</text><text x="849" y="485">Atender solicitudes</text>
-  <rect x="208" y="553" width="784" height="43" rx="14" fill="#e1f2ee"/><text x="600" y="582" text-anchor="middle">Evaluar la nueva versión · observar · conservar una versión anterior</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 664" role="img" aria-labelledby="title description">
+<title id="title">Publicación de una aplicación compatible en OCI Generative AI</title>
+<desc id="description">La aplicación probada se empaqueta como imagen, se sube a OCI Container Registry, se configura una aplicación, se crea su deployment y se atienden solicitudes por el endpoint. La evaluación y la versión anterior permiten detectar regresiones y volver atrás.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m2 2 6 3-6 3" fill="none" stroke="#536078" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:23px}.h{font-size:34px;font-weight:700}.label{font-size:26px;font-weight:700}.muted{fill:#536078}.white{fill:#fff}.edge{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}.card{fill:#fff;stroke:#dce1ec;stroke-width:1.5}</style></defs>
+<rect width="1200" height="664" fill="#f7f8fc"/>
+<text x="56" y="65" class="h">Publicar el runtime, no solo llamar al modelo</text>
+<path d="M376 220H440" class="edge"/>
+<path d="M760 220H824" class="edge"/>
+<path d="M984 312V333Q984 350 967 350H233Q216 350 216 367V388" class="edge"/>
+<path d="M376 480H440" class="edge"/>
+<path d="M760 480H824" class="edge"/>
+<g class="step-card" transform="translate(56 128)">
+  <rect width="320" height="184" rx="20" class="card"/>
+  <circle cx="45" cy="42" r="22" fill="#4f46b8"/>
+  <text x="45" y="50" text-anchor="middle" class="white" font-weight="700">1</text>
+  <text x="26" y="111" class="label">Desarrollar</text>
+  <text x="26" y="151">Probar lógica y límites</text>
+</g>
+<g class="step-card" transform="translate(440 128)">
+  <rect width="320" height="184" rx="20" class="card"/>
+  <circle cx="45" cy="42" r="22" fill="#4f46b8"/>
+  <text x="45" y="50" text-anchor="middle" class="white" font-weight="700">2</text>
+  <text x="26" y="111" class="label">Empaquetar</text>
+  <text x="26" y="151">Imagen con dependencias</text>
+</g>
+<g class="step-card" transform="translate(824 128)">
+  <rect width="320" height="184" rx="20" class="card"/>
+  <circle cx="45" cy="42" r="22" fill="#4f46b8"/>
+  <text x="45" y="50" text-anchor="middle" class="white" font-weight="700">3</text>
+  <text x="26" y="111" class="label">OCIR</text>
+  <text x="26" y="151">Publicar la imagen</text>
+</g>
+<g class="step-card" transform="translate(56 388)">
+  <rect width="320" height="184" rx="20" class="card"/>
+  <circle cx="45" cy="42" r="22" fill="#087f7a"/>
+  <text x="45" y="50" text-anchor="middle" class="white" font-weight="700">4</text>
+  <text x="26" y="111" class="label">Aplicación</text>
+  <text x="26" y="151">Red, identidad y capacidad</text>
+</g>
+<g class="step-card" transform="translate(440 388)">
+  <rect width="320" height="184" rx="20" class="card"/>
+  <circle cx="45" cy="42" r="22" fill="#087f7a"/>
+  <text x="45" y="50" text-anchor="middle" class="white" font-weight="700">5</text>
+  <text x="26" y="111" class="label">Deployment</text>
+  <text x="26" y="151">Ejecutar esa imagen</text>
+</g>
+<g class="step-card" transform="translate(824 388)">
+  <rect width="320" height="184" rx="20" class="card"/>
+  <circle cx="45" cy="42" r="22" fill="#087f7a"/>
+  <text x="45" y="50" text-anchor="middle" class="white" font-weight="700">6</text>
+  <text x="26" y="111" class="label">Endpoint</text>
+  <text x="26" y="151">Atender solicitudes</text>
+</g>
+<path d="M56 606H1144" stroke="#dce1ec"/>
+<text x="600" y="640" text-anchor="middle" class="muted">Evalúa la nueva versión y conserva una versión anterior.</text>
 </svg>

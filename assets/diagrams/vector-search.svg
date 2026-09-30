@@ -6,7 +6,7 @@
     <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
     <marker id="arrow-coral" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#c74436" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
     <style>
-      text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.subtitle{font-size:21px;fill:#536078}.label{font-size:23px;font-weight:700}.body{font-size:21px}.meta{font-size:21px;fill:#536078}.muted{fill:#536078}.white{fill:#fff}.coral{fill:#c74436}.teal{fill:#087f7a}.line{fill:none;stroke:#536078;stroke-width:2.4;marker-end:url(#arrow)}
+      text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.subtitle{font-size:21px;fill:#536078}.label{font-size:23px;font-weight:700}.body{font-size:21px}.meta{font-size:21px;fill:#536078}.muted{fill:#536078}.white{fill:#fff}.coral{fill:#c74436}.teal{fill:#087f7a}.line{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}
     </style>
   </defs>
   <rect width="1200" height="640" fill="#f7f8fc"/>
@@ -19,17 +19,17 @@
   <path d="M106 230h63l18 18v100h-81Z" fill="#fff" stroke="#a8a3d8" stroke-width="2"/>
   <path d="M169 230v20h18M121 269h48m-48 14h48m-48 14h37m-37 14h44m-44 14h26" fill="none" stroke="#aaa5d7" stroke-width="3" stroke-linecap="round"/>
   <text x="140" y="382" text-anchor="middle" class="body">Documentos</text>
-  <path d="M206 290h38" class="line"/>
+  <path d="M187 290H270" class="line"/>
   <rect x="270" y="239" width="118" height="28" rx="7" fill="#eae7fb" stroke="#a8a3d8"/>
   <rect x="270" y="280" width="118" height="28" rx="7" fill="#eae7fb" stroke="#a8a3d8"/>
   <rect x="270" y="321" width="118" height="28" rx="7" fill="#eae7fb" stroke="#a8a3d8"/>
   <path d="M284 253h89m-89 41h72m-72 41h82" stroke="#7770be" stroke-width="3" stroke-linecap="round"/>
   <text x="329" y="382" text-anchor="middle" class="body">Fragmentos</text>
-  <path d="M406 290h34" class="line"/>
+  <path d="M388 290H462" class="line"/>
   <circle cx="523" cy="291" r="61" fill="#4f46b8"/>
   <path d="M493 302v-18m15 35v-53m15 61v-72m15 58v-44m15 33v-18" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
   <text x="523" y="382" text-anchor="middle" class="body">Embeddings</text>
-  <path d="M597 291h86" class="line"/>
+  <path d="M584 291H706" class="line"/>
   <!-- Meaning space: a query star and its three illustrative neighbours. -->
   <rect x="706" y="215" width="438" height="312" rx="22" fill="#fff" stroke="#d8dcec" stroke-width="1.5"/>
   <path d="M726 245h398v260H726Z" fill="url(#grid)"/>
@@ -48,20 +48,20 @@
   <text x="56" y="439" class="meta" font-weight="700">02 / BUSCAR CON LA PREGUNTA</text>
   <path d="M73 458h290q12 0 12 12v36q0 12-12 12H111l-21 17v-17H73q-12 0-12-12v-36q0-12 12-12Z" fill="#fae9e5" stroke="#e3b0a8" stroke-width="1.5"/>
   <text x="88" y="495" class="body">«Mochila para laptop»</text>
-  <path d="M392 489h53" class="line"/>
+  <path d="M375 489H492" class="line"/>
   <circle cx="523" cy="489" r="31" fill="#c74436"/>
   <path d="M507 493v-7m8 14v-22m8 26v-31m8 24v-17m8 11v-6" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
   <text x="523" y="548" text-anchor="middle" class="meta">Mismo modelo compatible</text>
-  <path d="M569 489h82V410h231" fill="none" stroke="#c74436" stroke-width="2.5" marker-end="url(#arrow-coral)"/>
+  <path d="M554 489H629Q651 489 651 467V432Q651 410 673 410H894" fill="none" stroke="#c74436" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-coral)"/>
   <path d="M56 573h1088" stroke="#dbe0eb"/>
   <text x="56" y="608" class="meta" font-weight="700">03 / GENERAR CON RAG</text>
   <text x="56" y="641" class="body">Pregunta del usuario</text>
   <text x="423" y="640" text-anchor="middle" class="label muted">+</text>
   <path d="M469 604h44l12 12v40h-56Z" fill="#fff" stroke="#087f7a" stroke-width="2"/><path d="M482 622h26m-26 11h26m-26 11h18" stroke="#087f7a" stroke-width="2"/>
   <text x="547" y="623" class="body">Fragmentos</text><text x="547" y="650" class="body">permitidos</text>
-  <path d="M669 631h44" class="line"/>
+  <path d="M665 631H735" class="line"/>
   <rect x="735" y="601" width="99" height="58" rx="16" fill="#17243b"/><text x="784" y="638" class="label white" text-anchor="middle">LLM</text>
-  <path d="M849 631h45" class="line"/>
+  <path d="M834 631H900" class="line"/>
   <text x="917" y="623" class="body teal" font-weight="700">Respuesta</text><text x="917" y="650" class="body">con fuentes</text>
   </g>
 </svg>

@@ -1,7 +1,52 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title description">
-<title id="title">Primero acordar, después descubrir y operar</title><desc id="description">La conexión acuerda versión y capacidades. tools/list descubre los esquemas; tools/call invoca una herramienta y recibe resultado o error. Los mensajes JSON-RPC viajan sobre stdio entre procesos locales o Streamable HTTP hacia un endpoint.</desc>
-<defs><linearGradient id="coral" x2="1" y2="1"><stop stop-color="#fff4ef"/><stop offset="1" stop-color="#f1ccc5"/></linearGradient><linearGradient id="indigo" x2="1" y2="1"><stop stop-color="#f2f0ff"/><stop offset="1" stop-color="#d8d4f5"/></linearGradient><linearGradient id="teal" x2="1" y2="1"><stop stop-color="#effaf7"/><stop offset="1" stop-color="#c9e9e3"/></linearGradient>
-<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m2 1 6 4-6 4" fill="none" stroke="#536078" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
-<style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:32px;font-weight:700}.label{font-size:26px;font-weight:700}.body{font-size:23px;fill:#536078}.small{font-size:21px;fill:#536078}.mono{font-family:Consolas,monospace;font-size:22px}.line{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.card{fill:#fff;stroke:#dce1eb;stroke-width:1.5}</style></defs>
-<rect width="1200" height="630" fill="#f7f8fc"/>
-<text x="56" y="64" class="title">Primero acordar, después descubrir y operar</text><circle cx="175" cy="168" r="42" fill="#4f46b8" opacity=".09"/><circle cx="170" cy="161" r="42" fill="url(#indigo)" stroke="#4f46b8" stroke-opacity=".15"/><g transform="translate(170 161)" class="icon" stroke="#4f46b8"><path d="m-3-17 8-8a18 18 0 0 1 25 25l-8 8M3 17l-8 8A18 18 0 0 1-30 0l8-8M-13 13 13-13"/></g><circle cx="460" cy="168" r="42" fill="#4f46b8" opacity=".09"/><circle cx="455" cy="161" r="42" fill="url(#indigo)" stroke="#4f46b8" stroke-opacity=".15"/><g transform="translate(455 161)" class="icon" stroke="#4f46b8"><circle cx="-6" cy="-6" r="20"/><path d="m9 9 21 21M-15-6h18M-6-15V3"/></g><circle cx="745" cy="168" r="42" fill="#c74436" opacity=".09"/><circle cx="740" cy="161" r="42" fill="url(#coral)" stroke="#c74436" stroke-opacity=".15"/><g transform="translate(740 161)" class="icon" stroke="#c74436"><path d="M12-27a20 20 0 0 0-25 26l-20 20a8 8 0 0 0 11 11L-2 10A20 20 0 0 0 24-16L11-3-2-16Z"/></g><circle cx="1030" cy="168" r="42" fill="#087f7a" opacity=".09"/><circle cx="1025" cy="161" r="42" fill="url(#teal)" stroke="#087f7a" stroke-opacity=".15"/><g transform="translate(1025 161)" class="icon" stroke="#087f7a"><rect x="-23" y="-29" width="46" height="58" rx="6"/><path d="M-13-14h26M-13-3h20M-13 8h26M-13 19H3"/></g><path d="M224 161H399M509 161H684M794 161H969" class="line"/><text x="170" y="244" class="label" text-anchor="middle">Inicializar</text><text x="455" y="244" class="mono" text-anchor="middle">tools/list</text><text x="740" y="244" class="mono" text-anchor="middle">tools/call</text><text x="1025" y="244" class="label" text-anchor="middle">Respuesta</text><text x="170" y="289" class="body" text-anchor="middle">Versión y</text><text x="170" y="320" class="body" text-anchor="middle">capacidades</text><text x="455" y="289" class="body" text-anchor="middle">Nombres, propósito</text><text x="455" y="320" class="body" text-anchor="middle">y argumentos</text><text x="740" y="289" class="body" text-anchor="middle">Nombre y</text><text x="740" y="320" class="body" text-anchor="middle">argumentos</text><text x="1025" y="289" class="body" text-anchor="middle">Resultado o error</text><text x="1025" y="320" class="body" text-anchor="middle">asociado al ID</text><rect x="56" y="377" width="1088" height="197" rx="22" class="card"/><text x="88" y="421" class="label" text-anchor="start">El mismo formato JSON-RPC, dos transportes</text><text x="89" y="478" class="mono" text-anchor="start">stdio</text><text x="374" y="478" class="body" text-anchor="start">Cliente local</text><path d="M558 470H787" class="line"/><text x="820" y="478" class="body" text-anchor="start">Proceso servidor</text><text x="89" y="542" class="mono" text-anchor="start">Streamable HTTP</text><text x="374" y="542" class="body" text-anchor="start">Cliente</text><path d="M558 534H787" class="line"/><text x="820" y="542" class="body" text-anchor="start">Endpoint HTTP</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 674" role="img" aria-labelledby="title description">
+  <title id="title">Primero acordar, después descubrir y operar</title>
+  <desc id="description">La inicialización acuerda versión y capacidades. tools/list descubre esquemas y tools/call solicita una operación. La respuesta contiene el resultado o error asociado al ID. Los mensajes JSON-RPC viajan por stdio entre procesos locales o por Streamable HTTP hacia un endpoint.</desc>
+  <defs>
+    <!-- Lucide icons, ISC. See assets/icons/LICENSE-lucide.txt. -->
+    <symbol id="plug" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5M15 8V2M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1zM9 8V2"/></symbol>
+    <symbol id="search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></symbol>
+    <symbol id="wrench" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"/></symbol>
+    <symbol id="file-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2zM14 2v5a1 1 0 0 0 1 1h5M10 9H8M16 13H8M16 17H8"/></symbol>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="m2 1 6 4-6 4" fill="none" stroke="#536078" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <style>
+      text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}
+      .title{font-size:32px;font-weight:700}.label{font-size:25px;font-weight:700}
+      .body{font-size:22px;fill:#536078}.mono{font-family:Consolas,monospace;font-size:22px;fill:#536078}
+      .card{fill:#fff;stroke:#dce1eb;stroke-width:1.5}
+      .connector{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}
+      .bidirectional{marker-start:url(#arrow)}.divider{stroke:#dce1eb;stroke-width:1.5}
+    </style>
+  </defs>
+  <rect width="1200" height="674" fill="#f7f8fc"/>
+  <text x="56" y="64" class="title" text-anchor="start">Primero acordar, después descubrir y operar</text>
+  <g class="icon-badge" data-icon="plug"><circle cx="170" cy="164" r="44" fill="#e9e6fa"/><use href="#plug" x="146" y="140" width="48" height="48" color="#4f46b8"/></g>
+  <text x="170" y="246" class="label" text-anchor="middle">Inicializar</text>
+  <text x="170" y="289" class="body" text-anchor="middle">Versión y</text>
+  <text x="170" y="322" class="body" text-anchor="middle">capacidades</text>
+  <g class="icon-badge" data-icon="search"><circle cx="455" cy="164" r="44" fill="#e9e6fa"/><use href="#search" x="431" y="140" width="48" height="48" color="#4f46b8"/></g>
+  <text x="455" y="246" class="mono" text-anchor="middle">tools/list</text>
+  <text x="455" y="289" class="body" text-anchor="middle">Nombres, propósito</text>
+  <text x="455" y="322" class="body" text-anchor="middle">y argumentos</text>
+  <g class="icon-badge" data-icon="wrench"><circle cx="740" cy="164" r="44" fill="#fae6e1"/><use href="#wrench" x="716" y="140" width="48" height="48" color="#c74436"/></g>
+  <text x="740" y="246" class="mono" text-anchor="middle">tools/call</text>
+  <text x="740" y="289" class="body" text-anchor="middle">Nombre y</text>
+  <text x="740" y="322" class="body" text-anchor="middle">argumentos</text>
+  <g class="icon-badge" data-icon="file-text"><circle cx="1025" cy="164" r="44" fill="#e1f2ee"/><use href="#file-text" x="1001" y="140" width="48" height="48" color="#087f7a"/></g>
+  <text x="1025" y="246" class="label" text-anchor="middle">Respuesta</text>
+  <text x="1025" y="289" class="body" text-anchor="middle">Resultado o error</text>
+  <text x="1025" y="322" class="body" text-anchor="middle">asociado al ID</text>
+  <path d="M214 164H411" class="connector"/>
+  <path d="M499 164H696" class="connector"/>
+  <path d="M784 164H981" class="connector"/>
+  <rect x="56" y="369" width="1088" height="258" rx="22" class="card"/>
+  <text x="88" y="415" class="label" text-anchor="start">El mismo formato JSON-RPC, dos transportes</text>
+  <text x="88" y="489" class="body" text-anchor="start">Cliente local</text>
+  <path d="M299 481H796" class="connector bidirectional"/>
+  <text x="550" y="465" class="mono" text-anchor="middle">stdio</text>
+  <text x="844" y="489" class="body" text-anchor="start">Proceso servidor</text>
+  <path d="M88 522H1112" class="divider"/>
+  <text x="88" y="585" class="body" text-anchor="start">Cliente</text>
+  <path d="M299 577H796" class="connector bidirectional"/>
+  <text x="550" y="561" class="mono" text-anchor="middle">Streamable HTTP</text>
+  <text x="844" y="585" class="body" text-anchor="start">Endpoint HTTP</text>
+</svg>

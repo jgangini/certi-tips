@@ -12,7 +12,7 @@
       .kicker{font-size:14px;font-weight:700;letter-spacing:2px;fill:#536078}
       .title{font-size:34px;font-weight:700;letter-spacing:-.6px}
       .subtitle{font-size:19px;fill:#536078}.label{font-size:27px;font-weight:700}
-      .body{font-size:21px;fill:#536078}.meta{font-size:16px;font-weight:600;fill:#536078}
+      .body{font-size:22px;fill:#536078}.meta{font-size:16px;font-weight:600;fill:#536078}
       .line{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}
       .icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
     </style>
@@ -25,19 +25,14 @@
   <circle cx="82" cy="201" r="6" fill="#c74436"/>
   <text x="100" y="207" class="meta">Entrada: objetivo + contexto</text>
   <path d="M270 225v28" class="line"/>
-  <path d="M369 342h131" class="line"/>
+  <path d="M356 342H514" class="line"/>
   <text x="435" y="319" text-anchor="middle" class="meta">tool call</text>
-  <path d="M699 342h131" class="line"/>
+  <path d="M686 342H844" class="line"/>
   <text x="765" y="319" text-anchor="middle" class="meta">resultado</text>
   <g transform="translate(270 342)">
     <circle cy="8" r="86" fill="#e9eaf1"/>
     <circle r="86" fill="url(#model)" stroke="#ebc8bf"/>
-    <rect x="-42" y="-42" width="84" height="84" rx="19" fill="#fff" stroke="#c74436" stroke-width="2.5"/>
-    <g class="icon" stroke="#c74436">
-      <path d="M-22-53v11M0-53v11M22-53v11M-22 42v11M0 42v11M22 42v11M-53-22h11M-53 0h11M-53 22h11M42-22h11M42 0h11M42 22h11"/>
-      <path d="m-20 12 20-28 20 28M-20 12h40M0-16v42"/>
-    </g>
-    <g fill="#fff" stroke="#c74436" stroke-width="2.5"><circle cy="-16" r="6"/><circle cx="-20" cy="12" r="6"/><circle cx="20" cy="12" r="6"/><circle cy="26" r="5"/></g>
+    <g transform="translate(-48 -48) scale(4)" fill="none" stroke="#c74436" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v2M12 2v2M17 20v2M17 2v2M2 12h2M2 17h2M2 7h2M20 12h2M20 17h2M20 7h2M7 20v2M7 2v2"/><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/></g>
   </g>
   <g transform="translate(600 342)">
     <circle cy="8" r="86" fill="#e9eaf1"/>

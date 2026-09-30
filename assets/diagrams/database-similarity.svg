@@ -11,7 +11,7 @@
   <g fill="#087f7a" stroke="#fff" stroke-width="3"><circle cx="346" cy="272" r="11"/><circle cx="182" cy="272" r="11"/></g>
   <path d="m240 365 6 11 13 2-9 9 2 13-12-6-12 6 2-13-9-9 13-2Z" fill="#c74436" stroke="#fff" stroke-width="2"/>
   <circle cx="573" cy="181" r="11" fill="#4f46b8" stroke="#fff" stroke-width="3"/>
-  <text x="351" y="232" class="body">Mochila</text><text x="351" y="265" class="body">para laptop</text>
+  <text x="365" y="229" class="body">Mochila</text><text x="365" y="259" class="body">para laptop</text>
   <text x="110" y="234" class="body">Bolso para laptop</text>
   <text x="240" y="447" text-anchor="middle" class="label" fill="#c74436">Consulta</text>
   <text x="573" y="146" text-anchor="middle" class="body">Bicicleta</text>

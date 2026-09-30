@@ -4,10 +4,11 @@
   <defs><linearGradient id="surface" x2="1" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#e7e4f8"/></linearGradient><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.6"/></marker><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:22px}.h{font-size:34px;font-weight:700}.label{font-size:26px;font-weight:700}.muted{fill:#536078}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}</style></defs>
   <rect width="1200" height="520" fill="#f7f8fc"/>
   <text x="56" y="65" class="h">Una decisión clara en cada nivel</text>
-  <path d="M260 228H374m154 0h114m154 0h114" fill="none" stroke="#aeb6c8" stroke-width="3" marker-end="url(#arrow)"/>
+  <g fill="none" stroke="#536078" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"><path d="M257 228H385"/><path d="M531 228H659"/><path d="M805 228H933"/></g>
   <g text-anchor="middle">
     <circle cx="190" cy="237" r="73" fill="#ecdbd8"/><circle cx="184" cy="228" r="73" fill="#fae6e1"/>
-    <g class="icon" stroke="#c74436"><path d="M151 210h30v32h-30zm46 0h22v32h-22M181 226h16m-46-29v-13h68v13"/></g>
+    <!-- Lucide repeat-2; license: ../icons/LICENSE-lucide.txt -->
+    <g transform="translate(151 195) scale(2.75)" fill="none" stroke="#c74436" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m2 9 3-3 3 3"/><path d="M13 18H7a2 2 0 0 1-2-2V6"/><path d="m22 15-3 3-3-3"/><path d="M11 6h6a2 2 0 0 1 2 2v10"/></g>
     <text x="184" y="348" class="label">Elegir el loop</text><text x="184" y="391">API directa o SDK</text><text x="184" y="424" class="muted">¿Quién coordina pasos?</text>
     <circle cx="464" cy="237" r="73" fill="#dfdcf2"/><circle cx="458" cy="228" r="73" fill="url(#surface)"/>
     <g class="icon" stroke="#4f46b8"><path d="m434 202-20 26 20 26m48-52 20 26-20 26m-15-61-18 70"/></g>

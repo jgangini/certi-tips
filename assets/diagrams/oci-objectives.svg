@@ -1,11 +1,50 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 580" role="img" aria-labelledby="title description">
-  <title id="title">Del prototipo de agente a una operación verificable en OCI</title>
-  <desc id="description">Los objetivos conectan cuatro preguntas: qué lógica describe el framework, cómo se ejecuta en un runtime, qué configuración permite llamar a OCI y quién opera el despliegue elegido.</desc>
-  <defs><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:23px}.h{font-size:34px;font-weight:700}.label{font-size:26px;font-weight:700}.muted{fill:#536078}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}</style></defs>
-  <rect width="1200" height="580" fill="#f7f8fc"/><text x="56" y="65" class="h">Del código que funciona al servicio que puedes operar</text>
-  <g fill="#fff" stroke="#dce1ec"><rect x="56" y="117" width="527" height="184" rx="22"/><rect x="617" y="117" width="527" height="184" rx="22"/><rect x="56" y="329" width="527" height="184" rx="22"/><rect x="617" y="329" width="527" height="184" rx="22"/></g>
-  <circle cx="123" cy="185" r="38" fill="#fae6e1"/><g class="icon" stroke="#c74436"><path d="m112 167-17 18 17 18m22-36 17 18-17 18"/></g><text x="185" y="184" class="label">1. Lógica del agente</text><text x="185" y="223">Modelo, herramientas y loop</text><text x="84" y="273" class="muted">Distinguir el framework del entorno de ejecución</text>
-  <circle cx="684" cy="185" r="38" fill="#e9e6fa"/><g class="icon" stroke="#4f46b8"><rect x="664" y="164" width="40" height="42" rx="6"/><path d="M672 177h24m-24 14h24"/></g><text x="746" y="184" class="label">2. Runtime</text><text x="746" y="223">Estado, límites y fallos</text><text x="645" y="273" class="muted">Ubicar las responsabilidades de operación</text>
-  <circle cx="123" cy="397" r="38" fill="#e9e6fa"/><g class="icon" stroke="#4f46b8"><circle cx="113" cy="395" r="11"/><path d="M124 395h25m-9 0v9m-9-9v7"/></g><text x="185" y="396" class="label">3. Primera llamada</text><text x="185" y="435">Identidad, proyecto y región</text><text x="84" y="485" class="muted">Comprobar acceso antes de añadir herramientas</text>
-  <circle cx="684" cy="397" r="38" fill="#e1f2ee"/><g class="icon" stroke="#087f7a"><path d="M663 405h43v-25h-43zm8 0v10h27v-10m-14-24v13m-6-5 6 6 6-6"/></g><text x="746" y="396" class="label">4. Despliegue</text><text x="746" y="435">API o aplicación alojada</text><text x="645" y="485" class="muted">Elegir quién opera el software y su capacidad</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 634" role="img" aria-labelledby="title description">
+  <title id="title">Del código que funciona al servicio que puedes operar</title>
+  <desc id="description">Los objetivos distinguen la lógica del framework, las responsabilidades del runtime, la configuración para la primera llamada y quién opera el despliegue. Cada tarjeta separa la capacidad de la comprobación que debe realizar el alumno.</desc>
+  <defs>
+    <!-- Lucide icons, ISC. See assets/icons/LICENSE-lucide.txt. -->
+    <symbol id="bot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></symbol>
+    <symbol id="workflow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="8" x="3" y="3" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect width="8" height="8" x="13" y="13" rx="2"/></symbol>
+    <symbol id="key-round" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></symbol>
+    <symbol id="cloud-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 13v8"/><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="m8 17 4-4 4 4"/></symbol>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="m2 1 6 4-6 4" fill="none" stroke="#536078" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <style>
+      text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}
+      .title{font-size:32px;font-weight:700}.label{font-size:25px;font-weight:700}
+      .body{font-size:22px;fill:#536078}.mono{font-family:Consolas,monospace;font-size:22px;fill:#536078}
+      .card{fill:#fff;stroke:#dce1eb;stroke-width:1.5}
+      .connector{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}
+      .bidirectional{marker-start:url(#arrow)}.divider{stroke:#dce1eb;stroke-width:1.5}
+    </style>
+  </defs>
+  <rect width="1200" height="634" fill="#f7f8fc"/>
+  <text x="56" y="64" class="title" text-anchor="start">Del código que funciona al servicio que puedes operar</text>
+  <rect x="56" y="116" width="526" height="211" rx="22" class="card"/>
+  <g class="icon-badge" data-icon="bot"><circle cx="128" cy="179" r="40" fill="#fae6e1"/><use href="#bot" x="104" y="155" width="48" height="48" color="#c74436"/></g>
+  <text x="191" y="165" class="label" text-anchor="start">1. Lógica del agente</text>
+  <text x="191" y="204" class="body" text-anchor="start">Modelo, herramientas y loop</text>
+  <path d="M84 233H554" class="divider"/>
+  <text x="84" y="271" class="body" text-anchor="start">El framework expresa la lógica;</text>
+  <text x="84" y="303" class="body" text-anchor="start">no opera tu infraestructura.</text>
+  <rect x="618" y="116" width="526" height="211" rx="22" class="card"/>
+  <g class="icon-badge" data-icon="workflow"><circle cx="690" cy="179" r="40" fill="#e9e6fa"/><use href="#workflow" x="666" y="155" width="48" height="48" color="#4f46b8"/></g>
+  <text x="753" y="165" class="label" text-anchor="start">2. Runtime</text>
+  <text x="753" y="204" class="body" text-anchor="start">Estado, límites y fallos</text>
+  <path d="M646 233H1116" class="divider"/>
+  <text x="646" y="271" class="body" text-anchor="start">Define quién sostiene la ejecución</text>
+  <text x="646" y="303" class="body" text-anchor="start">y cómo responde ante fallos.</text>
+  <rect x="56" y="365" width="526" height="211" rx="22" class="card"/>
+  <g class="icon-badge" data-icon="key-round"><circle cx="128" cy="428" r="40" fill="#e9e6fa"/><use href="#key-round" x="104" y="404" width="48" height="48" color="#4f46b8"/></g>
+  <text x="191" y="414" class="label" text-anchor="start">3. Primera llamada</text>
+  <text x="191" y="453" class="body" text-anchor="start">Identidad, proyecto y región</text>
+  <path d="M84 482H554" class="divider"/>
+  <text x="84" y="520" class="body" text-anchor="start">Comprueba el acceso antes</text>
+  <text x="84" y="552" class="body" text-anchor="start">de incorporar herramientas.</text>
+  <rect x="618" y="365" width="526" height="211" rx="22" class="card"/>
+  <g class="icon-badge" data-icon="cloud-upload"><circle cx="690" cy="428" r="40" fill="#e1f2ee"/><use href="#cloud-upload" x="666" y="404" width="48" height="48" color="#087f7a"/></g>
+  <text x="753" y="414" class="label" text-anchor="start">4. Despliegue</text>
+  <text x="753" y="453" class="body" text-anchor="start">API o aplicación alojada</text>
+  <path d="M646 482H1116" class="divider"/>
+  <text x="646" y="520" class="body" text-anchor="start">Elige quién opera el software</text>
+  <text x="646" y="552" class="body" text-anchor="start">y su capacidad.</text>
 </svg>

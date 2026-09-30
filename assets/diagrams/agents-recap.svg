@@ -1,21 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 536" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 554" role="img" aria-labelledby="title description">
 <title id="title">Evidencia para entender un agente</title>
-<desc id="description">Para explicar un agente, identifica la meta, la llamada propuesta, la validación antes de ejecutar y el resultado observado. Relaciona cada evidencia con su responsable.</desc>
+<desc id="description">La meta proviene del usuario. La llamada contiene un nombre de función y argumentos. La aplicación comprueba permisos y límites. La herramienta devuelve datos o errores que el loop usa para responder.</desc>
 <defs>
-  <linearGradient id="coral" x2="1" y2="1"><stop stop-color="#fff0eb"/><stop offset="1" stop-color="#f8d8d1"/></linearGradient>
-  <linearGradient id="indigo" x2="1" y2="1"><stop stop-color="#f0edff"/><stop offset="1" stop-color="#ded9f6"/></linearGradient>
-  <linearGradient id="teal" x2="1" y2="1"><stop stop-color="#e7f7f3"/><stop offset="1" stop-color="#c9e9e3"/></linearGradient>
-  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.7"/></marker>
-  <style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.label{font-size:27px;font-weight:700}.body{font-size:23px;fill:#536078}.small{font-size:21px;fill:#536078}.flow{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.white{fill:#fff}</style>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m2 1 6 4-6 4" fill="none" stroke="#536078" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.label{font-size:27px;font-weight:700}.body{font-size:24px;fill:#536078}.small{font-size:22px;fill:#536078}.flow{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}.card{fill:#fff;stroke:#dce1ec;stroke-width:1.5}.white{fill:#fff}</style>
 </defs>
-<rect width="1200" height="536" fill="#f7f8fc"/>
-<text x="56" y="70" class="title">Explica el agente con evidencia observable</text>
-<path d="M267 215h61M559 215h61M851 215h61" class="flow"/>
-<g fill="#fff" stroke="#dce1ec"><rect x="56" y="134" width="210" height="161" rx="22"/><rect x="348" y="134" width="210" height="161" rx="22"/><rect x="640" y="134" width="210" height="161" rx="22"/><rect x="932" y="134" width="210" height="161" rx="22"/></g>
-<g text-anchor="middle"><text x="161" y="192" class="label">Meta</text><text x="453" y="192" class="label">Llamada</text><text x="745" y="192" class="label">Control</text><text x="1037" y="192" class="label">Resultado</text>
-<text x="161" y="239" class="small">Petición del usuario</text><text x="453" y="239" class="small">Nombre + argumentos</text><text x="745" y="239" class="small">Permisos y límites</text><text x="1037" y="239" class="small">Dato, error o cierre</text></g>
-<path d="M161 295v55M453 295v55M745 295v55M1037 295v55" stroke="#ccd3df" stroke-width="2"/>
-<g text-anchor="middle"><circle cx="161" cy="380" r="33" fill="url(#coral)"/><circle cx="453" cy="380" r="33" fill="url(#coral)"/><circle cx="745" cy="380" r="33" fill="url(#indigo)"/><circle cx="1037" cy="380" r="33" fill="url(#teal)"/></g>
-<g class="icon"><path d="M145 380h32m-16-16v32M437 373h32m-32 13h23" stroke="#c74436"/><path d="m728 379 12 12 24-27" stroke="#4f46b8"/><path d="m1020 379 12 12 24-27" stroke="#087f7a"/></g>
-<g text-anchor="middle" class="body"><text x="161" y="463">Usuario</text><text x="453" y="463">Modelo</text><text x="745" y="463">Aplicación</text><text x="1037" y="463">Herramienta + loop</text></g>
+<rect width="1200" height="554" fill="#f7f8fc"/>
+
+<text x="56" y="68" class="title">Explica el agente con evidencia observable</text>
+<g class="card"><rect x="56" y="134" width="232" height="188" rx="24"/><rect x="342" y="134" width="232" height="188" rx="24"/><rect x="628" y="134" width="232" height="188" rx="24"/><rect x="914" y="134" width="232" height="188" rx="24"/></g>
+<path d="M288 228H342" class="flow"/><path d="M574 228H628" class="flow"/><path d="M860 228H914" class="flow"/>
+<g text-anchor="middle"><text x="172" y="189" class="label">Meta</text><text x="458" y="189" class="label">Llamada</text><text x="744" y="189" class="label">Control</text><text x="1030" y="189" class="label">Resultado</text>
+<text x="172" y="243" class="body"><tspan x="172">Petición</tspan><tspan x="172" dy="32">del usuario</tspan></text>
+<text x="458" y="243" class="body"><tspan x="458">Nombre</tspan><tspan x="458" dy="32">+ argumentos</tspan></text>
+<text x="744" y="243" class="body"><tspan x="744">Permisos</tspan><tspan x="744" dy="32">y límites</tspan></text>
+<text x="1030" y="243" class="body"><tspan x="1030">Dato, error</tspan><tspan x="1030" dy="32">o cierre</tspan></text></g>
+<g stroke="#ccd3df" stroke-width="2"><path d="M172 322V354"/><path d="M458 322V354"/><path d="M744 322V354"/><path d="M1030 322V354"/></g>
+<g transform="translate(172 408)"><circle r="54" fill="#fae6e1"/><g fill="none" stroke="#c74436" stroke-width="3" stroke-linecap="round"><circle cy="-12" r="12"/><path d="M-23 23v-6Q-23 5 0 5Q23 5 23 17v6"/></g></g>
+<g transform="translate(458 408)"><circle r="54" fill="#fae6e1"/><g transform="translate(-30 -30) scale(2.5)" fill="none" stroke="#c74436" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v2M12 2v2M17 20v2M17 2v2M2 12h2M2 17h2M2 7h2M20 12h2M20 17h2M20 7h2M7 20v2M7 2v2"/><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/></g></g>
+<g transform="translate(744 408)"><circle r="54" fill="#e9e8f8"/><g transform="translate(-30 -30) scale(2.5)" fill="none" stroke="#4f46b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="8" x="3" y="3" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect width="8" height="8" x="13" y="13" rx="2"/></g></g>
+<g transform="translate(1030 408)"><circle r="54" fill="#e1f2ee"/><g transform="translate(-30 -30) scale(2.5)" fill="none" stroke="#087f7a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"/></g></g>
+<g text-anchor="middle" class="body"><text x="172" y="512">Usuario</text><text x="458" y="512">Modelo</text><text x="744" y="512">Aplicación</text><text x="1030" y="512">Herramienta + loop</text></g>
 </svg>

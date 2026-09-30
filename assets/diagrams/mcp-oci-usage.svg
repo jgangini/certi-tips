@@ -1,7 +1,39 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" role="img" aria-labelledby="title description">
-<title id="title">MCP local, datos en Oracle Cloud</title><desc id="description">El cliente y el servidor MCP de uso y costos pueden ser procesos en la misma máquina conectados por stdio. El servidor consulta una API de OCI por HTTPS y devuelve resultados. Para contrastar un informe se igualan fechas, moneda y alcance.</desc>
-<defs><linearGradient id="coral" x2="1" y2="1"><stop stop-color="#fff4ef"/><stop offset="1" stop-color="#f1ccc5"/></linearGradient><linearGradient id="indigo" x2="1" y2="1"><stop stop-color="#f2f0ff"/><stop offset="1" stop-color="#d8d4f5"/></linearGradient><linearGradient id="teal" x2="1" y2="1"><stop stop-color="#effaf7"/><stop offset="1" stop-color="#c9e9e3"/></linearGradient>
-<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m2 1 6 4-6 4" fill="none" stroke="#536078" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
-<style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:32px;font-weight:700}.label{font-size:26px;font-weight:700}.body{font-size:23px;fill:#536078}.small{font-size:21px;fill:#536078}.mono{font-family:Consolas,monospace;font-size:22px}.line{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.card{fill:#fff;stroke:#dce1eb;stroke-width:1.5}</style></defs>
-<rect width="1200" height="640" fill="#f7f8fc"/>
-<text x="56" y="64" class="title">MCP local, datos en Oracle Cloud</text><rect x="48" y="121" width="744" height="325" rx="24" fill="#eeecfa" stroke="#d5d0ed"/><text x="77" y="165" class="label" text-anchor="start">Máquina local</text><circle cx="223" cy="266" r="52" fill="#4f46b8" opacity=".09"/><circle cx="218" cy="259" r="52" fill="url(#indigo)" stroke="#4f46b8" stroke-opacity=".15"/><g transform="translate(218 259)" class="icon" stroke="#4f46b8"><rect x="-33" y="-26" width="66" height="52" rx="6"/><path d="M-33-11h66M-23-19h1m8 0h1m8 0h1M-18 0l10 8-10 8M1 16h17"/></g><circle cx="622" cy="266" r="52" fill="#c74436" opacity=".09"/><circle cx="617" cy="259" r="52" fill="url(#coral)" stroke="#c74436" stroke-opacity=".15"/><g transform="translate(617 259)" class="icon" stroke="#c74436"><path d="M12-27a20 20 0 0 0-25 26l-20 20a8 8 0 0 0 11 11L-2 10A20 20 0 0 0 24-16L11-3-2-16Z"/></g><circle cx="1015" cy="266" r="52" fill="#087f7a" opacity=".09"/><circle cx="1010" cy="259" r="52" fill="url(#teal)" stroke="#087f7a" stroke-opacity=".15"/><g transform="translate(1010 259)" class="icon" stroke="#087f7a"><rect x="-23" y="-29" width="46" height="58" rx="6"/><path d="M-13-14h26M-13-3h20M-13 8h26M-13 19H3"/></g><text x="218" y="356" class="label" text-anchor="middle">Cliente MCP</text><text x="617" y="356" class="label" text-anchor="middle">Servidor de uso</text><text x="1010" y="356" class="label" text-anchor="middle">API de OCI</text><text x="218" y="396" class="small" text-anchor="middle">Coordina la solicitud</text><text x="617" y="396" class="small" text-anchor="middle">Aplica credenciales</text><text x="1010" y="396" class="small" text-anchor="middle">Devuelve datos</text><path d="M281 248H550M681 248H944" class="line"/><path d="M550 280H282M944 280H681" class="line"/><text x="418" y="214" class="small" text-anchor="middle">stdio · MCP</text><text x="815" y="214" class="small" text-anchor="middle">HTTPS</text><rect x="56" y="497" width="1088" height="93" rx="22" class="card"/><text x="86" y="538" class="label" text-anchor="start">Contrasta con el informe autorizado</text><text x="86" y="576" class="small" text-anchor="start">Mismo periodo · misma moneda · misma zona horaria · mismo alcance</text></svg>
+  <title id="title">MCP local, datos en Oracle Cloud</title>
+  <desc id="description">Cliente y servidor MCP son procesos locales conectados por stdio. El servidor usa otra conexión, HTTPS, para consultar una API de OCI. Cada tramo tiene sus extremos y su transporte. Un informe se contrasta usando iguales periodo, moneda, zona horaria y alcance.</desc>
+  <defs>
+    <!-- Lucide icons, ISC. See assets/icons/LICENSE-lucide.txt. -->
+    <symbol id="app-window" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4M2 8h20M6 4v4"/></symbol>
+    <symbol id="server" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 6h.01M6 18h.01"/></symbol>
+    <symbol id="cloud" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></symbol>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="m2 1 6 4-6 4" fill="none" stroke="#536078" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <style>
+      text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}
+      .title{font-size:32px;font-weight:700}.label{font-size:25px;font-weight:700}
+      .body{font-size:22px;fill:#536078}.mono{font-family:Consolas,monospace;font-size:22px;fill:#536078}
+      .card{fill:#fff;stroke:#dce1eb;stroke-width:1.5}
+      .connector{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}
+      .bidirectional{marker-start:url(#arrow)}.divider{stroke:#dce1eb;stroke-width:1.5}
+    </style>
+  </defs>
+  <rect width="1200" height="640" fill="#f7f8fc"/>
+  <text x="56" y="64" class="title" text-anchor="start">MCP local, datos en Oracle Cloud</text>
+  <rect x="56" y="128" width="690" height="308" rx="24" fill="#e9e6fa" stroke="#d5d0ed"/>
+  <text x="84" y="174" class="label" text-anchor="start">Máquina local</text>
+  <g class="icon-badge" data-icon="app-window"><circle cx="190" cy="254" r="48" fill="#e9e6fa"/><use href="#app-window" x="164" y="228" width="52" height="52" color="#4f46b8"/></g>
+  <g class="icon-badge" data-icon="server"><circle cx="575" cy="254" r="48" fill="#fae6e1"/><use href="#server" x="549" y="228" width="52" height="52" color="#c74436"/></g>
+  <g class="icon-badge" data-icon="cloud"><circle cx="1010" cy="254" r="48" fill="#e1f2ee"/><use href="#cloud" x="984" y="228" width="52" height="52" color="#087f7a"/></g>
+  <path d="M238 254H527" class="connector bidirectional"/>
+  <text x="382" y="235" class="mono" text-anchor="middle">stdio · MCP</text>
+  <path d="M623 254H962" class="connector bidirectional"/>
+  <text x="793" y="235" class="mono" text-anchor="middle">HTTPS</text>
+  <text x="190" y="351" class="label" text-anchor="middle">Cliente MCP</text>
+  <text x="575" y="351" class="label" text-anchor="middle">Servidor de uso</text>
+  <text x="1010" y="351" class="label" text-anchor="middle">API de OCI</text>
+  <text x="190" y="389" class="body" text-anchor="middle">Coordina la solicitud</text>
+  <text x="575" y="389" class="body" text-anchor="middle">Aplica credenciales</text>
+  <text x="1010" y="389" class="body" text-anchor="middle">Devuelve datos</text>
+  <rect x="56" y="488" width="1088" height="108" rx="22" class="card"/>
+  <text x="86" y="531" class="label" text-anchor="start">Contrasta con el informe autorizado</text>
+  <text x="86" y="568" class="body" text-anchor="start">Mismo periodo · misma moneda · misma zona horaria · mismo alcance</text>
+</svg>

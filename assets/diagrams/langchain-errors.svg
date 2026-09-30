@@ -1,7 +1,62 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 570" role="img" aria-labelledby="title description">
-<title id="title">Localizar el fallo antes de culpar al modelo</title><desc id="description">Tres errores y su corrección: una invocación del agente puede implicar varias llamadas; conservar solo texto pierde resultados de herramientas; cambiar proveedor requiere revisar capacidades y pruebas.</desc>
-<defs><linearGradient id="coral" x2="1" y2="1"><stop stop-color="#fff4ef"/><stop offset="1" stop-color="#f1ccc5"/></linearGradient><linearGradient id="indigo" x2="1" y2="1"><stop stop-color="#f2f0ff"/><stop offset="1" stop-color="#d8d4f5"/></linearGradient><linearGradient id="teal" x2="1" y2="1"><stop stop-color="#effaf7"/><stop offset="1" stop-color="#c9e9e3"/></linearGradient>
-<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m2 1 6 4-6 4" fill="none" stroke="#536078" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
-<style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:32px;font-weight:700}.label{font-size:26px;font-weight:700}.body{font-size:23px;fill:#536078}.small{font-size:21px;fill:#536078}.mono{font-family:Consolas,monospace;font-size:22px}.line{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.card{fill:#fff;stroke:#dce1eb;stroke-width:1.5}</style></defs>
-<rect width="1200" height="570" fill="#f7f8fc"/>
-<text x="56" y="64" class="title">Localizar el fallo antes de culpar al modelo</text><text x="89" y="128" class="label" text-anchor="start">Suposición que falla</text><text x="665" y="128" class="label" text-anchor="start">Qué comprobar</text><rect x="56" y="165" width="485" height="91" rx="22" class="card"/><rect x="632" y="165" width="511" height="91" rx="22" class="card"/><path d="M554 211H617" class="line"/><rect x="56" y="290" width="485" height="91" rx="22" class="card"/><rect x="632" y="290" width="511" height="91" rx="22" class="card"/><path d="M554 336H617" class="line"/><rect x="56" y="415" width="485" height="91" rx="22" class="card"/><rect x="632" y="415" width="511" height="91" rx="22" class="card"/><path d="M554 461H617" class="line"/><text x="82" y="218" class="body" text-anchor="start">invoke = una llamada de red</text><text x="658" y="203" class="small" text-anchor="start">Revisa la secuencia de llamadas.</text><text x="658" y="234" class="small" text-anchor="start">Un agente puede invocar varias veces.</text><text x="82" y="343" class="body" text-anchor="start">Guardar solo la respuesta final</text><text x="658" y="328" class="small" text-anchor="start">Conserva llamadas y resultados</text><text x="658" y="359" class="small" text-anchor="start">con su identificador y contexto.</text><text x="82" y="468" class="small" text-anchor="start">Mismo interfaz = mismo comportamiento</text><text x="658" y="453" class="small" text-anchor="start">Prueba tool calling, parámetros</text><text x="658" y="484" class="small" text-anchor="start">y límites al cambiar de proveedor.</text><rect x="56" y="165" width="7" height="91" rx="3" fill="#c74436"/><rect x="632" y="165" width="7" height="91" rx="3" fill="#087f7a"/><rect x="56" y="290" width="7" height="91" rx="3" fill="#c74436"/><rect x="632" y="290" width="7" height="91" rx="3" fill="#087f7a"/><rect x="56" y="415" width="7" height="91" rx="3" fill="#c74436"/><rect x="632" y="415" width="7" height="91" rx="3" fill="#087f7a"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 538" role="img" aria-labelledby="title description">
+  <title id="title">Localizar el fallo antes de culpar al modelo</title>
+  <desc id="description">Tres errores y su corrección: una invocación del agente puede implicar varias llamadas; conservar solo texto pierde resultados de herramientas; cambiar proveedor requiere revisar capacidades y pruebas.</desc>
+  <defs>
+    <style>
+      text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:24px}
+      .title{font-size:34px;font-weight:700}
+      .label{font-size:26px;font-weight:700}
+      .mistake rect{fill:#fae6e1;stroke:#efc7be;stroke-width:1.5}
+      .correction rect{fill:#e1f2ee;stroke:#b7ddd5;stroke-width:1.5}
+      .arrow{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+      .icon{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+    </style>
+  </defs>
+  <rect width="1200" height="538" fill="#f7f8fc"/>
+  <text x="56" y="64" class="title">Localizar el fallo antes de culpar al modelo</text>
+  <g class="column-headings">
+    <circle cx="80" cy="118" r="16" fill="#fae6e1"/>
+    <path d="m75 113 10 10m0-10-10 10" class="icon" stroke="#c74436"/>
+    <text x="108" y="127" class="label">Error o confusión</text>
+    <circle cx="648" cy="118" r="16" fill="#e1f2ee"/>
+    <path d="m641 118 5 5 9-10" class="icon" stroke="#087f7a"/>
+    <text x="676" y="127" class="label">Qué comprobar</text>
+  </g>
+  <g class="comparison-row" transform="translate(0 154)">
+    <g class="mistake">
+      <rect x="56" width="480" height="96" rx="16"/>
+      <text x="82" y="57">invoke = una llamada de red</text>
+    </g>
+    <path d="M553 48h50m-13-9 13 9-13 9" class="arrow"/>
+    <g class="correction">
+      <rect x="624" width="520" height="96" rx="16"/>
+      <text x="650" y="40">Revisa la secuencia de llamadas.</text>
+      <text x="650" y="74">Un agente puede invocar varias veces.</text>
+    </g>
+  </g>
+  <g class="comparison-row" transform="translate(0 270)">
+    <g class="mistake">
+      <rect x="56" width="480" height="96" rx="16"/>
+      <text x="82" y="57">Guardar solo la respuesta final</text>
+    </g>
+    <path d="M553 48h50m-13-9 13 9-13 9" class="arrow"/>
+    <g class="correction">
+      <rect x="624" width="520" height="96" rx="16"/>
+      <text x="650" y="40">Conserva llamadas y resultados</text>
+      <text x="650" y="74">con su identificador y contexto.</text>
+    </g>
+  </g>
+  <g class="comparison-row" transform="translate(0 386)">
+    <g class="mistake">
+      <rect x="56" width="480" height="96" rx="16"/>
+      <text x="82" y="40">Misma interfaz =</text>
+      <text x="82" y="74">mismo comportamiento</text>
+    </g>
+    <path d="M553 48h50m-13-9 13 9-13 9" class="arrow"/>
+    <g class="correction">
+      <rect x="624" width="520" height="96" rx="16"/>
+      <text x="650" y="40">Prueba tool calling, parámetros</text>
+      <text x="650" y="74">y límites al cambiar de proveedor.</text>
+    </g>
+  </g>
+</svg>

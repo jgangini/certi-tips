@@ -1,7 +1,45 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 580" role="img" aria-labelledby="title description">
-<title id="title">Operar, aportar contexto o preparar un prompt</title><desc id="description">Tools exponen operaciones que el modelo puede solicitar bajo controles de ejecución. Resources aportan contexto gestionado por la aplicación. Prompts son plantillas que el usuario puede seleccionar. Ninguna de estas capacidades concede permisos por sí sola.</desc>
-<defs><linearGradient id="coral" x2="1" y2="1"><stop stop-color="#fff4ef"/><stop offset="1" stop-color="#f1ccc5"/></linearGradient><linearGradient id="indigo" x2="1" y2="1"><stop stop-color="#f2f0ff"/><stop offset="1" stop-color="#d8d4f5"/></linearGradient><linearGradient id="teal" x2="1" y2="1"><stop stop-color="#effaf7"/><stop offset="1" stop-color="#c9e9e3"/></linearGradient>
-<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m2 1 6 4-6 4" fill="none" stroke="#536078" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
-<style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:32px;font-weight:700}.label{font-size:26px;font-weight:700}.body{font-size:23px;fill:#536078}.small{font-size:21px;fill:#536078}.mono{font-family:Consolas,monospace;font-size:22px}.line{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.card{fill:#fff;stroke:#dce1eb;stroke-width:1.5}</style></defs>
-<rect width="1200" height="580" fill="#f7f8fc"/>
-<text x="56" y="64" class="title">Operar, aportar contexto o preparar un prompt</text><rect x="56" y="121" width="332" height="399" rx="22" class="card"/><rect x="434" y="121" width="332" height="399" rx="22" class="card"/><rect x="812" y="121" width="332" height="399" rx="22" class="card"/><circle cx="227" cy="211" r="52" fill="#c74436" opacity=".09"/><circle cx="222" cy="204" r="52" fill="url(#coral)" stroke="#c74436" stroke-opacity=".15"/><g transform="translate(222 204)" class="icon" stroke="#c74436"><path d="M12-27a20 20 0 0 0-25 26l-20 20a8 8 0 0 0 11 11L-2 10A20 20 0 0 0 24-16L11-3-2-16Z"/></g><circle cx="605" cy="211" r="52" fill="#087f7a" opacity=".09"/><circle cx="600" cy="204" r="52" fill="url(#teal)" stroke="#087f7a" stroke-opacity=".15"/><g transform="translate(600 204)" class="icon" stroke="#087f7a"><rect x="-23" y="-29" width="46" height="58" rx="6"/><path d="M-13-14h26M-13-3h20M-13 8h26M-13 19H3"/></g><circle cx="983" cy="211" r="52" fill="#4f46b8" opacity=".09"/><circle cx="978" cy="204" r="52" fill="url(#indigo)" stroke="#4f46b8" stroke-opacity=".15"/><g transform="translate(978 204)" class="icon" stroke="#4f46b8"><rect x="-33" y="-26" width="66" height="52" rx="6"/><path d="M-33-11h66M-23-19h1m8 0h1m8 0h1M-18 0l10 8-10 8M1 16h17"/></g><text x="222" y="302" class="label" text-anchor="middle">Tools</text><text x="600" y="302" class="label" text-anchor="middle">Resources</text><text x="978" y="302" class="label" text-anchor="middle">Prompts</text><text x="222" y="348" class="body" text-anchor="middle">Consultar un pedido</text><text x="222" y="379" class="body" text-anchor="middle">Operación con esquema</text><text x="600" y="348" class="body" text-anchor="middle">Leer una política</text><text x="600" y="379" class="body" text-anchor="middle">Información con URI</text><text x="978" y="348" class="body" text-anchor="middle">Preparar un diagnóstico</text><text x="978" y="379" class="body" text-anchor="middle">Plantilla reutilizable</text><text x="222" y="448" class="small" text-anchor="middle">El modelo solicita;</text><text x="222" y="479" class="small" text-anchor="middle">la aplicación controla.</text><text x="600" y="448" class="small" text-anchor="middle">La aplicación incorpora</text><text x="600" y="479" class="small" text-anchor="middle">el contexto pertinente.</text><text x="978" y="448" class="small" text-anchor="middle">El usuario selecciona</text><text x="978" y="479" class="small" text-anchor="middle">la interacción.</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 578" role="img" aria-labelledby="title description">
+  <title id="title">Operar, aportar contexto o preparar un prompt</title>
+  <desc id="description">Tools exponen operaciones que el modelo solicita bajo control de ejecución. Resources aportan contexto que gestiona la aplicación. Prompts son plantillas seleccionadas por el usuario. Cada capacidad conserva su patrón de control y no concede permisos por sí sola.</desc>
+  <defs>
+    <!-- Lucide icons, ISC. See assets/icons/LICENSE-lucide.txt. -->
+    <symbol id="wrench" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"/></symbol>
+    <symbol id="file-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2zM14 2v5a1 1 0 0 0 1 1h5M10 9H8M16 13H8M16 17H8"/></symbol>
+    <symbol id="messages-square" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2zM20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1"/></symbol>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="m2 1 6 4-6 4" fill="none" stroke="#536078" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <style>
+      text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}
+      .title{font-size:32px;font-weight:700}.label{font-size:25px;font-weight:700}
+      .body{font-size:22px;fill:#536078}.mono{font-family:Consolas,monospace;font-size:22px;fill:#536078}
+      .card{fill:#fff;stroke:#dce1eb;stroke-width:1.5}
+      .connector{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}
+      .bidirectional{marker-start:url(#arrow)}.divider{stroke:#dce1eb;stroke-width:1.5}
+    </style>
+  </defs>
+  <rect width="1200" height="578" fill="#f7f8fc"/>
+  <text x="56" y="64" class="title" text-anchor="start">Operar, aportar contexto o preparar un prompt</text>
+  <rect x="56" y="122" width="332" height="398" rx="22" class="card"/>
+  <g class="icon-badge" data-icon="wrench"><circle cx="222" cy="206" r="48" fill="#fae6e1"/><use href="#wrench" x="196" y="180" width="52" height="52" color="#c74436"/></g>
+  <text x="222" y="300" class="label" text-anchor="middle">Tools</text>
+  <text x="222" y="343" class="body" text-anchor="middle">Consultar un pedido</text>
+  <text x="222" y="378" class="body" text-anchor="middle">Operación con esquema</text>
+  <path d="M84 409H360" class="divider"/>
+  <text x="222" y="450" class="body" text-anchor="middle">El modelo solicita;</text>
+  <text x="222" y="484" class="body" text-anchor="middle">la aplicación controla.</text>
+  <rect x="434" y="122" width="332" height="398" rx="22" class="card"/>
+  <g class="icon-badge" data-icon="file-text"><circle cx="600" cy="206" r="48" fill="#e1f2ee"/><use href="#file-text" x="574" y="180" width="52" height="52" color="#087f7a"/></g>
+  <text x="600" y="300" class="label" text-anchor="middle">Resources</text>
+  <text x="600" y="343" class="body" text-anchor="middle">Leer una política</text>
+  <text x="600" y="378" class="body" text-anchor="middle">Información con URI</text>
+  <path d="M462 409H738" class="divider"/>
+  <text x="600" y="450" class="body" text-anchor="middle">La aplicación incorpora</text>
+  <text x="600" y="484" class="body" text-anchor="middle">el contexto pertinente.</text>
+  <rect x="812" y="122" width="332" height="398" rx="22" class="card"/>
+  <g class="icon-badge" data-icon="messages-square"><circle cx="978" cy="206" r="48" fill="#e9e6fa"/><use href="#messages-square" x="952" y="180" width="52" height="52" color="#4f46b8"/></g>
+  <text x="978" y="300" class="label" text-anchor="middle">Prompts</text>
+  <text x="978" y="343" class="body" text-anchor="middle">Preparar un diagnóstico</text>
+  <text x="978" y="378" class="body" text-anchor="middle">Plantilla reutilizable</text>
+  <path d="M840 409H1116" class="divider"/>
+  <text x="978" y="450" class="body" text-anchor="middle">El usuario selecciona</text>
+  <text x="978" y="484" class="body" text-anchor="middle">la interacción.</text>
+</svg>

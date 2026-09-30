@@ -5,19 +5,19 @@
   <linearGradient id="coral" x2="1" y2="1"><stop stop-color="#fff0eb"/><stop offset="1" stop-color="#f8d8d1"/></linearGradient>
   <linearGradient id="indigo" x2="1" y2="1"><stop stop-color="#f0edff"/><stop offset="1" stop-color="#ded9f6"/></linearGradient>
   <linearGradient id="teal" x2="1" y2="1"><stop stop-color="#e7f7f3"/><stop offset="1" stop-color="#c9e9e3"/></linearGradient>
-  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.7"/></marker>
-  <style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.label{font-size:27px;font-weight:700}.body{font-size:23px;fill:#536078}.small{font-size:21px;fill:#536078}.flow{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.white{fill:#fff}</style>
+  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></marker>
+  <style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.label{font-size:27px;font-weight:700}.body{font-size:23px;fill:#536078}.small{font-size:22px;fill:#536078}.flow{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.white{fill:#fff}</style>
 </defs>
 <rect width="1200" height="560" fill="#f7f8fc"/>
 <text x="56" y="70" class="title">Tres formas de resolver una petición</text>
 <g transform="translate(228 204)"><circle cy="7" r="66" fill="#e9eaf1"/><circle r="66" fill="url(#coral)"/><path d="M-35-25h70v45H-8l-22 18V20h-5Z" fill="#fff" stroke="#c74436" stroke-width="3"/><path d="M-20-9h40M-20 5H8" class="icon" stroke="#c74436"/></g>
-<g transform="translate(600 204)"><circle cy="7" r="66" fill="#e9eaf1"/><circle r="66" fill="url(#indigo)"/><path d="M-42 0h84" stroke="#4f46b8" stroke-width="3"/><g fill="#fff" stroke="#4f46b8" stroke-width="3"><rect x="-46" y="-12" width="24" height="24" rx="4"/><rect x="-12" y="-12" width="24" height="24" rx="4"/><rect x="22" y="-12" width="24" height="24" rx="4"/></g></g>
+<g transform="translate(600 204)"><circle cy="7" r="66" fill="#e9eaf1"/><circle r="66" fill="url(#indigo)"/><path d="M-38 0h76" stroke="#4f46b8" stroke-width="3"/><g fill="#fff" stroke="#4f46b8" stroke-width="3"><rect x="-38" y="-11" width="22" height="22" rx="4"/><rect x="-11" y="-11" width="22" height="22" rx="4"/><rect x="16" y="-11" width="22" height="22" rx="4"/></g></g>
 <g transform="translate(972 204)"><circle cy="7" r="66" fill="#e9eaf1"/><circle r="66" fill="url(#teal)"/><path d="M-32-16A37 37 0 1 1-32 20M-43-17l15-4 4 15" class="icon" stroke="#087f7a"/><path d="m-15 3 10 10 24-25" class="icon" stroke="#087f7a"/></g>
 <g text-anchor="middle"><text x="228" y="313" class="label">Chatbot</text><text x="600" y="313" class="label">Workflow</text><text x="972" y="313" class="label">Agente</text>
 <text x="228" y="354" class="body">Responde una pregunta</text><text x="600" y="354" class="body">Sigue una secuencia fija</text><text x="972" y="354" class="body">Decide el próximo paso</text></g>
-<path d="M192 418h51M527 418h29M634 418h30" class="flow"/>
+<path d="M192 418H246" class="flow"/><path d="M527 418H559" class="flow"/><path d="M634 418H667" class="flow"/>
 <g fill="#fff" stroke="#cbd2df"><rect x="74" y="392" width="118" height="52" rx="12"/><rect x="246" y="392" width="134" height="52" rx="12"/><rect x="452" y="392" width="75" height="52" rx="12"/><rect x="559" y="392" width="75" height="52" rx="12"/><rect x="667" y="392" width="75" height="52" rx="12"/></g>
 <g text-anchor="middle" class="small"><text x="133" y="425">Pregunta</text><text x="313" y="425">Respuesta</text><text x="490" y="425">A</text><text x="597" y="425">B</text><text x="705" y="425">C</text></g>
-<path d="M968 418h27M1062 444v39H904v-35" class="flow"/><g fill="#fff" stroke="#b9ddd6"><rect x="840" y="392" width="128" height="52" rx="12"/><rect x="998" y="392" width="128" height="52" rx="12"/></g>
+<path d="M968 418H998" class="flow"/><path d="M1062 444V465Q1062 483 1044 483H922Q904 483 904 465V444" class="flow"/><g fill="#fff" stroke="#b9ddd6"><rect x="840" y="392" width="128" height="52" rx="12"/><rect x="998" y="392" width="128" height="52" rx="12"/></g>
 <text x="904" y="425" text-anchor="middle" class="small">Decisión</text><text x="1062" y="425" text-anchor="middle" class="small">Acción</text><text x="967" y="520" text-anchor="middle" class="small">Observación y límites</text>
 </svg>

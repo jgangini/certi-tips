@@ -8,6 +8,6 @@
   <text x="230" y="248" class="label">Tu aplicación</text><text x="230" y="285">Lógica y funciones</text><text x="86" y="363">Tu equipo sigue operando el backend</text><text x="86" y="402">y validando sus acciones.</text>
   <rect x="764" y="118" width="380" height="325" rx="25" fill="#e1f2ee" stroke="#bfded6" stroke-width="2"/><text x="798" y="165" class="label">OCI Generative AI</text>
   <g class="icon" stroke="#087f7a"><path d="M857 274h164a31 31 0 0 0-12-59 48 48 0 0 0-89-12 34 34 0 0 0-63 36 18 18 0 0 0 0 35Z"/></g><text x="954" y="336" text-anchor="middle" class="label">Responses API</text><text x="954" y="376" text-anchor="middle">Modelo compatible</text>
-  <path d="M539 250h211m0 74H539" class="line"/><text x="644" y="226" text-anchor="middle">Petición</text><text x="644" y="366" text-anchor="middle">Resultado</text>
+  <path d="M525 250H764" class="line"/><path d="M764 324H525" class="line"/><text x="644" y="232" text-anchor="middle">Petición</text><text x="644" y="306" text-anchor="middle">Resultado</text>
   <text x="600" y="502" text-anchor="middle" style="fill:#536078">Ajusta endpoint · autenticación · proyecto · modelo · herramientas compatibles</text>
 </svg>

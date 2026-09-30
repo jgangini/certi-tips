@@ -1,21 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 590" role="img" aria-labelledby="title description">
   <title id="title">Autonomous MCP Server conecta clientes y herramientas</title>
   <desc id="description">Dos aplicaciones MCP compatibles usan HTTPS para acceder al servidor gestionado. Este expone herramientas Select AI Agent. Identidad, roles, políticas y auditoría se aplican al acceso a los datos; el protocolo no concede acceso universal.</desc>
-  <defs><linearGradient id="db" x2="1" y2="1"><stop stop-color="#55a9a0"/><stop offset="1" stop-color="#087f7a"/></linearGradient><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.6"/></marker><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.label{font-size:25px;font-weight:700}.body{font-size:22px;fill:#536078}.line{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}.white{fill:#fff}</style></defs>
+  <defs><linearGradient id="db" x2="1" y2="1"><stop stop-color="#55a9a0"/><stop offset="1" stop-color="#087f7a"/></linearGradient><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.label{font-size:25px;font-weight:700}.body{font-size:22px;fill:#536078}.line{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}.white{fill:#fff}</style></defs>
   <rect width="1200" height="590" fill="#f7f8fc"/>
   <text x="48" y="61" class="title">Un protocolo común, con controles de base de datos</text>
   <g fill="#fff" stroke="#4f46b8" stroke-width="3"><rect x="74" y="156" width="137" height="77" rx="8"/><path d="M142 234v20m-32 0h64"/><rect x="74" y="332" width="137" height="77" rx="8"/><path d="M142 410v20m-32 0h64"/></g>
   <g fill="#4f46b8"><circle cx="99" cy="177" r="4"/><circle cx="112" cy="177" r="4"/><circle cx="99" cy="353" r="4"/><circle cx="112" cy="353" r="4"/></g>
   <text x="143" y="294" text-anchor="middle" class="body">Cliente MCP A</text><text x="143" y="470" text-anchor="middle" class="body">Cliente MCP B</text>
-  <path d="M230 202h47v178h-47" fill="none" stroke="#536078" stroke-width="2.5"/><path d="M277 314h78" class="line"/><text x="285" y="278" class="body">HTTPS</text>
+  <path d="M211 194H276Q298 194 298 216V292Q298 314 320 314" fill="none" stroke="#536078" stroke-width="2.5" stroke-linecap="round"/><path d="M211 370H276Q298 370 298 348V336Q298 314 320 314" fill="none" stroke="#536078" stroke-width="2.5" stroke-linecap="round"/><text x="325" y="292" class="body">HTTPS</text>
   <rect x="380" y="120" width="772" height="420" rx="24" fill="#fff" stroke="#cfd9df" stroke-width="2"/>
   <text x="409" y="164" class="label">Autonomous AI Database</text>
-  <rect x="416" y="233" width="236" height="160" rx="20" fill="#eae7fa"/>
-  <g fill="none" stroke="#4f46b8" stroke-width="4"><path d="M496 258h25v30h-25m76-30h-25v30h25m-51-15h26"/></g>
+  <path d="M320 314H416" class="line"/><rect x="416" y="233" width="236" height="160" rx="20" fill="#eae7fa"/>
+  <g transform="translate(534 279)"><g transform="translate(-27 -27) scale(2.25)" fill="none" stroke="#4f46b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5M15 8V2M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1zM9 8V2"/></g></g>
   <text x="534" y="333" text-anchor="middle" class="label">Servidor MCP</text><text x="534" y="368" text-anchor="middle" class="body">Gestionado</text>
-  <path d="M669 314h35" class="line"/>
+  <path d="M652 314H722" class="line"/>
   <rect x="722" y="244" width="230" height="138" rx="18" fill="#eae7fa"/><text x="837" y="282" text-anchor="middle" class="label">Select AI Agent</text><text x="837" y="320" text-anchor="middle" class="body">Tools definidas</text><text x="837" y="351" text-anchor="middle" class="body">Descubrir / invocar</text>
-  <path d="M966 314h28" class="line"/>
+  <path d="M952 314H1016" class="line"/>
   <path d="M1016 286v77c0 13 24 23 53 23s53-10 53-23v-77" fill="url(#db)"/><ellipse cx="1069" cy="286" rx="53" ry="23" fill="#a0d8cf"/><path d="M1016 320c0 13 24 23 53 23s53-10 53-23" fill="none" stroke="#b5e2da" stroke-width="2"/>
   <text x="1069" y="418" text-anchor="middle" class="body">Datos</text>
   <rect x="415" y="458" width="702" height="51" rx="12" fill="#17243b"/>

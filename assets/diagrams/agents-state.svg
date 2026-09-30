@@ -1,23 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 604" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 660" role="img" aria-labelledby="title description">
 <title id="title">Componentes y estado de un agente</title>
-<desc id="description">El modelo propone una llamada. El runtime valida y ejecuta una herramienta, guarda mensajes y resultados y prepara el siguiente contexto. La memoria pertenece a la aplicación, no a un cambio de pesos del modelo.</desc>
+<desc id="description">El modelo propone la llamada, el runtime valida y coordina y la herramienta ejecuta una operación. La aplicación conserva mensajes, resultados y progreso y prepara el contexto del siguiente turno.</desc>
 <defs>
-  <linearGradient id="coral" x2="1" y2="1"><stop stop-color="#fff0eb"/><stop offset="1" stop-color="#f8d8d1"/></linearGradient>
-  <linearGradient id="indigo" x2="1" y2="1"><stop stop-color="#f0edff"/><stop offset="1" stop-color="#ded9f6"/></linearGradient>
-  <linearGradient id="teal" x2="1" y2="1"><stop stop-color="#e7f7f3"/><stop offset="1" stop-color="#c9e9e3"/></linearGradient>
-  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.7"/></marker>
-  <style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.label{font-size:27px;font-weight:700}.body{font-size:23px;fill:#536078}.small{font-size:21px;fill:#536078}.flow{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.white{fill:#fff}</style>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m2 1 6 4-6 4" fill="none" stroke="#536078" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.label{font-size:27px;font-weight:700}.body{font-size:24px;fill:#536078}.small{font-size:22px;fill:#536078}.flow{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}.card{fill:#fff;stroke:#dce1ec;stroke-width:1.5}.white{fill:#fff}</style>
 </defs>
-<rect width="1200" height="604" fill="#f7f8fc"/>
-<text x="56" y="70" class="title">El runtime conecta las piezas y conserva el estado</text>
-<path d="M310 218h176M715 218h176" class="flow"/>
-<g transform="translate(206 218)"><circle cy="7" r="72" fill="#e9eaf1"/><circle r="72" fill="url(#coral)"/><rect x="-35" y="-35" width="70" height="70" rx="14" fill="#fff" stroke="#c74436" stroke-width="3"/><path d="M-20-47v12M0-47v12M20-47v12M-20 35v12M0 35v12M20 35v12M-47-20h12M-47 0h12M-47 20h12M35-20h12M35 0h12M35 20h12m-54 0 19-36 19 36Z" class="icon" stroke="#c74436"/></g>
-<g transform="translate(600 218)"><circle cy="7" r="72" fill="#e9eaf1"/><circle r="72" fill="url(#indigo)"/><rect x="-46" y="-33" width="92" height="66" rx="10" fill="#fff" stroke="#4f46b8" stroke-width="3"/><path d="M-45-12h90m-62 12 12 10-12 10m24 0h22" class="icon" stroke="#4f46b8"/></g>
-<g transform="translate(994 218)"><circle cy="7" r="72" fill="#e9eaf1"/><circle r="72" fill="url(#teal)"/><path d="M-24-35a22 22 0 0 0 29 29L32 21a12 12 0 0 1-17 17L-12 11a22 22 0 0 1-29-29l18 18 13-13Z" fill="#fff" stroke="#087f7a" stroke-width="3"/></g>
-<text x="400" y="180" text-anchor="middle" class="small">Propone</text><text x="800" y="180" text-anchor="middle" class="small">Valida y ejecuta</text>
-<g text-anchor="middle"><text x="206" y="334" class="label">Modelo</text><text x="600" y="334" class="label">Runtime</text><text x="994" y="334" class="label">Herramienta</text><text x="206" y="369" class="body">Interpreta el contexto</text><text x="600" y="369" class="body">Controla el loop</text><text x="994" y="369" class="body">Devuelve datos o error</text></g>
-<path d="M600 389v48" class="flow"/><path d="M994 389v109H935" class="flow"/>
-<rect x="266" y="444" width="668" height="108" rx="20" fill="#e9e8f8" stroke="#d2cdec"/>
-<text x="600" y="485" text-anchor="middle" class="label">Estado de la aplicación</text><text x="600" y="523" text-anchor="middle" class="body">Mensajes · resultados · progreso</text>
-<path d="M266 498h-60q-48 0-48-48v-64" class="flow"/><text x="56" y="578" class="small">El siguiente turno recibe el contexto pertinente</text>
+<rect width="1200" height="660" fill="#f7f8fc"/>
+
+<text x="56" y="68" class="title">El runtime coordina; la aplicación conserva el estado</text>
+<g class="card"><rect x="56" y="126" width="296" height="266" rx="24"/><rect x="452" y="126" width="296" height="266" rx="24"/><rect x="848" y="126" width="296" height="266" rx="24"/></g>
+<g transform="translate(204 216)"><circle r="58" fill="#fae6e1"/><g transform="translate(-30 -30) scale(2.5)" fill="none" stroke="#c74436" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v2M12 2v2M17 20v2M17 2v2M2 12h2M2 17h2M2 7h2M20 12h2M20 17h2M20 7h2M7 20v2M7 2v2"/><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/></g></g>
+<g transform="translate(600 216)"><circle r="58" fill="#e9e8f8"/><g transform="translate(-30 -30) scale(2.5)" fill="none" stroke="#4f46b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="8" x="3" y="3" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect width="8" height="8" x="13" y="13" rx="2"/></g></g>
+<g transform="translate(996 216)"><circle r="58" fill="#e1f2ee"/><g transform="translate(-30 -30) scale(2.5)" fill="none" stroke="#087f7a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"/></g></g>
+<path d="M352 250H452" class="flow"/><path d="M748 250H848" class="flow"/>
+<text x="402" y="224" text-anchor="middle" class="small">Propone</text><text x="798" y="224" text-anchor="middle" class="small">Ejecuta</text>
+<g text-anchor="middle"><text x="204" y="314" class="label">Modelo</text><text x="600" y="314" class="label">Runtime</text><text x="996" y="314" class="label">Herramienta</text>
+<text x="204" y="356" class="body">Interpreta el contexto</text><text x="600" y="356" class="body">Valida y controla el loop</text><text x="996" y="350" class="body"><tspan x="996">Devuelve datos</tspan><tspan x="996" dy="29">o un error</tspan></text></g>
+<rect x="300" y="476" width="600" height="116" rx="24" fill="#e9e8f8" stroke="#d2cdec"/>
+<text x="600" y="521" text-anchor="middle" class="label">Estado de la aplicación</text><text x="600" y="562" text-anchor="middle" class="body">Mensajes · resultados · progreso</text>
+<path d="M600 392V476" class="flow"/>
+<path d="M996 392V510Q996 534 972 534H900" class="flow"/>
+<path d="M300 534H228Q204 534 204 510V392" class="flow"/>
+<text x="600" y="634" text-anchor="middle" class="small">El estado prepara el contexto del siguiente turno; no cambia los pesos del modelo.</text>
 </svg>

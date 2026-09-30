@@ -5,7 +5,7 @@
   <rect width="1200" height="600" fill="#f7f8fc"/>
   <text x="48" y="61" class="title">Parecido no basta: también debe cumplir los filtros</text>
   <circle cx="134" cy="189" r="67" fill="#e9d1cd"/><circle cx="129" cy="182" r="67" fill="url(#bag)"/>
-  <g stroke="#c74436" stroke-width="3" fill="#fff"><rect x="91" y="148" width="76" height="85" rx="19"/><path d="M112 148v-12q17-19 34 0v12" fill="none"/><rect x="102" y="187" width="54" height="33" rx="6"/><path d="M107 179h44" fill="none"/></g>
+  <g transform="translate(129 182) scale(.72) translate(-129 -182)" stroke="#c74436" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="#fff"><rect x="91" y="148" width="76" height="85" rx="19"/><path d="M112 148v-12q17-19 34 0v12" fill="none"/><rect x="102" y="187" width="54" height="33" rx="6"/><path d="M107 179h44" fill="none"/></g>
   <text x="229" y="151" class="label">«Mochila ligera para laptop, por menos de S/ 200»</text>
   <text x="229" y="190" class="body">Representación compatible + precio + disponibilidad</text>
   <text x="229" y="230" class="body">Datos de ejemplo: se verifican los atributos de cada producto.</text>

@@ -1,16 +1,51 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" role="img" aria-labelledby="title description">
-  <title id="title">Tareas del modelo, capacidad de servicio y gobierno en OCI</title>
-  <desc id="description">En una recuperación documental, embeddings ayudan a recuperar candidatos, rerank puede priorizarlos y chat redacta con el contexto elegido. La capacidad de modelos puede ser on-demand o dedicada. Red, IAM y guardrails protegen aspectos diferentes de todo el flujo.</desc>
-  <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.6"/></marker><linearGradient id="surface" x2="1" y2="1"><stop stop-color="#f4f1ff"/><stop offset="1" stop-color="#d9d3f5"/></linearGradient><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:22px}.h{font-size:34px;font-weight:700}.label{font-size:25px;font-weight:700}.muted{fill:#536078}.line{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}</style></defs>
-  <rect width="1200" height="640" fill="#f7f8fc"/><text x="56" y="65" class="h">Una respuesta necesita modelos, capacidad y controles</text>
-  <path d="M278 186h244" class="line"/><path d="M678 186h244" class="line"/>
-  <circle cx="206" cy="194" r="60" fill="#ddd8f1"/><circle cx="200" cy="186" r="60" fill="url(#surface)"/><g class="icon" stroke="#4f46b8"><path d="M176 163v45h48M185 191l13-11 13 5 11-23"/><circle cx="185" cy="191" r="3"/><circle cx="198" cy="180" r="3"/><circle cx="211" cy="185" r="3"/></g>
-  <circle cx="606" cy="194" r="60" fill="#ddd8f1"/><circle cx="600" cy="186" r="60" fill="url(#surface)"/><g class="icon" stroke="#4f46b8"><path d="M576 165h49m-49 19h38m-38 19h25m15-3 9 9 14-19"/></g>
-  <circle cx="1006" cy="194" r="60" fill="#edd8d2"/><circle cx="1000" cy="186" r="60" fill="#fae6e1"/><g class="icon" stroke="#c74436"><path d="M974 164h52v39h-32l-16 15v-15h-4Zm12 13h28m-28 12h20"/></g>
-  <g text-anchor="middle"><text x="200" y="283" class="label">Embed</text><text x="200" y="320">Vectores para recuperar candidatos</text><text x="600" y="283" class="label">Rerank · opcional</text><text x="600" y="320">Prioriza por relevancia</text><text x="1000" y="283" class="label">Chat</text><text x="1000" y="320">Redacta con el contexto elegido</text></g>
-  <rect x="56" y="361" width="528" height="88" rx="19" fill="#fff" stroke="#dce1ec"/><text x="82" y="397" class="label">On-demand</text><text x="82" y="432" class="muted">Capacidad compartida · consumo según uso</text>
-  <rect x="610" y="361" width="534" height="88" rx="19" fill="#fff" stroke="#dce1ec"/><text x="636" y="397" class="label">Dedicated AI Clusters</text><text x="636" y="432" class="muted">Capacidad dedicada · horas de infraestructura</text>
-  <rect x="56" y="482" width="1088" height="111" rx="21" fill="#17243b"/>
-  <g text-anchor="middle" style="fill:#fff"><text x="238" y="527" class="label" style="fill:#fff">Red</text><text x="238" y="567" style="fill:#d1d8e7">Ruta privada · ZPR</text><text x="600" y="527" class="label" style="fill:#fff">IAM</text><text x="600" y="567" style="fill:#d1d8e7">Identidades y permisos</text><text x="962" y="527" class="label" style="fill:#fff">Guardrails</text><text x="962" y="567" style="fill:#d1d8e7">Controles de contenido</text></g>
-  <path d="M418 505v65m365-65v65" stroke="#5b6982" stroke-width="2"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 706" role="img" aria-labelledby="title description">
+  <title id="title">Una respuesta necesita modelos, capacidad y controles</title>
+  <desc id="description">En recuperación documental, embeddings convierten texto en vectores usados para buscar candidatos. Rerank puede priorizarlos por relevancia; chat redacta con el contexto seleccionado. On-demand y Dedicated AI Clusters son modalidades de capacidad del modelo. Red, IAM y guardrails protegen capas distintas.</desc>
+  <defs>
+    <!-- Lucide icons, ISC. See assets/icons/LICENSE-lucide.txt. -->
+    <symbol id="file-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2zM14 2v5a1 1 0 0 0 1 1h5"/><circle cx="11.5" cy="14.5" r="2.5"/><path d="m13.3 16.3 1.7 1.7"/></symbol>
+    <symbol id="list-ordered" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5h10M11 12h10M11 19h10M4 4h1v5M4 9h2M6.5 20H3.4c0-1 2.6-1.925 2.6-3.5a1.5 1.5 0 0 0-2.6-1.02"/></symbol>
+    <symbol id="messages-square" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2zM20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1"/></symbol>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="m2 1 6 4-6 4" fill="none" stroke="#536078" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <style>
+      text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}
+      .title{font-size:32px;font-weight:700}.label{font-size:25px;font-weight:700}
+      .body{font-size:22px;fill:#536078}.mono{font-family:Consolas,monospace;font-size:22px;fill:#536078}
+      .card{fill:#fff;stroke:#dce1eb;stroke-width:1.5}
+      .connector{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}
+      .bidirectional{marker-start:url(#arrow)}.divider{stroke:#dce1eb;stroke-width:1.5}
+    </style>
+  </defs>
+  <rect width="1200" height="706" fill="#f7f8fc"/>
+  <text x="56" y="64" class="title" text-anchor="start">Una respuesta necesita modelos, capacidad y controles</text>
+  <g class="icon-badge" data-icon="file-search"><circle cx="220" cy="177" r="48" fill="#e9e6fa"/><use href="#file-search" x="194" y="151" width="52" height="52" color="#4f46b8"/></g>
+  <g class="icon-badge" data-icon="list-ordered"><circle cx="600" cy="177" r="48" fill="#e9e6fa"/><use href="#list-ordered" x="574" y="151" width="52" height="52" color="#4f46b8"/></g>
+  <g class="icon-badge" data-icon="messages-square"><circle cx="980" cy="177" r="48" fill="#fae6e1"/><use href="#messages-square" x="954" y="151" width="52" height="52" color="#c74436"/></g>
+  <path d="M268 177H552" class="connector"/>
+  <text x="410" y="157" class="body" text-anchor="middle">Candidatos</text>
+  <path d="M648 177H932" class="connector"/>
+  <text x="790" y="157" class="body" text-anchor="middle">Contexto elegido</text>
+  <text x="220" y="268" class="label" text-anchor="middle">Embed</text>
+  <text x="220" y="311" class="body" text-anchor="middle">Texto → vectores</text>
+  <text x="220" y="345" class="body" text-anchor="middle">Búsqueda por similitud</text>
+  <text x="600" y="268" class="label" text-anchor="middle">Rerank · opcional</text>
+  <text x="600" y="311" class="body" text-anchor="middle">Ordena los candidatos</text>
+  <text x="600" y="345" class="body" text-anchor="middle">según la consulta</text>
+  <text x="980" y="268" class="label" text-anchor="middle">Chat</text>
+  <text x="980" y="311" class="body" text-anchor="middle">Redacta usando</text>
+  <text x="980" y="345" class="body" text-anchor="middle">el contexto seleccionado</text>
+  <rect x="56" y="397" width="528" height="103" rx="22" class="card"/>
+  <text x="84" y="441" class="label" text-anchor="start">On-demand</text>
+  <text x="84" y="477" class="body" text-anchor="start">Capacidad compartida · consumo según uso</text>
+  <rect x="616" y="397" width="528" height="103" rx="22" class="card"/>
+  <text x="644" y="441" class="label" text-anchor="start">Dedicated AI Clusters</text>
+  <text x="644" y="477" class="body" text-anchor="start">Capacidad dedicada · tiempo reservado</text>
+  <rect x="56" y="536" width="1088" height="122" rx="22" fill="#17243b"/>
+  <text x="238" y="582" class="label" text-anchor="middle" style="fill:#fff">Red</text>
+  <text x="238" y="626" class="body" text-anchor="middle" style="fill:#d1d8e7">Ruta privada · ZPR</text>
+  <text x="600" y="582" class="label" text-anchor="middle" style="fill:#fff">IAM</text>
+  <text x="600" y="626" class="body" text-anchor="middle" style="fill:#d1d8e7">Identidades y permisos</text>
+  <text x="962" y="582" class="label" text-anchor="middle" style="fill:#fff">Guardrails</text>
+  <text x="962" y="626" class="body" text-anchor="middle" style="fill:#d1d8e7">Controles de contenido</text>
+  <path d="M418 560v74M782 560v74" fill="none" stroke="#5b6982" stroke-width="1.5"/>
 </svg>

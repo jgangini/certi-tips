@@ -98,6 +98,21 @@ test('requires a complete bank with unique questions and four explained choices'
   includesIssue(issues, /oracle-database: expected 6 questions, received 5/);
 });
 
+test('SVG illustrations allow inline PNG only and still reject active or external content', () => {
+  const input = fixture();
+  const file = 'assets/diagrams/oci-runtime.svg';
+  const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aXioAAAAASUVORK5CYII=';
+  const diagram = image => `<svg><title>Runtime</title><desc>Illustrated runtime.</desc>${image}</svg>`;
+  input.files.set(file, diagram(`<image href="${png}"/>`));
+  assert.deepEqual(validateSite(input), []);
+  for (const href of ['https://remote.test/image.png', '../image.png', 'data:image/png;base64,not-a-png', 'data:image/svg+xml;base64,PHN2Zz4=']) {
+    input.files.set(file, diagram(`<image href="${href}"/>`));
+    includesIssue(validateSite(input), /embedded SVG element <image> is not allowed/);
+  }
+  input.files.set(file, diagram(`<image href="${png}" onload="alert(1)"/>`));
+  includesIssue(validateSite(input), /SVG event handler onload is not allowed/);
+});
+
 test('validates newly added diagrams as well as the required originals', () => {
   const input = fixture();
   const file = 'assets/diagrams/new-concept.svg';

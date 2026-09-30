@@ -1,18 +1,62 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" role="img" aria-labelledby="title description">
-  <title id="title">Preguntas operativas para explicar un agente empresarial</title>
-  <desc id="description">El repaso sitúa la lógica en el framework y pregunta por acceso, ejecución, estado, herramientas, capacidad y observación. Estas responsabilidades deben ubicarse tanto en despliegues propios como gestionados.</desc>
-  <defs><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:22px}.h{font-size:34px;font-weight:700}.label{font-size:25px;font-weight:700}.muted{fill:#536078}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}</style></defs>
-  <rect width="1200" height="620" fill="#f7f8fc"/><text x="56" y="65" class="h">El framework expresa la lógica. ¿Quién opera lo demás?</text>
-  <g fill="#fff" stroke="#dce1ec"><rect x="56" y="126" width="344" height="187" rx="22"/><rect x="428" y="126" width="344" height="187" rx="22"/><rect x="800" y="126" width="344" height="187" rx="22"/><rect x="56" y="340" width="344" height="187" rx="22"/><rect x="428" y="340" width="344" height="187" rx="22"/><rect x="800" y="340" width="344" height="187" rx="22"/></g>
-  <g fill="#fae6e1"><circle cx="109" cy="180" r="29"/><circle cx="481" cy="180" r="29"/></g><g fill="#e9e6fa"><circle cx="853" cy="180" r="29"/><circle cx="109" cy="394" r="29"/></g><g fill="#e1f2ee"><circle cx="481" cy="394" r="29"/><circle cx="853" cy="394" r="29"/></g>
-  <g class="icon" stroke="#c74436"><path d="M95 192v-17a14 14 0 0 1 28 0v17zm14-12v6M465 164h32v32h-32zm7 8h18m-18 8h18m-18 8h18"/></g>
-  <g class="icon" stroke="#4f46b8"><path d="M837 170v23q16 9 32 0v-23m-32 0q16-9 32 0-16 9-32 0M94 382h30v26H94zm8-7v7m14-7v7m-14 26v7m14-7v7"/></g>
-  <g class="icon" stroke="#087f7a"><path d="M465 407v-14h9v14m5 0v-25h9v25m5 0v-35h9v35M833 395h9l5-14 10 28 8-14h9"/></g>
-  <text x="157" y="189" class="label">Acceso</text><text x="82" y="251">¿Quién puede llamar?</text><text x="82" y="287" class="muted">Identidad y permisos</text>
-  <text x="529" y="189" class="label">Ejecución</text><text x="454" y="251">¿Dónde corre el código?</text><text x="454" y="287" class="muted">Propia o gestionada</text>
-  <text x="901" y="189" class="label">Estado</text><text x="826" y="251">¿Qué se conserva?</text><text x="826" y="287" class="muted">Memoria y retención</text>
-  <text x="157" y="403" class="label">Herramientas</text><text x="82" y="465">¿Qué acción está permitida?</text><text x="82" y="501" class="muted">Integración y validación</text>
-  <text x="529" y="403" class="label">Capacidad</text><text x="454" y="465">¿Qué pasa con más carga?</text><text x="454" y="501" class="muted">Límites, cuotas y fallos</text>
-  <text x="901" y="403" class="label">Observación</text><text x="826" y="465">¿Cómo investigas un fallo?</text><text x="826" y="501" class="muted">Logs, métricas y trazas</text>
-  <text x="600" y="584" text-anchor="middle" style="fill:#536078">Diseñar → construir → probar → desplegar → observar → mejorar</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 690" role="img" aria-labelledby="title description">
+  <title id="title">¿Quién opera cada parte del agente?</title>
+  <desc id="description">El framework expresa la lógica. El repaso diferencia acceso, ejecución, estado, herramientas, capacidad y observación mediante seis preguntas y sus controles. Estas responsabilidades deben asignarse tanto en un despliegue propio como en uno gestionado.</desc>
+  <defs>
+    <!-- Lucide icons, ISC. See assets/icons/LICENSE-lucide.txt. -->
+    <symbol id="lock-keyhole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="16" r="1"/><rect x="3" y="10" width="18" height="12" rx="2"/><path d="M7 10V7a5 5 0 0 1 10 0v3"/></symbol>
+    <symbol id="workflow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="8" x="3" y="3" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect width="8" height="8" x="13" y="13" rx="2"/></symbol>
+    <symbol id="database" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5M3 12A9 3 0 0 0 21 12"/></symbol>
+    <symbol id="wrench" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"/></symbol>
+    <symbol id="gauge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></symbol>
+    <symbol id="activity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></symbol>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="m2 1 6 4-6 4" fill="none" stroke="#536078" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <style>
+      text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}
+      .title{font-size:32px;font-weight:700}.label{font-size:25px;font-weight:700}
+      .body{font-size:22px;fill:#536078}.mono{font-family:Consolas,monospace;font-size:22px;fill:#536078}
+      .card{fill:#fff;stroke:#dce1eb;stroke-width:1.5}
+      .connector{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}
+      .bidirectional{marker-start:url(#arrow)}.divider{stroke:#dce1eb;stroke-width:1.5}
+    </style>
+  </defs>
+  <rect width="1200" height="690" fill="#f7f8fc"/>
+  <text x="56" y="64" class="title" text-anchor="start">¿Quién opera cada parte del agente?</text>
+  <text x="56" y="101" class="body" text-anchor="start">El framework expresa la lógica; la operación necesita responsables.</text>
+  <rect x="56" y="137" width="344" height="211" rx="22" class="card"/>
+  <g class="icon-badge" data-icon="lock-keyhole"><circle cx="118" cy="196" r="40" fill="#fae6e1"/><use href="#lock-keyhole" x="96" y="174" width="44" height="44" color="#c74436"/></g>
+  <text x="175" y="204" class="label" text-anchor="start">Acceso</text>
+  <text x="83" y="271" class="body" text-anchor="start">¿Quién puede llamar?</text>
+  <path d="M83 293H373" class="divider"/>
+  <text x="83" y="326" class="body" text-anchor="start">Identidad y permisos</text>
+  <rect x="428" y="137" width="344" height="211" rx="22" class="card"/>
+  <g class="icon-badge" data-icon="workflow"><circle cx="490" cy="196" r="40" fill="#fae6e1"/><use href="#workflow" x="468" y="174" width="44" height="44" color="#c74436"/></g>
+  <text x="547" y="204" class="label" text-anchor="start">Ejecución</text>
+  <text x="455" y="271" class="body" text-anchor="start">¿Dónde corre el código?</text>
+  <path d="M455 293H745" class="divider"/>
+  <text x="455" y="326" class="body" text-anchor="start">Propia o gestionada</text>
+  <rect x="800" y="137" width="344" height="211" rx="22" class="card"/>
+  <g class="icon-badge" data-icon="database"><circle cx="862" cy="196" r="40" fill="#e9e6fa"/><use href="#database" x="840" y="174" width="44" height="44" color="#4f46b8"/></g>
+  <text x="919" y="204" class="label" text-anchor="start">Estado</text>
+  <text x="827" y="271" class="body" text-anchor="start">¿Qué se conserva?</text>
+  <path d="M827 293H1117" class="divider"/>
+  <text x="827" y="326" class="body" text-anchor="start">Memoria y retención</text>
+  <rect x="56" y="381" width="344" height="211" rx="22" class="card"/>
+  <g class="icon-badge" data-icon="wrench"><circle cx="118" cy="440" r="40" fill="#e9e6fa"/><use href="#wrench" x="96" y="418" width="44" height="44" color="#4f46b8"/></g>
+  <text x="175" y="448" class="label" text-anchor="start">Herramientas</text>
+  <text x="83" y="515" class="body" text-anchor="start">¿Qué acción autorizas?</text>
+  <path d="M83 537H373" class="divider"/>
+  <text x="83" y="570" class="body" text-anchor="start">Integración y validación</text>
+  <rect x="428" y="381" width="344" height="211" rx="22" class="card"/>
+  <g class="icon-badge" data-icon="gauge"><circle cx="490" cy="440" r="40" fill="#e1f2ee"/><use href="#gauge" x="468" y="418" width="44" height="44" color="#087f7a"/></g>
+  <text x="547" y="448" class="label" text-anchor="start">Capacidad</text>
+  <text x="455" y="515" class="body" text-anchor="start">¿Soporta más carga?</text>
+  <path d="M455 537H745" class="divider"/>
+  <text x="455" y="570" class="body" text-anchor="start">Límites, cuotas y fallos</text>
+  <rect x="800" y="381" width="344" height="211" rx="22" class="card"/>
+  <g class="icon-badge" data-icon="activity"><circle cx="862" cy="440" r="40" fill="#e1f2ee"/><use href="#activity" x="840" y="418" width="44" height="44" color="#087f7a"/></g>
+  <text x="919" y="448" class="label" text-anchor="start">Observación</text>
+  <text x="827" y="515" class="body" text-anchor="start">¿Cómo rastreas un fallo?</text>
+  <path d="M827 537H1117" class="divider"/>
+  <text x="827" y="570" class="body" text-anchor="start">Logs, métricas y trazas</text>
+  <text x="600" y="648" class="body" text-anchor="middle">Diseñar → construir → probar → desplegar → observar → mejorar</text>
 </svg>

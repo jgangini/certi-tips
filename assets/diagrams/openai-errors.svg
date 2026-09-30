@@ -1,14 +1,74 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 570" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 654" role="img" aria-labelledby="title description">
   <title id="title">Cuatro confusiones del SDK y su corrección</title>
   <desc id="description">Distingue cliente de API de orquestador, herramienta declarada de función ejecutada, transferencia de control de consulta y filtro de entrada de autorización de cada operación.</desc>
-  <defs><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:23px}.h{font-size:34px;font-weight:700}.label{font-size:25px;font-weight:700}.arrow{fill:none;stroke:#8f98ae;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}</style></defs>
-  <rect width="1200" height="570" fill="#f7f8fc"/><text x="56" y="65" class="h">Se parecen, pero no significan lo mismo</text>
-  <text x="87" y="128" class="label" style="fill:#c74436">Confusión</text><text x="652" y="128" class="label" style="fill:#087f7a">Lectura correcta</text>
-  <g fill="#fae6e1"><rect x="56" y="154" width="480" height="76" rx="16"/><rect x="56" y="247" width="480" height="76" rx="16"/><rect x="56" y="340" width="480" height="76" rx="16"/><rect x="56" y="433" width="480" height="76" rx="16"/></g>
-  <g fill="#e1f2ee"><rect x="624" y="154" width="520" height="76" rx="16"/><rect x="624" y="247" width="520" height="76" rx="16"/><rect x="624" y="340" width="520" height="76" rx="16"/><rect x="624" y="433" width="520" height="76" rx="16"/></g>
-  <g class="arrow"><path d="M553 192h50m-13-10 13 10-13 10M553 285h50m-13-10 13 10-13 10M553 378h50m-13-10 13 10-13 10M553 471h50m-13-10 13 10-13 10"/></g>
-  <text x="82" y="201">«Cliente API = Agents SDK»</text><text x="650" y="184">Cliente: llamadas a la API</text><text x="650" y="218">Agents SDK: coordina el loop</text>
-  <text x="82" y="294">«Declarar una función la ejecuta»</text><text x="650" y="277">El modelo solicita; el runtime ejecuta</text><text x="650" y="311">después de validar la operación</text>
-  <text x="82" y="387">«Handoff siempre vuelve al triage»</text><text x="650" y="370">El especialista asume el control</text><text x="650" y="404">No es una llamada con retorno garantizado</text>
-  <text x="82" y="480">«Entrada válida = reembolso permitido»</text><text x="650" y="463">Comprueba permisos y reglas</text><text x="650" y="497">de cada reembolso</text>
+  <defs>
+    <style>
+      text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:24px}
+      .title{font-size:34px;font-weight:700}
+      .label{font-size:26px;font-weight:700}
+      .mistake rect{fill:#fae6e1;stroke:#efc7be;stroke-width:1.5}
+      .correction rect{fill:#e1f2ee;stroke:#b7ddd5;stroke-width:1.5}
+      .arrow{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+      .icon{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+    </style>
+  </defs>
+  <rect width="1200" height="654" fill="#f7f8fc"/>
+  <text x="56" y="64" class="title">Se parecen, pero no significan lo mismo</text>
+  <g class="column-headings">
+    <circle cx="80" cy="118" r="16" fill="#fae6e1"/>
+    <path d="m75 113 10 10m0-10-10 10" class="icon" stroke="#c74436"/>
+    <text x="108" y="127" class="label">Error o confusión</text>
+    <circle cx="648" cy="118" r="16" fill="#e1f2ee"/>
+    <path d="m641 118 5 5 9-10" class="icon" stroke="#087f7a"/>
+    <text x="676" y="127" class="label">Qué comprobar</text>
+  </g>
+  <g class="comparison-row" transform="translate(0 154)">
+    <g class="mistake">
+      <rect x="56" width="480" height="96" rx="16"/>
+      <text x="82" y="57">«Cliente API = Agents SDK»</text>
+    </g>
+    <path d="M553 48h50m-13-9 13 9-13 9" class="arrow"/>
+    <g class="correction">
+      <rect x="624" width="520" height="96" rx="16"/>
+      <text x="650" y="40">Cliente: llamadas a la API</text>
+      <text x="650" y="74">Agents SDK: coordina el loop</text>
+    </g>
+  </g>
+  <g class="comparison-row" transform="translate(0 270)">
+    <g class="mistake">
+      <rect x="56" width="480" height="96" rx="16"/>
+      <text x="82" y="57">«Declarar una función la ejecuta»</text>
+    </g>
+    <path d="M553 48h50m-13-9 13 9-13 9" class="arrow"/>
+    <g class="correction">
+      <rect x="624" width="520" height="96" rx="16"/>
+      <text x="650" y="40">El modelo solicita; el runtime ejecuta</text>
+      <text x="650" y="74">después de validar la operación</text>
+    </g>
+  </g>
+  <g class="comparison-row" transform="translate(0 386)">
+    <g class="mistake">
+      <rect x="56" width="480" height="96" rx="16"/>
+      <text x="82" y="57">«Handoff siempre vuelve al triage»</text>
+    </g>
+    <path d="M553 48h50m-13-9 13 9-13 9" class="arrow"/>
+    <g class="correction">
+      <rect x="624" width="520" height="96" rx="16"/>
+      <text x="650" y="40">El especialista asume el control</text>
+      <text x="650" y="74">No hay retorno garantizado al triage</text>
+    </g>
+  </g>
+  <g class="comparison-row" transform="translate(0 502)">
+    <g class="mistake">
+      <rect x="56" width="480" height="96" rx="16"/>
+      <text x="82" y="40">«Entrada válida =</text>
+      <text x="82" y="74">reembolso permitido»</text>
+    </g>
+    <path d="M553 48h50m-13-9 13 9-13 9" class="arrow"/>
+    <g class="correction">
+      <rect x="624" width="520" height="96" rx="16"/>
+      <text x="650" y="40">Comprueba permisos y reglas</text>
+      <text x="650" y="74">de cada reembolso</text>
+    </g>
+  </g>
 </svg>

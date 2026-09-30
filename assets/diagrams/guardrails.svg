@@ -3,7 +3,7 @@
   <desc id="description">Valida las entradas antes del modelo, autoriza y valida cada llamada antes de ejecutar una herramienta y revisa la salida. Las acciones sensibles pueden requerir aprobación humana. Trazas y evaluaciones observan todo el flujo. Los guardrails no sustituyen los permisos.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m2 1 6 4-6 4" fill="none" stroke="#536078" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></marker>
-    <style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700;letter-spacing:-.7px}.sub{font-size:19px;fill:#536078}.label{font-size:24px;font-weight:700}.body{font-size:21px;fill:#536078}.meta{font-size:16px;fill:#536078}.white{fill:#fff}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.flow{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}</style>
+    <style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700;letter-spacing:-.7px}.sub{font-size:19px;fill:#536078}.label{font-size:24px;font-weight:700}.body{font-size:22px;fill:#536078}.meta{font-size:16px;fill:#536078}.white{fill:#fff}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.flow{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}</style>
   </defs>
   <rect width="1200" height="657" fill="#f7f8fc"/>
   <g transform="translate(0 -32)">
@@ -19,21 +19,21 @@
   <path d="M305 196v364" stroke="#dce1eb"/>
   <g transform="translate(414 257)">
     <circle r="43" fill="#e9e8f8"/>
-    <g class="icon" stroke="#4f46b8"><path d="M-23-21h46L8 2v21l-16-8V2Z" fill="#fff"/><path d="M-11-10h22"/></g>
+    <g class="icon" stroke="#4f46b8" transform="scale(.85)"><path d="M-23-21h46L8 2v21l-16-8V2Z" fill="#fff"/><path d="M-11-10h22"/></g>
   </g>
   <g transform="translate(624 257)">
     <circle r="43" fill="#edf0f6"/>
-    <g class="icon" stroke="#536078"><rect x="-21" y="-21" width="42" height="42" rx="8" fill="#fff"/><path d="M-11-7h22m-22 14h14M-10-31v10M10-31v10M-10 21v10M10 21v10M-31-10h10M-31 10h10M21-10h10M21 10h10"/></g>
+    <g class="icon" stroke="#536078" transform="scale(.75)"><rect x="-21" y="-21" width="42" height="42" rx="8" fill="#fff"/><path d="M-11-7h22m-22 14h14M-10-31v10M10-31v10M-10 21v10M10 21v10M-31-10h10M-31 10h10M21-10h10M21 10h10"/></g>
   </g>
   <g transform="translate(834 257)">
     <circle r="43" fill="#f8e6e2"/>
-    <g class="icon" stroke="#c74436"><rect x="-23" y="-5" width="46" height="34" rx="7" fill="#fff"/><path d="M-14-5v-11a14 14 0 0 1 28 0v11M0 8v9"/></g>
+    <g class="icon" stroke="#c74436" transform="scale(.8)"><rect x="-23" y="-5" width="46" height="34" rx="7" fill="#fff"/><path d="M-14-5v-11a14 14 0 0 1 28 0v11M0 8v9"/></g>
   </g>
   <g transform="translate(1044 257)">
     <circle r="43" fill="#e1f2ef"/>
-    <g class="icon" stroke="#087f7a"><path d="M-24-23h48v39H-8l-14 12v-12h-2Z" fill="#fff"/><path d="m-12-3 8 8 16-17"/></g>
+    <g class="icon" stroke="#087f7a" transform="scale(.8)"><path d="M-24-23h48v39H-8l-14 12v-12h-2Z" fill="#fff"/><path d="m-12-3 8 8 16-17"/></g>
   </g>
-  <path d="M463 257h109M673 257h109M883 257h109" class="flow"/>
+  <path d="M457 257H581" class="flow"/><path d="M667 257H791" class="flow"/><path d="M877 257H1001" class="flow"/>
   <g text-anchor="middle">
     <text x="414" y="332" class="label">Entrada</text>
     <text x="414" y="368" class="body"><tspan x="414">Valida formato</tspan><tspan x="414" dy="29">y contenido.</tspan></text>
