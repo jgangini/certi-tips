@@ -23,3 +23,74 @@ Las ilustraciones transparentes se mantienen como PNG fuente y se incrustan dura
 ## Revisión
 
 Se revisan geometría renderizada, márgenes interiores, conexiones y significado de cada flujo. La revisión en Browser usa DOM, accesibilidad, carga real, apertura, Escape y retorno de foco; no usa capturas. Las pruebas de regresión protegen trazos con punta independientes, números blancos, ejemplo en USD, caso OCI único y estado completado sin insignia adicional.
+
+### Auditoría de iconos — 2026-09-29
+
+La revisión anterior de límites y carga no detectó que dos agentes aún usaban símbolos de refrescar/check. Esta pasada revisa el significado por separado: robot = agente; chip = modelo; ventana = aplicación; nodos de flujo = orquestación; llave de herramientas = función; documento comprobado = formato de salida, no veracidad. Las flechas representan el ciclo, no sustituyen al agente.
+
+Se revisaron las 60 imágenes usadas en los seis módulos: 58 SVG y dos ilustraciones PNG. Se corrigieron 15 SVG. El resto conserva símbolos concretos, iconos ya coherentes o notación de flujo que no necesita dibujos decorativos. La tabla registra decisiones sobre los archivos, no una aprobación visual basada en capturas.
+
+| Imagen | Decisión |
+| --- | --- |
+| agent-loop.svg | Conservar CPU, aplicación validada y observación documental. |
+| agents-objectives.svg | Cambiar los tres pictogramas a mensajes, workflow y bot. Eliminar círculo con check del agente. |
+| agents-state.svg | Conservar CPU, workflow y herramienta. |
+| agents-reasoning.svg | Conservar secuencia, ciclo y bifurcaciones: son patrones, no entidades. |
+| agents-example.svg | Conservar operadores aritméticos. |
+| agents-decision.svg | Conservar rombo y ramas de decisión. |
+| agents-recap.svg | Conservar persona, CPU, workflow y herramienta. |
+| agents-mistakes.svg | Conservar cruz/check como error/comprobación. |
+| guardrails.svg | Unificar entrada documental, modelo, autorización y salida con Lucide. |
+| oci-support.svg | Conservar iconos oficiales OCI. |
+| langchain-flow.svg | Cambiar prompt a mensajes y parser a documento comprobado. |
+| langchain-objectives.svg | Cambiar chain.invoke a workflow y agent.invoke a bot. |
+| langchain-building-blocks.svg | Usar los mismos prompt y parser del flujo. |
+| langchain-message-cycle.svg | Conservar CPU y workflow. |
+| langchain-math-sequence.svg | Conservar actores, llamadas, IDs y resultados. |
+| langchain-debug.svg | Conservar evidencia, inspección y límite. |
+| langchain-recap.svg | Conservar CPU, workflow y herramienta. |
+| langchain-errors.svg | Conservar comparación error/comprobación. |
+| mcp-architecture.svg | Conservar modelo, aplicación, clientes y servidor diferenciados. |
+| mcp-objectives.svg | Conservar red, herramienta, mensajes y conexión. |
+| mcp-capabilities.svg | Conservar herramienta, recurso documental y prompt. |
+| mcp-connection.svg | Conservar inicialización, descubrimiento, ejecución y respuesta. |
+| mcp-shared-tool.svg | Conservar ventana y bot para los dos hosts. |
+| mcp-oci-usage.svg | Conservar cliente, servidor y cloud como extremos. |
+| mcp-transport-exercise.svg | Conservar extremos y transportes distintos. |
+| mcp-recap.svg | Conservar host, cliente y servidor. |
+| mcp-errors.svg | Conservar comparación error/comprobación. |
+| openai-stack.svg | Unificar aplicación, SDK y API como ventana, workflow y conexión. |
+| openai-objectives.svg | Unificar herramienta, delegación y control. Mantener repeat-2 solo para el loop. |
+| openai-context.svg | Usar database para el almacenamiento de Conversations. |
+| openai-tools.svg | Usar workflow para Runner, cloud para alojamiento y wrench para función. |
+| handoffs.svg | Conservar headset para triage y bot para manager/especialista. |
+| openai-support-steps.svg | Conservar numeración de pasos; no representa entidades. |
+| openai-guardrails.svg | Conservar entrada, autorización y salida comprobada. |
+| openai-exercise.svg | Conservar bot, pedido y políticas. |
+| openai-recap.svg | Aplicar los mismos símbolos del stack. |
+| openai-errors.svg | Conservar comparación error/comprobación. |
+| oci-runtime.svg | Conservar ilustraciones IA de alojamiento y separación respecto de la API. |
+| oci-objectives.svg | Conservar bot, workflow, llave y despliegue. |
+| oci-models-governance.svg | Cambiar Embed de lupa a CPU: es un modelo, no la búsqueda. |
+| oci-building-blocks.svg | Conservar aplicación, API, proyecto, herramientas, memoria y recursos diferenciados. |
+| oci-first-call.svg | Conservar secuencia numerada. |
+| oci-tool-sequence.svg | Conservar actores y mensajes explícitos. |
+| enterprise-agent.png | Conservar ilustración conceptual de componentes; no es una secuencia de ejecución. |
+| oci-deployment.svg | Conservar secuencia numerada. |
+| oci-exercise.svg | Sustituir aplicación artesanal por app-window. |
+| oci-recap.svg | Conservar acceso, ejecución, estado, herramientas, capacidad y observación. |
+| oci-errors.svg | Conservar comparación error/comprobación. |
+| database-capabilities.svg | Usar bot para Select AI Agent y workflow para Agent Factory. |
+| database-objectives.svg | Conservar datos, búsqueda, selección y autorización. |
+| database-similarity.svg | Conservar puntos, ángulos y distancia: son las magnitudes enseñadas. |
+| vector-search.svg | Sustituir ondas por CPU en ambos modelos de embeddings. |
+| database-product-search.svg | Conservar mochila y tabla de filtros del caso. |
+| grounded-answer-v2.png | Conservar pregunta, recuperación autorizada, contexto y respuesta documentada. |
+| database-agent-factory.svg | Conservar documentos, tabla y nombres de los agentes. |
+| database-select-agent.svg | Añadir bots a ambos agentes y wrench a Tools. |
+| database-mcp.svg | Conservar clientes, conexión MCP y base de datos. |
+| database-exercise.svg | Conservar escudo de autorización y cruz de escritura no permitida. |
+| database-recap.svg | Conservar árbol textual de decisión sin iconos decorativos. |
+| database-misconceptions.svg | Conservar comparación error/comprobación. |
+
+Browser comprobó los 58 SVG renderizados, sus referencias y texto, incluidos 89 pictogramas identificados mediante `data-icon`; no hubo referencias vacías ni texto superpuesto o fuera del lienzo. Esa comprobación de DOM no sustituye una evaluación visual completa mediante capturas, que no se realizó por la restricción del proyecto.

@@ -84,3 +84,18 @@ test("the support case uses one OCI architecture instead of two competing exampl
   assert.equal((lesson.match(/assets\/diagrams\/oci-support\.svg/g) || []).length, 1);
   assert.doesNotMatch(lesson, /support-agent\.png/);
 });
+
+test("the agent pictogram is a robot, not a loop or a completion check", () => {
+  const source = readDiagram("agents-objectives.svg");
+  const concepts = [...source.matchAll(/<g\b[^>]*data-concept="([^"]+)"[^>]*data-icon="([^"]+)"[^>]*>(.*?)<\/g>/gs)];
+  assert.deepEqual(concepts.map(([, concept, icon]) => [concept, icon]), [
+    ["chatbot", "messages-square"], ["workflow", "workflow"], ["agent", "bot"],
+  ]);
+  for (const [, , icon, body] of concepts) {
+    assert.ok(body.includes(`href="#${icon}"`));
+    assert.match(body, /width="76" height="76"/);
+    assert.ok(source.includes(`<symbol id="${icon}"`));
+  }
+  assert.doesNotMatch(source, /M-32-16A37|m-15 3 10 10 24-25/);
+  assert.match(readDiagram("langchain-objectives.svg"), /data-icon="bot"/);
+});

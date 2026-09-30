@@ -3,7 +3,7 @@
   <desc id="description">En recuperación documental, embeddings convierten texto en vectores usados para buscar candidatos. Rerank puede priorizarlos por relevancia; chat redacta con el contexto seleccionado. On-demand y Dedicated AI Clusters son modalidades de capacidad del modelo. Red, IAM y guardrails protegen capas distintas.</desc>
   <defs>
     <!-- Lucide icons, ISC. See assets/icons/LICENSE-lucide.txt. -->
-    <symbol id="file-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2zM14 2v5a1 1 0 0 0 1 1h5"/><circle cx="11.5" cy="14.5" r="2.5"/><path d="m13.3 16.3 1.7 1.7"/></symbol>
+    <symbol id="cpu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v2M12 2v2M17 20v2M17 2v2M2 12h2M2 17h2M2 7h2M20 12h2M20 17h2M20 7h2M7 20v2M7 2v2"/><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/></symbol>
     <symbol id="list-ordered" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5h10M11 12h10M11 19h10M4 4h1v5M4 9h2M6.5 20H3.4c0-1 2.6-1.925 2.6-3.5a1.5 1.5 0 0 0-2.6-1.02"/></symbol>
     <symbol id="messages-square" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2zM20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1"/></symbol>
     <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="m2 1 6 4-6 4" fill="none" stroke="#536078" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
@@ -18,7 +18,7 @@
   </defs>
   <rect width="1200" height="706" fill="#f7f8fc"/>
   <text x="56" y="64" class="title" text-anchor="start">Una respuesta necesita modelos, capacidad y controles</text>
-  <g class="icon-badge" data-icon="file-search"><circle cx="220" cy="177" r="48" fill="#e9e6fa"/><use href="#file-search" x="194" y="151" width="52" height="52" color="#4f46b8"/></g>
+  <g class="icon-badge" data-icon="cpu"><circle cx="220" cy="177" r="48" fill="#e9e6fa"/><use href="#cpu" x="194" y="151" width="52" height="52" color="#4f46b8"/></g>
   <g class="icon-badge" data-icon="list-ordered"><circle cx="600" cy="177" r="48" fill="#e9e6fa"/><use href="#list-ordered" x="574" y="151" width="52" height="52" color="#4f46b8"/></g>
   <g class="icon-badge" data-icon="messages-square"><circle cx="980" cy="177" r="48" fill="#fae6e1"/><use href="#messages-square" x="954" y="151" width="52" height="52" color="#c74436"/></g>
   <path d="M268 177H552" class="connector"/>

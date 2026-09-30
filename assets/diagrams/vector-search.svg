@@ -2,6 +2,7 @@
   <title id="title">Del documento al vecino semántico y a una respuesta con evidencia</title>
   <desc id="description">Preparación: documentos se dividen en fragmentos y se convierten en embeddings. Los vectores se almacenan con el texto y sus metadatos. Consulta: la pregunta se transforma con el mismo modelo compatible; el punto de consulta encuentra vecinos semánticos permitidos. El mapa de dos dimensiones es una representación didáctica, no los vectores reales. Para RAG, los fragmentos recuperados y la pregunta se entregan al LLM, que genera una respuesta sustentada en fuentes. Buscar similitud no es generar una respuesta.</desc>
   <defs>
+    <symbol id="cpu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v2M12 2v2M17 20v2M17 2v2M2 12h2M2 17h2M2 7h2M20 12h2M20 17h2M20 7h2M7 20v2M7 2v2"/><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/></symbol>
     <pattern id="grid" width="34" height="34" patternUnits="userSpaceOnUse"><path d="M34 0H0V34" fill="none" stroke="#e1e5f1" stroke-width="1"/></pattern>
     <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
     <marker id="arrow-coral" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#c74436" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
@@ -26,8 +27,7 @@
   <path d="M284 253h89m-89 41h72m-72 41h82" stroke="#7770be" stroke-width="3" stroke-linecap="round"/>
   <text x="329" y="382" text-anchor="middle" class="body">Fragmentos</text>
   <path d="M388 290H462" class="line"/>
-  <circle cx="523" cy="291" r="61" fill="#4f46b8"/>
-  <path d="M493 302v-18m15 35v-53m15 61v-72m15 58v-44m15 33v-18" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+  <g class="icon-badge" data-icon="cpu"><circle cx="523" cy="291" r="61" fill="#4f46b8"/><use href="#cpu" x="489" y="257" width="68" height="68" color="#fff"/></g>
   <text x="523" y="382" text-anchor="middle" class="body">Embeddings</text>
   <path d="M584 291H706" class="line"/>
   <!-- Meaning space: a query star and its three illustrative neighbours. -->
@@ -49,8 +49,7 @@
   <path d="M73 458h290q12 0 12 12v36q0 12-12 12H111l-21 17v-17H73q-12 0-12-12v-36q0-12 12-12Z" fill="#fae9e5" stroke="#e3b0a8" stroke-width="1.5"/>
   <text x="88" y="495" class="body">«Mochila para laptop»</text>
   <path d="M375 489H492" class="line"/>
-  <circle cx="523" cy="489" r="31" fill="#c74436"/>
-  <path d="M507 493v-7m8 14v-22m8 26v-31m8 24v-17m8 11v-6" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+  <g class="icon-badge" data-icon="cpu"><circle cx="523" cy="489" r="31" fill="#c74436"/><use href="#cpu" x="505" y="471" width="36" height="36" color="#fff"/></g>
   <text x="523" y="548" text-anchor="middle" class="meta">Mismo modelo compatible</text>
   <path d="M554 489H629Q651 489 651 467V432Q651 410 673 410H894" fill="none" stroke="#c74436" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-coral)"/>
   <path d="M56 573h1088" stroke="#dbe0eb"/>

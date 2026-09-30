@@ -2,6 +2,10 @@
 <title id="title">Chatbot, workflow y agente</title>
 <desc id="description">Un chatbot responde a una consulta. Un workflow sigue pasos definidos. Un agente elige un siguiente paso y usa observaciones para continuar, con controles de ejecución.</desc>
 <defs>
+  <!-- Lucide icons, ISC. See assets/icons/LICENSE-lucide.txt. -->
+  <symbol id="messages-square" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2zM20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1"/></symbol>
+  <symbol id="workflow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="8" x="3" y="3" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect width="8" height="8" x="13" y="13" rx="2"/></symbol>
+  <symbol id="bot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></symbol>
   <linearGradient id="coral" x2="1" y2="1"><stop stop-color="#fff0eb"/><stop offset="1" stop-color="#f8d8d1"/></linearGradient>
   <linearGradient id="indigo" x2="1" y2="1"><stop stop-color="#f0edff"/><stop offset="1" stop-color="#ded9f6"/></linearGradient>
   <linearGradient id="teal" x2="1" y2="1"><stop stop-color="#e7f7f3"/><stop offset="1" stop-color="#c9e9e3"/></linearGradient>
@@ -10,9 +14,9 @@
 </defs>
 <rect width="1200" height="560" fill="#f7f8fc"/>
 <text x="56" y="70" class="title">Tres formas de resolver una petición</text>
-<g transform="translate(228 204)"><circle cy="7" r="66" fill="#e9eaf1"/><circle r="66" fill="url(#coral)"/><path d="M-35-25h70v45H-8l-22 18V20h-5Z" fill="#fff" stroke="#c74436" stroke-width="3"/><path d="M-20-9h40M-20 5H8" class="icon" stroke="#c74436"/></g>
-<g transform="translate(600 204)"><circle cy="7" r="66" fill="#e9eaf1"/><circle r="66" fill="url(#indigo)"/><path d="M-38 0h76" stroke="#4f46b8" stroke-width="3"/><g fill="#fff" stroke="#4f46b8" stroke-width="3"><rect x="-38" y="-11" width="22" height="22" rx="4"/><rect x="-11" y="-11" width="22" height="22" rx="4"/><rect x="16" y="-11" width="22" height="22" rx="4"/></g></g>
-<g transform="translate(972 204)"><circle cy="7" r="66" fill="#e9eaf1"/><circle r="66" fill="url(#teal)"/><path d="M-32-16A37 37 0 1 1-32 20M-43-17l15-4 4 15" class="icon" stroke="#087f7a"/><path d="m-15 3 10 10 24-25" class="icon" stroke="#087f7a"/></g>
+<g transform="translate(228 204)" data-concept="chatbot" data-icon="messages-square"><circle cy="7" r="66" fill="#e9eaf1"/><circle r="66" fill="url(#coral)"/><use href="#messages-square" x="-38" y="-38" width="76" height="76" color="#c74436"/></g>
+<g transform="translate(600 204)" data-concept="workflow" data-icon="workflow"><circle cy="7" r="66" fill="#e9eaf1"/><circle r="66" fill="url(#indigo)"/><use href="#workflow" x="-38" y="-38" width="76" height="76" color="#4f46b8"/></g>
+<g transform="translate(972 204)" data-concept="agent" data-icon="bot"><circle cy="7" r="66" fill="#e9eaf1"/><circle r="66" fill="url(#teal)"/><use href="#bot" x="-38" y="-38" width="76" height="76" color="#087f7a"/></g>
 <g text-anchor="middle"><text x="228" y="313" class="label">Chatbot</text><text x="600" y="313" class="label">Workflow</text><text x="972" y="313" class="label">Agente</text>
 <text x="228" y="354" class="body">Responde una pregunta</text><text x="600" y="354" class="body">Sigue una secuencia fija</text><text x="972" y="354" class="body">Decide el próximo paso</text></g>
 <path d="M192 418H246" class="flow"/><path d="M527 418H559" class="flow"/><path d="M634 418H667" class="flow"/>

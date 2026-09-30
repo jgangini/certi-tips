@@ -1,6 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 708" role="img" aria-labelledby="title description">
 <title id="title">Responsabilidades de Select AI Agent</title><desc id="description">Un equipo coordina agentes que realizan tareas con herramientas. El perfil de IA configura la conexión al modelo externo al framework. El historial permite revisar las ejecuciones de todo el equipo. DBMS_CLOUD_AI_AGENT administra estos objetos.</desc>
 <defs>
+<symbol id="bot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></symbol>
+<symbol id="wrench" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 1 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"/></symbol>
 <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m2 1 6 4-6 4" fill="none" stroke="#536078" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></marker>
 <style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.label{font-size:27px;font-weight:700}.body{font-size:24px;fill:#536078}.small{font-size:22px;fill:#536078}.flow{fill:none;stroke:#536078;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}.card{fill:#fff;stroke:#dce1ec;stroke-width:1.5}.white{fill:#fff}</style>
 </defs>
@@ -14,10 +16,11 @@
 <path d="M429 257V270Q429 288 411 288H263Q245 288 245 306V322" class="flow"/>
 <path d="M429 257V270Q429 288 447 288H577Q595 288 595 306V322" class="flow"/>
 <rect x="90" y="322" width="310" height="86" rx="18" fill="#e9e8f8"/><rect x="440" y="322" width="310" height="86" rx="18" fill="#e9e8f8"/>
-<g text-anchor="middle"><text x="245" y="356" class="label">Agente A</text><text x="245" y="392" class="small">Realiza una tarea</text><text x="595" y="356" class="label">Agente B</text><text x="595" y="392" class="small">Realiza otra tarea</text></g>
+<g data-icon="bot"><use href="#bot" x="114" y="341" width="48" height="48" color="#4f46b8"/></g><g data-icon="bot"><use href="#bot" x="464" y="341" width="48" height="48" color="#4f46b8"/></g>
+<g text-anchor="middle"><text x="275" y="356" class="label">Agente A</text><text x="275" y="392" class="small">Realiza una tarea</text><text x="625" y="356" class="label">Agente B</text><text x="625" y="392" class="small">Realiza otra tarea</text></g>
 <path d="M245 408V430Q245 448 263 448H404Q422 448 422 466V477" class="flow"/>
 <path d="M595 408V430Q595 448 577 448H440Q422 448 422 466V477" class="flow"/>
-<rect x="267" y="477" width="310" height="76" rx="18" fill="#e1f2ee"/><text x="422" y="509" text-anchor="middle" class="label">Tools</text><text x="422" y="541" text-anchor="middle" class="small">Operaciones definidas</text>
+<rect x="267" y="477" width="310" height="76" rx="18" fill="#e1f2ee"/><g data-icon="wrench"><use href="#wrench" x="282" y="494" width="42" height="42" color="#087f7a"/></g><text x="449" y="509" text-anchor="middle" class="label">Tools</text><text x="449" y="541" text-anchor="middle" class="small">Operaciones definidas</text>
 <rect x="90" y="586" width="660" height="43" rx="14" fill="#edf0f6"/><text x="420" y="615" text-anchor="middle" class="small">Historial: revisar las ejecuciones del equipo</text>
 <rect x="862" y="128" width="280" height="252" rx="24" class="card"/>
 <g transform="translate(997 215)"><circle r="62" fill="#fae6e1"/><g transform="translate(-30 -30) scale(2.5)" fill="none" stroke="#c74436" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v2M12 2v2M17 20v2M17 2v2M2 12h2M2 17h2M2 7h2M20 12h2M20 17h2M20 7h2M7 20v2M7 2v2"/><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/></g></g>

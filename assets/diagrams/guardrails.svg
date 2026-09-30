@@ -19,19 +19,19 @@
   <path d="M305 196v364" stroke="#dce1eb"/>
   <g transform="translate(414 257)">
     <circle r="43" fill="#e9e8f8"/>
-    <g class="icon" stroke="#4f46b8" transform="scale(.85)"><path d="M-23-21h46L8 2v21l-16-8V2Z" fill="#fff"/><path d="M-11-10h22"/></g>
+    <g data-icon="file-input" transform="translate(-24 -24) scale(2)" fill="none" stroke="#4f46b8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1M14 2v5a1 1 0 0 0 1 1h5M2 15h10m-3 3 3-3-3-3"/></g>
   </g>
   <g transform="translate(624 257)">
     <circle r="43" fill="#edf0f6"/>
-    <g class="icon" stroke="#536078" transform="scale(.75)"><rect x="-21" y="-21" width="42" height="42" rx="8" fill="#fff"/><path d="M-11-7h22m-22 14h14M-10-31v10M10-31v10M-10 21v10M10 21v10M-31-10h10M-31 10h10M21-10h10M21 10h10"/></g>
+    <g data-icon="cpu" transform="translate(-24 -24) scale(2)" fill="none" stroke="#536078" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v2M12 2v2M17 20v2M17 2v2M2 12h2M2 17h2M2 7h2M20 12h2M20 17h2M20 7h2M7 20v2M7 2v2"/><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/></g>
   </g>
   <g transform="translate(834 257)">
     <circle r="43" fill="#f8e6e2"/>
-    <g class="icon" stroke="#c74436" transform="scale(.8)"><rect x="-23" y="-5" width="46" height="34" rx="7" fill="#fff"/><path d="M-14-5v-11a14 14 0 0 1 28 0v11M0 8v9"/></g>
+    <g data-icon="shield-check" transform="translate(-24 -24) scale(2)" fill="none" stroke="#c74436" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></g>
   </g>
   <g transform="translate(1044 257)">
     <circle r="43" fill="#e1f2ef"/>
-    <g class="icon" stroke="#087f7a" transform="scale(.8)"><path d="M-24-23h48v39H-8l-14 12v-12h-2Z" fill="#fff"/><path d="m-12-3 8 8 16-17"/></g>
+    <g data-icon="file-check" transform="translate(-24 -24) scale(2)" fill="none" stroke="#087f7a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2zM14 2v5a1 1 0 0 0 1 1h5m-11 7 2 2 4-4"/></g>
   </g>
   <path d="M457 257H581" class="flow"/><path d="M667 257H791" class="flow"/><path d="M877 257H1001" class="flow"/>
   <g text-anchor="middle">

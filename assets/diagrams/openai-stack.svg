@@ -11,19 +11,19 @@
   <text x="56" y="101" class="muted">La API conecta con el modelo; el SDK coordina; tu aplicación conserva el control.</text>
   <rect x="120" y="142" width="710" height="140" rx="22" fill="#fff" stroke="#dce1ec"/>
   <circle cx="178" cy="212" r="36" fill="#e9e6fa"/>
-  <g transform="translate(156 190) scale(1.83)" class="icon" stroke="#4f46b8"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M9 21V9"/></g>
+  <g data-icon="app-window" transform="translate(156 190) scale(1.83)" fill="none" stroke="#4f46b8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4M2 8h20M6 4v4"/></g>
   <text x="236" y="186" class="label">Tu aplicación</text>
   <text x="236" y="223">Negocio · permisos · funciones · despliegue</text>
   <text x="236" y="259" class="muted">El SDK no aloja tu aplicación.</text>
   <path d="M475 282V325" class="route"/>
   <rect x="120" y="325" width="710" height="118" rx="22" fill="#e9e6fa" stroke="#d4cef2"/>
   <circle cx="178" cy="384" r="36" fill="#fff"/>
-  <g transform="translate(156 362) scale(1.83)" class="icon" stroke="#4f46b8"><path d="m2 9 3-3 3 3M13 18H7a2 2 0 0 1-2-2V6m17 9-3 3-3-3M11 6h6a2 2 0 0 1 2 2v10"/></g>
+  <g data-icon="workflow" transform="translate(156 362) scale(1.83)" fill="none" stroke="#4f46b8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="8" x="3" y="3" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect width="8" height="8" x="13" y="13" rx="2"/></g>
   <text x="236" y="371" class="label">Agents SDK</text><text x="236" y="408">Runner · herramientas · handoffs · guardrails</text>
   <path d="M475 443V486" class="route"/>
   <rect x="120" y="486" width="710" height="118" rx="22" fill="#fae6e1" stroke="#ebcec7"/>
   <circle cx="178" cy="545" r="36" fill="#fff"/>
-  <g fill="none" stroke="#c74436" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m165 530-13 15 13 15M191 530l13 15-13 15m-9-34-8 38"/></g>
+  <g data-icon="plug" transform="translate(156 523) scale(1.83)" fill="none" stroke="#c74436" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5M15 8V2M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1zM9 8V2"/></g>
   <text x="236" y="532" class="label">Responses API</text><text x="236" y="569">Entrada y contexto → modelos y herramientas</text>
   <path d="M120 212H90Q70 212 70 232V525Q70 545 90 545H120" class="route" stroke-dasharray="6 6"/>
   <text x="120" y="651" class="muted">También puedes llamar a Responses directamente, sin Agents SDK.</text>

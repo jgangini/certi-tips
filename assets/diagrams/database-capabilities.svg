@@ -25,7 +25,7 @@
   <text x="56" y="215" class="meta indigo" font-weight="700">RECUPERAR</text>
   <text x="56" y="250" class="label">AI Vector</text><text x="56" y="288" class="label">Search</text>
   <text x="56" y="327" class="body">Busca contenido</text><text x="56" y="355" class="body">por similitud.</text>
-  <g transform="translate(870 265)"><circle r="55" fill="#dff1eb"/><g transform="translate(-30 -30) scale(2.5)" fill="none" stroke="#087f7a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3M12 12V8"/></g></g>
+  <g class="icon-badge" data-icon="bot" transform="translate(870 265)"><circle r="55" fill="#dff1eb"/><g transform="translate(-30 -30) scale(2.5)" fill="none" stroke="#087f7a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></g></g>
   <text x="946" y="215" class="meta teal" font-weight="700">ORQUESTAR</text>
   <text x="946" y="250" class="label">Select AI</text><text x="946" y="288" class="label">Agent</text>
   <text x="946" y="327" class="body">Coordina tareas,</text><text x="946" y="355" class="body">tools y equipos.</text>
@@ -38,7 +38,7 @@
   <rect x="494" y="371" width="212" height="79" rx="16" fill="#333269"/>
   <text x="600" y="402" text-anchor="middle" class="label white">Oracle AI</text><text x="600" y="434" text-anchor="middle" class="label white">Database</text>
   <text x="600" y="554" text-anchor="middle" class="meta">Datos + controles de acceso</text>
-  <g transform="translate(330 563)"><circle r="55" fill="#fae6e2"/><g transform="translate(-30 -30) scale(2.5)" fill="none" stroke="#c74436" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 22V7a1 1 0 0 0-1-1H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5a1 1 0 0 0-1-1H2"/><rect x="14" y="2" width="8" height="8" rx="1"/></g></g>
+  <g class="icon-badge" data-icon="workflow" transform="translate(330 563)"><circle r="55" fill="#fae6e2"/><g transform="translate(-30 -30) scale(2.5)" fill="none" stroke="#c74436" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="8" x="3" y="3" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect width="8" height="8" x="13" y="13" rx="2"/></g></g>
   <text x="56" y="492" class="meta coral" font-weight="700">CONSTRUIR</text>
   <text x="56" y="527" class="label">Private Agent</text><text x="56" y="565" class="label">Factory</text>
   <text x="56" y="604" class="body">Ensambla agentes</text><text x="56" y="632" class="body">y flujos visuales.</text>

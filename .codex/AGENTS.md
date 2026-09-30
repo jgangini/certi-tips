@@ -33,6 +33,8 @@ Quiz reviews must retain their exact original completed practice. The initial ar
 
 ## Repo-Specific Friction
 
+- Diagram QA must check the meaning of each pictogram, not only text bounds and successful loading. Two visual reviews missed agent icons represented as refresh/check symbols. Keep agents (`bot`) distinct from models (`cpu`), runtimes and loop arrows. Report DOM/geometry validation separately from screenshot-based visual review; screenshots remain prohibited unless explicitly requested as a deliverable.
+
 - Sensitive paths or fragile areas:
 - Credentials, external systems, or approval boundaries:
 - Noisy, slow, or expensive commands to avoid by default:

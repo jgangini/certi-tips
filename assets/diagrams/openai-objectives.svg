@@ -7,17 +7,17 @@
   <g fill="none" stroke="#536078" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"><path d="M257 228H385"/><path d="M531 228H659"/><path d="M805 228H933"/></g>
   <g text-anchor="middle">
     <circle cx="190" cy="237" r="73" fill="#ecdbd8"/><circle cx="184" cy="228" r="73" fill="#fae6e1"/>
-    <!-- Lucide repeat-2; license: ../icons/LICENSE-lucide.txt -->
-    <g transform="translate(151 195) scale(2.75)" fill="none" stroke="#c74436" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m2 9 3-3 3 3"/><path d="M13 18H7a2 2 0 0 1-2-2V6"/><path d="m22 15-3 3-3-3"/><path d="M11 6h6a2 2 0 0 1 2 2v10"/></g>
+    <!-- Lucide repeat-2, wrench, network and shield-check; license: ../icons/LICENSE-lucide.txt -->
+    <g data-icon="repeat-2" transform="translate(151 195) scale(2.75)" fill="none" stroke="#c74436" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m2 9 3-3 3 3"/><path d="M13 18H7a2 2 0 0 1-2-2V6"/><path d="m22 15-3 3-3-3"/><path d="M11 6h6a2 2 0 0 1 2 2v10"/></g>
     <text x="184" y="348" class="label">Elegir el loop</text><text x="184" y="391">API directa o SDK</text><text x="184" y="424" class="muted">¿Quién coordina pasos?</text>
     <circle cx="464" cy="237" r="73" fill="#dfdcf2"/><circle cx="458" cy="228" r="73" fill="url(#surface)"/>
-    <g class="icon" stroke="#4f46b8"><path d="m434 202-20 26 20 26m48-52 20 26-20 26m-15-61-18 70"/></g>
+    <g data-icon="wrench" transform="translate(425 195) scale(2.75)" fill="none" stroke="#4f46b8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"/></g>
     <text x="458" y="348" class="label">Conectar herramientas</text><text x="458" y="391">Servicio o código propio</text><text x="458" y="424" class="muted">¿Dónde se ejecutan?</text>
     <circle cx="738" cy="237" r="73" fill="#dfdcf2"/><circle cx="732" cy="228" r="73" fill="url(#surface)"/>
-    <g class="icon" stroke="#4f46b8"><circle cx="732" cy="202" r="11"/><circle cx="709" cy="250" r="11"/><circle cx="755" cy="250" r="11"/><path d="m728 213-15 27m23-27 15 27"/></g>
+    <g data-icon="network" transform="translate(699 195) scale(2.75)" fill="none" stroke="#4f46b8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3M12 12V8"/></g>
     <text x="732" y="348" class="label">Delegar</text><text x="732" y="391">Handoff o manager</text><text x="732" y="424" class="muted">¿Quién debe responder?</text>
     <circle cx="1012" cy="237" r="73" fill="#cde5e1"/><circle cx="1006" cy="228" r="73" fill="#e1f2ee"/>
-    <g class="icon" stroke="#087f7a"><path d="m1006 191 31 12v26q0 23-31 39-31-16-31-39v-26zm-15 36 11 11 22-26"/></g>
+    <g data-icon="shield-check" transform="translate(973 195) scale(2.75)" fill="none" stroke="#087f7a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></g>
     <text x="1006" y="348" class="label">Controlar</text><text x="1006" y="391">Validación y trazas</text><text x="1006" y="424" class="muted">¿Qué ocurrió realmente?</text>
   </g>
 </svg>
