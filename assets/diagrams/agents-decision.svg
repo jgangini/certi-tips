@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 564" role="img" aria-labelledby="title description">
+<title id="title">Validación de una cancelación</title>
+<desc id="description">La aplicación verifica identidad, política y aprobación requerida. Si se cumplen los controles, ejecuta la cancelación autorizada. Si faltan, no modifica el pedido y explica el bloqueo.</desc>
+<defs>
+  <linearGradient id="coral" x2="1" y2="1"><stop stop-color="#fff0eb"/><stop offset="1" stop-color="#f8d8d1"/></linearGradient>
+  <linearGradient id="indigo" x2="1" y2="1"><stop stop-color="#f0edff"/><stop offset="1" stop-color="#ded9f6"/></linearGradient>
+  <linearGradient id="teal" x2="1" y2="1"><stop stop-color="#e7f7f3"/><stop offset="1" stop-color="#c9e9e3"/></linearGradient>
+  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.7"/></marker>
+  <style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.label{font-size:27px;font-weight:700}.body{font-size:23px;fill:#536078}.small{font-size:21px;fill:#536078}.flow{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.white{fill:#fff}</style>
+</defs>
+<rect width="1200" height="564" fill="#f7f8fc"/>
+<text x="56" y="70" class="title">Una consulta no concede permiso para cancelar</text>
+<g fill="#fff" stroke="#dce1ec"><rect x="56" y="134" width="266" height="112" rx="18"/><rect x="467" y="134" width="266" height="112" rx="18"/><rect x="878" y="134" width="266" height="112" rx="18"/></g>
+<g text-anchor="middle"><text x="189" y="180" class="label">Identidad</text><text x="189" y="220" class="body">¿Puede operar aquí?</text><text x="600" y="180" class="label">Política</text><text x="600" y="220" class="body">¿Se puede cancelar?</text><text x="1011" y="180" class="label">Aprobación</text><text x="1011" y="220" class="body">¿Está confirmada?</text></g>
+<path d="M189 246v44H600M1011 246v44H600M600 246v75" class="flow"/>
+<path d="m600 321 130 69-130 69-130-69Z" fill="url(#indigo)" stroke="#4f46b8" stroke-width="2"/>
+<text x="600" y="384" text-anchor="middle" class="body"><tspan x="600">¿Controles</tspan><tspan x="600" dy="29">cumplidos?</tspan></text>
+<path d="M470 390H323M730 390h146" class="flow"/>
+<text x="395" y="368" text-anchor="middle" class="small">No</text><text x="803" y="368" text-anchor="middle" class="small">Sí</text>
+<rect x="56" y="345" width="266" height="100" rx="20" fill="url(#coral)"/><rect x="878" y="345" width="266" height="100" rx="20" fill="url(#teal)"/>
+<g text-anchor="middle"><text x="189" y="386" class="label">No modificar</text><text x="189" y="421" class="body">Explicar el bloqueo</text><text x="1011" y="386" class="label">Ejecutar</text><text x="1011" y="421" class="body">Registrar el resultado</text></g>
+</svg>

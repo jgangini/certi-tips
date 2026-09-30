@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 614" role="img" aria-labelledby="title description">
+<title id="title">Errores de control y su corrección</title>
+<desc id="description">Una petición no equivale a permiso. Un argumento con formato válido aún necesita validación de negocio. Los documentos recuperados son datos. Las ejecuciones necesitan límites y supervisión.</desc>
+<defs>
+  <linearGradient id="coral" x2="1" y2="1"><stop stop-color="#fff0eb"/><stop offset="1" stop-color="#f8d8d1"/></linearGradient>
+  <linearGradient id="indigo" x2="1" y2="1"><stop stop-color="#f0edff"/><stop offset="1" stop-color="#ded9f6"/></linearGradient>
+  <linearGradient id="teal" x2="1" y2="1"><stop stop-color="#e7f7f3"/><stop offset="1" stop-color="#c9e9e3"/></linearGradient>
+  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.7"/></marker>
+  <style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.label{font-size:27px;font-weight:700}.body{font-size:23px;fill:#536078}.small{font-size:21px;fill:#536078}.flow{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.white{fill:#fff}</style>
+</defs>
+<rect width="1200" height="614" fill="#f7f8fc"/>
+<text x="56" y="70" class="title">Qué comprobar antes de actuar</text>
+<rect x="56" y="113" width="458" height="55" rx="15" fill="url(#coral)"/><rect x="622" y="113" width="522" height="55" rx="15" fill="url(#teal)"/>
+<text x="88" y="149" class="label">Suposición peligrosa</text><text x="654" y="149" class="label">Comprobación necesaria</text>
+<g class="body">
+<text x="89" y="230">“El modelo lo pidió”</text><text x="657" y="230">Identidad y permiso para la acción</text>
+<text x="89" y="330">“El JSON tiene formato válido”</text><text x="657" y="330">Argumentos y reglas de negocio</text>
+<text x="89" y="430">“El documento da instrucciones”</text><text x="657" y="430">Origen y separación de instrucciones</text>
+<text x="89" y="530">“Que continúe hasta resolverlo”</text><text x="657" y="530">Límites de pasos, tiempo y gasto</text></g>
+<g stroke="#dce1ec"><path d="M88 270h1024M88 370h1024M88 470h1024"/></g>
+<path d="M535 221h62M535 321h62M535 421h62M535 521h62" class="flow"/>
+<g fill="none" stroke="#087f7a" stroke-width="3"><path d="m628 220 6 7 12-15m-18 108 6 7 12-15m-18 108 6 7 12-15m-18 108 6 7 12-15"/></g>
+</svg>

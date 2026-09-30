@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" role="img" aria-labelledby="title description">
+  <title id="title">Combinar significado y restricciones del negocio</title>
+  <desc id="description">Datos ficticios del ejemplo de mochilas, no resultados medidos: A cuesta 180 soles y está disponible, B cuesta 240 y no cumple el límite, C cuesta 150 pero no tiene stock. Solo A satisface significado, precio y disponibilidad. Se debe verificar que sus atributos respalden la respuesta.</desc>
+  <defs><linearGradient id="bag" x2="1" y2="1"><stop stop-color="#f5dcd5"/><stop offset="1" stop-color="#ebc5bd"/></linearGradient><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.label{font-size:24px;font-weight:700}.body{font-size:22px;fill:#536078}.white{fill:#fff}</style></defs>
+  <rect width="1200" height="600" fill="#f7f8fc"/>
+  <text x="48" y="61" class="title">Parecido no basta: también debe cumplir los filtros</text>
+  <circle cx="134" cy="189" r="67" fill="#e9d1cd"/><circle cx="129" cy="182" r="67" fill="url(#bag)"/>
+  <g stroke="#c74436" stroke-width="3" fill="#fff"><rect x="91" y="148" width="76" height="85" rx="19"/><path d="M112 148v-12q17-19 34 0v12" fill="none"/><rect x="102" y="187" width="54" height="33" rx="6"/><path d="M107 179h44" fill="none"/></g>
+  <text x="229" y="151" class="label">«Mochila ligera para laptop, por menos de S/ 200»</text>
+  <text x="229" y="190" class="body">Representación compatible + precio + disponibilidad</text>
+  <text x="229" y="230" class="body">Datos de ejemplo: se verifican los atributos de cada producto.</text>
+  <rect x="48" y="283" width="1104" height="262" rx="20" fill="#fff" stroke="#dbe0eb"/>
+  <path d="M48 348h1104M48 414h1104M48 480h1104" stroke="#dbe0eb"/>
+  <text x="77" y="324" class="label">Producto cercano</text><text x="398" y="324" class="label">Precio</text><text x="611" y="324" class="label">Disponibilidad</text><text x="910" y="324" class="label">Decisión</text>
+  <rect x="65" y="358" width="1070" height="46" rx="10" fill="#dff1ee"/>
+  <text x="78" y="389" class="body">Mochila A para laptop</text><text x="398" y="389" class="body">S/ 180</text><text x="611" y="389" class="body">Con stock</text><text x="910" y="389" class="label">✓ Incluir</text>
+  <text x="78" y="456" class="body">Mochila B para laptop</text><text x="398" y="456" class="body">S/ 240</text><text x="611" y="456" class="body">Con stock</text><text x="910" y="456" class="body" fill="#c74436">Fuera de precio</text>
+  <text x="78" y="522" class="body">Mochila C para laptop</text><text x="398" y="522" class="body">S/ 150</text><text x="611" y="522" class="body">Sin stock</text><text x="910" y="522" class="body" fill="#c74436">No disponible</text>
+</svg>

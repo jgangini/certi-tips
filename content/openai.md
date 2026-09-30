@@ -6,7 +6,9 @@ Piensa en tres niveles: **modelos** que producen respuestas y propuestas de acci
 
 Usar el SDK no significa que OpenAI aloje automáticamente tu aplicación Python. Tu aplicación sigue siendo responsable de su despliegue, integraciones, datos y decisiones de autorización. Una herramienta hospedada y una función de tu backend pueden aparecer en el mismo flujo, aunque se ejecutan en entornos diferentes.
 
-![Capas del OpenAI Agent Stack: aplicación y Agents SDK, Responses API, modelos y herramientas con responsabilidades separadas.]({{base}}assets/diagrams/openai-stack.svg)
+Para una solicitud sencilla puedes llamar a Responses directamente. Si necesitas varios pasos, también puedes implementar el loop en tu aplicación; el SDK resulta útil cuando quieres reutilizar coordinación, herramientas, handoffs y guardrails. La elección depende de cuánto control necesitas y qué lógica quieres mantener, no de que una opción sea siempre mejor.
+
+![Capas del OpenAI Agent Stack: aplicación y Agents SDK, Responses API, modelos y herramientas con responsabilidades separadas.]({{base}}assets/diagrams/openai-stack.svg "Aplicación, SDK y API tienen responsabilidades distintas.")
 
 ## Objetivos del módulo
 
@@ -15,11 +17,15 @@ Usar el SDK no significa que OpenAI aloje automáticamente tu aplicación Python
 - Explicar quién conserva el control después de un handoff.
 - Situar validación, aprobación y observabilidad donde realmente protegen el flujo.
 
+![Cuatro decisiones del módulo: elegir quién gestiona el loop, dónde se ejecutan las herramientas, quién conserva el control y cómo verificar el recorrido.]({{base}}assets/diagrams/openai-objectives.svg "Cuatro decisiones para diseñar el agente con criterio.")
+
 ## Responses y contexto
 
 Una solicitud a Responses especifica modelo, entrada y, cuando corresponde, instrucciones y herramientas. La salida puede contener texto y otros elementos, incluidas solicitudes de ejecución. `output_text` facilita leer el texto final, pero un integrador debe examinar los elementos relevantes cuando implementa el loop.
 
 Para mantener conversaciones existen opciones como historial administrado por la aplicación, `previous_response_id` para encadenar respuestas y Conversations para conservar elementos en una conversación. Tener un identificador de continuidad no elimina límites de contexto, costos ni decisiones de retención. Elige una estrategia y conserva los datos que esa estrategia requiere. La [guía oficial de estado de conversación](https://developers.openai.com/api/docs/guides/conversation-state) explica sus diferencias.
+
+![Comparación de tres estrategias de contexto: historial enviado por la aplicación, cadena mediante previous_response_id y elementos conservados en Conversations.]({{base}}assets/diagrams/openai-context.svg "Tres formas de aportar contexto al siguiente turno.")
 
 ## Agentes, runner y herramientas
 
@@ -29,11 +35,13 @@ Una **function tool** expone código de tu aplicación. El decorador `@function_
 
 Los esquemas mejoran la forma de los argumentos, pero una función de reembolso todavía debe verificar propietario, importe, estado y duplicados. Una clave API se guarda en el servidor o en un entorno protegido, nunca en JavaScript público de una página de estudio.
 
+![El Agent configura capacidades y el Runner coordina herramientas hospedadas en el servicio, funciones ejecutadas por la aplicación y especialistas consultados como herramientas.]({{base}}assets/diagrams/openai-tools.svg "El Runner coordina capacidades que se ejecutan en lugares distintos.")
+
 ## Handoffs y responsabilidad
 
 Con un **handoff**, el control de esa rama pasa al especialista. Con un **manager** que usa agentes como herramientas, el principal conserva la responsabilidad de la respuesta. No hacen falta varios agentes solo porque existan varias herramientas: divide cuando cambian las responsabilidades, políticas o capacidades. El [patrón de orquestación oficial](https://developers.openai.com/api/docs/guides/agents/orchestration) describe esa distinción.
 
-![Triage deriva una consulta a pedidos, reembolsos o políticas; se compara la transferencia de control con un manager que recibe resultados.]({{base}}assets/diagrams/handoffs.svg)
+![Triage deriva una consulta a pedidos, reembolsos o políticas; se compara la transferencia de control con un manager que recibe resultados.]({{base}}assets/diagrams/handoffs.svg "Un handoff transfiere el control; un manager lo conserva.")
 
 ## Ejemplo paso a paso
 
@@ -47,11 +55,17 @@ Construye mentalmente un sistema de soporte con triage, pedidos y devoluciones.
 
 Para la demostración usa datos ficticios y una función que solo simula la operación. Prueba pedido inexistente, acceso denegado y solicitud fuera de tema. En cada caso debe haber una respuesta controlada y ninguna operación financiera real.
 
+![Una consulta de pedido pasa por entrada, triage, especialista y backend autorizado antes de responder con el estado obtenido; un reembolso posterior exige nueva autorización.]({{base}}assets/diagrams/openai-support-steps.svg "Del mensaje del cliente al estado comprobado de su pedido.")
+
 ## Guardrails y trazas
 
 Los guardrails de entrada, salida y herramientas tienen alcances distintos. En el SDK, los de entrada se aplican al primer agente de la cadena y los de salida al que produce la respuesta final; no debes asumir que se repiten en todo especialista. La validación de una acción sensible se coloca junto a la herramienta, y una aprobación puede pausar el flujo. Los checks en paralelo reducen latencia, pero pueden permitir trabajo especulativo: usa ejecución bloqueante cuando sea necesario. Consulta [guardrails y revisión humana](https://developers.openai.com/api/docs/guides/agents/guardrails-approvals).
 
+En el ejemplo de soporte, un comprobador puede producir una salida estructurada como `is_support_question: bool`, definida con un modelo Pydantic. Si el resultado incumple la regla, el guardrail puede activar un **tripwire**: el Runner interrumpe la ejecución con una excepción que la aplicación debe manejar. No deshace operaciones ya realizadas; por eso importa cuándo se valida. La [implementación oficial de guardrails del SDK](https://openai.github.io/openai-agents-python/guardrails/) muestra el resultado estructurado y los modos de ejecución.
+
 Una traza muestra etapas, llamadas y resultados disponibles; ayuda a distinguir tiempo del modelo, de una API y de la validación. Protege los datos registrados y revisa la configuración de trazado. No interpretes una traza como el razonamiento interno completo ni deduzcas que la función más visible es necesariamente el cuello de botella.
+
+![Control de entrada en el primer agente, permisos junto a la herramienta y revisión de salida en el agente final; una traza relaciona etapas, llamadas, tiempos y estados.]({{base}}assets/diagrams/openai-guardrails.svg "Ubica cada control en la etapa que realmente protege.")
 
 ## Errores frecuentes
 
@@ -59,6 +73,8 @@ Una traza muestra etapas, llamadas y resultados disponibles; ayuda a distinguir 
 - Esperar que definir una herramienta ejecute inmediatamente su código.
 - Creer que un handoff garantiza el regreso al agente de triage.
 - Confiar en el guardrail de entrada para autorizar todos los reembolsos posteriores.
+
+![Cuatro contrastes: cliente API frente a SDK, declarar frente a ejecutar, handoff frente a retorno y validación de entrada frente a autorización de una operación.]({{base}}assets/diagrams/openai-errors.svg "Corrige la confusión antes de cambiar la implementación.")
 
 ## Ejercicio de diseño
 
@@ -69,8 +85,12 @@ Un agente debe consultar dos especialistas y combinar sus resultados en un únic
 
 Un manager con especialistas expuestos como herramientas mantiene el control y sintetiza el informe. El handoff es adecuado cuando otro especialista debe hacerse cargo de la conversación. Ninguno autoriza por sí mismo acciones sensibles: cada herramienta conserva sus validaciones y permisos.
 
+![Dos especialistas devuelven resultados al manager, que combina la información y produce un informe único sin transferir la responsabilidad de responder.]({{base}}assets/diagrams/openai-exercise.svg "El manager consulta, integra y responde.")
+
 </details>
 
 ## Fuentes y repaso
 
 La [introducción oficial al Agents SDK](https://developers.openai.com/api/docs/guides/agents/sdk) enlaza definiciones, ejecución y herramientas. Repasa el caso de soporte señalando qué configuración pertenece al agente y qué lógica debe permanecer en la aplicación. La sintaxis y capacidades exactas deben verificarse con la versión del SDK y el modelo elegidos.
+
+![Mapa de responsabilidades: Responses gestiona la interfaz, Agents SDK coordina el flujo y la aplicación mantiene reglas de negocio, permisos, datos y despliegue.]({{base}}assets/diagrams/openai-recap.svg "Repasa el stack explicando quién hace cada cosa.")

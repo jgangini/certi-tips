@@ -4,10 +4,10 @@ import { validateSite } from '../scripts/check-site.mjs';
 
 function fixture() {
   const slugs = ['overview', 'agents', 'langchain', 'mcp', 'openai', 'oci-enterprise', 'oracle-database'];
-  const catalog = { base: '/certi-tips/', origin: 'https://example.test', courses: [{ id: 'course', modules: slugs.map((slug, i) => ({ slug, type: i ? 'module' : 'orientation' })), resources: [{ slug: 'practice' }] }] };
+  const catalog = { base: '/certi-tips/', origin: 'https://example.test', courses: [{ id: 'course', exam: { code: 'course' }, modules: slugs.map((slug, i) => ({ slug, type: i ? 'module' : 'orientation' })), resources: [{ slug: 'practice' }] }] };
   const files = new Map([['index.html', '<main id="main"><a href="/certi-tips/course/agents/#conceptos-clave">Guide</a><img src="/certi-tips/assets/logo.svg"><script type="module" src="/certi-tips/assets/main.js"></script></main>'], ['assets/logo.svg', '<svg></svg>'], ['assets/main.js', 'import { ready } from "./helper.js";'], ['assets/helper.js', 'export const ready = true;']]);
   for (const slug of [...slugs, 'practice']) files.set(`course/${slug}/index.html`, '<main id="conceptos-clave"><a href="#conceptos-clave">Section</a></main>');
-  const diagrams = ['certification-roadmap', 'agent-loop', 'guardrails', 'langchain-flow', 'mcp-architecture', 'openai-stack', 'handoffs', 'oci-runtime', 'vector-search', 'database-capabilities'];
+  const diagrams = ['agent-loop', 'guardrails', 'langchain-flow', 'mcp-architecture', 'openai-stack', 'handoffs', 'oci-runtime', 'vector-search', 'database-capabilities'];
   for (const diagram of diagrams) {
     files.set(`assets/diagrams/${diagram}.svg`, '<svg xmlns="http://www.w3.org/2000/svg"><title>Concept</title><desc>An explanation.</desc><defs><marker id="arrow"/></defs><path marker-end="url(#arrow)"/></svg>');
     files.set('index.html', `${files.get('index.html')}<img src="/certi-tips/assets/diagrams/${diagram}.svg" alt="Concept">`);
@@ -96,6 +96,19 @@ test('requires a complete bank with unique questions and four explained choices'
   includesIssue(issues, /every alternative needs text and an explanation/);
   includesIssue(issues, /exactly four alternatives/);
   includesIssue(issues, /oracle-database: expected 6 questions, received 5/);
+});
+
+test('validates newly added diagrams as well as the required originals', () => {
+  const input = fixture();
+  const file = 'assets/diagrams/new-concept.svg';
+  input.files.set('index.html', `${input.files.get('index.html')}<img src="/certi-tips/${file}" alt="New concept">`);
+  input.files.set(file, '<svg><title>New concept</title><desc>A useful explanation.</desc></svg>');
+  assert.deepEqual(validateSite(input), []);
+  input.files.set(file, '<svg onload="alert(1)"><title>New concept</title><script>alert(1)</script></svg>');
+  const issues = validateSite(input);
+  includesIssue(issues, /new-concept\.svg: missing nonempty SVG desc/);
+  includesIssue(issues, /new-concept\.svg: SVG event handler onload is not allowed/);
+  includesIssue(issues, /new-concept\.svg: active or embedded SVG element <script> is not allowed/);
 });
 
 test('checks study references against actual published module anchors', () => {

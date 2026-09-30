@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" role="img" aria-labelledby="title description">
+  <title id="title">Diagnóstico de errores comunes al integrar OCI</title>
+  <desc id="description">Cinco señales guían una revisión concreta: modelo no disponible a región, endpoint cambiado a compatibilidad, proyecto confundido a identidad del recurso, acceso denegado a permisos mínimos y memoria activada a política de retención.</desc>
+  <defs><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:23px}.h{font-size:34px;font-weight:700}.label{font-size:25px;font-weight:700}.arrow{fill:none;stroke:#8f98ae;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}</style></defs>
+  <rect width="1200" height="620" fill="#f7f8fc"/><text x="56" y="65" class="h">Antes de cambiar código, localiza la causa</text>
+  <text x="82" y="124" class="label" style="fill:#c74436">Señal de problema</text><text x="650" y="124" class="label" style="fill:#087f7a">Primera comprobación</text>
+  <g fill="#fae6e1"><rect x="56" y="147" width="480" height="71" rx="15"/><rect x="56" y="235" width="480" height="71" rx="15"/><rect x="56" y="323" width="480" height="71" rx="15"/><rect x="56" y="411" width="480" height="71" rx="15"/><rect x="56" y="499" width="480" height="71" rx="15"/></g>
+  <g fill="#e1f2ee"><rect x="624" y="147" width="520" height="71" rx="15"/><rect x="624" y="235" width="520" height="71" rx="15"/><rect x="624" y="323" width="520" height="71" rx="15"/><rect x="624" y="411" width="520" height="71" rx="15"/><rect x="624" y="499" width="520" height="71" rx="15"/></g>
+  <g class="arrow"><path d="M553 183h50m-13-10 13 10-13 10M553 271h50m-13-10 13 10-13 10M553 359h50m-13-10 13 10-13 10M553 447h50m-13-10 13 10-13 10M553 535h50m-13-10 13 10-13 10"/></g>
+  <text x="82" y="191">El modelo del ejemplo no responde</text><text x="650" y="191">Disponibilidad del modelo en esa región</text>
+  <text x="82" y="279">Cambiar solo la URL rompe una función</text><text x="650" y="279">Soporte de la API y de esa herramienta</text>
+  <text x="82" y="367">Proyecto y compartment se mezclan</text><text x="650" y="367">Tipo de recurso y OCID que se solicita</text>
+  <text x="82" y="455">La llamada devuelve acceso denegado</text><text x="650" y="455">Identidad y política mínima necesaria</text>
+  <text x="82" y="543">Se guarda más contexto del esperado</text><text x="650" y="543">Retención, datos personales y acceso</text>
+</svg>

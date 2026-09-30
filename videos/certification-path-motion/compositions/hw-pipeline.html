@@ -1,0 +1,244 @@
+<!DOCTYPE html><!-- hyperframes-registry-item: hw-pipeline -->
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+  </head>
+  <body>
+    <template>
+      <style>
+        * { box-sizing: border-box; }
+        #hw-pl-root {
+          --paper: #fff;
+          --pale: #f0f2f6;
+          --ink: #31333f;
+          --heading: #4b5563;
+          --muted: #606574;
+          --accent: #c74634;
+          --branch: #a6382b;
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+          background: var(--paper);
+          color: var(--ink);
+          /* ponytail: system-ui keeps the embed offline and close to Inter; bundle Inter locally when exact brand metrics matter. */
+          font-family: system-ui, sans-serif;
+        }
+        #hw-pl-scene, #hw-pl-svg, #hw-pl-base-labels, #hw-pl-branch-labels {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+        }
+        #hw-pl-svg { overflow: visible; }
+        #hw-pl-svg path {
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+        .hw-pl-box {
+          fill: var(--paper);
+          stroke: var(--accent);
+          stroke-width: 7;
+        }
+        .hw-pl-branch-box { stroke: var(--branch); }
+        .hw-pl-conn {
+          fill: none;
+          stroke: var(--accent);
+          stroke-width: 8;
+        }
+        .hw-pl-branch-conn { stroke: var(--branch); }
+        .hw-pl-label {
+          position: absolute;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 15px 22px;
+          color: var(--ink);
+          opacity: 0;
+          text-align: center;
+        }
+        .hw-pl-level {
+          color: var(--accent);
+          font-size: 28px;
+          font-weight: 400;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+        }
+        .hw-pl-title {
+          font-size: 42px;
+          font-weight: 400;
+          line-height: 1.05;
+          letter-spacing: -0.035em;
+          white-space: pre-line;
+        }
+        .hw-pl-branch-label {
+          padding: 12px 22px;
+        }
+        .hw-pl-branch-label .hw-pl-title { font-size: 42px; }
+        .hw-pl-branch-label .hw-pl-level {
+          font-size: 28px;
+        }
+        #hw-pl-headline, #hw-pl-route-heading {
+          position: absolute;
+          margin: 0;
+          left: 115px;
+          font-weight: 400;
+          letter-spacing: -0.025em;
+          color: var(--heading);
+          font-size: 42px;
+          line-height: 1.15;
+          opacity: 0;
+        }
+        #hw-pl-headline {
+          top: 92px;
+        }
+        #hw-pl-route-heading {
+          top: 540px;
+        }
+      </style>
+      <div data-hf-id="hf-4vmb" id="hw-pl-root" data-composition-id="hw-pipeline" data-start="0" data-duration="15.5" data-fps="30" data-width="1920" data-height="1080">
+        <section data-hf-id="hf-9ltb" id="hw-pl-scene" class="clip" data-start="0" data-duration="15.5" data-track-index="0" aria-label="Cuatro certificaciones de nivel 1 en Foundation Sprint, seguidas de tres rutas de especialización opcionales">
+          <svg data-hf-id="hf-tcji" id="hw-pl-svg" viewBox="0 0 1920 1080" aria-hidden="true">
+            <g data-hf-id="hf-utr0" id="hw-pl-base-svg" />
+            <g data-hf-id="hf-9i6z" id="hw-pl-branch-svg" />
+          </svg>
+          <div data-hf-id="hf-uyq5" id="hw-pl-base-labels"></div>
+          <div data-hf-id="hf-bu58" id="hw-pl-branch-labels"></div>
+          <h1 data-hf-id="hf-zbqh" id="hw-pl-headline">Foundation Sprint</h1>
+          <p data-hf-id="hf-emqv" id="hw-pl-route-heading">Después, elige tu ruta</p>
+        </section>
+      </div>
+      <script>
+        (function () {
+          const NS = "http://www.w3.org/2000/svg";
+          const baseSvg = document.getElementById("hw-pl-base-svg");
+          const branchSvg = document.getElementById("hw-pl-branch-svg");
+          const baseLabels = document.getElementById("hw-pl-base-labels");
+          const branchLabels = document.getElementById("hw-pl-branch-labels");
+          const tl = gsap.timeline({ paused: true });
+          const base = [
+            { title: "OCI Foundations Associate 2026", label: "OCI", x: 115, at: 1.0 },
+            { title: "OCI AI Foundations Associate 2026", label: "AI", x: 555, at: 2.0 },
+            { title: "Oracle AI Data Platform Essentials", label: "AI Data\nPlatform", x: 995, at: 3.0 },
+            { title: "Oracle Agentic AI Foundations Associate 2026", label: "Agentic\nAI", x: 1435, at: 4.0 }
+          ];
+          const branches = [
+            { title: "AI & Agents", level: "Niveles 2–3", x: 225, at: 6.9 },
+            { title: "Data & AI", level: "Niveles 2–3", x: 775, at: 7.8 },
+            { title: "Architecture", level: "Nivel 2", x: 1325, at: 8.7 }
+          ];
+
+          function hash(n, seed) {
+            const value = Math.sin(n * 127.1 + seed * 311.7) * 43758.5453;
+            return (value - Math.floor(value)) * 2 - 1;
+          }
+          // Retained from hw-pipeline: seeded outline variation is fixed, never boiling frame to frame.
+          function wobbleRect(w, h, seed) {
+            const j = n => hash(n, seed) * 3.5;
+            return "M " + (24 + j(1)) + " " + j(2) +
+              " L " + (w / 2 + j(3)) + " " + j(4) +
+              " L " + (w - 24 + j(5)) + " " + j(6) +
+              " Q " + (w + j(7)) + " " + j(8) + " " + (w + j(9)) + " " + (24 + j(10)) +
+              " L " + (w + j(11)) + " " + (h / 2 + j(12)) +
+              " L " + (w + j(13)) + " " + (h - 24 + j(14)) +
+              " Q " + (w + j(15)) + " " + (h + j(16)) + " " + (w - 24 + j(17)) + " " + (h + j(18)) +
+              " L " + (w / 2 + j(19)) + " " + (h + j(20)) +
+              " L " + (24 + j(21)) + " " + (h + j(22)) +
+              " Q " + j(23) + " " + (h + j(24)) + " " + j(25) + " " + (h - 24 + j(26)) +
+              " L " + j(27) + " " + (h / 2 + j(28)) +
+              " L " + j(29) + " " + (24 + j(30)) +
+              " Q " + j(31) + " " + j(32) + " " + (24 + j(33)) + " " + j(34);
+          }
+          function path(parent, id, d, className) {
+            const element = document.createElementNS(NS, "path");
+            element.setAttribute("id", id);
+            element.setAttribute("class", className);
+            element.setAttribute("d", d);
+            parent.appendChild(element);
+            return element;
+          }
+          function drawn(element, start, duration) {
+            const length = element.getTotalLength();
+            gsap.set(element, { strokeDasharray: length, strokeDashoffset: length, opacity: 0 });
+            // ponytail: hidden until its own beat; dash offsets alone leave red round-cap dots at frame zero.
+            tl.set(element, { opacity: 1 }, start);
+            tl.to(element, { strokeDashoffset: 0, duration: duration, ease: "power2.inOut" }, start);
+          }
+          function box(parent, id, leftX, topY, w, h, seed, className) {
+            const group = document.createElementNS(NS, "g");
+            group.setAttribute("transform", "translate(" + leftX + " " + topY + ")");
+            parent.appendChild(group);
+            return path(group, id, wobbleRect(w, h, seed), className);
+          }
+          function label(parent, id, title, level, leftX, topY, w, h, className) {
+            const element = document.createElement("div");
+            element.id = id;
+            element.className = className;
+            const tier = document.createElement("span");
+            tier.className = "hw-pl-level";
+            tier.textContent = level;
+            const name = document.createElement("span");
+            name.className = "hw-pl-title";
+            name.textContent = title;
+            element.append(tier, name);
+            element.style.left = leftX + "px";
+            element.style.top = topY + "px";
+            element.style.width = w + "px";
+            element.style.height = h + "px";
+            parent.appendChild(element);
+            return element;
+          }
+          function curvedArrow(x1, y1, cx, cy, x2, y2, arrowSize = 24) {
+            const angle = Math.atan2(y2 - cy, x2 - cx) + Math.PI;
+            const bx1 = x2 + arrowSize * Math.cos(angle - 0.45);
+            const by1 = y2 + arrowSize * Math.sin(angle - 0.45);
+            const bx2 = x2 + arrowSize * Math.cos(angle + 0.45);
+            const by2 = y2 + arrowSize * Math.sin(angle + 0.45);
+            return "M " + x1 + " " + y1 + " Q " + cx + " " + cy + " " + x2 + " " + y2 +
+              " M " + x2 + " " + y2 + " L " + bx1 + " " + by1 +
+              " M " + x2 + " " + y2 + " L " + bx2 + " " + by2;
+          }
+
+          tl.fromTo("#hw-pl-headline", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 0.15);
+
+          base.forEach(function (node, i) {
+            const outline = box(baseSvg, "hw-pl-base-box-" + i, node.x, 235, 350, 185, 11 + i, "hw-pl-box");
+            const text = label(baseLabels, "hw-pl-base-label-" + i, node.label, "Nivel 1", node.x, 235, 350, 185, "hw-pl-label");
+            drawn(outline, node.at - 0.5, 0.48);
+            tl.fromTo(text, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.32, ease: "power2.out" }, node.at);
+            if (i < base.length - 1) {
+              const edge = path(baseSvg, "hw-pl-base-edge-" + i,
+                curvedArrow(node.x + 357, 327, node.x + 390, 295, base[i + 1].x - 12, 327, 18), "hw-pl-conn");
+              drawn(edge, node.at + 0.5, 0.42);
+            }
+          });
+
+          tl.fromTo("#hw-pl-route-heading", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.42, ease: "power2.out" }, 5.2);
+
+          const stem = path(branchSvg, "hw-pl-stem",
+            "M 1610 420 C 1600 545 1340 610 960 625", "hw-pl-conn hw-pl-branch-conn");
+          drawn(stem, 5.75, 0.75);
+          branches.forEach(function (node, i) {
+            const edge = path(branchSvg, "hw-pl-branch-edge-" + i,
+              curvedArrow(960, 625, node.x + 190, 650, node.x + 190, 695, 18),
+              "hw-pl-conn hw-pl-branch-conn");
+            drawn(edge, node.at - 0.35, 0.42);
+          });
+          branches.forEach(function (node, i) {
+            const outline = box(branchSvg, "hw-pl-branch-box-" + i, node.x, 705, 380, 170, 21 + i, "hw-pl-box hw-pl-branch-box");
+            const text = label(branchLabels, "hw-pl-branch-label-" + i, node.title, node.level, node.x, 705, 380, 170, "hw-pl-label hw-pl-branch-label");
+            drawn(outline, node.at, 0.43);
+            tl.fromTo(text, { opacity: 0 }, { opacity: 1, duration: 0.28, ease: "power2.out" }, node.at + 0.35);
+          });
+                    // ponytail: hold the complete map for over four seconds before a short loop-reset fade.
+          tl.to("#hw-pl-scene", { opacity: 0, duration: 0.5, ease: "power2.inOut" }, 14.75);
+          window.__timelines["hw-pipeline"] = tl;
+          tl.seek(0);
+        })();
+      </script>
+    </template>
+  </body>
+</html>

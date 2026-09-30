@@ -3,11 +3,123 @@
   "base": "/certi-tips/",
   "origin": "https://jgangini.github.io",
   "repository": "https://github.com/jgangini/certi-tips",
+  "paths": [
+    {
+      "id": "foundation-sprint",
+      "label": "Foundation",
+      "title": "Foundation",
+      "description": "Foundation reúne cuatro certificaciones de nivel 1 que recomendamos como base común para OCI, IA, datos y agentes. Después, elige la especialidad que mejor se ajuste a tu objetivo.",
+      "items": [
+        {
+          "id": "oci-foundations-2026",
+          "level": 1,
+          "title": "OCI Foundations Associate 2026",
+          "description": "Conceptos de nube, identidad, red, cómputo y almacenamiento en OCI.",
+          "officialUrl": "https://mylearn.oracle.com/ou/learning-path/-become-an-oci-foundations-associate-2026/163541"
+        },
+        {
+          "id": "oci-ai-foundations-2026",
+          "level": 1,
+          "title": "OCI AI Foundations Associate 2026",
+          "description": "Vocabulario de IA, aprendizaje automático, modelos generativos y servicios de OCI.",
+          "officialUrl": "https://mylearn.oracle.com/ou/learning-path/become-an-oci-ai-foundations-associate-2026/163544"
+        },
+        {
+          "id": "ai-data-platform-essentials",
+          "level": 1,
+          "title": "Oracle AI Data Platform Essentials",
+          "description": "Fundamentos de la plataforma de datos que alimenta las soluciones de IA.",
+          "officialUrl": "https://mylearn.oracle.com/ou/article-course/oracle-ai-data-platform-essentials-new-/159384"
+        },
+        {
+          "id": "agentic-ai-foundations-2026",
+          "level": 1,
+          "title": "Oracle Agentic AI Foundations Associate 2026",
+          "description": "Agentes, herramientas, MCP, OCI Enterprise AI y Oracle AI Database.",
+          "officialUrl": "https://mylearn.oracle.com/ou/learning-path/become-an-oracle-agentic-ai-foundations-associate-2026/163239",
+          "guide": "agentic-ai-foundations-2026"
+        }
+      ]
+    },
+    {
+      "id": "ai-first",
+      "label": "AI & Agents",
+      "title": "AI & Agents",
+      "description": "Elige IA generativa o ciencia de datos según tu trabajo. Después profundiza en agentes empresariales.",
+      "items": [
+        {
+          "id": "oci-generative-ai-2025",
+          "level": 2,
+          "title": "OCI Generative AI Professional 2025",
+          "description": "Modelos generativos y sus aplicaciones en OCI.",
+          "officialUrl": "https://mylearn.oracle.com/ou/learning-path/become-an-oci-generative-ai-professional-2025/147863"
+        },
+        {
+          "id": "oci-data-science-2025",
+          "level": 2,
+          "title": "OCI Data Science Professional 2025",
+          "description": "Datos, modelos y ciclo de vida de soluciones de aprendizaje automático.",
+          "officialUrl": "https://mylearn.oracle.com/ou/learning-path/become-an-oci-data-science-professional-2025/148474"
+        },
+        {
+          "id": "oci-enterprise-ai-2026",
+          "level": 3,
+          "title": "OCI Enterprise AI Professional 2026",
+          "description": "Construcción y operación de soluciones de IA para empresas.",
+          "officialUrl": "https://mylearn.oracle.com/ou/learning-path/become-an-oci-enterprise-ai-professional-2026/163234"
+        }
+      ]
+    },
+    {
+      "id": "ai-data-layer",
+      "label": "Data & AI",
+      "title": "Data & AI",
+      "description": "Empieza por la base de datos, añade recuperación semántica y luego diseña agentes cercanos a los datos.",
+      "items": [
+        {
+          "id": "autonomous-ai-database-2026",
+          "level": 2,
+          "title": "Oracle Autonomous AI Database Professional 2026",
+          "description": "Operación y capacidades de Autonomous AI Database.",
+          "officialUrl": "https://mylearn.oracle.com/ou/learning-path/become-an-oracle-autonomous-ai-database-professional-2026/163045"
+        },
+        {
+          "id": "ai-vector-search",
+          "level": 2,
+          "title": "Oracle AI Vector Search Professional",
+          "description": "Vectores, similitud y búsqueda de información para IA.",
+          "officialUrl": "https://mylearn.oracle.com/ou/learning-path/become-an-oracle-ai-vector-search-professional/144854"
+        },
+        {
+          "id": "agentic-ai-database-2026",
+          "level": 3,
+          "title": "Agentic AI for Oracle AI Database Professional 2026",
+          "description": "Agentes que aprovechan datos y capacidades de Oracle AI Database.",
+          "officialUrl": "https://mylearn.oracle.com/ou/learning-path/become-an-agentic-ai-for-oracle-ai-database-professional-2026/163163"
+        }
+      ]
+    },
+    {
+      "id": "oci-enablers",
+      "label": "Architecture",
+      "title": "Architecture",
+      "description": "Profundiza en el diseño de infraestructura, seguridad, red y despliegue que sostiene las soluciones de IA.",
+      "items": [
+        {
+          "id": "oci-architect-2025",
+          "level": 2,
+          "title": "OCI Architect Associate 2025",
+          "description": "Diseño de soluciones en OCI con identidad, red, cómputo y almacenamiento.",
+          "officialUrl": "https://mylearn.oracle.com/ou/learning-path/become-an-oci-architect-associate-2025/147631"
+        }
+      ]
+    }
+  ],
   "courses": [
     {
       "id": "agentic-ai-foundations-2026",
       "title": "Oracle Agentic AI Foundations",
-      "edition": "Associate · 2026",
+      "edition": "Associate 2026",
       "description": "De entender un agente a elegir cómo construirlo, conectarlo y operarlo. Una ruta visual con ejemplos, ejercicios y práctica explicada.",
       "exam": { "code": "1Z0-1157-26", "questions": 40, "minutes": 60, "passingPercent": 65, "verified": "2026-09-28", "source": "https://blogs.oracle.com/oracleuniversity/oracle-agentic-ai-foundations-training-certification-now-available" },
       "modules": [
@@ -20,11 +132,9 @@
         { "slug": "oracle-database", "title": "Agentes cerca de tus datos", "short": "Oracle AI Database", "description": "Relaciona búsqueda vectorial, Select AI Agent, Private Agent Factory y el servidor MCP de Autonomous.", "minutes": 20, "type": "module" }
       ],
       "resources": [
-        { "slug": "study-path", "title": "Tu plan de siete sesiones", "short": "Plan de estudio", "description": "Una secuencia de estudio con entregables pequeños para avanzar con intención." },
         { "slug": "glossary", "title": "Habla el idioma de los agentes", "short": "Glosario", "description": "Términos técnicos en inglés, explicados en español y con sus diferencias importantes." },
-        { "slug": "review", "title": "Repaso antes de practicar", "short": "Repaso final", "description": "Las distinciones que debes poder explicar sin memorizar una lista de respuestas." },
         { "slug": "exam-checklist", "title": "El siguiente paso: tu certificación", "short": "Ruta al examen oficial", "description": "Comprueba tu preparación y sigue los enlaces oficiales para completar la ruta de Oracle." },
-        { "slug": "practice", "title": "Pon a prueba lo que entiendes", "short": "Práctica explicada", "description": "12 preguntas, seis temas y una explicación en cada respuesta. Aprende también de tus errores." }
+        { "slug": "practice", "title": "Pon a prueba lo que entiendes", "short": "Práctica", "description": "12 preguntas, seis temas y una explicación en cada respuesta. Aprende también de tus errores." }
       ]
     }
   ]

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 650" role="img" aria-labelledby="title description">
   <title id="title">MCP: una aplicación, conexiones explícitas</title>
   <desc id="description">Una aplicación host contiene un modelo y dos clientes MCP. Cada cliente mantiene su propia conexión con un servidor. El primer servidor expone herramientas, recursos y plantillas; el segundo representa otra integración. El protocolo comunica capacidades, pero no concede permisos ni sustituye al modelo.</desc>
   <defs>
@@ -16,8 +16,8 @@
       .route{fill:none;stroke:#087f7a;stroke-width:2.5;stroke-linejoin:round;marker-start:url(#arrow);marker-end:url(#arrow)}
     </style>
   </defs>
-  <rect width="1200" height="760" fill="#f7f8fc"/>
-  <text x="56" y="50" class="eyebrow">03 / MODEL CONTEXT PROTOCOL</text>
+  <rect width="1200" height="650" fill="#f7f8fc"/>
+  <g transform="translate(0 -45)">
   <text x="56" y="98" class="title">MCP conecta capacidades, no concede permisos</text>
   <text x="56" y="134" class="subtitle">Un contrato compartido entre tu aplicación y los sistemas que necesita consultar.</text>
 
@@ -80,7 +80,5 @@
   <g class="icon" stroke="#087f7a"><rect x="674" y="585" width="38" height="20" rx="4"/><rect x="674" y="612" width="38" height="20" rx="4"/><path d="M684 595h17m-17 27h17"/></g>
   <text x="738" y="605" class="label">Servidor MCP B</text>
   <text x="738" y="637" class="body">Otro sistema, su propia conexión</text>
-  <path d="M56 698H1144" stroke="#d9deec"/>
-  <text x="56" y="732" class="meta" font-weight="700" letter-spacing="1.2">CERTITIPS / GUÍA VISUAL</text>
-  <text x="379" y="732" class="meta">Un cliente por conexión. El acceso siempre requiere controles explícitos.</text>
+  </g>
 </svg>

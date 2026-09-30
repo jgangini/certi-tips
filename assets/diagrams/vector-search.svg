@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" role="img" aria-labelledby="title description">
   <title id="title">Del documento al vecino semántico y a una respuesta con evidencia</title>
   <desc id="description">Preparación: documentos se dividen en fragmentos y se convierten en embeddings. Los vectores se almacenan con el texto y sus metadatos. Consulta: la pregunta se transforma con el mismo modelo compatible; el punto de consulta encuentra vecinos semánticos permitidos. El mapa de dos dimensiones es una representación didáctica, no los vectores reales. Para RAG, los fragmentos recuperados y la pregunta se entregan al LLM, que genera una respuesta sustentada en fuentes. Buscar similitud no es generar una respuesta.</desc>
   <defs>
@@ -6,11 +6,11 @@
     <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
     <marker id="arrow-coral" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#c74436" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
     <style>
-      text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.eyebrow{font-size:14px;font-weight:700;letter-spacing:2px;fill:#536078}.title{font-size:34px;font-weight:700}.subtitle{font-size:19px;fill:#536078}.label{font-size:23px;font-weight:700}.body{font-size:21px}.meta{font-size:16px;fill:#536078}.muted{fill:#536078}.white{fill:#fff}.coral{fill:#c74436}.teal{fill:#087f7a}.line{fill:none;stroke:#536078;stroke-width:2.4;marker-end:url(#arrow)}
+      text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.subtitle{font-size:21px;fill:#536078}.label{font-size:23px;font-weight:700}.body{font-size:21px}.meta{font-size:21px;fill:#536078}.muted{fill:#536078}.white{fill:#fff}.coral{fill:#c74436}.teal{fill:#087f7a}.line{fill:none;stroke:#536078;stroke-width:2.4;marker-end:url(#arrow)}
     </style>
   </defs>
-  <rect width="1200" height="760" fill="#f7f8fc"/>
-  <text x="56" y="50" class="eyebrow">07 / ORACLE AI VECTOR SEARCH</text>
+  <rect width="1200" height="640" fill="#f7f8fc"/>
+  <g transform="translate(0 -50)">
   <text x="56" y="98" class="title">Primero encuentra evidencia. Después responde.</text>
   <text x="56" y="134" class="subtitle">Un embedding sitúa el significado; la búsqueda recupera texto y el LLM construye la respuesta.</text>
   <text x="56" y="196" class="meta" font-weight="700">01 / PREPARAR LOS DATOS</text>
@@ -44,7 +44,7 @@
   <g fill="#087f7a" stroke="#fff" stroke-width="3"><circle cx="882" cy="376" r="9"/><circle cx="958" cy="371" r="9"/><circle cx="942" cy="442" r="9"/></g>
   <path d="m910 395 5 10 11 2-8 8 2 11-10-5-10 5 2-11-8-8 11-2Z" fill="#c74436" stroke="#fff" stroke-width="2"/>
   <text x="957" y="495" class="meta">Vecinos próximos</text>
-  <text x="727" y="549" class="meta">Vectores + texto + metadatos · vista 2D ilustrativa</text>
+  <text x="727" y="549" class="meta">Vista 2D ilustrativa · vectores + texto</text>
   <text x="56" y="439" class="meta" font-weight="700">02 / BUSCAR CON LA PREGUNTA</text>
   <path d="M73 458h290q12 0 12 12v36q0 12-12 12H111l-21 17v-17H73q-12 0-12-12v-36q0-12 12-12Z" fill="#fae9e5" stroke="#e3b0a8" stroke-width="1.5"/>
   <text x="88" y="495" class="body">«Mochila para laptop»</text>
@@ -63,7 +63,5 @@
   <rect x="735" y="601" width="99" height="58" rx="16" fill="#17243b"/><text x="784" y="638" class="label white" text-anchor="middle">LLM</text>
   <path d="M849 631h45" class="line"/>
   <text x="917" y="623" class="body teal" font-weight="700">Respuesta</text><text x="917" y="650" class="body">con fuentes</text>
-  <path d="M56 698h1088" stroke="#dbe0eb"/>
-  <text x="56" y="730" class="eyebrow">CERTITIPS / GUÍA VISUAL</text>
-  <text x="1144" y="730" text-anchor="end" class="meta">Similitud no significa verdad ni autorización.</text>
+  </g>
 </svg>

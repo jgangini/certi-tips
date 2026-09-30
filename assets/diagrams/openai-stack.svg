@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" role="img" aria-labelledby="title description">
   <title id="title">OpenAI Agent Stack: responsabilidades por nivel</title>
   <desc id="description">Tres capas de software separan responsabilidades: tu aplicación controla negocio, permisos y funciones; Agents SDK coordina agentes, handoffs y guardrails; Responses API conecta las entradas con modelos y herramientas. Tracing permite inspeccionar pasos y errores. Es posible llamar a Responses directamente sin Agents SDK. Las funciones propias se validan y ejecutan en la aplicación.</desc>
   <defs>
@@ -15,11 +15,11 @@
       .route{fill:none;stroke:#536078;stroke-width:2.5;stroke-linejoin:round;marker-end:url(#arrow)}
     </style>
   </defs>
-  <rect width="1200" height="760" fill="#f7f8fc"/>
-  <text x="56" y="50" class="eyebrow">04 / OPENAI AGENT STACK</text>
-  <text x="56" y="98" class="title">Tres niveles. Tres responsabilidades distintas.</text>
-  <text x="56" y="134" class="subtitle">La API conecta con el modelo; el SDK coordina; tu aplicación conserva el control.</text>
+  <rect width="1200" height="640" fill="#f7f8fc"/>
+  <text x="56" y="60" class="title">Tres niveles. Tres responsabilidades distintas.</text>
+  <text x="56" y="96" class="subtitle">La API conecta con el modelo; el SDK coordina; tu aplicación conserva el control.</text>
 
+  <g transform="translate(0 -60)">
   <!-- Layered software plates: depth communicates stacking, not cloud ownership. -->
   <path d="M93 198H819L840 216V304L819 322H93Z" fill="#e1e5f0"/>
   <rect x="82" y="187" width="734" height="117" rx="19" fill="#fff" stroke="#d9deec" stroke-width="1.5"/>
@@ -74,7 +74,5 @@
   <path d="M866 416H925" class="route" stroke-dasharray="4 5"/>
   <text x="1042" y="621" text-anchor="middle" class="meta">El SDK no aloja</text>
   <text x="1042" y="645" text-anchor="middle" class="meta">tu aplicación.</text>
-  <path d="M56 698H1144" stroke="#d9deec"/>
-  <text x="56" y="732" class="meta" font-weight="700" letter-spacing="1.2">CERTITIPS / GUÍA VISUAL</text>
-  <text x="379" y="732" class="meta">Function calling propone; tu aplicación valida y ejecuta sus funciones.</text>
+  </g>
 </svg>

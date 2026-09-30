@@ -6,7 +6,7 @@ LangChain ofrece piezas reutilizables para conectar modelos y herramientas. Su v
 
 Una **chain** conecta pasos definidos por el desarrollador. Un agente deja al modelo proponer herramientas y orden de ejecución dentro de límites. Compartir una interfaz entre modelos facilita cambios, pero no garantiza capacidades idénticas: verifica tool calling, parámetros, límites y comportamiento del proveedor elegido.
 
-![Flujo de LangChain entre aplicación, mensajes, modelo, registro de herramientas y retorno de resultados con identificadores.]({{base}}assets/diagrams/langchain-flow.svg)
+![Una chain sigue un camino fijo; un agente coordina decisiones del modelo, ejecución de herramientas y resultados con identificadores.]({{base}}assets/diagrams/langchain-flow.svg "Una secuencia fija y un ciclo de decisiones tienen responsabilidades distintas.")
 
 ## Objetivos del módulo
 
@@ -14,6 +14,8 @@ Una **chain** conecta pasos definidos por el desarrollador. Un agente deja al mo
 - Diferenciar `model.invoke`, `chain.invoke` y `agent.invoke` por el trabajo que desencadenan.
 - Reconstruir el intercambio de una llamada a herramienta y su resultado.
 - Detectar fallos de contexto, esquemas y ejecución sin culpar automáticamente al modelo.
+
+![Comparación de model.invoke, chain.invoke y agent.invoke: respuesta del modelo, secuencia definida y loop con herramientas.]({{base}}assets/diagrams/langchain-objectives.svg "El objeto que invocas determina el trabajo que se inicia.")
 
 ## Bloques reutilizables
 
@@ -23,6 +25,8 @@ Una composición como `prompt | model | parser` describe una secuencia mediante 
 
 Las herramientas suelen expresarse como funciones con tipos y descripciones; el decorador `@tool` permite exponer metadatos al framework. `create_agent` reúne el modelo y las herramientas, y `agent.invoke` inicia la ejecución. Esa sencillez de uso oculta trabajo útil, no elimina responsabilidades de seguridad. La [documentación actual de agentes](https://docs.langchain.com/oss/python/langchain/agents) explica esta construcción y su configuración.
 
+![Pipeline de prompt, modelo y parser con contexto aportado por la aplicación; validar el formato no demuestra veracidad.]({{base}}assets/diagrams/langchain-building-blocks.svg "El prompt prepara, el modelo genera y el parser procesa la salida.")
+
 ## Qué ocurre bajo el capó
 
 El runtime prepara mensajes y esquemas de herramientas. El modelo puede devolver texto, llamadas a herramientas u otros bloques compatibles; no deduzcas que está terminado solamente porque apareció texto. Cuando hay una llamada pendiente, la aplicación identifica el nombre registrado, analiza argumentos y ejecuta la herramienta permitida.
@@ -30,6 +34,8 @@ El runtime prepara mensajes y esquemas de herramientas. El modelo puede devolver
 Cada resultado se vincula con el identificador de la llamada correspondiente. Luego entra al contexto de la siguiente solicitud. Así el modelo puede utilizar el valor obtenido, pedir otra operación o producir una respuesta final. El loop también debe tener límites y gestionar errores: terminar no depende exclusivamente de que el modelo decida hacerlo.
 
 Conservar estado no significa que el LLM modifique sus pesos o aprenda permanentemente el nombre del usuario. La aplicación o un servicio guarda contexto y lo aporta a futuras inferencias. Tampoco es obligatorio reenviar por red todo el historial literal en cada integración: puede haber mecanismos de continuación, recorte y resumen. Lo necesario es conservar el contexto pertinente y la relación entre llamadas y resultados.
+
+![El modelo solicita multiplicar con argumentos e ID call-a; el runtime valida y ejecuta, y devuelve 90 asociado al mismo identificador.]({{base}}assets/diagrams/langchain-message-cycle.svg "El identificador une cada solicitud con la evidencia que regresa.")
 
 ## Ejemplo paso a paso
 
@@ -44,6 +50,8 @@ Considera “multiplica 18 por 5 y divide el resultado entre 3”. Las herramien
 | 5 | Runtime | Valida divisor distinto de cero; devuelve `30`. |
 | 6 | Modelo y runtime | Producen y entregan la respuesta final: `30`. |
 
+![Secuencia de dos llamadas: multiplicar 18 por 5 produce 90 para call-a; dividir 90 entre 3 produce 30 para call-b.]({{base}}assets/diagrams/langchain-math-sequence.svg "El resultado de la primera herramienta alimenta la segunda.")
+
 La función de multiplicación no llama al LLM. Es código normal dentro de una aplicación que sí utiliza un modelo. Para comprobar la demostración, revisa tanto el resultado como los argumentos: obtener 30 por casualidad no prueba que las herramientas correctas se hayan usado.
 
 Prueba después “divide entre cero”. El resultado esperado es un error controlado o una solicitud de corrección, no una excepción sin manejar ni un número inventado. Por último, elimina deliberadamente el resultado de `call-a` del contexto y explica por qué se pierde la evidencia que necesitaba la segunda operación.
@@ -56,6 +64,8 @@ Prueba después “divide entre cero”. El resultado esperado es un error contr
 - Suponer que cambiar el nombre del proveedor mantiene el resultado y costo de la aplicación.
 - Confundir trazas de llamadas con el razonamiento interno completo del modelo.
 
+![Contraste entre errores y comprobaciones: varias llamadas por invocación, resultados conservados en contexto y capacidades distintas entre proveedores.]({{base}}assets/diagrams/langchain-errors.svg "Revisa mensajes, contexto y capacidades antes de atribuir un fallo al modelo.")
+
 ## Ejercicio de depuración
 
 La multiplicación devuelve 90 correctamente, pero el agente vuelve a solicitarla varias veces. ¿Qué dos aspectos revisarías antes de aumentar el límite de pasos?
@@ -65,8 +75,12 @@ La multiplicación devuelve 90 correctamente, pero el agente vuelve a solicitarl
 
 Primero, confirma que el resultado aparece en el contexto con el identificador de la llamada correcta. Segundo, revisa instrucciones, descripción de herramientas y condiciones de finalización para comprobar que el agente reconoce el resultado. Aumentar el límite podría hacer más cara una ejecución defectuosa sin corregir la causa. Añade también un límite para que el fallo siga siendo controlable.
 
+![Depuración del loop repetido: comprobar call-a y su resultado en contexto, revisar la condición de finalización y mantener un límite.]({{base}}assets/diagrams/langchain-debug.svg "Corregir la evidencia y la condición de salida evita repetir una llamada resuelta.")
+
 </details>
 
 ## Fuentes y repaso
 
 Consulta [Agents](https://docs.langchain.com/oss/python/langchain/agents), [Tools](https://docs.langchain.com/oss/python/langchain/tools) y [Messages](https://docs.langchain.com/oss/python/langchain/messages) en la documentación oficial de LangChain. El aprendizaje clave es poder señalar, en cada flecha del diagrama, qué mensaje circula, quién lo interpreta y dónde se ejecuta el código.
+
+![Repaso de responsabilidades: el modelo propone, LangChain coordina mensajes y estado, la función ejecuta y el resultado vuelve al contexto.]({{base}}assets/diagrams/langchain-recap.svg "Explica cada llamada siguiendo su nombre, argumentos, identificador y resultado.")

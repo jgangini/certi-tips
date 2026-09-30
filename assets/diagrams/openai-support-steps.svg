@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" role="img" aria-labelledby="title description">
+  <title id="title">Recorrido de una consulta de pedido con handoff</title>
+  <desc id="description">Una consulta ficticia pasa por validación de alcance, triage, especialista de pedidos y backend autorizado. El backend devuelve el estado, y el especialista responde con ese resultado. Un reembolso posterior requiere otra validación.</desc>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.6"/></marker><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:22px}.h{font-size:34px;font-weight:700}.label{font-size:25px;font-weight:700}.muted{fill:#536078}.line{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}</style></defs>
+  <rect width="1200" height="560" fill="#f7f8fc"/><text x="56" y="65" class="h">«¿Dónde está mi pedido P-204?»</text>
+  <path d="M142 215H1060" stroke="#d8dcec" stroke-width="8"/>
+  <g text-anchor="middle"><g fill="#c74436"><circle cx="148" cy="215" r="35"/><circle cx="374" cy="215" r="35"/></g><circle cx="600" cy="215" r="35" fill="#4f46b8"/><circle cx="826" cy="215" r="35" fill="#4f46b8"/><circle cx="1052" cy="215" r="35" fill="#087f7a"/>
+  <g style="fill:#fff;font-size:27px;font-weight:700"><text x="148" y="225">1</text><text x="374" y="225">2</text><text x="600" y="225">3</text><text x="826" y="225">4</text><text x="1052" y="225">5</text></g>
+  <text x="148" y="288" class="label">Entrada</text><text x="148" y="327">Alcance y formato</text><text x="374" y="288" class="label">Triage</text><text x="374" y="327">Deriva a pedidos</text><text x="600" y="288" class="label">Especialista</text><text x="600" y="327">Solicita la consulta</text><text x="826" y="288" class="label">Backend</text><text x="826" y="327">Autoriza y consulta</text><text x="1052" y="288" class="label">Respuesta</text><text x="1052" y="327">Usa el estado real</text></g>
+  <rect x="510" y="385" width="634" height="108" rx="20" fill="#e1f2ee"/><text x="541" y="424" class="label">Resultado: «en preparación»</text><text x="541" y="462">El dato vuelve al especialista antes de responder</text><path d="M826 350v22" class="line"/>
+  <rect x="56" y="385" width="402" height="108" rx="20" fill="#fae6e1"/><text x="82" y="426" class="label">¿Ahora pide un reembolso?</text><text x="82" y="463">Nueva acción, nueva autorización</text>
+</svg>

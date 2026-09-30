@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title description">
+  <title id="title">Proyecto, herramientas y memoria en OCI Generative AI</title>
+  <desc id="description">Un proyecto agrupa recursos relacionados. Responses API se conecta con herramientas, memoria y APIs de apoyo. File Search recupera documentos, Code Interpreter usa un sandbox, Function Calling ejecuta funciones mediante la aplicación y MCP accede a servidores externos. La memoria separa conversación, persistencia y compactación.</desc>
+  <defs><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:22px}.h{font-size:34px;font-weight:700}.label{font-size:25px;font-weight:700}.muted{fill:#536078}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}</style></defs>
+  <rect width="1200" height="630" fill="#f7f8fc"/><text x="56" y="65" class="h">Un proyecto conecta recursos, no sustituye tu aplicación</text>
+  <rect x="56" y="111" width="1088" height="463" rx="24" fill="#fff" stroke="#ccd2e2" stroke-width="2"/>
+  <rect x="79" y="133" width="1042" height="65" rx="14" fill="#17243b"/><text x="105" y="174" style="fill:#fff;font-size:25px;font-weight:700">Proyecto OCI Generative AI</text><text x="683" y="174" style="fill:#fff">OCI Responses API</text>
+  <rect x="79" y="222" width="510" height="322" rx="17" fill="#fae6e1"/><text x="106" y="264" class="label">Herramientas</text>
+  <text x="106" y="316">File Search</text><text x="310" y="316" class="muted">Recupera documentos</text><path d="M105 335h458" stroke="#e8c7c0"/>
+  <text x="106" y="372">Code Interpreter</text><text x="310" y="372" class="muted">Sandbox gestionado</text><path d="M105 391h458" stroke="#e8c7c0"/>
+  <text x="106" y="428">Function Calling</text><text x="310" y="428" class="muted">Ejecuta tu aplicación</text><path d="M105 447h458" stroke="#e8c7c0"/>
+  <text x="106" y="484">MCP Calling</text><text x="310" y="484" class="muted">Servidor externo</text>
+  <rect x="615" y="222" width="506" height="177" rx="17" fill="#e9e6fa"/><text x="641" y="263" class="label">Memoria</text><text x="641" y="309">Conversación · entre sesiones</text><text x="641" y="352" class="muted">Compaction: resume el contexto</text>
+  <rect x="615" y="420" width="506" height="124" rx="17" fill="#e1f2ee"/><text x="641" y="461" class="label">APIs de apoyo</text><text x="641" y="506">Files · Vector Stores · Containers</text>
+</svg>

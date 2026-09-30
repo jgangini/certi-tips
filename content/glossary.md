@@ -56,4 +56,4 @@ Usa los términos en inglés para reconocerlos en documentación y material ofic
 
 ## Una prueba de comprensión
 
-Explica la diferencia entre **tool calling**, **MCP** y **runtime** con un pedido de una tienda. Una respuesta sólida identifica la solicitud estructurada, el protocolo de integración y el entorno que ejecuta y coordina el trabajo. Si usas los tres términos como sinónimos, vuelve al [módulo de MCP]({{base}}agentic-ai-foundations-2026/mcp/).
+Explica la diferencia entre **tool calling**, **MCP** y **runtime** con un pedido de una tienda. Una respuesta sólida identifica la solicitud estructurada, el protocolo de integración y el entorno que ejecuta y coordina el trabajo. Si usas los tres términos como sinónimos, vuelve al [módulo de MCP]({{base}}1Z0-1157-26/mcp/).

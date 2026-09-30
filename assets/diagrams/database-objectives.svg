@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" role="img" aria-labelledby="title description">
+  <title id="title">Del significado a una operación autorizada</title>
+  <desc id="description">Cuatro objetivos conectados: representar datos con embeddings, recuperar evidencia usando similitud y filtros, elegir la capacidad adecuada y comprobar permisos. Recuperar y generar una respuesta son operaciones distintas.</desc>
+  <defs>
+    <linearGradient id="coral" x2="1" y2="1"><stop stop-color="#f7ddd6"/><stop offset="1" stop-color="#edc7bf"/></linearGradient>
+    <linearGradient id="teal" x2="1" y2="1"><stop stop-color="#e3f4ef"/><stop offset="1" stop-color="#bde2df"/></linearGradient>
+    <style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.label{font-size:25px;font-weight:700}.body{font-size:22px;fill:#536078}</style>
+  </defs>
+  <rect width="1200" height="520" fill="#f7f8fc"/>
+  <text x="48" y="61" class="title">Cuatro decisiones que debes poder explicar</text>
+  <path d="M158 228C285 228 309 320 451 320S574 194 742 194s135 100 299 100" fill="none" stroke="#d8dceb" stroke-width="9"/>
+  <g transform="translate(160 220)"><circle cx="5" cy="8" r="61" fill="#e5d1cd"/><circle r="61" fill="url(#coral)"/><path d="M-32 16v-32m16 44v-55m16 65v-77m16 65v-53m16 42v-31" stroke="#c74436" stroke-width="6" stroke-linecap="round"/></g>
+  <text x="160" y="322" text-anchor="middle" class="label">Representar</text><text x="160" y="359" text-anchor="middle" class="body">Datos → embeddings</text><text x="160" y="389" text-anchor="middle" class="body">Modelo compatible</text>
+  <g transform="translate(450 312)"><circle cx="5" cy="8" r="61" fill="#dcd9ef"/><circle r="61" fill="#e9e5fa"/><circle cx="-7" cy="-7" r="25" fill="none" stroke="#4f46b8" stroke-width="5"/><path d="m12 13 24 25" stroke="#4f46b8" stroke-width="6" stroke-linecap="round"/><g fill="#4f46b8"><circle cx="-16" cy="-13" r="5"/><circle cx="3" cy="-6" r="5"/><circle cx="-11" cy="4" r="5"/></g></g>
+  <text x="450" y="410" text-anchor="middle" class="label">Recuperar</text><text x="450" y="447" text-anchor="middle" class="body">Similitud + filtros</text><text x="450" y="477" text-anchor="middle" class="body">Evidencia para RAG</text>
+  <g transform="translate(742 186)"><circle cx="5" cy="8" r="61" fill="#dcd9ef"/><circle r="61" fill="#e9e5fa"/><path d="M0-20v22M-32 2h64M-32 2v20M0 2v20M32 2v20" fill="none" stroke="#4f46b8" stroke-width="4"/><rect x="-13" y="-38" width="26" height="24" rx="5" fill="#4f46b8"/><g fill="#fff" stroke="#4f46b8" stroke-width="3"><rect x="-43" y="23" width="22" height="20" rx="4"/><rect x="-11" y="23" width="22" height="20" rx="4"/><rect x="21" y="23" width="22" height="20" rx="4"/></g></g>
+  <text x="742" y="287" text-anchor="middle" class="label">Elegir</text><text x="742" y="324" text-anchor="middle" class="body">Búsqueda, builder,</text><text x="742" y="354" text-anchor="middle" class="body">agentes o MCP</text>
+  <g transform="translate(1040 286)"><circle cx="5" cy="8" r="61" fill="#cbe1df"/><circle r="61" fill="url(#teal)"/><path d="M0-38 34-24v29c0 25-34 42-34 42S-34 30-34 5v-29Z" fill="#fff" stroke="#087f7a" stroke-width="3"/><path d="m-16 3 12 12L20-11" fill="none" stroke="#087f7a" stroke-width="5" stroke-linecap="round"/></g>
+  <text x="1040" y="388" text-anchor="middle" class="label">Autorizar</text><text x="1040" y="425" text-anchor="middle" class="body">Identidad + permisos</text><text x="1040" y="455" text-anchor="middle" class="body">También en lenguaje natural</text>
+</svg>

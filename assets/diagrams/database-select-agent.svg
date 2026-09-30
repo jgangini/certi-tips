@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" role="img" aria-labelledby="title description">
+  <title id="title">Responsabilidades de Select AI Agent</title>
+  <desc id="description">Un equipo coordina agentes; cada agente realiza tareas con herramientas. El paquete DBMS_CLOUD_AI_AGENT administra estos objetos. El perfil de IA configura la conexión al modelo, que se representa separado del framework de base de datos. El historial permite revisar la ejecución.</desc>
+  <defs><linearGradient id="control" x2="1" y2="1"><stop stop-color="#8b81d9"/><stop offset="1" stop-color="#4f46b8"/></linearGradient><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.6"/></marker><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.label{font-size:25px;font-weight:700}.body{font-size:22px;fill:#536078}.line{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}.white{fill:#fff}</style></defs>
+  <rect width="1200" height="620" fill="#f7f8fc"/>
+  <text x="48" y="61" class="title">Coordinar no es lo mismo que ejecutar una herramienta</text>
+  <rect x="48" y="100" width="807" height="456" rx="22" fill="#fff" stroke="#dbe0eb" stroke-width="2"/>
+  <text x="77" y="143" class="label">Select AI Agent</text>
+  <rect x="305" y="168" width="295" height="75" rx="15" fill="url(#control)"/><text x="452" y="195" text-anchor="middle" class="label white">Team · equipo</text><text x="452" y="228" text-anchor="middle" class="body white">Coordina aportes</text>
+  <path d="M452 247v31" fill="none" stroke="#536078" stroke-width="2.5"/>
+  <path d="M452 278H251v27" class="line"/><path d="M452 278h202v27" class="line"/>
+  <rect x="100" y="315" width="300" height="73" rx="15" fill="#eae7fa"/><text x="250" y="342" text-anchor="middle" class="label">Agente A</text><text x="250" y="375" text-anchor="middle" class="body">Realiza una tarea</text>
+  <rect x="503" y="315" width="300" height="73" rx="15" fill="#eae7fa"/><text x="653" y="342" text-anchor="middle" class="label">Agente B</text><text x="653" y="375" text-anchor="middle" class="body">Realiza otra tarea</text>
+  <path d="M250 393v36M653 393v36" class="line"/>
+  <rect x="100" y="441" width="300" height="72" rx="15" fill="#dff1ee"/><text x="250" y="468" text-anchor="middle" class="label">Tools</text><text x="250" y="501" text-anchor="middle" class="body">Operaciones definidas</text>
+  <rect x="503" y="441" width="300" height="72" rx="15" fill="#dff1ee"/><text x="653" y="468" text-anchor="middle" class="label">Historial</text><text x="653" y="501" text-anchor="middle" class="body">Revisar ejecuciones</text>
+  <text x="452" y="591" text-anchor="middle" class="body">Administración: DBMS_CLOUD_AI_AGENT</text>
+  <circle cx="1003" cy="195" r="65" fill="#eed6d1"/><circle cx="997" cy="187" r="65" fill="#fae6e2"/>
+  <g fill="none" stroke="#c74436" stroke-width="3"><rect x="967" y="157" width="60" height="60" rx="12"/><path d="M979 145v12m18-12v12m18-12v12m-36 60v12m18-12v12m18-12v12m-60-54h12m-12 18h12m60-18h12m-12 18h12"/><circle cx="997" cy="177" r="7"/><circle cx="984" cy="201" r="6"/><circle cx="1010" cy="201" r="6"/><path d="m993 184-6 11m14-11 6 11"/></g>
+  <text x="997" y="296" text-anchor="middle" class="label">Modelo configurado</text>
+  <path d="M997 317v49" class="line"/>
+  <rect x="887" y="383" width="222" height="72" rx="14" fill="#fae6e2"/><text x="998" y="427" text-anchor="middle" class="label">Perfil de IA</text>
+  <path d="M887 419h-20v-68h-56" class="line"/>
+</svg>

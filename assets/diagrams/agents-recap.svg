@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 536" role="img" aria-labelledby="title description">
+<title id="title">Evidencia para entender un agente</title>
+<desc id="description">Para explicar un agente, identifica la meta, la llamada propuesta, la validación antes de ejecutar y el resultado observado. Relaciona cada evidencia con su responsable.</desc>
+<defs>
+  <linearGradient id="coral" x2="1" y2="1"><stop stop-color="#fff0eb"/><stop offset="1" stop-color="#f8d8d1"/></linearGradient>
+  <linearGradient id="indigo" x2="1" y2="1"><stop stop-color="#f0edff"/><stop offset="1" stop-color="#ded9f6"/></linearGradient>
+  <linearGradient id="teal" x2="1" y2="1"><stop stop-color="#e7f7f3"/><stop offset="1" stop-color="#c9e9e3"/></linearGradient>
+  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.7"/></marker>
+  <style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.label{font-size:27px;font-weight:700}.body{font-size:23px;fill:#536078}.small{font-size:21px;fill:#536078}.flow{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.white{fill:#fff}</style>
+</defs>
+<rect width="1200" height="536" fill="#f7f8fc"/>
+<text x="56" y="70" class="title">Explica el agente con evidencia observable</text>
+<path d="M267 215h61M559 215h61M851 215h61" class="flow"/>
+<g fill="#fff" stroke="#dce1ec"><rect x="56" y="134" width="210" height="161" rx="22"/><rect x="348" y="134" width="210" height="161" rx="22"/><rect x="640" y="134" width="210" height="161" rx="22"/><rect x="932" y="134" width="210" height="161" rx="22"/></g>
+<g text-anchor="middle"><text x="161" y="192" class="label">Meta</text><text x="453" y="192" class="label">Llamada</text><text x="745" y="192" class="label">Control</text><text x="1037" y="192" class="label">Resultado</text>
+<text x="161" y="239" class="small">Petición del usuario</text><text x="453" y="239" class="small">Nombre + argumentos</text><text x="745" y="239" class="small">Permisos y límites</text><text x="1037" y="239" class="small">Dato, error o cierre</text></g>
+<path d="M161 295v55M453 295v55M745 295v55M1037 295v55" stroke="#ccd3df" stroke-width="2"/>
+<g text-anchor="middle"><circle cx="161" cy="380" r="33" fill="url(#coral)"/><circle cx="453" cy="380" r="33" fill="url(#coral)"/><circle cx="745" cy="380" r="33" fill="url(#indigo)"/><circle cx="1037" cy="380" r="33" fill="url(#teal)"/></g>
+<g class="icon"><path d="M145 380h32m-16-16v32M437 373h32m-32 13h23" stroke="#c74436"/><path d="m728 379 12 12 24-27" stroke="#4f46b8"/><path d="m1020 379 12 12 24-27" stroke="#087f7a"/></g>
+<g text-anchor="middle" class="body"><text x="161" y="463">Usuario</text><text x="453" y="463">Modelo</text><text x="745" y="463">Aplicación</text><text x="1037" y="463">Herramienta + loop</text></g>
+</svg>

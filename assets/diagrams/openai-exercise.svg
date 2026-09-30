@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 570" role="img" aria-labelledby="title description">
+  <title id="title">Un manager combina los resultados de dos especialistas</title>
+  <desc id="description">El manager consulta un especialista de pedidos y otro de políticas como herramientas. Ambos devuelven resultados al manager, que conserva la responsabilidad de sintetizar un informe único.</desc>
+  <defs><linearGradient id="surface" x2="1" y2="1"><stop stop-color="#f1eeff"/><stop offset="1" stop-color="#d7d2f4"/></linearGradient><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.6"/></marker><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:22px}.h{font-size:34px;font-weight:700}.label{font-size:25px;font-weight:700}.line{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}</style></defs>
+  <rect width="1200" height="570" fill="#f7f8fc"/><text x="56" y="65" class="h">Consultar a dos especialistas, responder una sola vez</text>
+  <rect x="56" y="167" width="300" height="105" rx="20" fill="#fae6e1"/><text x="82" y="209" class="label">Pedidos</text><text x="82" y="247">Estado y artículos</text>
+  <rect x="56" y="344" width="300" height="105" rx="20" fill="#e1f2ee"/><text x="82" y="386" class="label">Políticas</text><text x="82" y="424">Reglas aplicables</text>
+  <path d="M537 255 371 209" class="line"/><path d="M371 249 513 290" class="line"/><path d="M513 350 371 379" class="line"/><path d="M371 421 528 385" class="line"/>
+  <circle cx="616" cy="329" r="89" fill="#ddd8f1"/><circle cx="608" cy="320" r="89" fill="url(#surface)"/>
+  <g class="icon" stroke="#4f46b8"><circle cx="608" cy="292" r="18"/><path d="M574 348v-7q0-24 34-24t34 24v7"/></g>
+  <text x="608" y="456" text-anchor="middle" class="label">Manager</text><text x="608" y="493" text-anchor="middle">Integra ambos resultados</text>
+  <path d="M716 320h112" class="line"/>
+  <rect x="852" y="221" width="268" height="200" rx="20" fill="#fff" stroke="#badbd4" stroke-width="2"/>
+  <g class="icon" stroke="#087f7a"><path d="M897 261h135m-135 24h161m-161 24h115m-115 24h153"/></g><text x="986" y="381" text-anchor="middle" class="label">Informe único</text>
+</svg>

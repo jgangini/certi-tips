@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" role="img" aria-labelledby="title description">
+  <title id="title">Mapa de responsabilidades para repasar el stack</title>
+  <desc id="description">La interfaz Responses transmite entradas y devuelve elementos; el SDK coordina agentes, herramientas y handoffs; la aplicación conserva permisos, reglas y despliegue. La revisión del flujo pregunta por contexto, ejecutor, control y evidencia.</desc>
+  <defs><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:23px}.h{font-size:34px;font-weight:700}.label{font-size:26px;font-weight:700}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}</style></defs>
+  <rect width="1200" height="560" fill="#f7f8fc"/><text x="56" y="65" class="h">Explica el sistema señalando quién hace cada cosa</text>
+  <g fill="#fff" stroke="#dce1ec"><rect x="56" y="119" width="1088" height="100" rx="18"/><rect x="56" y="237" width="1088" height="100" rx="18"/><rect x="56" y="355" width="1088" height="100" rx="18"/></g>
+  <circle cx="109" cy="169" r="30" fill="#fae6e1"/><g class="icon" stroke="#c74436"><path d="m99 156-12 13 12 13m20-26 12 13-12 13"/></g><text x="163" y="178" class="label">Responses API</text><text x="440" y="160">Entradas, contexto y herramientas declaradas</text><text x="440" y="195">Texto y otros elementos de salida</text>
+  <circle cx="109" cy="287" r="30" fill="#e9e6fa"/><g class="icon" stroke="#4f46b8"><path d="M96 287a13 13 0 1 1 13 13m-13-13-7 7m7-7 8 6"/></g><text x="163" y="296" class="label">Agents SDK</text><text x="440" y="278">Loop, agentes, handoffs y herramientas</text><text x="440" y="313">Guardrails y trazado según configuración</text>
+  <circle cx="109" cy="405" r="30" fill="#e1f2ee"/><g class="icon" stroke="#087f7a"><path d="m109 388 16 7v13q-2 12-16 18-14-6-16-18v-13Zm-7 18 5 5 11-12"/></g><text x="163" y="414" class="label">Tu aplicación</text><text x="440" y="396">Reglas de negocio, identidad y permisos</text><text x="440" y="431">Funciones propias, datos y despliegue</text>
+  <text x="600" y="514" text-anchor="middle" style="fill:#536078">Contexto → ejecución → responsabilidad → evidencia</text>
+</svg>

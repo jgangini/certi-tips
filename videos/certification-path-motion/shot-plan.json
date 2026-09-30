@@ -1,0 +1,132 @@
+{
+  "category": "kinetic-type",
+  "duration_s": 15.5,
+  "fps": 30,
+  "canvas": {
+    "w": 1920,
+    "h": 1080,
+    "aspect": "16:9"
+  },
+  "style": "Flujo manuscrito del bloque HyperFrames hw-pipeline, adaptado a CertiTips con fondo blanco, tinta slate y rojo Oracle. Cajas de contorno dibujado a mano y conectores curvos que se trazan una vez; rótulos grandes para el hero ampliado y sin borde. Sin verde ni temblor continuo.",
+  "palette": [
+    "#ffffff",
+    "#f0f2f6",
+    "#31333f",
+    "#606574",
+    "#d9dde6",
+    "#c74634",
+    "#a6382b"
+  ],
+  "font": "system-ui",
+  "beats": [
+    15,
+    30,
+    60,
+    90,
+    120,
+    156,
+    207,
+    234,
+    261,
+    290,
+    442
+  ],
+  "export": "mp4",
+  "asset_needs": [],
+  "block": "hw-pipeline",
+  "customize": {
+    "source_block": "hw-pipeline",
+    "adaptation": "Reutilizar las cajas irregulares y conectores curvos de dibujo secuencial del bloque. Sustituir sus nodos por cuatro certificaciones base en una fila y tres ramas opcionales; usar system-ui en rótulos, conservar la sensación manuscrita en trazos y contornos, y ocultar los trazos hasta su beat para evitar puntos rojos iniciales. Mantener visible lo ya dibujado.",
+    "background": "#ffffff",
+    "card_fill": "#ffffff",
+    "ink": "#31333f",
+    "muted_ink": "#606574",
+    "inactive_stroke": "#d9dde6",
+    "active_stroke": "#c74634",
+    "branch_stroke": "#a6382b",
+    "brand": "CertiTips"
+  },
+  "content": {
+    "category_mapping": "Se conserva kinetic-type como categoría formal porque los rótulos son contenido suministrado y no hay magnitudes estadísticas. La geometría y el movimiento provienen del bloque hw-pipeline del catálogo HyperFrames.",
+    "shot_brief": "Cuatro certificaciones de nivel 1 se dibujan en una fila bajo Foundation Sprint. Desde esa base, un conector abre tres grupos opcionales con sus niveles: AI & Agents, Data & AI y Architecture. El mapa completo permanece visible durante más de cuatro segundos antes de un fundido breve que prepara el bucle.",
+    "headline": "Foundation Sprint",
+    "foundation_label": "Tu base",
+    "branch_label": "Después, elige tu ruta",
+    "embed_constraints": {
+      "placement": "Zona derecha ampliada del hero; media 16:9 completa y sin borde, aproximadamente 650 × 365 px en escritorio; en móvil, debajo del título a ancho completo.",
+      "safe_area_px": { "left": 110, "top": 85, "right": 110, "bottom": 85 },
+      "typography": "Los rótulos visibles son abreviaturas inequívocas de una o dos líneas, con system-ui de 42 px y peso normal en el lienzo 1920 × 1080. Los dos encabezados narrativos comparten tamaño, peso y color. Los títulos completos viven en la lista accesible del sitio.",
+      "motion": "Los cuatro hitos de Foundation se dibujan en una fila y permanecen visibles; desde el último se abren tres ramas opcionales debajo. Ninguna línea futura aparece antes de su beat.",
+      "final_frame": "El mapa entero y la nota de opcionalidad quedan en la zona segura durante más de cuatro segundos; este fotograma sirve como póster y alternativa para movimiento reducido."
+    },
+    "scenes": [
+      {
+        "id": "hook",
+        "start": 0,
+        "end": 0.8,
+        "text": "Foundation Sprint",
+        "emphasis_words": ["Foundation Sprint"],
+        "emotion": "claro y orientador",
+        "motion": "aparece el título breve y el primer contorno se dibuja como trazo de pluma",
+        "beats": [0.4]
+      },
+      {
+        "id": "foundation",
+        "start": 0.8,
+        "end": 5.2,
+        "text": "Foundation Sprint",
+        "emphasis_words": ["Foundation Sprint"],
+        "emotion": "avance acumulativo",
+        "motion": "las cajas irregulares y los conectores curvos del bloque hw-pipeline se dibujan en orden; cada rótulo entra después de su contorno y permanece visible",
+        "beats": [1, 2, 3, 4]
+      },
+      {
+        "id": "branches",
+        "start": 5.2,
+        "end": 9.65,
+        "text": "Después, elige tu ruta",
+        "emphasis_words": ["elige"],
+        "emotion": "apertura de posibilidades",
+        "motion": "la fila base permanece completa; un trazo rojo del último hito llega a una unión central y se abre en tres conectores rojos, uno por rama, con tarjetas escalonadas",
+        "beats": [6.9, 7.8, 8.7]
+      },
+      {
+        "id": "resolve",
+        "start": 9.65,
+        "end": 15.5,
+        "emotion": "conclusión serena",
+        "motion": "sostener los siete nodos; mantener el mapa completo más de cuatro segundos y fundir brevemente al final para reiniciar el bucle sin salto brusco",
+        "beats": [9.65, 14.75]
+      }
+    ],
+    "layout": {
+      "safe_margin_px": 110,
+      "headline": { "x": 115, "y": 92, "max_width": 1550, "font_px": 42 },
+      "foundation_band": { "x": 115, "y": 235, "width": 1670, "height": 185 },
+      "branch_band": { "x": 225, "y": 705, "width": 1480, "height": 170 },
+      "junction": { "x": 960, "y": 625 },
+      "node_card_px": { "w": 350, "h": 185 },
+      "branch_card_px": { "w": 380, "h": 170 },
+      "node_label_font_px": 42,
+      "branch_label_font_px": 42
+    },
+    "nodes": [
+      { "id": "oci-foundations-2026", "label": "OCI", "full_title": "OCI Foundations Associate 2026", "group": "Foundation Sprint", "center": [290, 327], "activate_s": 1 },
+      { "id": "oci-ai-foundations-2026", "label": "AI", "full_title": "OCI AI Foundations Associate 2026", "group": "Foundation Sprint", "center": [730, 327], "activate_s": 2 },
+      { "id": "ai-data-platform-essentials", "label": "AI Data\nPlatform", "full_title": "Oracle AI Data Platform Essentials", "group": "Foundation Sprint", "center": [1170, 327], "activate_s": 3 },
+      { "id": "agentic-ai-foundations-2026", "label": "Agentic\nAI", "full_title": "Oracle Agentic AI Foundations Associate 2026", "group": "Foundation Sprint", "center": [1610, 327], "activate_s": 4 },
+      { "id": "ai-first", "label": "AI & Agents", "full_title": "AI & Agents", "group": "Especialización opcional", "center": [415, 790], "activate_s": 6.9 },
+      { "id": "ai-data-layer", "label": "Data & AI", "full_title": "Data & AI", "group": "Especialización opcional", "center": [965, 790], "activate_s": 7.8 },
+      { "id": "oci-enablers", "label": "Architecture", "full_title": "Architecture", "group": "Especialización opcional", "center": [1515, 790], "activate_s": 8.7 }
+    ],
+    "edges": [
+      { "from": "oci-foundations-2026", "to": "oci-ai-foundations-2026", "kind": "recommended_base", "draw_s": [1.5, 1.92] },
+      { "from": "oci-ai-foundations-2026", "to": "ai-data-platform-essentials", "kind": "recommended_base", "draw_s": [2.5, 2.92] },
+      { "from": "ai-data-platform-essentials", "to": "agentic-ai-foundations-2026", "kind": "recommended_base", "draw_s": [3.5, 3.92] },
+      { "from": "agentic-ai-foundations-2026", "to": "ai-first", "kind": "optional_branch", "via": "junction", "draw_s": [6.55, 6.97] },
+      { "from": "agentic-ai-foundations-2026", "to": "ai-data-layer", "kind": "optional_branch", "via": "junction", "draw_s": [7.45, 7.87] },
+      { "from": "agentic-ai-foundations-2026", "to": "oci-enablers", "kind": "optional_branch", "via": "junction", "draw_s": [8.35, 8.77] }
+    ],
+    "delivery_note": "Animación finita, silenciosa y sin dependencias de imagen externa. La web reproduce el MP4 en bucle nativo y detiene el movimiento automático cuando se solicita movimiento reducido."
+  }
+}

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 650" role="img" aria-labelledby="title description">
   <title id="title">LangChain: una secuencia fija o un ciclo con decisiones</title>
   <desc id="description">Arriba, una cadena LCEL conecta prompt, modelo y parser por un camino predefinido. Abajo, el modelo propone una llamada, la aplicación valida y ejecuta una herramienta y devuelve el resultado asociado a la llamada. El ciclo continúa hasta la respuesta final o un límite.</desc>
   <defs>
@@ -6,8 +6,8 @@
     <marker id="return" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m2 1 6 4-6 4" fill="none" stroke="#087f7a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></marker>
     <style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.eyebrow{font-size:14px;font-weight:700;letter-spacing:2px;fill:#536078}.title{font-size:34px;font-weight:700;letter-spacing:-.7px}.sub{font-size:19px;fill:#536078}.label{font-size:24px;font-weight:700}.body{font-size:21px;fill:#536078}.meta{font-size:16px;fill:#536078}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.flow{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}.teal{fill:#087f7a}.white{fill:#fff}</style>
   </defs>
-  <rect width="1200" height="760" fill="#f7f8fc"/>
-  <text x="56" y="50" class="eyebrow">03 / LANGCHAIN</text>
+  <rect width="1200" height="650" fill="#f7f8fc"/>
+  <g transform="translate(0 -45)">
   <text x="56" y="98" class="title">El camino cambia cuando hay decisiones.</text>
   <text x="56" y="134" class="sub">Una chain compone pasos. Un agente elige acciones dentro de un ciclo controlado.</text>
   <rect x="56" y="182" width="1088" height="190" rx="22" fill="#fff" stroke="#dce1eb"/>
@@ -50,7 +50,5 @@
   <path d="M369 553h-43q-17 0-17 17v36h-68" class="flow"/>
   <rect x="86" y="581" width="156" height="52" rx="12" fill="#17243b"/>
   <text x="164" y="614" text-anchor="middle" font-size="21" font-weight="600" class="white">Fin o límite</text>
-  <path d="M56 698H1144" stroke="#dce1eb"/>
-  <text x="56" y="730" class="eyebrow">CERTITIPS / GUÍA VISUAL</text>
-  <text x="1144" y="730" text-anchor="end" class="meta">Usar un LLM en una secuencia no la convierte en un agente.</text>
+  </g>
 </svg>

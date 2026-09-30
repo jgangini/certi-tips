@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title description">
+  <title id="title">Intercambio entre la aplicación y OCI Responses API</title>
+  <desc id="description">La aplicación declara consultar_pedido y calcular_total. OCI devuelve solicitudes de herramienta. La aplicación valida y ejecuta su backend, devuelve resultados asociados y presenta la respuesta cuando el loop termina.</desc>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.6"/></marker><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:22px}.h{font-size:34px;font-weight:700}.label{font-size:26px;font-weight:700}.line{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}</style></defs>
+  <rect width="1200" height="630" fill="#f7f8fc"/><text x="56" y="65" class="h">La API solicita; tu código ejecuta sus propias funciones</text>
+  <rect x="84" y="113" width="320" height="60" rx="16" fill="#e9e6fa"/><text x="244" y="152" text-anchor="middle" class="label">Tu aplicación</text><rect x="796" y="113" width="320" height="60" rx="16" fill="#fae6e1"/><text x="956" y="152" text-anchor="middle" class="label">OCI Responses API</text>
+  <path d="M244 186v371M956 186v371" stroke="#d4d9e5" stroke-width="3" stroke-dasharray="7 8"/>
+  <text x="600" y="211" text-anchor="middle">1. Petición + herramientas declaradas</text><path d="M259 231h682" class="line"/>
+  <text x="600" y="281" text-anchor="middle">2. Solicitud: consultar_pedido(P-204)</text><path d="M941 301H259" class="line"/>
+  <rect x="78" y="329" width="366" height="98" rx="17" fill="#e9e6fa"/><text x="101" y="367" class="label">3. Validar y ejecutar</text><text x="101" y="404">Usuario, pedido y backend</text>
+  <text x="699" y="381" text-anchor="middle">4. Resultado asociado a la llamada</text><path d="M461 409h480" class="line"/>
+  <text x="600" y="473" text-anchor="middle">5. Otra herramienta o respuesta final</text><path d="M941 493H259" class="line"/>
+  <rect x="385" y="539" width="649" height="49" rx="16" fill="#e1f2ee"/><text x="709" y="571" text-anchor="middle">El loop puede repetir la consulta con calcular_total</text>
+</svg>

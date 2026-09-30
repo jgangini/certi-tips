@@ -1,0 +1,18 @@
+{
+  "title": "Aplicación de soporte en Oracle Cloud",
+  "layout": "left-to-right",
+  "groups": [
+    { "id": "oci", "label": "Oracle Cloud Infrastructure", "type": "region" }
+  ],
+  "nodes": [
+    { "id": "app", "label": "Aplicación de soporte", "service": "virtual-machine", "group": "oci" },
+    { "id": "model", "label": "Modelo", "service": "oci-generative-ai", "group": "oci" },
+    { "id": "policies", "label": "Políticas", "service": "object-storage", "group": "oci" },
+    { "id": "orders", "label": "Pedidos", "service": "oracle-autonomous-database", "group": "oci" }
+  ],
+  "edges": [
+    { "from": "app", "to": "model", "label": "Modelo" },
+    { "from": "app", "to": "policies", "label": "Políticas" },
+    { "from": "app", "to": "orders", "label": "Pedidos" }
+  ]
+}

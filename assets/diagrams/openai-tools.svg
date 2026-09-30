@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 610" role="img" aria-labelledby="title description">
+  <title id="title">El Runner coordina capacidades con lugares de ejecución distintos</title>
+  <desc id="description">La definición Agent configura instrucciones, modelo y herramientas. El Runner invoca el modelo y coordina hosted tools ejecutadas por el servicio, function tools ejecutadas en la aplicación y especialistas consultados como herramientas.</desc>
+  <defs><linearGradient id="surface" x2="1" y2="1"><stop stop-color="#f0edff"/><stop offset="1" stop-color="#d7d2f4"/></linearGradient><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.6"/></marker><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:22px}.h{font-size:34px;font-weight:700}.label{font-size:25px;font-weight:700}.muted{fill:#536078}.line{fill:none;stroke:#536078;stroke-width:2.5;marker-end:url(#arrow)}.icon{fill:none;stroke:#4f46b8;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}</style></defs>
+  <rect width="1200" height="610" fill="#f7f8fc"/><text x="56" y="65" class="h">Definir el agente no ejecuta sus herramientas</text>
+  <rect x="56" y="110" width="1088" height="65" rx="16" fill="#17243b"/><text x="85" y="152" style="fill:#fff">Agent = responsabilidad + instrucciones + modelo + herramientas</text>
+  <circle cx="251" cy="340" r="90" fill="#ddd8f1"/><circle cx="244" cy="331" r="90" fill="url(#surface)"/>
+  <g class="icon"><path d="M216 315a32 32 0 0 1 58 0m-6-13 9 15 8-16m-68 46a32 32 0 0 0 58 0m-59 14-4-17-13 11"/><path d="m235 318 20 13-20 13Z"/></g>
+  <text x="244" y="460" text-anchor="middle" class="label">Runner</text><text x="244" y="497" text-anchor="middle" class="muted">Invoca, coordina y repite</text>
+  <path d="M346 331h97V247h63" class="line"/><path d="M443 331h63" class="line"/><path d="M443 331v131h63" class="line"/>
+  <rect x="520" y="204" width="624" height="87" rx="17" fill="#fae6e1"/><text x="546" y="240" class="label">Hosted tool</text><text x="546" y="271">El servicio opera una capacidad compatible</text>
+  <rect x="520" y="320" width="624" height="87" rx="17" fill="#e9e6fa"/><text x="546" y="356" class="label">Function tool</text><text x="546" y="387">Tu aplicación valida y ejecuta su función</text>
+  <rect x="520" y="436" width="624" height="87" rx="17" fill="#e1f2ee"/><text x="546" y="472" class="label">Agent as tool</text><text x="546" y="503">El especialista devuelve un resultado al principal</text>
+  <path d="M831 539v26H244v-48" class="line" stroke-dasharray="6 6"/>
+</svg>

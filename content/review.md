@@ -4,12 +4,12 @@ Este repaso funciona mejor con el material cerrado. Intenta responder cada pregu
 
 | Área | La distinción | Pregunta para comprobarla |
 | --- | --- | --- |
-| [Agentes]({{base}}agentic-ai-foundations-2026/agents/) | Proponer una acción y ejecutarla son pasos distintos. | ¿Quién valida los argumentos y quién realiza la operación? |
-| [LangChain]({{base}}agentic-ai-foundations-2026/langchain/) | Una cadena fija y un ciclo con decisiones no son lo mismo. | ¿El siguiente paso está predefinido o depende de la salida del modelo? |
-| [MCP]({{base}}agentic-ai-foundations-2026/mcp/) | Estandarizar la conexión no resuelve el razonamiento ni la autorización. | ¿Qué componente descubre y llama capacidades externas? |
-| [OpenAI]({{base}}agentic-ai-foundations-2026/openai/) | La API y el SDK operan en capas diferentes. | ¿Necesito control directo de llamadas o coordinación de agentes? |
-| [OCI]({{base}}agentic-ai-foundations-2026/oci-enterprise/) | Un runtime administrado no define automáticamente una política de negocio correcta. | ¿Qué gestiona el servicio y qué debo evaluar y configurar yo? |
-| [Database]({{base}}agentic-ai-foundations-2026/oracle-database/) | Recuperar contexto, generar SQL y ejecutar tareas son capacidades distintas. | ¿Busco pasajes relevantes, una consulta o una acción controlada? |
+| [Agentes]({{base}}1Z0-1157-26/agents/) | Proponer una acción y ejecutarla son pasos distintos. | ¿Quién valida los argumentos y quién realiza la operación? |
+| [LangChain]({{base}}1Z0-1157-26/langchain/) | Una cadena fija y un ciclo con decisiones no son lo mismo. | ¿El siguiente paso está predefinido o depende de la salida del modelo? |
+| [MCP]({{base}}1Z0-1157-26/mcp/) | Estandarizar la conexión no resuelve el razonamiento ni la autorización. | ¿Qué componente descubre y llama capacidades externas? |
+| [OpenAI]({{base}}1Z0-1157-26/openai/) | La API y el SDK operan en capas diferentes. | ¿Necesito control directo de llamadas o coordinación de agentes? |
+| [OCI]({{base}}1Z0-1157-26/oci-enterprise/) | Un runtime administrado no define automáticamente una política de negocio correcta. | ¿Qué gestiona el servicio y qué debo evaluar y configurar yo? |
+| [Database]({{base}}1Z0-1157-26/oracle-database/) | Recuperar contexto, generar SQL y ejecutar tareas son capacidades distintas. | ¿Busco pasajes relevantes, una consulta o una acción controlada? |
 
 ## Sigue una solicitud de extremo a extremo
 
@@ -45,4 +45,4 @@ Explica también por qué descartas las otras opciones. Si solo reconoces una pa
 
 ## Antes de cerrar tus apuntes
 
-Comprueba que puedes dibujar un ciclo, situar host/cliente/servidor MCP, justificar API frente a SDK, delimitar un runtime y explicar cómo se generan y usan embeddings. Después realiza una [práctica de 12 preguntas]({{base}}agentic-ai-foundations-2026/practice/) y termina con la [práctica oficial de Oracle](https://mylearn.oracle.com/ou/course/practice-exam-oci-agentic-ai-associate-certification/163247).
+Comprueba que puedes dibujar un ciclo, situar host/cliente/servidor MCP, justificar API frente a SDK, delimitar un runtime y explicar cómo se generan y usan embeddings. Después realiza una [práctica de 12 preguntas]({{base}}1Z0-1157-26/practice/) y termina con la [práctica oficial de Oracle](https://mylearn.oracle.com/ou/course/practice-exam-oci-agentic-ai-associate-certification/163247).

@@ -2,7 +2,7 @@ Aprender un tema no es lo mismo que reconocer una frase. En cada sesión vas a p
 
 ## Antes de empezar
 
-Revisa [tu punto de partida]({{base}}agentic-ai-foundations-2026/overview/). Si no puedes explicar qué es una inferencia, leer una función Python o distinguir una API de una interfaz web, dedica primero tiempo a esos conceptos. No necesitas crear recursos de pago para realizar los ejercicios conceptuales de CertiTips.
+Revisa [tu punto de partida]({{base}}1Z0-1157-26/overview/). Si no puedes explicar qué es una inferencia, leer una función Python o distinguir una API de una interfaz web, dedica primero tiempo a esos conceptos. No necesitas crear recursos de pago para realizar los ejercicios conceptuales de CertiTips.
 
 Abre un documento de notas con tres columnas: **lo que entiendo**, **lo que confundo** y **cómo lo comprobaré**. Después de cada sesión, transforma al menos una duda en una explicación con tus palabras.
 
@@ -10,13 +10,13 @@ Abre un documento de notas con tres columnas: **lo que entiendo**, **lo que conf
 
 | Sesión | Qué estudiar | Qué debes poder demostrar |
 | --- | --- | --- |
-| 1 · Del chat a la acción | Introducción y [agentes]({{base}}agentic-ai-foundations-2026/agents/) | Dibujar un ciclo con dos llamadas a herramientas y una condición de parada. Explicar quién ejecuta cada llamada. |
-| 2 · Orquestación | [LangChain]({{base}}agentic-ai-foundations-2026/langchain/) | Diferenciar una cadena fija de un agente. Seguir el estado de un cálculo en varios pasos. |
-| 3 · Interoperabilidad | [MCP]({{base}}agentic-ai-foundations-2026/mcp/) | Ubicar host, cliente y servidor; clasificar una herramienta, un recurso y un prompt. |
-| 4 · Elegir una capa | [Responses API y Agents SDK]({{base}}agentic-ai-foundations-2026/openai/) | Justificar cuándo usar cada capa y cuándo un handoff tiene sentido. |
-| 5 · Operar con control | [OCI Enterprise AI]({{base}}agentic-ai-foundations-2026/oci-enterprise/) | Separar lo que proporciona el runtime de las políticas y evaluaciones que debes diseñar. |
-| 6 · Datos y agentes | [Oracle AI Database]({{base}}agentic-ai-foundations-2026/oracle-database/) | Distinguir recuperación semántica, generación de SQL, tareas de un agente y exposición por MCP. |
-| 7 · Integrar y practicar | [Repaso]({{base}}agentic-ai-foundations-2026/review/), [práctica]({{base}}agentic-ai-foundations-2026/practice/) y ruta oficial | Resolver un caso de extremo a extremo, revisar los errores y preparar el siguiente paso oficial. |
+| 1 · Del chat a la acción | Introducción y [agentes]({{base}}1Z0-1157-26/agents/) | Dibujar un ciclo con dos llamadas a herramientas y una condición de parada. Explicar quién ejecuta cada llamada. |
+| 2 · Orquestación | [LangChain]({{base}}1Z0-1157-26/langchain/) | Diferenciar una cadena fija de un agente. Seguir el estado de un cálculo en varios pasos. |
+| 3 · Interoperabilidad | [MCP]({{base}}1Z0-1157-26/mcp/) | Ubicar host, cliente y servidor; clasificar una herramienta, un recurso y un prompt. |
+| 4 · Elegir una capa | [Responses API y Agents SDK]({{base}}1Z0-1157-26/openai/) | Justificar cuándo usar cada capa y cuándo un handoff tiene sentido. |
+| 5 · Operar con control | [OCI Enterprise AI]({{base}}1Z0-1157-26/oci-enterprise/) | Separar lo que proporciona el runtime de las políticas y evaluaciones que debes diseñar. |
+| 6 · Datos y agentes | [Oracle AI Database]({{base}}1Z0-1157-26/oracle-database/) | Distinguir recuperación semántica, generación de SQL, tareas de un agente y exposición por MCP. |
+| 7 · Integrar y practicar | [Repaso]({{base}}1Z0-1157-26/review/), [práctica]({{base}}1Z0-1157-26/practice/) y ruta oficial | Resolver un caso de extremo a extremo, revisar los errores y preparar el siguiente paso oficial. |
 
 ## La rutina de cada sesión
 
@@ -48,4 +48,4 @@ La búsqueda recupera documentación autorizada; una herramienta separada consul
 
 ## Cuándo avanzar al examen
 
-Busca consistencia, no una única puntuación alta. Si fallas una pregunta, explica por qué elegiste esa alternativa y qué dato del enunciado cambia la decisión. Repite la práctica tras repasar, completa la [práctica oficial de Oracle](https://mylearn.oracle.com/ou/course/practice-exam-oci-agentic-ai-associate-certification/163247) y sigue el [checklist del examen]({{base}}agentic-ai-foundations-2026/exam-checklist/).
+Busca consistencia, no una única puntuación alta. Si fallas una pregunta, explica por qué elegiste esa alternativa y qué dato del enunciado cambia la decisión. Repite la práctica tras repasar, completa la [práctica oficial de Oracle](https://mylearn.oracle.com/ou/course/practice-exam-oci-agentic-ai-associate-certification/163247) y sigue el [checklist del examen]({{base}}1Z0-1157-26/exam-checklist/).

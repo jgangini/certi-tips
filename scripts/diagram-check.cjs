@@ -1,11 +1,17 @@
 // Run in an isolated playwright-cli session; measures real SVG text, no screenshots.
 async (page) => {
   const origin = await page.evaluate(() => location.origin);
-  const names = ['agent-loop', 'certification-roadmap', 'guardrails', 'langchain-flow', 'mcp-architecture', 'openai-stack', 'handoffs', 'oci-runtime', 'vector-search', 'database-capabilities'];
+  const sources = new Set();
+  for (const slug of ['agents', 'langchain', 'mcp', 'openai', 'oci-enterprise', 'oracle-database']) {
+    await page.goto(`${origin}/certi-tips/1Z0-1157-26/${slug}/`);
+    for (const source of await page.locator('.prose img[src$=".svg"]').evaluateAll(images => images.map(image => image.src))) sources.add(source);
+  }
+  if (!sources.size) throw new Error('No course SVG diagrams found');
   const reports = [];
   await page.setViewportSize({ width: 1200, height: 760 });
-  for (const name of names) {
-    const response = await page.goto(`${origin}/certi-tips/assets/diagrams/${name}.svg`);
+  for (const source of sources) {
+    const name = source.split('/').pop();
+    const response = await page.goto(source);
     if (response.status() !== 200) throw new Error(`Missing diagram: ${name}`);
     reports.push(await page.evaluate(name => {
       const root = document.querySelector('svg');

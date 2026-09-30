@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" role="img" aria-labelledby="title description">
+  <title id="title">Preguntas operativas para explicar un agente empresarial</title>
+  <desc id="description">El repaso sitúa la lógica en el framework y pregunta por acceso, ejecución, estado, herramientas, capacidad y observación. Estas responsabilidades deben ubicarse tanto en despliegues propios como gestionados.</desc>
+  <defs><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:22px}.h{font-size:34px;font-weight:700}.label{font-size:25px;font-weight:700}.muted{fill:#536078}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}</style></defs>
+  <rect width="1200" height="620" fill="#f7f8fc"/><text x="56" y="65" class="h">El framework expresa la lógica. ¿Quién opera lo demás?</text>
+  <g fill="#fff" stroke="#dce1ec"><rect x="56" y="126" width="344" height="187" rx="22"/><rect x="428" y="126" width="344" height="187" rx="22"/><rect x="800" y="126" width="344" height="187" rx="22"/><rect x="56" y="340" width="344" height="187" rx="22"/><rect x="428" y="340" width="344" height="187" rx="22"/><rect x="800" y="340" width="344" height="187" rx="22"/></g>
+  <g fill="#fae6e1"><circle cx="109" cy="180" r="29"/><circle cx="481" cy="180" r="29"/></g><g fill="#e9e6fa"><circle cx="853" cy="180" r="29"/><circle cx="109" cy="394" r="29"/></g><g fill="#e1f2ee"><circle cx="481" cy="394" r="29"/><circle cx="853" cy="394" r="29"/></g>
+  <g class="icon" stroke="#c74436"><path d="M95 192v-17a14 14 0 0 1 28 0v17zm14-12v6M465 164h32v32h-32zm7 8h18m-18 8h18m-18 8h18"/></g>
+  <g class="icon" stroke="#4f46b8"><path d="M837 170v23q16 9 32 0v-23m-32 0q16-9 32 0-16 9-32 0M94 382h30v26H94zm8-7v7m14-7v7m-14 26v7m14-7v7"/></g>
+  <g class="icon" stroke="#087f7a"><path d="M465 407v-14h9v14m5 0v-25h9v25m5 0v-35h9v35M833 395h9l5-14 10 28 8-14h9"/></g>
+  <text x="157" y="189" class="label">Acceso</text><text x="82" y="251">¿Quién puede llamar?</text><text x="82" y="287" class="muted">Identidad y permisos</text>
+  <text x="529" y="189" class="label">Ejecución</text><text x="454" y="251">¿Dónde corre el código?</text><text x="454" y="287" class="muted">Propia o gestionada</text>
+  <text x="901" y="189" class="label">Estado</text><text x="826" y="251">¿Qué se conserva?</text><text x="826" y="287" class="muted">Memoria y retención</text>
+  <text x="157" y="403" class="label">Herramientas</text><text x="82" y="465">¿Qué acción está permitida?</text><text x="82" y="501" class="muted">Integración y validación</text>
+  <text x="529" y="403" class="label">Capacidad</text><text x="454" y="465">¿Qué pasa con más carga?</text><text x="454" y="501" class="muted">Límites, cuotas y fallos</text>
+  <text x="901" y="403" class="label">Observación</text><text x="826" y="465">¿Cómo investigas un fallo?</text><text x="826" y="501" class="muted">Logs, métricas y trazas</text>
+  <text x="600" y="584" text-anchor="middle" style="fill:#536078">Diseñar → construir → probar → desplegar → observar → mejorar</text>
+</svg>

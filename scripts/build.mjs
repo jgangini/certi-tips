@@ -1,4 +1,5 @@
 import { readFile, mkdir, writeFile, cp, realpath, rm } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import MarkdownIt from "markdown-it";
 import { layout, homeBody, escapeHtml } from "./layout.mjs";
@@ -24,7 +25,8 @@ md.renderer.rules.image = (tokens, index) => {
   const token = tokens[index];
   const src = escapeHtml(token.attrGet("src"));
   const alt = escapeHtml(token.content);
-  return `<button class="diagram" type="button" data-diagram="${src}" aria-label="Ampliar: ${alt}"><img src="${src}" alt="${alt}" loading="lazy"><span>Ampliar diagrama <span aria-hidden="true">↗</span></span></button>`;
+  const caption = escapeHtml(token.attrGet("title") || token.content);
+  return `<button class="diagram" type="button" data-diagram="${src}" aria-label="Ampliar: ${alt}"><img src="${src}" alt="${alt}" loading="lazy"><span>${caption} <span aria-hidden="true">↗</span></span></button>`;
 };
 
 function renderMarkdown(source) {
@@ -67,6 +69,7 @@ await cp(
   path.join(output, "assets/questions.json"),
 );
 for (const course of site.courses) {
+  const publicPath = course.exam.code;
   const pages = [...course.modules, ...course.resources];
   const rendered = new Map(await Promise.all(pages.map(async (page) => [
     page.slug,
@@ -77,7 +80,7 @@ for (const course of site.courses) {
     const { html } = rendered.get(page.slug);
     const index = course.modules.indexOf(page);
     await save(
-      `${course.id}/${page.slug}/index.html`,
+      `${publicPath}/${page.slug}/index.html`,
       layout({
         site,
         course,
@@ -88,14 +91,20 @@ for (const course of site.courses) {
         next: course.modules[index + 1],
       }),
     );
+    if (publicPath !== course.id) {
+      const destination = `${site.base}${publicPath}/${page.slug}/`;
+      // ponytail: static aliases keep old bookmarks; script preserves fragments, meta refresh covers no-JS.
+      await save(`${course.id}/${page.slug}/index.html`, `<!doctype html><html lang="es"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${destination}"><link rel="canonical" href="${site.origin}${destination}"><script>location.replace(${JSON.stringify(destination)}+location.hash)</script><a href="${destination}">Continuar en la guía</a></html>`);
+    }
   }
-  const redirect = `${site.base}${course.id}/overview/`;
+  const redirect = `${site.base}${publicPath}/overview/`;
   // ponytail: keep the former workshop URL working without a second learning mode.
   await save(`${course.id}/talk/index.html`, `<!doctype html><html lang="es"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${redirect}"><title>CertiTips</title><link rel="canonical" href="${site.origin}${redirect}"><a href="${redirect}">Continuar en la guía</a></html>`);
   await save(
-    `${course.id}/index.html`,
+    `${publicPath}/index.html`,
     `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${redirect}"><title>${escapeHtml(course.title)}</title><link rel="canonical" href="${site.origin}${redirect}"></head><body><a href="${redirect}">Abrir la guía</a></body></html>`,
   );
+  if (publicPath !== course.id) await save(`${course.id}/index.html`, `<!doctype html><html lang="es"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${redirect}"><link rel="canonical" href="${site.origin}${redirect}"><a href="${redirect}">Abrir la guía</a></html>`);
 }
 await save(
   "index.html",
@@ -104,7 +113,7 @@ await save(
     course: site.courses[0],
     page: { slug: "home" },
     home: true,
-    body: homeBody(site, site.courses[0]),
+    body: homeBody(site, existsSync(path.join(root, "assets/motion/certification-path.mp4"))),
   }),
 );
 await save(

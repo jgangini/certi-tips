@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" role="img" aria-labelledby="title description">
+  <title id="title">Controles de entrada, acción y salida con trazas</title>
+  <desc id="description">El control de entrada corresponde al primer agente; las validaciones de la operación están junto a la herramienta; el control de salida corresponde al agente final. Una traza registra tiempos y estados de las etapas, sin revelar razonamiento interno completo.</desc>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.6"/></marker><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:22px}.h{font-size:34px;font-weight:700}.label{font-size:25px;font-weight:700}.muted{fill:#536078}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}</style></defs>
+  <rect width="1200" height="600" fill="#f7f8fc"/><text x="56" y="65" class="h">Cada control protege una parte del recorrido</text>
+  <path d="M278 225H522" fill="none" stroke="#536078" stroke-width="2.5" marker-end="url(#arrow)"/><path d="M678 225H922" fill="none" stroke="#536078" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <circle cx="206" cy="233" r="65" fill="#efd8d2"/><circle cx="200" cy="225" r="65" fill="#fae6e1"/><g class="icon" stroke="#c74436"><path d="M167 203h66l-25 28v29l-16-9v-20Z"/></g>
+  <circle cx="606" cy="233" r="65" fill="#dad5f0"/><circle cx="600" cy="225" r="65" fill="#e9e6fa"/><g class="icon" stroke="#4f46b8"><rect x="575" y="217" width="50" height="40" rx="7"/><path d="M586 216v-17a14 14 0 0 1 28 0v17m-14 14v11"/></g>
+  <circle cx="1006" cy="233" r="65" fill="#cde5df"/><circle cx="1000" cy="225" r="65" fill="#e1f2ee"/><g class="icon" stroke="#087f7a"><path d="M977 195h46v55h-46zm9 19 8 8 19-19m-27 30h25"/></g>
+  <g text-anchor="middle"><text x="200" y="334" class="label">Entrada</text><text x="200" y="372">Primer agente de la cadena</text><text x="600" y="334" class="label">Acción sensible</text><text x="600" y="372">Permisos junto a la herramienta</text><text x="1000" y="334" class="label">Salida</text><text x="1000" y="372">Agente que responde al final</text></g>
+  <path d="M200 394v36m400-36v36m400-36v36" stroke="#c2c8d7" stroke-width="2" stroke-dasharray="5 5"/>
+  <rect x="56" y="444" width="1088" height="100" rx="20" fill="#17243b"/><text x="84" y="484" style="fill:#fff;font-size:25px;font-weight:700">Traza de la ejecución</text><text x="84" y="520" style="fill:#d1d8e7">Etapas · llamadas · tiempos · estados</text>
+  <g stroke-width="12" stroke-linecap="round"><path d="M661 482h122" stroke="#e59b90"/><path d="M805 482h208" stroke="#aaa2ed"/><path d="M840 515h56" stroke="#77d4c7"/></g>
+</svg>

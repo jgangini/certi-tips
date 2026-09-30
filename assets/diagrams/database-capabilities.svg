@@ -1,14 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" role="img" aria-labelledby="title description">
   <title id="title">Cuatro capacidades alrededor de Oracle AI Database</title>
   <desc id="description">Una base de datos central se conecta a cuatro capacidades distintas. AI Vector Search recupera contenido por similitud. Select AI Agent orquesta herramientas, tareas, agentes y equipos. Private Agent Factory permite construir agentes y flujos visualmente. El servidor MCP de Autonomous AI Database expone herramientas a clientes compatibles. El mapa no supone que todas las capacidades estén disponibles en cualquier edición, versión o despliegue. Los controles de datos e identidad siguen aplicando.</desc>
   <defs>
     <linearGradient id="database-body" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#34356f"/><stop offset=".6" stop-color="#4f46b8"/><stop offset="1" stop-color="#6558bd"/></linearGradient>
     <style>
-      text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.eyebrow{font-size:14px;font-weight:700;letter-spacing:2px;fill:#536078}.title{font-size:34px;font-weight:700}.subtitle{font-size:19px;fill:#536078}.label{font-size:24px;font-weight:700}.body{font-size:21px}.meta{font-size:16px;fill:#536078}.muted{fill:#536078}.white{fill:#fff}.coral{fill:#c74436}.teal{fill:#087f7a}.indigo{fill:#4f46b8}
+      text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.subtitle{font-size:21px;fill:#536078}.label{font-size:24px;font-weight:700}.body{font-size:21px}.meta{font-size:21px;fill:#536078}.muted{fill:#536078}.white{fill:#fff}.coral{fill:#c74436}.teal{fill:#087f7a}.indigo{fill:#4f46b8}
     </style>
   </defs>
-  <rect width="1200" height="760" fill="#f7f8fc"/>
-  <text x="56" y="50" class="eyebrow">07 / ORACLE AI DATABASE</text>
+  <rect width="1200" height="620" fill="#f7f8fc"/>
+  <g transform="translate(0 -50)">
   <text x="56" y="98" class="title">Una base de datos. Cuatro trabajos diferentes.</text>
   <text x="56" y="134" class="subtitle">Elige la capacidad por la tarea: recuperar, orquestar, construir o conectar.</text>
   <!-- Four purpose-specific branches surround the shared data foundation. -->
@@ -22,7 +22,7 @@
   <path d="m311 279 22-26 26 16m-26-16 7 35" stroke="#8e85cb" stroke-width="2"/>
   <circle cx="311" cy="279" r="7" fill="#4f46b8"/><circle cx="333" cy="253" r="8" fill="#4f46b8"/><circle cx="359" cy="269" r="7" fill="#4f46b8"/><circle cx="340" cy="288" r="7" fill="#4f46b8"/>
   <circle cx="298" cy="240" r="4" fill="#aaa4d7"/><circle cx="355" cy="232" r="4" fill="#aaa4d7"/><circle cx="307" cy="302" r="4" fill="#aaa4d7"/>
-  <text x="56" y="215" class="meta indigo" font-weight="700">01 / RECUPERAR</text>
+  <text x="56" y="215" class="meta indigo" font-weight="700">RECUPERAR</text>
   <text x="56" y="250" class="label">AI Vector</text><text x="56" y="288" class="label">Search</text>
   <text x="56" y="327" class="body">Busca contenido</text><text x="56" y="355" class="body">por similitud.</text>
   <!-- A coordinator fans out tasks to two tools. -->
@@ -30,7 +30,7 @@
   <path d="M870 254v17m-25 0h50m-50 0v11m50-11v11" fill="none" stroke="#087f7a" stroke-width="3"/>
   <circle cx="870" cy="240" r="15" fill="#087f7a"/><path d="m864 240 4 4 8-8" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
   <rect x="831" y="282" width="28" height="21" rx="5" fill="#087f7a"/><rect x="881" y="282" width="28" height="21" rx="5" fill="#087f7a"/>
-  <text x="946" y="215" class="meta teal" font-weight="700">02 / ORQUESTAR</text>
+  <text x="946" y="215" class="meta teal" font-weight="700">ORQUESTAR</text>
   <text x="946" y="250" class="label">Select AI</text><text x="946" y="288" class="label">Agent</text>
   <text x="946" y="327" class="body">Coordina tareas,</text><text x="946" y="355" class="body">tools y equipos.</text>
   <!-- This cylinder anchors the map; it does not imply LLM weights execute inside the database. -->
@@ -49,16 +49,14 @@
   <circle cx="306" cy="538" r="2" fill="#c74436"/><circle cx="313" cy="538" r="2" fill="#c74436"/>
   <path d="M312 559h36m-18 0v18" fill="none" stroke="#c74436" stroke-width="2"/>
   <rect x="306" y="552" width="13" height="13" rx="3" fill="#c74436"/><rect x="342" y="552" width="13" height="13" rx="3" fill="#c74436"/><rect x="324" y="571" width="13" height="13" rx="3" fill="#c74436"/>
-  <text x="56" y="492" class="meta coral" font-weight="700">03 / CONSTRUIR</text>
+  <text x="56" y="492" class="meta coral" font-weight="700">CONSTRUIR</text>
   <text x="56" y="527" class="label">Private Agent</text><text x="56" y="565" class="label">Factory</text>
   <text x="56" y="604" class="body">Ensambla agentes</text><text x="56" y="632" class="body">y flujos visuales.</text>
   <!-- Coupled connectors mark a protocol boundary, not universal permission. -->
   <circle cx="870" cy="563" r="55" fill="#ebe8f9"/>
   <path d="M836 549h19v28h-19m68-28h-19v28h19m-49-14h30m-44-14v-10m10 10v-10m38 38v10m10-10v10" fill="none" stroke="#4f46b8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="946" y="492" class="meta indigo" font-weight="700">04 / CONECTAR</text>
-  <text x="946" y="527" class="label">Servidor MCP</text><text x="946" y="555" class="meta">Autonomous AI Database</text>
+  <text x="946" y="492" class="meta indigo" font-weight="700">CONECTAR</text>
+  <text x="946" y="527" class="label">Servidor MCP</text><text x="946" y="555" class="meta">Autonomous</text>
   <text x="946" y="604" class="body">Expone tools a</text><text x="946" y="632" class="body">clientes de IA.</text>
-  <path d="M56 698h1088" stroke="#dbe0eb"/>
-  <text x="56" y="730" class="eyebrow">CERTITIPS / GUÍA VISUAL</text>
-  <text x="1144" y="730" text-anchor="end" class="meta">Comprueba versión y despliegue: no son capacidades intercambiables.</text>
+  </g>
 </svg>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" role="img" aria-labelledby="title description">
+  <title id="title">Cuatro decisiones para construir con Responses y Agents SDK</title>
+  <desc id="description">El aprendizaje avanza de elegir quién gestiona el loop a distinguir dónde se ejecutan herramientas, decidir quién conserva el control y colocar validaciones y trazas.</desc>
+  <defs><linearGradient id="surface" x2="1" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#e7e4f8"/></linearGradient><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="m1 1 7 4-7 4" fill="none" stroke="#536078" stroke-width="1.6"/></marker><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b;font-size:22px}.h{font-size:34px;font-weight:700}.label{font-size:26px;font-weight:700}.muted{fill:#536078}.icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}</style></defs>
+  <rect width="1200" height="520" fill="#f7f8fc"/>
+  <text x="56" y="65" class="h">Una decisión clara en cada nivel</text>
+  <path d="M260 228H374m154 0h114m154 0h114" fill="none" stroke="#aeb6c8" stroke-width="3" marker-end="url(#arrow)"/>
+  <g text-anchor="middle">
+    <circle cx="190" cy="237" r="73" fill="#ecdbd8"/><circle cx="184" cy="228" r="73" fill="#fae6e1"/>
+    <g class="icon" stroke="#c74436"><path d="M151 210h30v32h-30zm46 0h22v32h-22M181 226h16m-46-29v-13h68v13"/></g>
+    <text x="184" y="348" class="label">Elegir el loop</text><text x="184" y="391">API directa o SDK</text><text x="184" y="424" class="muted">¿Quién coordina pasos?</text>
+    <circle cx="464" cy="237" r="73" fill="#dfdcf2"/><circle cx="458" cy="228" r="73" fill="url(#surface)"/>
+    <g class="icon" stroke="#4f46b8"><path d="m434 202-20 26 20 26m48-52 20 26-20 26m-15-61-18 70"/></g>
+    <text x="458" y="348" class="label">Conectar herramientas</text><text x="458" y="391">Servicio o código propio</text><text x="458" y="424" class="muted">¿Dónde se ejecutan?</text>
+    <circle cx="738" cy="237" r="73" fill="#dfdcf2"/><circle cx="732" cy="228" r="73" fill="url(#surface)"/>
+    <g class="icon" stroke="#4f46b8"><circle cx="732" cy="202" r="11"/><circle cx="709" cy="250" r="11"/><circle cx="755" cy="250" r="11"/><path d="m728 213-15 27m23-27 15 27"/></g>
+    <text x="732" y="348" class="label">Delegar</text><text x="732" y="391">Handoff o manager</text><text x="732" y="424" class="muted">¿Quién debe responder?</text>
+    <circle cx="1012" cy="237" r="73" fill="#cde5e1"/><circle cx="1006" cy="228" r="73" fill="#e1f2ee"/>
+    <g class="icon" stroke="#087f7a"><path d="m1006 191 31 12v26q0 23-31 39-31-16-31-39v-26zm-15 36 11 11 22-26"/></g>
+    <text x="1006" y="348" class="label">Controlar</text><text x="1006" y="391">Validación y trazas</text><text x="1006" y="424" class="muted">¿Qué ocurrió realmente?</text>
+  </g>
+</svg>

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 678" role="img" aria-labelledby="title description">
   <title id="title">El ciclo de un agente: decidir, actuar y observar</title>
   <desc id="description">El objetivo y el contexto entran al modelo. El modelo propone una llamada a herramienta; la aplicación valida argumentos, permisos y aprobación antes de ejecutarla. El resultado o error se incorpora al contexto para decidir el siguiente paso. Se termina con una respuesta final o al alcanzar un límite de pasos, tiempo o coste.</desc>
   <defs>
@@ -17,8 +17,8 @@
       .icon{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
     </style>
   </defs>
-  <rect width="1200" height="760" fill="#f7f8fc"/>
-  <text x="56" y="50" class="kicker">AGENTES DE IA / EL CICLO DE EJECUCIÓN</text>
+  <rect width="1200" height="678" fill="#f7f8fc"/>
+  <g transform="translate(0 -32)">
   <text x="56" y="98" class="title">Decide. Actúa. Observa.</text>
   <text x="56" y="134" class="subtitle">El modelo propone la acción. Tu aplicación controla lo que ocurre.</text>
   <rect x="56" y="179" width="298" height="44" rx="22" fill="#fff" stroke="#dce1ec"/>
@@ -72,7 +72,5 @@
   <rect x="402" y="582" width="396" height="42" rx="21" fill="#e4f2ef"/>
   <text x="600" y="609" text-anchor="middle" font-size="19" font-weight="600" style="fill:#076762">La observación actualiza el contexto</text>
   <text x="600" y="665" text-anchor="middle" class="body">Salida: respuesta final o límite de pasos, tiempo o coste.</text>
-  <path d="M56 698h1088" stroke="#dce1ec"/>
-  <text x="56" y="731" class="kicker">CERTITIPS / GUÍA VISUAL</text>
-  <text x="1144" y="731" text-anchor="end" class="meta">Una propuesta del modelo todavía no es una acción ejecutada.</text>
+  </g>
 </svg>

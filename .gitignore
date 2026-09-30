@@ -7,3 +7,6 @@ graphify-out/
 .DS_Store
 .playwright-cli/
 output/
+videos/*/renders/
+videos/*/.hyperframes/
+videos/*/.thumbnails/

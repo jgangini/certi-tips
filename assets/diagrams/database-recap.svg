@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 610" role="img" aria-labelledby="title description">
+  <title id="title">Elegir por necesidad: buscar, ensamblar, orquestar o exponer</title>
+  <desc id="description">Un árbol de decisión relaciona necesidades con capacidades: encontrar significado con AI Vector Search, ensamblar un flujo visual con Private Agent Factory, coordinar tareas con Select AI Agent, y conectar aplicaciones externas con Autonomous MCP Server. La elección se confirma con la documentación y la versión disponibles.</desc>
+  <defs><linearGradient id="root" x2="1" y2="1"><stop stop-color="#7f76cf"/><stop offset="1" stop-color="#4f46b8"/></linearGradient><style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}.title{font-size:34px;font-weight:700}.label{font-size:24px;font-weight:700}.body{font-size:22px;fill:#536078}.white{fill:#fff}</style></defs>
+  <rect width="1200" height="610" fill="#f7f8fc"/>
+  <text x="48" y="61" class="title">Empieza por la necesidad, no por el nombre del producto</text>
+  <circle cx="156" cy="318" r="88" fill="#dedbec"/><circle cx="150" cy="309" r="88" fill="url(#root)"/>
+  <text x="150" y="300" text-anchor="middle" class="label white">¿Qué quieres</text><text x="150" y="335" text-anchor="middle" class="label white">resolver?</text>
+  <path d="M248 309h48M296 162v308M296 162h50M296 265h50M296 367h50M296 470h50" fill="none" stroke="#928bc7" stroke-width="3"/>
+  <g fill="#4f46b8"><circle cx="296" cy="162" r="6"/><circle cx="296" cy="265" r="6"/><circle cx="296" cy="367" r="6"/><circle cx="296" cy="470" r="6"/></g>
+  <rect x="362" y="120" width="790" height="84" rx="17" fill="#fff" stroke="#dbe0eb"/>
+  <text x="387" y="170" class="body">Buscar por significado</text><text x="699" y="170" class="label">→ AI Vector Search</text>
+  <rect x="362" y="223" width="790" height="84" rx="17" fill="#fae6e2"/>
+  <text x="387" y="273" class="body">Ensamblar visualmente</text><text x="699" y="273" class="label">→ Private Agent Factory</text>
+  <rect x="362" y="325" width="790" height="84" rx="17" fill="#eae7fa"/>
+  <text x="387" y="375" class="body">Coordinar tareas y tools</text><text x="699" y="375" class="label">→ Select AI Agent</text>
+  <rect x="362" y="428" width="790" height="84" rx="17" fill="#dff1ee"/>
+  <text x="387" y="478" class="body">Conectar clientes externos</text><text x="699" y="478" class="label">→ Autonomous MCP Server</text>
+  <text x="757" y="570" text-anchor="middle" class="body">Comprueba la elección con las fuentes del módulo.</text>
+</svg>

@@ -2,7 +2,8 @@ import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const diagramNames = ['certification-roadmap', 'agent-loop', 'guardrails', 'langchain-flow', 'mcp-architecture', 'openai-stack', 'handoffs', 'oci-runtime', 'vector-search', 'database-capabilities'];
+const diagramNames = ['agent-loop', 'guardrails', 'langchain-flow', 'mcp-architecture', 'openai-stack', 'handoffs', 'oci-runtime', 'vector-search', 'database-capabilities'];
+const diagramFile = /^assets\/diagrams\/.+\.svg$/i;
 const lessonCounts = [1, 7, 8, 8, 11, 9, 9];
 const textFile = /\.(?:html|css|m?js|json|svg|md|txt)$/i;
 const present = value => typeof value === 'string' && value.trim().length > 0;
@@ -106,8 +107,8 @@ function validateSvgElement(file, tag, attributes, error) {
 
 function validateDiagrams(context) {
   const { files, parsed, usedDiagrams, error } = context;
-  for (const name of diagramNames) {
-    const file = `assets/diagrams/${name}.svg`;
+  const diagrams = new Set([...diagramNames.map(name => `assets/diagrams/${name}.svg`), ...[...files.keys()].filter(file => diagramFile.test(file))]);
+  for (const file of diagrams) {
     const source = files.get(file);
     if (source === undefined) { error(file, 'required diagram is missing'); continue; }
     if (!usedDiagrams.has(file)) error(file, 'diagram is not used by a page');
@@ -121,7 +122,7 @@ function validateDiagrams(context) {
 function validatePublishedPages(context) {
   const { course, files, error } = context;
   for (const page of [...course.modules, ...(course.resources || [])]) {
-    const file = `${course.id}/${page.slug}/index.html`;
+    const file = `${course.exam.code}/${page.slug}/index.html`;
     if (!files.has(file)) error('data/catalog.json', `missing published page ${file}`);
   }
 }
@@ -129,7 +130,7 @@ function validatePublishedPages(context) {
 function validateStudyReference(context, file, ref) {
   const { course, modules, catalog, error } = context;
   if (!ref || !modules.has(ref.module) || !present(ref.anchor)) { error(file, 'reference needs a known module and nonempty anchor'); return; }
-  validateReference(context, file, `${catalog.base}${course.id}/${ref.module}/#${ref.anchor}`);
+  validateReference(context, file, `${catalog.base}${course.exam.code}/${ref.module}/#${ref.anchor}`);
 }
 
 function validateOptions(file, question, error) {
@@ -242,7 +243,7 @@ async function main() {
     if (issues.length) {
       console.error(`Site validation failed (${issues.length} issues):\n${issues.map(issue => `- ${issue}`).join('\n')}`);
       process.exitCode = 1;
-    } else console.log(`Site validation passed: ${files.size} deployed files, 53 lessons, 36 questions and 10 linked diagrams.`);
+    } else console.log(`Site validation passed: ${files.size} deployed files, 53 lessons, 36 questions and ${[...files.keys()].filter(file => diagramFile.test(file)).length} linked diagrams.`);
   } catch (error) {
     console.error(`Site validation failed: ${error.message}. Run npm run build first and check data/*.json.`);
     process.exitCode = 1;
