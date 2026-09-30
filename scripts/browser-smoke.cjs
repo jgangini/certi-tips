@@ -48,7 +48,7 @@ async (page) => {
     checks.push(`${width}px: 11 pages, no overflow, full-width table rows, fixed footer without content overlap`);
   }
   await page.goto(`${base}${course}/agents/`);
-  const menu = page.getByRole('button', { name: 'Menú', exact: true });
+  const menu = page.getByRole('button', { name: 'Contenido del curso', exact: true });
   await menu.click();
   assert(await menu.getAttribute('aria-expanded') === 'true', 'Mobile menu did not open');
   const sidebarState = await page.evaluate(() => {

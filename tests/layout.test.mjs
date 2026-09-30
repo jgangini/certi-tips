@@ -30,6 +30,41 @@ const tocByPage = new Map([
   ["review", [{ id: "practicar", title: "Antes de practicar" }]],
 ]);
 
+test("mobile path navigation uses a menu icon and a responsive panel below the header", () => {
+  const html = layout({ site, course, page: course.modules[0], body: "", home: true });
+  const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
+  assert.match(html, /<details class="path-nav-mobile"><summary aria-label="Abrir grupos de certificaciones"><svg[^>]*width="22" height="22"[^>]*><path d="M4 6h16M4 12h10M4 18h5"\/><\/svg><span class="visually-hidden">Grupos de certificaciones<\/span><\/summary><div class="path-nav-mobile-panel"><nav aria-label="Grupos de certificaciones">/);
+  assert.doesNotMatch(html, /<summary>Paths<\/summary>/);
+  assert.match(html, /<g class="theme-sun"><circle cx="12" cy="12" r="3\.5"\/><path d="M12 5V3M12 21v-2/);
+  assert.doesNotMatch(html, /M12 2v2m0 16v2/);
+  assert.match(css, /\.path-nav-mobile summary \{[\s\S]*?width: 44px;[\s\S]*?height: 44px;/);
+  assert.match(css, /\.path-nav-mobile-panel \{[\s\S]*?top: 100%;[\s\S]*?left: 0;[\s\S]*?width: 100%;[\s\S]*?max-height: calc\(100dvh - var\(--header\) - var\(--footer-height\)\);[\s\S]*?background: var\(--sidebar-bg\);[\s\S]*?border-radius: 0;/);
+  assert.match(css, /\.path-nav-mobile \.path-group-panel \{[\s\S]*?background: transparent;/);
+  assert.match(css, /\.path-nav-mobile \.path-group-panel a:is\(:hover, :focus-visible\)\s*\{\s*background: transparent;\s*color: var\(--ink\);\s*text-decoration: none;/);
+  assert.match(css, /\.path-nav-mobile \.path-group-panel a:is\(:hover, :focus-visible\) \.path-title\s*\{\s*text-decoration: underline;/);
+  assert.match(css, /html\[data-theme="dark"\] \.path-nav-mobile \.path-group-panel a:is\(:hover, :focus-visible\)\s*\{\s*background: var\(--hover\);/);
+  assert.match(css, /\.path-nav-mobile \.path-group summary:is\(:hover, :focus-visible\)\s*\{\s*background: var\(--selected-surface\);\s*color: var\(--selected-ink\);/);
+});
+
+test("mobile course navigation keeps the grid icon next to the certification menu", () => {
+  const html = layout({ site, course, page: course.modules[0], body: "" });
+  const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
+  const courseMenu = html.indexOf('class="menu-toggle"');
+  const pathMenu = html.indexOf('class="path-nav-mobile"');
+  assert.ok(courseMenu > 0 && courseMenu < pathMenu);
+  assert.match(html, /<button class="menu-toggle" type="button" aria-expanded="false" aria-controls="course-navigation" aria-label="Contenido del curso"><svg viewBox="0 0 21 21" width="21" height="21"[^>]*><rect x="2\.5" y="2\.5" width="6" height="6" rx="1"\/><rect x="12\.5" y="2\.5" width="6" height="6" rx="1"\/><rect x="2\.5" y="12\.5" width="6" height="6" rx="1"\/><rect x="12\.5" y="12\.5" width="6" height="6" rx="1"\/><\/svg><span class="visually-hidden">Contenido del curso<\/span><\/button>/);
+  assert.doesNotMatch(html, /aria-controls="course-navigation">Menú<\/button>/);
+  assert.match(css, /\.menu-toggle \{[\s\S]*?width: 44px;[\s\S]*?height: 44px;/);
+  assert.match(css, /\.menu-toggle:is\(:hover, \[aria-expanded="true"\]\)\s*\{\s*background: var\(--selected-surface\);\s*color: var\(--selected-ink\);/);
+  assert.match(css, /@media \(max-width: 800px\) \{[\s\S]*?\.menu-toggle \{\s*display: inline-flex;\s*margin-left: auto;\s*\}[\s\S]*?\.path-nav-mobile \{\s*margin-left: 0;\s*\}/);
+});
+
+test("course navigation keeps its scrollbar within the narrower sidebar padding", () => {
+  const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
+  assert.match(css, /\.sidebar > nav \{[\s\S]*?margin-right: -18px;[\s\S]*?padding-right: 18px;[\s\S]*?scrollbar-color: var\(--line\) transparent;[\s\S]*?scrollbar-width: thin;/);
+  assert.match(css, /@media \(max-width: 1100px\) \{[\s\S]*?\.sidebar \{\s*padding: 22px 12px 0;\s*\}[\s\S]*?\.sidebar > nav \{\s*margin-right: -12px;\s*padding-right: 12px;\s*\}/);
+});
+
 test("sidebar has native module and resource disclosures with only the active branch open", () => {
   const html = sidebar(site, course, "agents", tocByPage);
   const branches = [...html.matchAll(/<details\b([^>]*)>(.*?)<\/details>/gs)];
@@ -164,8 +199,8 @@ test("layout moves the contents into the sidebar while preserving reading and si
   assert.match(html, /<article class="prose">[^]*<\/article><div data-completion-trigger aria-hidden="true"><\/div><button[^>]+data-mark-complete="agents"[^>]+hidden>/);
   assert.match(html, /<summary>Foundation Sprint<\/summary>/);
   assert.doesNotMatch(html, /Ver grupo completo/);
-  assert.match(html, /href="\/certi-tips\/course\/overview\/">Course<\/a>/);
-  assert.match(html, /href="https:\/\/mylearn\.oracle\.com\/pending" target="_blank" rel="noopener noreferrer"[^>]*>Pending course<span class="coming-soon"/);
+  assert.match(html, /href="\/certi-tips\/course\/overview\/"><span class="path-title">Course<\/span><\/a>/);
+  assert.match(html, /href="https:\/\/mylearn\.oracle\.com\/pending" target="_blank" rel="noopener noreferrer"[^>]*><span class="path-title">Pending course<\/span><span class="coming-soon"/);
   assert.doesNotMatch(html, /href="\/certi-tips\/#(?:course|pending)"/);
   assert.match(html, /data-theme-toggle aria-pressed="false"/);
   assert.doesNotMatch(html, /data-theme-label|>Dark mode<\/span>/);
@@ -184,11 +219,14 @@ test("lesson completion floats above the next-page navigation", () => {
   assert.match(css, /\.course-main\.lesson-main\s*\{\s*padding-bottom:\s*40px;/);
 });
 
-test("selected navigation uses contrasting gray in both themes and keeps blue-gray section hover", () => {
+test("path menu headings change on interaction without retaining an open-state fill", () => {
   const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
   assert.match(css, /--selected-surface:\s*#59616e;\s*--selected-ink:\s*#fff;/);
   assert.match(css, /html\[data-theme="dark"\]\s*\{[^}]*--selected-surface:\s*#414653;/);
-  assert.match(css, /\.path-group summary:hover,\s*\.path-group\[open\] summary\s*\{\s*background:\s*var\(--selected-surface\);\s*color:\s*var\(--selected-ink\);/);
+  assert.match(css, /\.path-group summary:hover\s*\{\s*background:\s*var\(--selected-surface\);\s*color:\s*var\(--selected-ink\);/);
+  assert.doesNotMatch(css, /\.path-group\[open\] summary\s*\{\s*background:/);
+  assert.match(css, /\.path-nav-mobile \.path-group summary\s*\{[\s\S]*?justify-content:\s*flex-start;[\s\S]*?text-align:\s*left;/);
+  assert.match(css, /\.path-nav-mobile \.path-group-panel\s*\{[\s\S]*?padding:\s*6px 0 6px 12px;[\s\S]*?margin:\s*6px 12px 8px;/);
   assert.match(css, /\.path-group-panel a:is\(:hover, :focus-visible\)\s*\{\s*background:\s*var\(--selected-surface\);\s*color:\s*var\(--selected-ink\);/);
   assert.match(css, /\.nav-link\[aria-current="page"\]\s*\{\s*background:\s*var\(--selected-surface\);\s*color:\s*var\(--selected-ink\);/);
   assert.match(css, /\.nav-section-link:hover\s*\{\s*color:\s*var\(--ink\);\s*background:\s*var\(--hover\);/);
@@ -213,8 +251,10 @@ test("completed modules use a blue block without adding a width-consuming badge"
 });
 
 test("search lists certifications before typing and keeps study topics available for filtering", () => {
+  const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
   const html = layout({ site, course, page: course.modules[0], body: "" });
   const search = html.match(/<dialog id="site-search"[\s\S]*?<\/dialog>/)[0];
+  assert.doesNotMatch(css, /\.search-heading:focus-within/);
   assert.equal((search.match(/data-search-kind="certification"/g) || []).length, 2);
   assert.equal((search.match(/data-search-kind="topic"[^>]* hidden/g) || []).length, 3);
   assert.match(search, /aria-controls="search-results"/);
