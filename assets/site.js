@@ -176,6 +176,20 @@ const pathGroups = [...document.querySelectorAll(".path-group")];
 for (const group of pathGroups) group.addEventListener("toggle", () => {
   if (group.open) for (const other of pathGroups) if (other !== group && other.parentElement === group.parentElement) other.open = false;
 });
+const desktopPathNav = document.querySelector(".path-nav");
+const canHoverPathNav = () => matchMedia("(hover: hover) and (min-width: 1101px)").matches;
+desktopPathNav?.addEventListener("pointerover", (event) => {
+  if (!canHoverPathNav() || event.pointerType === "touch") return;
+  const group = event.target.closest(".path-group");
+  if (group?.parentElement === desktopPathNav) group.open = true;
+});
+desktopPathNav?.addEventListener("click", (event) => {
+  if (!canHoverPathNav() || event.detail === 0) return;
+  const summary = event.target.closest("summary");
+  if (summary?.parentElement?.parentElement !== desktopPathNav) return;
+  event.preventDefault();
+  summary.parentElement.open = true;
+});
 pathMenu?.addEventListener("click", (event) => {
   if (event.target.closest("a")) pathMenu.open = false;
 });

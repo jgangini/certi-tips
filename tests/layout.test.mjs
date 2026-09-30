@@ -59,6 +59,13 @@ test("mobile course navigation keeps the grid icon next to the certification men
   assert.match(css, /@media \(max-width: 800px\) \{[\s\S]*?\.menu-toggle \{\s*display: inline-flex;\s*margin-left: auto;\s*\}[\s\S]*?\.path-nav-mobile \{\s*margin-left: 0;\s*\}/);
 });
 
+test("desktop path navigation opens the category reached by a pointing device", () => {
+  const script = readFileSync(new URL("../assets/site.js", import.meta.url), "utf8");
+  assert.match(script, /const desktopPathNav = document\.querySelector\("\.path-nav"\);/);
+  assert.match(script, /desktopPathNav\?\.addEventListener\("pointerover", \(event\) => \{[\s\S]*?group\?\.parentElement === desktopPathNav\) group\.open = true;/);
+  assert.doesNotMatch(script, /desktopPathNav\?\.addEventListener\("pointerleave"/);
+});
+
 test("course navigation keeps its scrollbar within the narrower sidebar padding", () => {
   const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
   assert.match(css, /\.sidebar > nav \{[\s\S]*?margin-right: -18px;[\s\S]*?padding-right: 18px;[\s\S]*?scrollbar-color: var\(--line\) transparent;[\s\S]*?scrollbar-width: thin;/);
@@ -224,6 +231,7 @@ test("path menu headings change on interaction without retaining an open-state f
   assert.match(css, /--selected-surface:\s*#59616e;\s*--selected-ink:\s*#fff;/);
   assert.match(css, /html\[data-theme="dark"\]\s*\{[^}]*--selected-surface:\s*#414653;/);
   assert.match(css, /\.path-group summary:hover\s*\{\s*background:\s*var\(--selected-surface\);\s*color:\s*var\(--selected-ink\);/);
+  assert.match(css, /\.path-nav \.path-group\[open\] > summary\s*\{\s*background:\s*var\(--selected-surface\);\s*color:\s*var\(--selected-ink\);/);
   assert.doesNotMatch(css, /\.path-group\[open\] summary\s*\{\s*background:/);
   assert.match(css, /\.path-nav-mobile \.path-group summary\s*\{[\s\S]*?justify-content:\s*flex-start;[\s\S]*?text-align:\s*left;/);
   assert.match(css, /\.path-nav-mobile \.path-group-panel\s*\{[\s\S]*?padding:\s*6px 0 6px 12px;[\s\S]*?margin:\s*6px 12px 8px;/);

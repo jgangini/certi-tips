@@ -251,12 +251,17 @@ async (page) => {
   assert(await page.locator('#foundation-sprint').isVisible(), 'Group carousel did not return');
   assert(await page.locator('#foundation-sprint > .group-carousel-controls').count() === 1, 'Controls did not return to Foundation Sprint');
   const headerGroup = page.locator('.path-nav .path-group').first();
-  await headerGroup.locator('summary').click();
-  assert(await headerGroup.evaluate(element => element.open), 'Desktop group dropdown did not open');
+  const nextHeaderGroup = page.locator('.path-nav .path-group').nth(1);
+  await headerGroup.hover();
+  assert(await headerGroup.evaluate(element => element.open), 'Desktop group dropdown did not open on pointer entry');
+  await nextHeaderGroup.hover();
+  assert(await nextHeaderGroup.evaluate(element => element.open) && !await headerGroup.evaluate(element => element.open), 'Desktop category change did not show only the new dropdown');
+  await headerGroup.hover();
   const pendingMenu = headerGroup.locator('.path-group-panel a').first();
   assert((await pendingMenu.getAttribute('href')).startsWith('https://mylearn.oracle.com/'), 'Pending certification does not open its official route');
   assert(await pendingMenu.getAttribute('target') === '_blank', 'Official route should open in a new tab');
   await pendingMenu.hover();
+  assert(await headerGroup.evaluate(element => element.open), 'Desktop dropdown closed before its item could be selected');
   assert(await pendingMenu.locator('.coming-soon').isVisible(), 'Pending certification badge is missing on hover');
   const pendingStyle = await pendingMenu.evaluate(link => {
     const badge = getComputedStyle(link.querySelector('.coming-soon'));

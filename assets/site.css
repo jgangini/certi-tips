@@ -209,6 +209,10 @@ strong {
   background: var(--selected-surface);
   color: var(--selected-ink);
 }
+.path-nav .path-group[open] > summary {
+  background: var(--selected-surface);
+  color: var(--selected-ink);
+}
 .path-group-panel a:is(:hover, :focus-visible) {
   background: var(--selected-surface);
   color: var(--selected-ink);
