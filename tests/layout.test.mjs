@@ -25,6 +25,25 @@ const course = {
   resources: [{ slug: "review", short: "Repaso final", title: "Repaso", description: "Prepara el examen" }],
 };
 site.courses = [course];
+
+test("sharing uses an English Oracle overview and a public PNG icon on every page type", () => {
+  const home = layout({ site, course, page: course.modules[0], body: "", home: true });
+  assert.match(home, /<title>CertiTips · Oracle Certification Paths<\/title>/);
+  assert.match(home, /<meta name="description" content="Explore Oracle certification paths with visual study guides in Spanish, explained practice questions, and CertiQuiz team quizzes\."/);
+  assert.doesNotMatch(home, /Ruta de certificaciones en Data e IA|Foundation Sprint y rutas/);
+  for (const html of [home, layout({ site, course, page: course.modules[0], body: "" }), layout({ site, course, page: { slug: "certiquiz", title: "CertiQuiz" }, body: "" })]) {
+    assert.match(html, /<meta property="og:image" content="https:\/\/example\.test\/certi-tips\/assets\/favicon\.png">/);
+    assert.match(html, /<meta property="og:image:type" content="image\/png">/);
+    assert.match(html, /<meta property="og:image:width" content="512"><meta property="og:image:height" content="512">/);
+    assert.match(html, /<meta property="og:image:alt" content="CertiTips logo">/);
+    assert.match(html, /<meta property="og:url" content="https:\/\/example\.test\/certi-tips\//);
+    assert.match(html, /<link rel="icon" href="\/certi-tips\/assets\/favicon\.png" type="image\/png" sizes="512x512">/);
+  }
+  const icon = readFileSync(new URL("../assets/favicon.png", import.meta.url));
+  assert.equal(icon.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
+  assert.equal(icon.readUInt32BE(16), 512);
+  assert.equal(icon.readUInt32BE(20), 512);
+});
 test("home keeps CertiQuiz beside GitHub inside the site in the same tab", () => {
   const html = homeBody(site);
   assert.match(html, /class="hero-actions"><a class="button github-link"[^]*?<a class="button button-secondary certiquiz-link" href="\/certi-tips\/certiquiz\/">/);
