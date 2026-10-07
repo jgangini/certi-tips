@@ -1,0 +1,506 @@
+[
+  {
+    "lesson": "01-01-01-welcome-to-ai-foundations.md",
+    "module": "overview",
+    "anchor": "objetivos-y-examen",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-02-01-module-intro.md",
+    "module": "ai-basics",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-02-02-introduction-to-ai.md",
+    "module": "ai-basics",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-02-03-ai-tasks-and-data.md",
+    "module": "ai-basics",
+    "anchor": "tareas-y-tipos-de-datos",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-02-04-demo-ai.md",
+    "module": "ai-basics",
+    "anchor": "ejemplo-paso-a-paso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-02-05-ai-vs-ml-vs-dl.md",
+    "module": "ai-basics",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-02-06-skill-check-ai-basics.md",
+    "module": "ai-basics",
+    "anchor": "ejercicio-de-seleccion",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-01-module-intro.md",
+    "module": "machine-learning",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-02-introduction-to-machine-learning.md",
+    "module": "machine-learning",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-03-supervised-learning-regression.md",
+    "module": "machine-learning",
+    "anchor": "aprendizaje-supervisado-y-evaluacion",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-04-supervised-learning-classification.md",
+    "module": "machine-learning",
+    "anchor": "aprendizaje-supervisado-y-evaluacion",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-05-demo-introduction-to-jupyter-notebooks.md",
+    "module": "machine-learning",
+    "anchor": "ejemplo-paso-a-paso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-06-demo-basic-machine-learning-part-1.md",
+    "module": "machine-learning",
+    "anchor": "ejemplo-paso-a-paso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-07-demo-basic-machine-learning-part-2.md",
+    "module": "machine-learning",
+    "anchor": "ejemplo-paso-a-paso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-08-unsupervised-learning.md",
+    "module": "machine-learning",
+    "anchor": "clustering-y-aprendizaje-por-refuerzo",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-09-reinforcement-learning.md",
+    "module": "machine-learning",
+    "anchor": "clustering-y-aprendizaje-por-refuerzo",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-10-skill-check-ml-basics.md",
+    "module": "machine-learning",
+    "anchor": "ejercicio-de-diagnostico",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-04-01-module-intro.md",
+    "module": "deep-learning",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-04-02-introduction-to-deep-learning.md",
+    "module": "deep-learning",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-04-03-deep-learning-models-sequence-models.md",
+    "module": "deep-learning",
+    "anchor": "modelos-de-secuencia",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-04-04-deep-learning-models-cnn.md",
+    "module": "deep-learning",
+    "anchor": "mlp-y-redes-convolucionales",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-04-05-demo-classification-with-multilayer-perceptron.md",
+    "module": "deep-learning",
+    "anchor": "mlp-y-redes-convolucionales",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-04-06-skill-check-dl-basics.md",
+    "module": "deep-learning",
+    "anchor": "ejercicio-de-arquitectura",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-01-module-intro.md",
+    "module": "generative-ai",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-02-introduction-to-generative-ai.md",
+    "module": "generative-ai",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-03-introduction-to-large-language-models.md",
+    "module": "generative-ai",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-04-transformers-part-1.md",
+    "module": "generative-ai",
+    "anchor": "transformers-y-embeddings",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-05-transformers-part-2.md",
+    "module": "generative-ai",
+    "anchor": "transformers-y-embeddings",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-06-prompt-engineering.md",
+    "module": "generative-ai",
+    "anchor": "prompting-rag-y-fine-tuning",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-07-customize-llms-with-your-data.md",
+    "module": "generative-ai",
+    "anchor": "prompting-rag-y-fine-tuning",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-08-skill-check-gen-ai-basics.md",
+    "module": "generative-ai",
+    "anchor": "ejercicio-de-decision",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-01-agents-overview.md",
+    "module": "enterprise-ai",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-02-enterprise-ai-overview.md",
+    "module": "enterprise-ai",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-03-models.md",
+    "module": "enterprise-ai",
+    "anchor": "modelos-recuperacion-y-personalizacion",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-04-customize-llms-with-your-data.md",
+    "module": "enterprise-ai",
+    "anchor": "modelos-recuperacion-y-personalizacion",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-05-embeddings-and-vector-stores.md",
+    "module": "enterprise-ai",
+    "anchor": "modelos-recuperacion-y-personalizacion",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-06-grounding-and-rag.md",
+    "module": "enterprise-ai",
+    "anchor": "modelos-recuperacion-y-personalizacion",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-07-oci-responses-api.md",
+    "module": "enterprise-ai",
+    "anchor": "herramientas-memoria-y-controles",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-08-tools-and-function-calling.md",
+    "module": "enterprise-ai",
+    "anchor": "herramientas-memoria-y-controles",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-09-model-context-protocol.md",
+    "module": "enterprise-ai",
+    "anchor": "herramientas-memoria-y-controles",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-10-multi-turn-conversations-and-memory.md",
+    "module": "enterprise-ai",
+    "anchor": "herramientas-memoria-y-controles",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-11-security-and-access-control.md",
+    "module": "enterprise-ai",
+    "anchor": "herramientas-memoria-y-controles",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-12-guardrails-and-responsible-ai.md",
+    "module": "enterprise-ai",
+    "anchor": "herramientas-memoria-y-controles",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-07-01-module-intro.md",
+    "module": "ai-portfolio",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-07-02-ai-services-overview.md",
+    "module": "ai-portfolio",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-07-03-ml-services-overview.md",
+    "module": "ai-portfolio",
+    "anchor": "oci-data-science-y-ciclo-del-modelo",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-07-04-ai-infrastructure.md",
+    "module": "ai-portfolio",
+    "anchor": "infraestructura-e-ia-responsable",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-07-05-gpus-and-superclusters-in-oci.md",
+    "module": "ai-portfolio",
+    "anchor": "infraestructura-e-ia-responsable",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-07-06-responsible-ai.md",
+    "module": "ai-portfolio",
+    "anchor": "infraestructura-e-ia-responsable",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-07-07-demo-data-science.md",
+    "module": "ai-portfolio",
+    "anchor": "ejemplo-paso-a-paso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-07-08-skill-check-oci-ai-portfolio.md",
+    "module": "ai-portfolio",
+    "anchor": "ejercicio-de-eleccion",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-08-01-module-intro.md",
+    "module": "oci-generative-ai",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-08-02-oci-generative-ai.md",
+    "module": "oci-generative-ai",
+    "anchor": "personalizacion-y-clusters-dedicados",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-08-03-demo-oci-generative-ai.md",
+    "module": "oci-generative-ai",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-08-04-vector-search.md",
+    "module": "oci-generative-ai",
+    "anchor": "ai-vector-search-y-select-ai",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-08-05-select-ai.md",
+    "module": "oci-generative-ai",
+    "anchor": "ai-vector-search-y-select-ai",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-08-06-skill-check-oci-gen-ai-service.md",
+    "module": "oci-generative-ai",
+    "anchor": "ejercicio-de-diseno",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-09-01-oci-language.md",
+    "module": "ai-services",
+    "anchor": "language-y-speech",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-09-02-demo-language.md",
+    "module": "ai-services",
+    "anchor": "language-y-speech",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-09-03-oci-speech.md",
+    "module": "ai-services",
+    "anchor": "language-y-speech",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-09-04-demo-speech.md",
+    "module": "ai-services",
+    "anchor": "language-y-speech",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-09-05-oci-vision.md",
+    "module": "ai-services",
+    "anchor": "vision-y-document-understanding",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-09-06-demo-vision.md",
+    "module": "ai-services",
+    "anchor": "vision-y-document-understanding",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-09-07-oci-document-understanding.md",
+    "module": "ai-services",
+    "anchor": "vision-y-document-understanding",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-09-08-demo-document-understanding.md",
+    "module": "ai-services",
+    "anchor": "vision-y-document-understanding",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-09-09-skill-check-oci-ai-services.md",
+    "module": "ai-services",
+    "anchor": "ejercicio-de-seleccion",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-10-01-agentic-ai-for-oracle-ai-database.md",
+    "module": "database-ai",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-10-02-introduction-to-oracle-ai-vector-search.md",
+    "module": "database-ai",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-10-03-oracle-ai-vector-search-workflow.md",
+    "module": "database-ai",
+    "anchor": "workflow-de-ai-vector-search",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-10-04-oracle-ai-database-private-agent-factory.md",
+    "module": "database-ai",
+    "anchor": "agent-factory-select-ai-agent-y-mcp",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-10-05-oracle-select-ai-agent-framework.md",
+    "module": "database-ai",
+    "anchor": "agent-factory-select-ai-agent-y-mcp",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-10-06-oracle-autonomous-ai-database-mcp-server.md",
+    "module": "database-ai",
+    "anchor": "agent-factory-select-ai-agent-y-mcp",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  }
+]

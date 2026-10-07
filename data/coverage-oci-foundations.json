@@ -1,0 +1,401 @@
+[
+  {
+    "lesson": "01-01-01-introduction.md",
+    "module": "overview",
+    "anchor": "objetivos-y-examen",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-01-02-oci-overview.md",
+    "module": "overview",
+    "anchor": "antes-de-comenzar",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-02-01-oci-architecture.md",
+    "module": "oci-architecture",
+    "anchor": "regiones-y-dominios-de-fallo",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-02-02-demo-oci-console-walk-through.md",
+    "module": "oci-architecture",
+    "anchor": "consola-y-formas-de-consumir-oci",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-02-03-skill-check-oci-introduction.md",
+    "module": "oci-architecture",
+    "anchor": "ejercicio-de-decision",
+    "source": "provided-notes",
+    "note": "Evaluación conceptual integrada en ejercicio con solución y banco original de práctica."
+  },
+  {
+    "lesson": "01-03-01-iam-introduction.md",
+    "module": "iam",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-02-compartments.md",
+    "module": "iam",
+    "anchor": "compartimentos-y-dominios-de-identidad",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-03-demo-compartments.md",
+    "module": "iam",
+    "anchor": "compartimentos-y-dominios-de-identidad",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-04-demo-creating-identity-domain.md",
+    "module": "iam",
+    "anchor": "compartimentos-y-dominios-de-identidad",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-05-authn-and-authz.md",
+    "module": "iam",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-06-demo-managing-groups.md",
+    "module": "iam",
+    "anchor": "ejemplo-paso-a-paso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-07-demo-managing-users.md",
+    "module": "iam",
+    "anchor": "ejemplo-paso-a-paso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-08-demo-understanding-administrator-role.md",
+    "module": "iam",
+    "anchor": "compartimentos-y-dominios-de-identidad",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-09-demo-policies.md",
+    "module": "iam",
+    "anchor": "leer-y-construir-politicas",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-10-tenancy-setup.md",
+    "module": "iam",
+    "anchor": "compartimentos-y-dominios-de-identidad",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-03-11-skill-check-identity-and-access-management-iam.md",
+    "module": "iam",
+    "anchor": "ejercicio-de-decision",
+    "source": "provided-notes",
+    "note": "Evaluación conceptual integrada en ejercicio con solución y banco original de práctica."
+  },
+  {
+    "lesson": "01-04-01-vcn-introduction.md",
+    "module": "networking",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-04-02-demo-create-a-vcn-using-wizard.md",
+    "module": "networking",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-04-03-vcn-routing.md",
+    "module": "networking",
+    "anchor": "rutas-gateways-y-seguridad",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-04-04-vcn-security.md",
+    "module": "networking",
+    "anchor": "rutas-gateways-y-seguridad",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-04-05-load-balancer.md",
+    "module": "networking",
+    "anchor": "balanceadores-y-salud-de-la-aplicacion",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-04-06-demo-public-load-balancer.md",
+    "module": "networking",
+    "anchor": "ejemplo-paso-a-paso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-04-07-demo-private-load-balancer.md",
+    "module": "networking",
+    "anchor": "ejemplo-paso-a-paso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-04-08-skill-check-networking.md",
+    "module": "networking",
+    "anchor": "ejercicio-de-decision",
+    "source": "provided-notes",
+    "note": "Evaluación conceptual integrada en ejercicio con solución y banco original de práctica."
+  },
+  {
+    "lesson": "01-05-01-compute-introduction.md",
+    "module": "compute",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-02-instance-basics.md",
+    "module": "compute",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-03-demo-getting-started-with-cloud-shell.md",
+    "module": "compute",
+    "anchor": "lanzar-conectar-y-escalar",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-04-demo-launch-and-connect-to-an-oracle-linux-instance.md",
+    "module": "compute",
+    "anchor": "lanzar-conectar-y-escalar",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-05-scaling.md",
+    "module": "compute",
+    "anchor": "lanzar-conectar-y-escalar",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-06-oracle-container-engine-for-kubernetes-oke.md",
+    "module": "compute",
+    "anchor": "contenedores-kubernetes-y-funciones",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-07-container-workloads-in-oci.md",
+    "module": "compute",
+    "anchor": "contenedores-kubernetes-y-funciones",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-08-serverless-with-oracle-functions.md",
+    "module": "compute",
+    "anchor": "contenedores-kubernetes-y-funciones",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-05-09-skill-check-compute.md",
+    "module": "compute",
+    "anchor": "ejercicio-de-decision",
+    "source": "provided-notes",
+    "note": "Evaluación conceptual integrada en ejercicio con solución y banco original de práctica."
+  },
+  {
+    "lesson": "01-06-01-storage-introduction.md",
+    "module": "storage",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-02-object-storage.md",
+    "module": "storage",
+    "anchor": "objetos-niveles-y-acceso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-03-demo-create-a-bucket-console-cloudshell-oci-cli.md",
+    "module": "storage",
+    "anchor": "objetos-niveles-y-acceso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-04-demo-upload-and-access-the-object-and-bucket-visibility.md",
+    "module": "storage",
+    "anchor": "objetos-niveles-y-acceso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-05-block-volume.md",
+    "module": "storage",
+    "anchor": "volumenes-y-sistemas-de-archivos",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-06-demo-block-volume-creation.md",
+    "module": "storage",
+    "anchor": "volumenes-y-sistemas-de-archivos",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-07-demo-attach-block-volume-to-instance-iscsi-attachment.md",
+    "module": "storage",
+    "anchor": "volumenes-y-sistemas-de-archivos",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-08-file-storage.md",
+    "module": "storage",
+    "anchor": "volumenes-y-sistemas-de-archivos",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-06-09-skill-check-storage.md",
+    "module": "storage",
+    "anchor": "ejercicio-de-decision",
+    "source": "provided-notes",
+    "note": "Evaluación conceptual integrada en ejercicio con solución y banco original de práctica."
+  },
+  {
+    "lesson": "01-07-01-security-introduction.md",
+    "module": "security",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-07-02-cloud-guard.md",
+    "module": "security",
+    "anchor": "prevenir-detectar-y-responder",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-07-03-security-zones-and-security-advisor.md",
+    "module": "security",
+    "anchor": "prevenir-detectar-y-responder",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-07-04-demo-security-zone-and-security-advisor.md",
+    "module": "security",
+    "anchor": "ejemplo-paso-a-paso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-07-05-encryption-basics.md",
+    "module": "security",
+    "anchor": "cifrado-claves-y-secretos",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-07-06-vault.md",
+    "module": "security",
+    "anchor": "cifrado-claves-y-secretos",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-07-07-demo-vault.md",
+    "module": "security",
+    "anchor": "ejemplo-paso-a-paso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-07-08-skill-check-security.md",
+    "module": "security",
+    "anchor": "ejercicio-de-decision",
+    "source": "provided-notes",
+    "note": "Evaluación conceptual integrada en ejercicio con solución y banco original de práctica."
+  },
+  {
+    "lesson": "01-08-01-pricing.md",
+    "module": "governance",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-08-02-cost-management.md",
+    "module": "governance",
+    "anchor": "presupuestos-cuotas-y-limites",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-08-03-demo-cost-management.md",
+    "module": "governance",
+    "anchor": "ejemplo-paso-a-paso",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-08-04-demo-cloud-advisor.md",
+    "module": "governance",
+    "anchor": "analizar-etiquetar-y-optimizar",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-08-05-tagging.md",
+    "module": "governance",
+    "anchor": "analizar-etiquetar-y-optimizar",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-08-06-support-rewards.md",
+    "module": "governance",
+    "anchor": "conceptos-clave",
+    "source": "provided-notes",
+    "note": "Síntesis original en español; concepto o demostración integrado en la sección enlazada."
+  },
+  {
+    "lesson": "01-08-07-skill-check-governance-and-administration.md",
+    "module": "governance",
+    "anchor": "ejercicio-de-decision",
+    "source": "provided-notes",
+    "note": "Evaluación conceptual integrada en ejercicio con solución y banco original de práctica."
+  }
+]

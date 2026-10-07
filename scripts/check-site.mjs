@@ -4,7 +4,6 @@ import { pathToFileURL } from 'node:url';
 
 const diagramNames = ['agent-loop', 'guardrails', 'langchain-flow', 'mcp-architecture', 'openai-stack', 'handoffs', 'oci-runtime', 'vector-search', 'database-capabilities'];
 const diagramFile = /^assets\/diagrams\/.+\.svg$/i;
-const lessonCounts = [1, 7, 8, 8, 11, 9, 9];
 const textFile = /\.(?:html|css|m?js|json|svg|md|txt)$/i;
 const present = value => typeof value === 'string' && value.trim().length > 0;
 const decode = value => value.replace(/&(?:amp|quot|apos|lt|gt|#\d+|#x[\da-f]+);/gi, entity => {
@@ -150,7 +149,7 @@ function validateOptions(file, question, error) {
 
 function validateQuestion(context, question, index, seen) {
   const { domains, error } = context;
-  const file = `data/questions.json[${index}] (${question?.id || 'no id'})`;
+  const file = `data/${context.course.questionBank}.json[${index}] (${question?.id || 'no id'})`;
   if (!question || !present(question.id) || seen.has(question.id)) error(file, 'question id must be nonempty and unique');
   seen.add(question?.id);
   if (!present(question?.question)) error(file, 'question text is empty');
@@ -161,26 +160,27 @@ function validateQuestion(context, question, index, seen) {
 }
 
 function validateQuestions(context, questions) {
-  const { files, domains, error } = context;
-  if (!Array.isArray(questions)) { error('data/questions.json', 'question bank must be an array'); return; }
+  const { files, domains, error, course } = context;
+  const source = `data/${course.questionBank}.json`;
+  const published = `assets/${course.questionBank}.json`;
+  if (!Array.isArray(questions)) { error(source, 'question bank must be an array'); return; }
   try {
-    if (JSON.stringify(JSON.parse(files.get('assets/questions.json'))) !== JSON.stringify(questions)) error('assets/questions.json', 'published question bank differs from source; rebuild the site');
-  } catch { error('assets/questions.json', 'published question bank is missing or invalid JSON'); }
-  if (questions.length !== 36) error('data/questions.json', `expected 36 questions, received ${questions.length}`);
+    if (JSON.stringify(JSON.parse(files.get(published))) !== JSON.stringify(questions)) error(published, 'published question bank differs from source; rebuild the site');
+  } catch { error(published, 'published question bank is missing or invalid JSON'); }
+  if (questions.length !== domains.length * 6) error(source, `expected ${domains.length * 6} questions, received ${questions.length}`);
   const seen = new Set();
   for (const [index, question] of questions.entries()) validateQuestion(context, question, index, seen);
   for (const domain of domains) {
     const count = questions.filter(question => question?.domain === domain).length;
-    if (count !== 6) error('data/questions.json', `${domain}: expected 6 questions, received ${count}`);
+    if (count !== 6) error(source, `${domain}: expected 6 questions, received ${count}`);
   }
-  if (domains.length !== 6) error('data/catalog.json', `expected six technical domains, received ${domains.length}`);
 }
 
 function validateCoverageEntry(context, entry, index, expected, seen) {
   const { error } = context;
-  const file = `data/coverage.json[${index}] (${entry?.lesson || 'no lesson'})`;
+  const file = `data/${context.course.coverage}.json[${index}] (${entry?.lesson || 'no lesson'})`;
   const match = present(entry?.lesson) ? entry.lesson.match(/^(01-\d{2}-\d{2})-[a-z0-9]+(?:-[a-z0-9]+)*\.md$/) : null;
-  if (!match || !expected.has(match[1])) error(file, 'lesson id or lowercase hyphenated filename is not in the expected 53-lesson sequence');
+  if (!match || !expected.has(match[1])) error(file, 'lesson id or lowercase hyphenated filename is not in the expected lesson sequence');
   else {
     if (seen.has(match[1])) error(file, `duplicate lesson id ${match[1]}`);
     seen.add(match[1]);
@@ -191,12 +191,16 @@ function validateCoverageEntry(context, entry, index, expected, seen) {
 
 function validateCoverage(context, coverage) {
   const { course, error } = context;
-  if (!Array.isArray(coverage)) { error('data/coverage.json', 'coverage must be an array'); return; }
-  if (coverage.length !== 53) error('data/coverage.json', `expected 53 lessons, received ${coverage.length}`);
+  const source = `data/${course.coverage}.json`;
+  const lessonCounts = course.lessonCounts;
+  if (!Array.isArray(lessonCounts) || lessonCounts.length !== course.modules.length || lessonCounts.some(count => !Number.isInteger(count) || count < 1)) { error('data/catalog.json', `${course.id}: invalid lesson counts`); return; }
+  const total = lessonCounts.reduce((sum, count) => sum + count, 0);
+  if (!Array.isArray(coverage)) { error(source, 'coverage must be an array'); return; }
+  if (coverage.length !== total) error(source, `expected ${total} lessons, received ${coverage.length}`);
   const expected = new Map(lessonCounts.flatMap((count, module) => Array.from({ length: count }, (_, lesson) => [`01-${String(module + 1).padStart(2, '0')}-${String(lesson + 1).padStart(2, '0')}`, course.modules[module]?.slug])));
   const seen = new Set();
   for (const [index, entry] of coverage.entries()) validateCoverageEntry(context, entry, index, expected, seen);
-  for (const lesson of expected.keys()) if (!seen.has(lesson)) error('data/coverage.json', `missing lesson ${lesson}`);
+  for (const lesson of expected.keys()) if (!seen.has(lesson)) error(source, `missing lesson ${lesson}`);
 }
 
 /** Validate the deployable files, plus the course's editorial and practice data. */
@@ -216,14 +220,16 @@ export function validateSite({ files, catalog, questions, coverage }) {
   const context = { files, catalog, origin, parsed, ids, usedDiagrams, caseNames, error };
   validateFiles(context);
   validateDiagrams(context);
-  const course = catalog.courses?.[0];
-  if (!course?.id || !Array.isArray(course.modules)) return [...issues, 'data/catalog.json: first course needs an id and modules'];
-  context.course = course;
-  context.modules = new Set(course.modules.map(module => module.slug));
-  context.domains = course.modules.filter(module => module.type === 'module').map(module => module.slug);
-  validatePublishedPages(context);
-  validateQuestions(context, questions);
-  validateCoverage(context, coverage);
+  if (!catalog.courses?.length) return [...issues, 'data/catalog.json: at least one course is required'];
+  for (const course of catalog.courses) {
+    if (!course?.id || !Array.isArray(course.modules)) { error('data/catalog.json', 'course needs an id and modules'); continue; }
+    context.course = course;
+    context.modules = new Set(course.modules.map(module => module.slug));
+    context.domains = course.modules.filter(module => module.type === 'module').map(module => module.slug);
+    validatePublishedPages(context);
+    validateQuestions(context, questions?.[course.id]);
+    validateCoverage(context, coverage?.[course.id]);
+  }
   return issues;
 }
 
@@ -239,12 +245,16 @@ async function main() {
   }
   try {
     await collect(path.join(root, 'dist'));
-    const [catalog, questions, coverage] = await Promise.all(['catalog', 'questions', 'coverage'].map(async name => JSON.parse(await readFile(path.join(root, 'data', `${name}.json`), 'utf8'))));
+    const catalog = JSON.parse(await readFile(path.join(root, 'data/catalog.json'), 'utf8'));
+    const questions = {}, coverage = {};
+    for (const course of catalog.courses) {
+      [questions[course.id], coverage[course.id]] = await Promise.all([course.questionBank, course.coverage].map(async name => JSON.parse(await readFile(path.join(root, 'data', `${name}.json`), 'utf8'))));
+    }
     const issues = validateSite({ files, catalog, questions, coverage });
     if (issues.length) {
       console.error(`Site validation failed (${issues.length} issues):\n${issues.map(issue => `- ${issue}`).join('\n')}`);
       process.exitCode = 1;
-    } else console.log(`Site validation passed: ${files.size} deployed files, 53 lessons, 36 questions and ${[...files.keys()].filter(file => diagramFile.test(file)).length} linked diagrams.`);
+    } else console.log(`Site validation passed: ${files.size} deployed files, ${Object.values(coverage).flat().length} lessons, ${Object.values(questions).flat().length} questions and ${[...files.keys()].filter(file => diagramFile.test(file)).length} linked diagrams.`);
   } catch (error) {
     console.error(`Site validation failed: ${error.message}. Run npm run build first and check data/*.json.`);
     process.exitCode = 1;

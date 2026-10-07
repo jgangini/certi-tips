@@ -8,33 +8,28 @@
       "id": "foundation-sprint",
       "label": "Foundation",
       "title": "Foundation",
-      "description": "Foundation reúne cuatro certificaciones de nivel 1 que recomendamos como base común para OCI, IA, datos y agentes. Después, elige la especialidad que mejor se ajuste a tu objetivo.",
+      "description": "Foundation reúne tres certificaciones de nivel 1 que recomendamos como base común para OCI, IA y agentes. Después, elige la especialidad que mejor se ajuste a tu objetivo.",
       "items": [
         {
           "id": "oci-foundations-2026",
           "level": 1,
-          "title": "OCI Foundations Associate 2026",
+          "title": "OCI Foundations Associate",
           "description": "Conceptos de nube, identidad, red, cómputo y almacenamiento en OCI.",
-          "officialUrl": "https://mylearn.oracle.com/ou/learning-path/-become-an-oci-foundations-associate-2026/163541"
+          "officialUrl": "https://mylearn.oracle.com/ou/learning-path/-become-an-oci-foundations-associate-2026/163541",
+          "guide": "oci-foundations-2026"
         },
         {
           "id": "oci-ai-foundations-2026",
           "level": 1,
-          "title": "OCI AI Foundations Associate 2026",
+          "title": "OCI AI Foundations Associate",
           "description": "Vocabulario de IA, aprendizaje automático, modelos generativos y servicios de OCI.",
-          "officialUrl": "https://mylearn.oracle.com/ou/learning-path/become-an-oci-ai-foundations-associate-2026/163544"
-        },
-        {
-          "id": "ai-data-platform-essentials",
-          "level": 1,
-          "title": "Oracle AI Data Platform Essentials",
-          "description": "Fundamentos de la plataforma de datos que alimenta las soluciones de IA.",
-          "officialUrl": "https://mylearn.oracle.com/ou/article-course/oracle-ai-data-platform-essentials-new-/159384"
+          "officialUrl": "https://mylearn.oracle.com/ou/learning-path/become-an-oci-ai-foundations-associate-2026/163544",
+          "guide": "oci-ai-foundations-2026"
         },
         {
           "id": "agentic-ai-foundations-2026",
           "level": 1,
-          "title": "Oracle Agentic AI Foundations Associate 2026",
+          "title": "Oracle Agentic AI Foundations Associate",
           "description": "Agentes, herramientas, MCP, OCI Enterprise AI y Oracle AI Database.",
           "officialUrl": "https://mylearn.oracle.com/ou/learning-path/become-an-oracle-agentic-ai-foundations-associate-2026/163239",
           "guide": "agentic-ai-foundations-2026"
@@ -50,21 +45,21 @@
         {
           "id": "oci-generative-ai-2025",
           "level": 2,
-          "title": "OCI Generative AI Professional 2025",
+          "title": "OCI Generative AI Professional",
           "description": "Modelos generativos y sus aplicaciones en OCI.",
           "officialUrl": "https://mylearn.oracle.com/ou/learning-path/become-an-oci-generative-ai-professional-2025/147863"
         },
         {
           "id": "oci-data-science-2025",
           "level": 2,
-          "title": "OCI Data Science Professional 2025",
+          "title": "OCI Data Science Professional",
           "description": "Datos, modelos y ciclo de vida de soluciones de aprendizaje automático.",
           "officialUrl": "https://mylearn.oracle.com/ou/learning-path/become-an-oci-data-science-professional-2025/148474"
         },
         {
           "id": "oci-enterprise-ai-2026",
           "level": 3,
-          "title": "OCI Enterprise AI Professional 2026",
+          "title": "OCI Enterprise AI Professional",
           "description": "Construcción y operación de soluciones de IA para empresas.",
           "officialUrl": "https://mylearn.oracle.com/ou/learning-path/become-an-oci-enterprise-ai-professional-2026/163234"
         }
@@ -74,12 +69,12 @@
       "id": "ai-data-layer",
       "label": "Data & AI",
       "title": "Data & AI",
-      "description": "Empieza por la base de datos, añade recuperación semántica y luego diseña agentes cercanos a los datos.",
+      "description": "Profundiza en bases de datos y búsqueda semántica. Después, especialízate en agentes sobre Oracle AI Database o en datos gobernados y agentes con AI Data Platform.",
       "items": [
         {
           "id": "autonomous-ai-database-2026",
           "level": 2,
-          "title": "Oracle Autonomous AI Database Professional 2026",
+          "title": "Oracle Autonomous AI Database Professional",
           "description": "Operación y capacidades de Autonomous AI Database.",
           "officialUrl": "https://mylearn.oracle.com/ou/learning-path/become-an-oracle-autonomous-ai-database-professional-2026/163045"
         },
@@ -93,9 +88,16 @@
         {
           "id": "agentic-ai-database-2026",
           "level": 3,
-          "title": "Agentic AI for Oracle AI Database Professional 2026",
+          "title": "Agentic AI for Oracle AI Database Professional",
           "description": "Agentes que aprovechan datos y capacidades de Oracle AI Database.",
           "officialUrl": "https://mylearn.oracle.com/ou/learning-path/become-an-agentic-ai-for-oracle-ai-database-professional-2026/163163"
+        },
+        {
+          "id": "ai-data-platform-professional",
+          "level": 3,
+          "title": "Oracle AI Data Platform Professional",
+          "description": "Datos gobernados y diseño, prueba y despliegue de agentes en AI Data Platform. Examen 1Z0-1154-26.",
+          "officialUrl": "https://mylearn.oracle.com/ou/learning-path/become-an-oracle-ai-data-platform-professional/164914"
         }
       ]
     },
@@ -108,7 +110,7 @@
         {
           "id": "oci-architect-2025",
           "level": 2,
-          "title": "OCI Architect Associate 2025",
+          "title": "OCI Architect Associate",
           "description": "Diseño de soluciones en OCI con identidad, red, cómputo y almacenamiento.",
           "officialUrl": "https://mylearn.oracle.com/ou/learning-path/become-an-oci-architect-associate-2025/147631"
         }
@@ -119,7 +121,7 @@
     {
       "id": "agentic-ai-foundations-2026",
       "title": "Oracle Agentic AI Foundations",
-      "edition": "Associate 2026",
+      "edition": "Associate",
       "description": "De entender un agente a elegir cómo construirlo, conectarlo y operarlo. Una ruta visual con ejemplos, ejercicios y práctica explicada.",
       "exam": { "code": "1Z0-1157-26", "questions": 40, "minutes": 60, "passingPercent": 65, "verified": "2026-09-28", "source": "https://blogs.oracle.com/oracleuniversity/oracle-agentic-ai-foundations-training-certification-now-available" },
       "modules": [
@@ -135,6 +137,147 @@
         { "slug": "glossary", "title": "Habla el idioma de los agentes", "short": "Glosario", "description": "Términos técnicos en inglés, explicados en español y con sus diferencias importantes." },
         { "slug": "exam-checklist", "title": "El siguiente paso: tu certificación", "short": "Ruta al examen oficial", "description": "Comprueba tu preparación y sigue los enlaces oficiales para completar la ruta de Oracle." },
         { "slug": "practice", "title": "Pon a prueba lo que entiendes", "short": "Práctica", "description": "12 preguntas, seis temas y una explicación en cada respuesta. Aprende también de tus errores." }
+      ],
+      "questionBank": "questions",
+      "coverage": "coverage",
+      "lessonCounts": [1, 7, 8, 8, 11, 9, 9]
+    },
+    {
+      "id": "oci-ai-foundations-2026",
+      "title": "Oracle Cloud Infrastructure AI Foundations",
+      "edition": "Associate",
+      "description": "De los fundamentos de IA a los servicios de OCI: ejemplos, gráficos, ejercicios y práctica explicada en español.",
+      "contentDir": "oci-ai-foundations-2026",
+      "questionBank": "questions-ai-foundations",
+      "coverage": "coverage-ai-foundations",
+      "lessonCounts": [1, 6, 10, 6, 8, 12, 8, 6, 9, 6],
+      "exam": { "code": "1Z0-1122-26", "minutes": 60, "verified": "2026-10-06", "source": "https://mylearn.oracle.com/ou/learning-path/become-an-oci-ai-foundations-associate-2026/163544" },
+      "modules": [
+        { "slug": "overview", "title": "Tu punto de partida", "short": "Empieza aquí", "description": "Conoce la ruta, revisa los prerrequisitos y decide cómo vas a estudiar.", "minutes": 8, "type": "orientation" },
+        { "slug": "ai-basics", "title": "Entender la inteligencia artificial", "short": "Fundamentos de IA", "description": "Relaciona tareas, datos y resultados; distingue IA, ML, deep learning e IA generativa.", "minutes": 18, "type": "module" },
+        { "slug": "machine-learning", "title": "Aprender de los datos", "short": "Machine Learning", "description": "Elige regresión, clasificación, clustering o aprendizaje por refuerzo y evalúa sin fuga de datos.", "minutes": 25, "type": "module" },
+        { "slug": "deep-learning", "title": "Redes que aprenden representaciones", "short": "Deep Learning", "description": "Sigue una neurona y compara MLP, CNN, RNN y LSTM según la estructura de los datos.", "minutes": 22, "type": "module" },
+        { "slug": "generative-ai", "title": "De tokens a respuestas útiles", "short": "IA generativa y LLM", "description": "Comprende transformers, prompting, RAG y fine-tuning sin confundir generación con veracidad.", "minutes": 25, "type": "module" },
+        { "slug": "enterprise-ai", "title": "Del modelo al agente empresarial", "short": "OCI Enterprise AI", "description": "Conecta modelos, recuperación, herramientas, memoria y controles en un caso de soporte.", "minutes": 28, "type": "module" },
+        { "slug": "ai-portfolio", "title": "Elegir dónde construir en OCI", "short": "Portafolio de IA", "description": "Distingue APIs preentrenadas, OCI Data Science e infraestructura GPU y aplica IA responsable.", "minutes": 24, "type": "module" },
+        { "slug": "oci-generative-ai", "title": "Usar modelos con tus datos en OCI", "short": "OCI Generative AI", "description": "Relaciona Playground, clusters dedicados, endpoints, AI Vector Search y Select AI.", "minutes": 24, "type": "module" },
+        { "slug": "ai-services", "title": "Resolver tareas con los servicios de IA", "short": "Servicios de IA", "description": "Selecciona Language, Speech, Vision o Document Understanding según entrada y salida.", "minutes": 25, "type": "module" },
+        { "slug": "database-ai", "title": "Agentes y búsqueda cerca de los datos", "short": "IA para bases de datos", "description": "Conecta vectores, Private Agent Factory, Select AI Agent y MCP de Autonomous AI Database.", "minutes": 24, "type": "module" }
+      ],
+      "resources": [
+        { "slug": "glossary", "title": "Habla el idioma de la IA", "short": "Glosario", "description": "Conceptos en inglés con definiciones en español y diferencias que debes dominar." },
+        { "slug": "exam-checklist", "title": "El siguiente paso: tu certificación", "short": "Ruta al examen oficial", "description": "Repasa los objetivos, comprueba tu preparación y continúa en Oracle MyLearn." },
+        { "slug": "practice", "title": "Pon a prueba lo que entiendes", "short": "Práctica", "description": "18 preguntas por intento, nueve temas y una explicación para cada alternativa." }
+      ]
+    },
+    {
+      "id": "oci-foundations-2026",
+      "title": "Oracle Cloud Infrastructure Foundations",
+      "edition": "Associate",
+      "description": "Diseña tu primera solución en OCI: arquitectura, IAM, redes, cómputo, datos, seguridad y costos con ejemplos y gráficos en español.",
+      "contentDir": "oci-foundations-2026",
+      "questionBank": "questions-oci-foundations",
+      "coverage": "coverage-oci-foundations",
+      "lessonCounts": [
+        2,
+        3,
+        11,
+        8,
+        9,
+        9,
+        8,
+        7
+      ],
+      "exam": {
+        "code": "1Z0-1085-26",
+        "verified": "2026-10-07",
+        "source": "https://mylearn.oracle.com/ou/learning-path/-become-an-oci-foundations-associate-2026/163541"
+      },
+      "modules": [
+        {
+          "slug": "overview",
+          "title": "Tu punto de partida",
+          "short": "Empieza aquí",
+          "description": "Conoce la ruta, revisa los prerrequisitos y decide cómo vas a estudiar.",
+          "minutes": 8,
+          "type": "orientation"
+        },
+        {
+          "slug": "oci-architecture",
+          "title": "Elegir dónde vive tu aplicación",
+          "short": "Arquitectura de OCI",
+          "description": "Distingue región, AD y FD; elige ubicación y reconoce qué fallo tolera tu diseño.",
+          "minutes": 22,
+          "type": "module"
+        },
+        {
+          "slug": "iam",
+          "title": "Dar a cada identidad el acceso necesario",
+          "short": "Identidad y acceso",
+          "description": "Organiza usuarios, grupos y recursos; interpreta políticas y permisos de aplicaciones.",
+          "minutes": 28,
+          "type": "module"
+        },
+        {
+          "slug": "networking",
+          "title": "Conectar sin exponer de más",
+          "short": "Redes y balanceo",
+          "description": "Sigue una petición por la VCN y distingue rutas, gateways, reglas y balanceadores.",
+          "minutes": 32,
+          "type": "module"
+        },
+        {
+          "slug": "compute",
+          "title": "Ejecutar y escalar tu aplicación",
+          "short": "Cómputo",
+          "description": "Relaciona imágenes, shapes y pools; compara VMs, contenedores y funciones.",
+          "minutes": 28,
+          "type": "module"
+        },
+        {
+          "slug": "storage",
+          "title": "Guardar datos según cómo los usas",
+          "short": "Almacenamiento",
+          "description": "Elige objetos, bloques o archivos; comprende niveles, acceso, persistencia y recuperación.",
+          "minutes": 30,
+          "type": "module"
+        },
+        {
+          "slug": "security",
+          "title": "Proteger, detectar y responder",
+          "short": "Seguridad",
+          "description": "Combina responsabilidades, Security Zones, Cloud Guard, WAF y gestión de claves.",
+          "minutes": 28,
+          "type": "module"
+        },
+        {
+          "slug": "governance",
+          "title": "Entender y controlar el consumo",
+          "short": "Gobierno y costos",
+          "description": "Relaciona precios, etiquetas, presupuestos, cuotas, análisis y recomendaciones.",
+          "minutes": 25,
+          "type": "module"
+        }
+      ],
+      "resources": [
+        {
+          "slug": "glossary",
+          "title": "Habla el idioma de OCI",
+          "short": "Glosario",
+          "description": "Términos en inglés, definiciones en español y diferencias que debes reconocer."
+        },
+        {
+          "slug": "exam-checklist",
+          "title": "El siguiente paso: tu certificación",
+          "short": "Ruta al examen oficial",
+          "description": "Comprueba tu preparación, resuelve el caso integrador y continúa en Oracle MyLearn."
+        },
+        {
+          "slug": "practice",
+          "title": "Pon a prueba lo que entiendes",
+          "short": "Práctica",
+          "description": "14 preguntas por intento, siete temas y explicación para cada alternativa."
+        }
       ]
     }
   ]

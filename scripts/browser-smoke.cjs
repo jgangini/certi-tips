@@ -7,6 +7,7 @@ async (page) => {
   const courseId = 'agentic-ai-foundations-2026';
   const quizKey = `certitips:quiz:v1:${courseId}`;
   const progressKey = `certitips:progress:v1:${courseId}`;
+  await page.evaluate(keys => keys.forEach(key => localStorage.removeItem(key)), [quizKey, `${quizKey}:last-practice`, progressKey]);
   const assert = (condition, message) => { if (!condition) throw new Error(message); };
   const checks = [];
   const errors = [];
@@ -18,15 +19,31 @@ async (page) => {
     for (const slug of ['', ...slugs]) {
       const response = await page.goto(`${base}${slug ? `${course}/${slug}/` : ''}`);
       assert(response.status() === 200, `HTTP failure: ${slug}`);
+      await page.locator('.prose img').evaluateAll(images => Promise.all(images.map(image => { image.loading = 'eager'; return image.decode(); })));
       const geometry = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth, h1: document.querySelectorAll('h1').length }));
       assert(geometry.document <= geometry.viewport + 1, `Horizontal overflow at ${width}: ${slug} (${geometry.document})`);
       assert(geometry.h1 === 1, `Missing/duplicate h1: ${slug}`);
+      const solutionsAligned = await page.evaluate(() => {
+        const diagram = document.querySelector('.prose > p > .diagram')?.getBoundingClientRect();
+        return !diagram || [...document.querySelectorAll('.prose > details')].every(solution => {
+          const box = solution.getBoundingClientRect();
+          return Math.abs(box.left - diagram.left) < 1 && Math.abs(box.right - diagram.right) < 1;
+        });
+      });
+      assert(solutionsAligned, `Solution panels exceed the diagram column at ${width}px: ${slug}`);
       if (!slug) {
         const controls = await page.evaluate(() => {
           const nav = document.querySelector('.path-section.is-active > .group-carousel-controls').getBoundingClientRect();
           const section = document.querySelector('.path-section.is-active').getBoundingClientRect();
-          const heading = document.querySelector('.path-section.is-active .path-section-heading').getBoundingClientRect();
-          return nav.right <= section.right + 1 && nav.top >= section.top && (nav.left >= heading.right || nav.bottom <= heading.top);
+          const heading = document.querySelector('.path-section.is-active .path-section-heading');
+          const walker = document.createTreeWalker(heading, NodeFilter.SHOW_TEXT);
+          const textBoxes = [];
+          while (walker.nextNode()) {
+            if (!walker.currentNode.textContent.trim()) continue;
+            const range = document.createRange(); range.selectNodeContents(walker.currentNode);
+            textBoxes.push(...range.getClientRects());
+          }
+          return nav.right <= section.right + 1 && nav.top >= section.top && textBoxes.every(box => nav.left >= box.right || nav.right <= box.left || nav.bottom <= box.top || nav.top >= box.bottom);
         });
         assert(controls, `Group controls overlap or escape active section at ${width}px`);
       }
@@ -34,6 +51,8 @@ async (page) => {
       assert(await page.locator('.nav-overview').count() === 0, 'Redundant Ver recurso link remains in the sidebar');
       if (slug === 'practice') assert(await page.locator('.nav-direct[aria-current="page"][href$="/practice/"]').count() === 1, 'Practice entry is not direct and active');
       else if (slug) assert(await page.locator(`.nav-branch[data-nav-page="${slug}"][open]`).count() === 1, `Active tree branch closed: ${slug}`);
+      await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+      if (await page.locator('[data-mark-complete]').count()) await page.locator('[data-mark-complete]').waitFor({ state: 'visible' });
       await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
       const layout = await page.evaluate(() => {
         const footer = document.querySelector('.site-footer');
@@ -62,7 +81,7 @@ async (page) => {
       navScrollable: nav.scrollHeight > nav.clientHeight && nav.scrollTop > 0, sidebarFixed: sidebar.scrollTop === 0,
       headingFixed: before[0] === heading.getBoundingClientRect().top && before[1] === progress.getBoundingClientRect().top };
   });
-  assert(sidebarState.tagFirst && sidebarState.title === 'Oracle Agentic AI Foundations Associate 2026', 'Sidebar title or exam tag order is wrong');
+  assert(sidebarState.tagFirst && sidebarState.title === 'Oracle Agentic AI Foundations Associate', 'Sidebar title or exam tag order is wrong');
   assert(sidebarState.navScrollable && sidebarState.sidebarFixed && sidebarState.headingFixed, 'Only the sidebar navigation should scroll');
   await page.keyboard.press('Escape');
   assert(await menu.getAttribute('aria-expanded') === 'false', 'Escape did not close mobile menu');
@@ -115,8 +134,10 @@ async (page) => {
   await page.goto(`${base}${course}/langchain/`);
   assert(await page.locator('.page-heading .eyebrow').count() === 0, 'Lesson heading repeats the module or reading time');
   assert(await page.locator('[data-mark-complete]').isHidden(), 'Completion button appears before the article ends');
+  await page.locator('.prose img').evaluateAll(images => Promise.all(images.map(image => { image.loading = 'eager'; return image.decode(); })));
   await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
   await page.waitForFunction(() => !document.querySelector('[data-mark-complete]').hidden);
+  await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
   const completionPosition = await page.evaluate(() => {
     const button = document.querySelector('[data-mark-complete]').getBoundingClientRect();
     const footer = document.querySelector('.site-footer').getBoundingClientRect();
@@ -124,7 +145,6 @@ async (page) => {
     return { aboveFooter: button.bottom < footer.top, abovePager: button.bottom + 16 <= pager.top, alignedWithPager: Math.abs(button.right - pager.right) < 1, footerGap: footer.top - pager.bottom };
   });
   assert(completionPosition.aboveFooter && completionPosition.abovePager && completionPosition.alignedWithPager && completionPosition.footerGap >= 24 && completionPosition.footerGap <= 64, 'Completion button must float above the next-page link with a compact footer gap');
-  await page.evaluate(key => localStorage.removeItem(key), progressKey);
   await page.locator('[data-mark-complete]').click();
   await page.reload();
   assert(await page.locator('[data-mark-complete]').getAttribute('aria-pressed') === 'true', 'Progress did not persist');
@@ -192,17 +212,22 @@ async (page) => {
   await page.locator('[data-start]').click();
   assert((await page.locator('.quiz-meta').textContent()).includes('1 de 12'), 'New attempt did not reset question counter');
   checks.push('reset confirmation/cancellation, cleared saved test, retained course progress, intro-only instructions');
-  await page.goto(`${base}${course}/talk/`);
+  await page.goto(`${base}${courseId}/talk/`);
   await page.waitForURL(`${base}${course}/overview/`);
   assert(await page.locator('[data-talk-mode], a[href$="/talk/"]').count() === 0, 'Separate talk mode remains');
   await page.goto(base);
   const homeText = await page.locator('body').innerText();
+  const certificationNames = await page.locator('.certification-item h3, .path-title, [data-search-kind="certification"] strong').allTextContents();
+  assert(certificationNames.every(name => !/\b20\d{2}\b|Essentials/.test(name)), 'Outdated certification names remain on home, menus or search');
+  assert(await page.locator('#ai-data-platform-essentials').count() === 0, 'Essentials remains in the certification catalog');
+  const platform = page.locator('#ai-data-layer #ai-data-platform-professional');
+  assert(await platform.locator('.certification-level').textContent() === 'Nivel 3', 'AI Data Platform Professional belongs in Data & AI at level 3');
+  assert((await platform.textContent()).includes('1Z0-1154-26'), 'AI Data Platform exam code is missing');
   await page.setViewportSize({ width: 1280, height: 900 });
   const desktopHero = await page.evaluate(() => ({ copy: document.querySelector('.hero-copy').getBoundingClientRect().toJSON(), flow: document.querySelector('.hero-flow').getBoundingClientRect().toJSON() }));
   assert(desktopHero.copy.right < desktopHero.flow.left && desktopHero.flow.width > 350, 'Hero is not split into two readable columns');
   await page.setViewportSize({ width: 390, height: 900 });
-  const mobileHero = await page.evaluate(() => ({ copy: document.querySelector('.hero-copy').getBoundingClientRect().toJSON(), flow: document.querySelector('.hero-flow').getBoundingClientRect().toJSON() }));
-  assert(mobileHero.flow.top >= mobileHero.copy.bottom, 'Hero flow does not stack below the headline on mobile');
+  assert(await page.locator('.hero-flow').isHidden(), 'Hero flow should remain hidden on mobile');
   assert(await page.locator('[data-hero-flow]').count() === 1, 'Animated certification path is missing');
   await page.locator('[data-hero-flow]').evaluate(video => new Promise((resolve, reject) => {
     if (video.readyState >= 1) return resolve();
@@ -234,14 +259,14 @@ async (page) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   assert(await page.locator('.path-section').count() === 4, 'Expected Foundation Sprint and three specializations');
   assert(await page.locator('.certification-item').count() === 11, 'Missing or duplicated FY27 certifications');
-  assert(await page.locator('.certification-item.has-guide').count() === 1, 'Expected exactly one available guide');
+  assert(await page.locator('.certification-item.has-guide').count() === 2, 'Expected two available guides');
   assert(await page.locator('.certification-actions a[href^="https://mylearn.oracle.com/"]').count() === 11, 'Every certification needs an Oracle source');
   assert(await page.locator('.path-nav .path-group').count() === 4, 'Header does not expose all groups');
-  assert(await page.locator('.certitips-button:not([disabled])').count() === 1, 'Available CertiTips guide button is missing');
-  assert(await page.locator('.certitips-button[disabled]').count() === 10, 'Pending guides need disabled gray buttons');
+  assert(await page.locator('.certitips-button:not([disabled])').count() === 2, 'Available CertiTips guide button is missing');
+  assert(await page.locator('.certitips-button[disabled]').count() === 9, 'Pending guides need disabled gray buttons');
   assert(await page.locator('.certitips-button svg[fill="currentColor"]').count() === 11, 'CertiTips icon is missing');
   assert(await page.locator('.path-section.is-active').count() === 1, 'Exactly one group should be visible');
-  assert(await page.locator('#foundation-sprint .certification-item:visible').count() === 4, 'Foundation certifications are not a vertical list');
+  assert(await page.locator('#foundation-sprint .certification-item:visible').count() === 3, 'Foundation certifications are not a vertical list');
   await page.locator('[data-group-next]').click();
   assert(await page.locator('#ai-first').isVisible(), 'Group carousel did not advance');
   assert(await page.locator('#ai-first > .group-carousel-controls').count() === 1, 'Controls did not move into the next section');
@@ -328,12 +353,16 @@ async (page) => {
   await page.locator('#search-query').fill('Oracle AI Vector Search Professional');
   const pendingSearch = page.locator('.search-results li:visible a').first();
   assert((await pendingSearch.getAttribute('href')).startsWith('https://mylearn.oracle.com/'), 'Search sends pending certification to home instead of Oracle');
-  await page.locator('#search-query').fill('Oracle Agentic AI Foundations Associate 2026');
+  await page.locator('#search-query').fill('1Z0-1154-26');
+  const platformSearch = page.locator('[data-search-kind="certification"]:visible');
+  assert(await platformSearch.count() === 1 && (await platformSearch.textContent()).includes('Oracle AI Data Platform Professional'), 'Search by exam code does not find AI Data Platform Professional');
+  assert((await platformSearch.locator('a').getAttribute('href')).endsWith('/become-an-oracle-ai-data-platform-professional/164914'), 'AI Data Platform search result uses the wrong official route');
+  await page.locator('#search-query').fill('Oracle Agentic AI Foundations Associate');
   await page.locator('.search-results li:visible a').first().click();
   await page.waitForURL(`${base}${course}/overview/`);
   for (const removed of ['TU PRÓXIMA CERTIFICACIÓN EMPIEZA AQUÍ', 'EN ESPAÑOL', 'ACCESO LIBRE', 'SIN REGISTRO', '¿Vas a dar una charla?', '90 minutos']) assert(!homeText.includes(removed), `Removed text remains: ${removed}`);
   assert(await page.locator('.hero-visual, .approach-grid, .hero-proof, .course-metrics').count() === 0, 'Removed home panel remains');
-  checks.push('11 Oracle routes, one active and ten pending guides, four-group carousel, search, dropdowns, dark-mode persistence');
+  checks.push('11 Oracle routes, two active and nine pending guides, four-group carousel, search, dropdowns, dark-mode persistence');
 
   const context = await page.context().browser().newContext();
   await context.addInitScript(() => Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('Blocked for test', 'SecurityError'); } }));

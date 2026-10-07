@@ -9,6 +9,32 @@ const questionFor = id => bank.find(question => question.id === id);
 const wrongOption = question => question.options.find(option => option.id !== question.correctOption).id;
 const attempt = () => newAttempt(bank, () => 0.25);
 
+for (const [courseId, bankFile, count] of [
+  ['oci-ai-foundations-2026', 'questions-ai-foundations', 18],
+  ['oci-foundations-2026', 'questions-oci-foundations', 14],
+]) test(`${courseId} selects balanced questions and restores review without mixing course banks`, () => {
+  const aiBank = JSON.parse(readFileSync(new URL(`../data/${bankFile}.json`, import.meta.url), 'utf8'));
+  const catalog = JSON.parse(readFileSync(new URL('../data/catalog.json', import.meta.url), 'utf8'));
+  const areas = catalog.courses.find(course => course.id === courseId).modules.filter(module => module.type === 'module').map(module => module.slug);
+  let current = newAttempt(aiBank, () => 0.25, areas);
+  assert.equal(current.ids.length, count);
+  assert.equal(new Set(current.ids).size, count);
+  for (const domain of areas) assert.equal(current.ids.filter(id => aiBank.find(question => question.id === id).domain === domain).length, 2);
+  assert.equal(restoreAttempt(current, bank), null);
+  assert.equal(restoreAttempt(attempt(), aiBank, areas), null);
+  assert.throws(() => newAttempt(aiBank.filter(question => question.domain !== areas[0]), Math.random, areas), /incompleto/);
+  while (current.index < current.ids.length) {
+    const question = aiBank.find(item => item.id === current.ids[current.index]);
+    current = advance(confirmAnswer(current, aiBank, current.index % 3 ? question.correctOption : wrongOption(question)));
+  }
+  assert.equal(results(current, aiBank).correct, count - Math.ceil(count / 3));
+  assert.deepEqual(restoreAttempt(JSON.parse(JSON.stringify(current)), aiBank, areas), current);
+  const review = reviewAttempt(current, aiBank, areas);
+  assert.equal(review.ids.length, Math.ceil(count / 3));
+  assert.deepEqual(restoreAttempt(JSON.parse(JSON.stringify(review)), aiBank, areas)?.original, current);
+  assert.equal(restoreAttempt(review, bank), null);
+});
+
 function finish(initial, isCorrect = () => true) {
   let current = initial;
   while (current.index < current.ids.length) {

@@ -1,0 +1,1784 @@
+[
+  {
+    "id": "aif-ai-basics-01",
+    "domain": "ai-basics",
+    "question": "Un sistema reconoce defectos usando una red neuronal profunda. ¿Cómo se relacionan las disciplinas empleadas?",
+    "options": [
+      {
+        "id": "a",
+        "text": "DL es parte de ML, y ML forma parte de IA.",
+        "explanation": "Las redes profundas son una familia de aprendizaje automático dentro del campo de IA."
+      },
+      {
+        "id": "b",
+        "text": "IA es una técnica contenida dentro de DL.",
+        "explanation": "IA es el campo más amplio, no una subfamilia de redes profundas."
+      },
+      {
+        "id": "c",
+        "text": "ML y DL son servicios exclusivos de OCI.",
+        "explanation": "Son disciplinas generales, independientes de un proveedor."
+      },
+      {
+        "id": "d",
+        "text": "Toda IA requiere redes neuronales profundas.",
+        "explanation": "También existen reglas y métodos de aprendizaje que no usan redes profundas."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "ai-basics",
+      "anchor": "conceptos-clave",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-ai-basics-02",
+    "domain": "ai-basics",
+    "question": "Un taller quiere convertir una llamada grabada en palabras escritas. ¿Cuál es la tarea principal?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Clasificación de sentimiento.",
+        "explanation": "Analiza una actitud; no produce la transcripción completa."
+      },
+      {
+        "id": "b",
+        "text": "Reconocimiento de voz o transcripción.",
+        "explanation": "Transforma audio hablado en texto."
+      },
+      {
+        "id": "c",
+        "text": "Síntesis de voz.",
+        "explanation": "La síntesis recorre el sentido contrario: texto a audio."
+      },
+      {
+        "id": "d",
+        "text": "Detección de objetos.",
+        "explanation": "Localiza objetos en imágenes, no palabras en audio."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "ai-basics",
+      "anchor": "tareas-y-tipos-de-datos",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-ai-basics-03",
+    "domain": "ai-basics",
+    "question": "Un identificador válido tiene exactamente ocho dígitos. La regla no cambia. ¿Qué solución inicial corresponde?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Pedir al LLM que invente un identificador parecido.",
+        "explanation": "Generar otro código no comprueba el recibido."
+      },
+      {
+        "id": "b",
+        "text": "Agrupar identificadores por similitud.",
+        "explanation": "Los grupos no garantizan cumplir la regla de ocho dígitos."
+      },
+      {
+        "id": "c",
+        "text": "Validar longitud y caracteres con una regla explícita.",
+        "explanation": "La condición está completamente definida y no necesita aprenderse."
+      },
+      {
+        "id": "d",
+        "text": "Entrenar una CNN con imágenes de identificadores.",
+        "explanation": "Añade entrenamiento innecesario para una regla determinista sobre texto."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "ai-basics",
+      "anchor": "elegir-entre-reglas-y-aprendizaje",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-ai-basics-04",
+    "domain": "ai-basics",
+    "question": "Una aplicación asigna a cada correo la etiqueta «reclamo» o «consulta». ¿Qué salida produce?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Una narración mediante generación.",
+        "explanation": "Se solicita una etiqueta, no una explicación nueva."
+      },
+      {
+        "id": "b",
+        "text": "Un valor continuo mediante regresión.",
+        "explanation": "Reclamo y consulta no son magnitudes numéricas continuas."
+      },
+      {
+        "id": "c",
+        "text": "Una transcripción de voz.",
+        "explanation": "La entrada ya es texto y no requiere convertir audio."
+      },
+      {
+        "id": "d",
+        "text": "Una categoría mediante clasificación.",
+        "explanation": "Elige entre etiquetas definidas a partir de la entrada."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "ai-basics",
+      "anchor": "tareas-y-tipos-de-datos",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-ai-basics-05",
+    "domain": "ai-basics",
+    "question": "Un asistente redacta una respuesta convincente sobre una garantía. ¿Qué falta antes de utilizarla?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Comprobar hechos y condiciones contra la política vigente.",
+        "explanation": "La fluidez no demuestra que las afirmaciones sean correctas."
+      },
+      {
+        "id": "b",
+        "text": "Aumentar la longitud de la respuesta.",
+        "explanation": "Más palabras no aportan evidencia sobre la garantía."
+      },
+      {
+        "id": "c",
+        "text": "Aceptar la respuesta porque contiene vocabulario técnico.",
+        "explanation": "El estilo técnico tampoco garantiza veracidad."
+      },
+      {
+        "id": "d",
+        "text": "Convertir la respuesta a audio.",
+        "explanation": "Cambiar el formato no verifica los hechos."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "ai-basics",
+      "anchor": "errores-frecuentes",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-ai-basics-06",
+    "domain": "ai-basics",
+    "question": "Soporte recibe una foto, una nota de voz y una pregunta. ¿Cómo dividirías el trabajo?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Usar transcripción para localizar objetos en la foto.",
+        "explanation": "Transcripción y visión resuelven tareas diferentes."
+      },
+      {
+        "id": "b",
+        "text": "Interpretar cada modalidad, comprobar datos y redactar con los resultados.",
+        "explanation": "Separa extracción, validación y generación."
+      },
+      {
+        "id": "c",
+        "text": "Tratar todos los archivos como tablas numéricas ya etiquetadas.",
+        "explanation": "Las modalidades necesitan procesamiento apropiado y no incluyen necesariamente etiquetas."
+      },
+      {
+        "id": "d",
+        "text": "Generar primero una solución y omitir los archivos.",
+        "explanation": "La respuesta quedaría sin apoyo en las entradas del cliente."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "ai-basics",
+      "anchor": "ejemplo-paso-a-paso",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-machine-learning-01",
+    "domain": "machine-learning",
+    "question": "Tienes reparaciones históricas con sus horas reales y quieres estimar la duración de una nueva. ¿Qué planteamiento corresponde?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Clustering sin usar las horas como objetivo.",
+        "explanation": "Agrupar no aprende directamente a predecir la duración conocida."
+      },
+      {
+        "id": "b",
+        "text": "Refuerzo sin entorno ni recompensas.",
+        "explanation": "El caso no describe una política de acciones con recompensas."
+      },
+      {
+        "id": "c",
+        "text": "Regresión supervisada.",
+        "explanation": "Las horas son un objetivo numérico disponible en ejemplos históricos."
+      },
+      {
+        "id": "d",
+        "text": "Clasificación de categorías sin orden.",
+        "explanation": "Se pide una duración numérica, no una clase."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "machine-learning",
+      "anchor": "conceptos-clave",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-machine-learning-02",
+    "domain": "machine-learning",
+    "question": "Se quiere estandarizar datos y medir la generalización. ¿Cuál es el procedimiento correcto?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Calcular la transformación con todos los datos antes de separar.",
+        "explanation": "Las estadísticas de prueba se filtran al entrenamiento."
+      },
+      {
+        "id": "b",
+        "text": "Entrenar usando las etiquetas del conjunto de prueba.",
+        "explanation": "La prueba deja de medir desempeño sobre datos reservados."
+      },
+      {
+        "id": "c",
+        "text": "Elegir cada ajuste usando repetidamente la nota del mismo conjunto de prueba.",
+        "explanation": "La selección repetida adapta el proceso a esa prueba y sesga la estimación."
+      },
+      {
+        "id": "d",
+        "text": "Separar y ajustar la transformación solo con entrenamiento.",
+        "explanation": "Evita que estadísticas de prueba influyan en el aprendizaje."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "machine-learning",
+      "anchor": "aprendizaje-supervisado-y-evaluacion",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-machine-learning-03",
+    "domain": "machine-learning",
+    "question": "Hay 95 equipos sanos y 5 con fallos. Un modelo siempre dice «sano». ¿Qué demuestra su 95% de accuracy?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Acertó 95 casos, pero no detectó ninguno de los cinco fallos.",
+        "explanation": "La clase mayoritaria domina accuracy; la detección de fallos es cero."
+      },
+      {
+        "id": "b",
+        "text": "Detectó el 95% de los fallos.",
+        "explanation": "Confunde aciertos totales con sensibilidad sobre los fallos."
+      },
+      {
+        "id": "c",
+        "text": "Cometió un error en equipos sanos.",
+        "explanation": "Acertó todos los sanos y falló en los cinco defectuosos."
+      },
+      {
+        "id": "d",
+        "text": "Generalizará con la misma cifra a cualquier población.",
+        "explanation": "La distribución observada no garantiza desempeño futuro."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "machine-learning",
+      "anchor": "ejercicio-de-diagnostico",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-machine-learning-04",
+    "domain": "machine-learning",
+    "question": "Quieres explorar grupos de clientes parecidos sin etiquetas de segmentos. ¿Qué técnica probarías?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Refuerzo para aprender movimientos de un robot.",
+        "explanation": "Ese entorno de acciones no corresponde a la segmentación descrita."
+      },
+      {
+        "id": "b",
+        "text": "Clustering no supervisado.",
+        "explanation": "Busca grupos sin requerir una etiqueta objetivo por ejemplo."
+      },
+      {
+        "id": "c",
+        "text": "Clasificación supervisada con segmentos ya conocidos.",
+        "explanation": "El problema especifica que no existen esas etiquetas."
+      },
+      {
+        "id": "d",
+        "text": "Regresión de un precio objetivo.",
+        "explanation": "No se pidió una magnitud numérica ni se definió ese objetivo."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "machine-learning",
+      "anchor": "clustering-y-aprendizaje-por-refuerzo",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-machine-learning-05",
+    "domain": "machine-learning",
+    "question": "Un agente prueba acciones y recibe recompensas según el resultado. ¿Qué está aprendiendo?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Una transcripción supervisada de cada acción.",
+        "explanation": "No se describen ejemplos etiquetados de audio y texto."
+      },
+      {
+        "id": "b",
+        "text": "Una regla fijada completamente antes de observar datos.",
+        "explanation": "La política se aprende mediante interacción."
+      },
+      {
+        "id": "c",
+        "text": "Una política mediante aprendizaje por refuerzo.",
+        "explanation": "Las recompensas orientan qué acciones conviene tomar."
+      },
+      {
+        "id": "d",
+        "text": "Una agrupación basada únicamente en distancias.",
+        "explanation": "Incluye acciones y recompensas, no solo similitud."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "machine-learning",
+      "anchor": "clustering-y-aprendizaje-por-refuerzo",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-machine-learning-06",
+    "domain": "machine-learning",
+    "question": "Un modelo acierta casi todo el entrenamiento y empeora mucho con nuevos datos comparables. ¿Qué sospecha inicial corresponde?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Evaluar en datos nuevos es innecesario.",
+        "explanation": "Precisamente esa evaluación revela el problema."
+      },
+      {
+        "id": "b",
+        "text": "Aumentar complejidad garantiza resolverlo.",
+        "explanation": "Más capacidad puede agravar la memorización."
+      },
+      {
+        "id": "c",
+        "text": "Inferencia y entrenamiento son el mismo proceso.",
+        "explanation": "Inferencia aplica parámetros; no vuelve a ajustarlos necesariamente."
+      },
+      {
+        "id": "d",
+        "text": "Sobreajuste a patrones particulares o ruido del entrenamiento.",
+        "explanation": "La diferencia marcada sugiere falta de generalización."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "machine-learning",
+      "anchor": "errores-frecuentes",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-deep-learning-01",
+    "domain": "deep-learning",
+    "question": "Una neurona recibe 2 y 3, pesos 0,5 y −1, bias 1 y ReLU. ¿Cuál es su salida?",
+    "options": [
+      {
+        "id": "a",
+        "text": "0.",
+        "explanation": "La suma es 1 − 3 + 1 = −1; ReLU devuelve max(0, −1)."
+      },
+      {
+        "id": "b",
+        "text": "−1.",
+        "explanation": "Es la suma previa a la activación, no el resultado de ReLU."
+      },
+      {
+        "id": "c",
+        "text": "1.",
+        "explanation": "Omitir contribuciones o cambiar signos altera el cálculo."
+      },
+      {
+        "id": "d",
+        "text": "6.",
+        "explanation": "Multiplicar las entradas entre sí no es la suma ponderada."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "deep-learning",
+      "anchor": "ejemplo-paso-a-paso",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-deep-learning-02",
+    "domain": "deep-learning",
+    "question": "Durante entrenamiento, ¿cómo se relacionan backpropagation y el optimizador?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Ambos son obligatorios en cada inferencia sin aprendizaje.",
+        "explanation": "La inferencia usa el modelo entrenado sin necesitar actualizarlo."
+      },
+      {
+        "id": "b",
+        "text": "Backpropagation calcula gradientes y el optimizador actualiza parámetros.",
+        "explanation": "Son responsabilidades complementarias del entrenamiento."
+      },
+      {
+        "id": "c",
+        "text": "Backpropagation obtiene etiquetas manuales para los datos.",
+        "explanation": "Las etiquetas no provienen del cálculo de gradientes."
+      },
+      {
+        "id": "d",
+        "text": "El optimizador convierte imágenes a texto.",
+        "explanation": "Su función es actualizar parámetros según el criterio de optimización."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "deep-learning",
+      "anchor": "conceptos-clave",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-deep-learning-03",
+    "domain": "deep-learning",
+    "question": "Una red debe reconocer patrones locales en imágenes. ¿Qué aporta una convolución?",
+    "options": [
+      {
+        "id": "a",
+        "text": "La eliminación permanente de las clases minoritarias.",
+        "explanation": "No es función de convolución y dañaría los datos."
+      },
+      {
+        "id": "b",
+        "text": "Una garantía de acierto en toda imagen nueva.",
+        "explanation": "La arquitectura ayuda, pero la calidad requiere evaluación."
+      },
+      {
+        "id": "c",
+        "text": "Filtros con pesos compartidos aplicados a distintas posiciones.",
+        "explanation": "Extrae patrones espaciales reutilizando parámetros."
+      },
+      {
+        "id": "d",
+        "text": "Un estado de memoria que recorre palabras de una frase.",
+        "explanation": "Describe recurrencia, no convolución espacial."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "deep-learning",
+      "anchor": "mlp-y-redes-convolucionales",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-deep-learning-04",
+    "domain": "deep-learning",
+    "question": "¿Qué diferencia hay entre detectar objetos y clasificar una imagen?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Clasificación siempre asigna una etiqueta por píxel.",
+        "explanation": "Eso corresponde a segmentación."
+      },
+      {
+        "id": "b",
+        "text": "Detección produce únicamente una etiqueta sin ubicación.",
+        "explanation": "Omite la localización que caracteriza la detección."
+      },
+      {
+        "id": "c",
+        "text": "Ambas salidas son idénticas para cualquier aplicación.",
+        "explanation": "Las necesidades de ubicación cambian el tipo de salida."
+      },
+      {
+        "id": "d",
+        "text": "Detección incluye localización; clasificación asigna categorías.",
+        "explanation": "Las cajas o ubicaciones indican dónde están los objetos."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "deep-learning",
+      "anchor": "mlp-y-redes-convolucionales",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-deep-learning-05",
+    "domain": "deep-learning",
+    "question": "¿Qué añade LSTM frente a una RNN simple para manejar una secuencia?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Estado de celda y compuertas que regulan información retenida y expuesta.",
+        "explanation": "Ayudan a gestionar dependencias temporales."
+      },
+      {
+        "id": "b",
+        "text": "Una tabla SQL que sustituye todos los parámetros.",
+        "explanation": "LSTM sigue siendo una arquitectura neuronal."
+      },
+      {
+        "id": "c",
+        "text": "Memoria garantizada para secuencias ilimitadas.",
+        "explanation": "Mejora el manejo de contexto, pero mantiene límites."
+      },
+      {
+        "id": "d",
+        "text": "Filtros espaciales que eliminan el orden temporal.",
+        "explanation": "Confunde convolución con memoria recurrente."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "deep-learning",
+      "anchor": "modelos-de-secuencia",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-deep-learning-06",
+    "domain": "deep-learning",
+    "question": "Un modelo memoriza el entrenamiento. ¿Qué describe correctamente dropout?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Aplicar softmax para transformar puntuaciones en probabilidades.",
+        "explanation": "Softmax tiene otra función sobre la salida."
+      },
+      {
+        "id": "b",
+        "text": "Desactivar aleatoriamente unidades durante entrenamiento como regularización.",
+        "explanation": "Reduce dependencias específicas entre unidades; su efecto debe evaluarse."
+      },
+      {
+        "id": "c",
+        "text": "Borrar definitivamente ejemplos mal clasificados de la prueba.",
+        "explanation": "Altera la evaluación y no es dropout."
+      },
+      {
+        "id": "d",
+        "text": "Añadir una época que garantiza perfección.",
+        "explanation": "Dropout no es una época adicional ni ofrece esa garantía."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "deep-learning",
+      "anchor": "mlp-y-redes-convolucionales",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-generative-ai-01",
+    "domain": "generative-ai",
+    "question": "Un LLM continúa una frase. ¿Qué mecanismo describe la generación autorregresiva?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Actualizar todos los parámetros después de cada palabra del usuario.",
+        "explanation": "Generar no implica reentrenar el modelo."
+      },
+      {
+        "id": "b",
+        "text": "Eliminar del vocabulario las palabras ajenas al tema.",
+        "explanation": "El contexto modifica probabilidades; no sustituye así el vocabulario."
+      },
+      {
+        "id": "c",
+        "text": "Predecir y seleccionar el siguiente token a partir del contexto, repetidamente.",
+        "explanation": "Cada token generado condiciona los siguientes."
+      },
+      {
+        "id": "d",
+        "text": "Copiar siempre una frase completa idéntica del entrenamiento.",
+        "explanation": "El mecanismo no exige recuperar una frase memorizada completa."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "generative-ai",
+      "anchor": "conceptos-clave",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-generative-ai-02",
+    "domain": "generative-ai",
+    "question": "¿Para qué sirve representar un fragmento con un embedding?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Certificar que su contenido sea verdadero.",
+        "explanation": "La representación no valida hechos."
+      },
+      {
+        "id": "b",
+        "text": "Cifrarlo con garantía de que nadie podrá reconstruir información.",
+        "explanation": "Un embedding no es cifrado ni garantiza privacidad."
+      },
+      {
+        "id": "c",
+        "text": "Dar permisos de acceso al documento.",
+        "explanation": "Los permisos requieren controles de identidad y autorización."
+      },
+      {
+        "id": "d",
+        "text": "Obtener un vector que permita comparar características semánticas.",
+        "explanation": "Permite operaciones de similitud en un espacio compatible."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "generative-ai",
+      "anchor": "transformers-y-embeddings",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-generative-ai-03",
+    "domain": "generative-ai",
+    "question": "Una política interna cambia cada semana. ¿Qué ayuda a responder con su versión vigente?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Recuperar documentación autorizada y añadirla al contexto mediante RAG.",
+        "explanation": "Aporta evidencia actual sin entrenar para memorizar cada cambio."
+      },
+      {
+        "id": "b",
+        "text": "Aumentar temperature.",
+        "explanation": "El muestreo no proporciona datos recientes."
+      },
+      {
+        "id": "c",
+        "text": "Usar solo conocimiento previo del modelo.",
+        "explanation": "El entrenamiento puede no incluir la política actual."
+      },
+      {
+        "id": "d",
+        "text": "Reducir la salida a pocos tokens para eliminar errores.",
+        "explanation": "La longitud no asegura actualidad ni exactitud."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "generative-ai",
+      "anchor": "prompting-rag-y-fine-tuning",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-generative-ai-04",
+    "domain": "generative-ai",
+    "question": "Se incluyen tres ejemplos de entrada y salida en el prompt. ¿Qué cambia por ese hecho?",
+    "options": [
+      {
+        "id": "a",
+        "text": "La ventana de contexto se vuelve ilimitada.",
+        "explanation": "Los límites del modelo siguen existiendo."
+      },
+      {
+        "id": "b",
+        "text": "El contexto disponible para orientar la respuesta.",
+        "explanation": "Few-shot prompting aporta ejemplos sin ajustar pesos por sí mismo."
+      },
+      {
+        "id": "c",
+        "text": "Los parámetros quedan actualizados permanentemente.",
+        "explanation": "Eso requeriría entrenamiento, no solo enviar ejemplos."
+      },
+      {
+        "id": "d",
+        "text": "El modelo obtiene acceso a una base privada.",
+        "explanation": "Los ejemplos no conceden conectividad ni permisos."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "generative-ai",
+      "anchor": "prompting-rag-y-fine-tuning",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-generative-ai-05",
+    "domain": "generative-ai",
+    "question": "¿Qué permite la atención en un transformer?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Reemplazar cada token por un permiso IAM.",
+        "explanation": "Es un mecanismo neuronal, no autorización."
+      },
+      {
+        "id": "b",
+        "text": "Exigir un único estado recurrente para toda secuencia.",
+        "explanation": "El transformer no depende de esa recurrencia obligatoria."
+      },
+      {
+        "id": "c",
+        "text": "Relacionar posiciones del contexto para construir representaciones contextualizadas.",
+        "explanation": "Pondera información de otras posiciones mediante atención."
+      },
+      {
+        "id": "d",
+        "text": "Garantizar que cualquier documento sea fiable.",
+        "explanation": "Relacionar tokens no autentica fuentes."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "generative-ai",
+      "anchor": "transformers-y-embeddings",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-generative-ai-06",
+    "domain": "generative-ai",
+    "question": "¿Qué distingue fine-tuning de añadir instrucciones al prompt?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Consulta automáticamente Internet.",
+        "explanation": "El ajuste no proporciona navegación ni datos actuales por sí mismo."
+      },
+      {
+        "id": "b",
+        "text": "Cambia los pesos exactamente como cualquier prompt.",
+        "explanation": "El prompt cambia contexto, no pesos por sí solo."
+      },
+      {
+        "id": "c",
+        "text": "Elimina la necesidad de evaluación.",
+        "explanation": "La personalización también necesita evaluación representativa."
+      },
+      {
+        "id": "d",
+        "text": "Ajusta parámetros entrenables usando datos de entrenamiento.",
+        "explanation": "Cambia el modelo o parámetros adaptables mediante aprendizaje."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "generative-ai",
+      "anchor": "prompting-rag-y-fine-tuning",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-enterprise-ai-01",
+    "domain": "enterprise-ai",
+    "question": "Un buscador recuperó 30 fragmentos y quiere ordenar los más pertinentes para la pregunta. ¿Qué capacidad corresponde?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Reranking de los candidatos.",
+        "explanation": "Reevalúa su relevancia frente a la consulta."
+      },
+      {
+        "id": "b",
+        "text": "Transcripción de audio.",
+        "explanation": "Speech no reordena candidatos textuales por relevancia."
+      },
+      {
+        "id": "c",
+        "text": "Crear un usuario IAM por fragmento.",
+        "explanation": "La identidad de acceso no determina relevancia semántica."
+      },
+      {
+        "id": "d",
+        "text": "Reentrenar el LLM con esos fragmentos en cada consulta.",
+        "explanation": "Entrenar por consulta es innecesario para reordenar candidatos."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "enterprise-ai",
+      "anchor": "modelos-recuperacion-y-personalizacion",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-enterprise-ai-02",
+    "domain": "enterprise-ai",
+    "question": "El modelo solicita una función propia para consultar una orden. ¿Quién ejecuta y valida la operación?",
+    "options": [
+      {
+        "id": "a",
+        "text": "El embedding de la orden.",
+        "explanation": "Un vector representa contenido; no ejecuta lógica de negocio."
+      },
+      {
+        "id": "b",
+        "text": "La aplicación que implementa el ciclo de herramientas.",
+        "explanation": "Valida argumentos y permisos, ejecuta y devuelve el resultado."
+      },
+      {
+        "id": "c",
+        "text": "El nombre de la función escrito en el prompt.",
+        "explanation": "Nombrar una herramienta no implementa su ejecución."
+      },
+      {
+        "id": "d",
+        "text": "El modelo modificando directamente cualquier base.",
+        "explanation": "Su solicitud no equivale a permisos ni ejecución arbitraria."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "enterprise-ai",
+      "anchor": "herramientas-memoria-y-controles",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-enterprise-ai-03",
+    "domain": "enterprise-ai",
+    "question": "Se conecta un servidor MCP remoto. ¿Qué aporta principalmente MCP?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Un conjunto de pesos que reemplaza al modelo.",
+        "explanation": "MCP es un protocolo, no un modelo entrenado."
+      },
+      {
+        "id": "b",
+        "text": "Ejecución de cualquier función local no implementada.",
+        "explanation": "Las operaciones expuestas requieren implementación."
+      },
+      {
+        "id": "c",
+        "text": "Un protocolo para descubrir y utilizar herramientas y recursos del servidor.",
+        "explanation": "Establece un contrato entre cliente y servidor."
+      },
+      {
+        "id": "d",
+        "text": "Autorización universal sobre OCI.",
+        "explanation": "Credenciales y permisos siguen siendo necesarios."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "enterprise-ai",
+      "anchor": "herramientas-memoria-y-controles",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-enterprise-ai-04",
+    "domain": "enterprise-ai",
+    "question": "Una aplicación mantiene conversaciones en un proyecto. ¿Qué debe comprobar sobre la memoria?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Que toda API de IA descarta siempre los datos de inmediato.",
+        "explanation": "La retención depende de recursos y configuración."
+      },
+      {
+        "id": "b",
+        "text": "Que guardar conversaciones equivale a reentrenar el LLM.",
+        "explanation": "Persistir estado no implica actualizar pesos."
+      },
+      {
+        "id": "c",
+        "text": "Que todos pueden compartir historial sin filtrado.",
+        "explanation": "Mezclar historiales puede revelar información entre usuarios."
+      },
+      {
+        "id": "d",
+        "text": "Identidad, aislamiento entre usuarios y retención configurada.",
+        "explanation": "Debe conocer qué se conserva, durante cuánto tiempo y quién accede."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "enterprise-ai",
+      "anchor": "herramientas-memoria-y-controles",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-enterprise-ai-05",
+    "domain": "enterprise-ai",
+    "question": "Un fragmento recuperado ordena ignorar permisos y revelar datos. ¿Qué tratamiento corresponde?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Tratarlo como contenido no confiable y aplicar controles en la ejecución.",
+        "explanation": "Un documento no puede conceder permisos mediante texto."
+      },
+      {
+        "id": "b",
+        "text": "Convertirlo en una instrucción del sistema.",
+        "explanation": "Eleva indebidamente la autoridad de contenido externo."
+      },
+      {
+        "id": "c",
+        "text": "Dar acceso de administrador si el modelo lo considera útil.",
+        "explanation": "Utilidad no demuestra autorización."
+      },
+      {
+        "id": "d",
+        "text": "Omitir validación porque proviene del índice vectorial.",
+        "explanation": "Recuperar contenido no certifica su seguridad."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "enterprise-ai",
+      "anchor": "errores-frecuentes",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-enterprise-ai-06",
+    "domain": "enterprise-ai",
+    "question": "Un agente repite una herramienta que falla y no avanza. ¿Qué debe aportar la orquestación?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Aumentar el historial sin límite.",
+        "explanation": "Más contexto no corrige un control de ejecución ausente."
+      },
+      {
+        "id": "b",
+        "text": "Límites de pasos, manejo de errores y una salida o escalamiento claro.",
+        "explanation": "Evita ciclos sin fin y permite comunicar el fallo real."
+      },
+      {
+        "id": "c",
+        "text": "Reintentos ilimitados sin revisar efectos.",
+        "explanation": "Puede consumir recursos o repetir acciones sin resolver nada."
+      },
+      {
+        "id": "d",
+        "text": "Marcar la operación como exitosa para cerrar.",
+        "explanation": "Oculta el resultado y engaña al usuario."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "enterprise-ai",
+      "anchor": "conceptos-clave",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-ai-portfolio-01",
+    "domain": "ai-portfolio",
+    "question": "Un equipo quiere transcribir llamadas sin entrenar un modelo de voz propio. ¿Dónde empieza?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Usar Model Catalog como transcriptor.",
+        "explanation": "Almacena modelos; no es una API de transcripción."
+      },
+      {
+        "id": "b",
+        "text": "Convertir audio en una política IAM.",
+        "explanation": "IAM controla acceso, no transforma audio en texto."
+      },
+      {
+        "id": "c",
+        "text": "Consumir un servicio gestionado como OCI Speech.",
+        "explanation": "Ofrece una capacidad lista para integrar y evaluar."
+      },
+      {
+        "id": "d",
+        "text": "Diseñar un supercluster para entrenar desde cero.",
+        "explanation": "No necesita desarrollar esa capacidad desde cero."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "ai-portfolio",
+      "anchor": "conceptos-clave",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-ai-portfolio-02",
+    "domain": "ai-portfolio",
+    "question": "Ya entrenaste un modelo y necesitas conservar artefacto y metadatos. ¿Qué recurso corresponde?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Model Deployment como sustituto del registro.",
+        "explanation": "Deployment sirve inferencias; el catálogo conserva el modelo."
+      },
+      {
+        "id": "b",
+        "text": "Un endpoint de Language para sentimiento.",
+        "explanation": "Analiza texto, no registra tu modelo personalizado."
+      },
+      {
+        "id": "c",
+        "text": "Una subred como almacén de parámetros.",
+        "explanation": "La subred organiza conectividad, no conserva artefactos."
+      },
+      {
+        "id": "d",
+        "text": "Model Catalog.",
+        "explanation": "Registra el artefacto y la información del modelo."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "ai-portfolio",
+      "anchor": "oci-data-science-y-ciclo-del-modelo",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-ai-portfolio-03",
+    "domain": "ai-portfolio",
+    "question": "Una aplicación necesita pedir predicciones HTTP a un modelo de Data Science registrado. ¿Qué etapa falta?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Crear un Model Deployment para servir inferencias.",
+        "explanation": "Publica el modelo detrás de un endpoint."
+      },
+      {
+        "id": "b",
+        "text": "Renombrar el notebook como URL pública.",
+        "explanation": "Un nombre no crea un servicio de inferencia."
+      },
+      {
+        "id": "c",
+        "text": "Guardar otro archivo en Model Catalog sin desplegar.",
+        "explanation": "El registro por sí solo no sirve solicitudes."
+      },
+      {
+        "id": "d",
+        "text": "Crear etiquetas reales para toda consulta futura.",
+        "explanation": "La inferencia predice entradas nuevas sin conocer sus etiquetas reales."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "ai-portfolio",
+      "anchor": "oci-data-science-y-ciclo-del-modelo",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-ai-portfolio-04",
+    "domain": "ai-portfolio",
+    "question": "Quieres ejecutar una evaluación reproducible sobre lotes de datos. ¿Qué capacidad se ajusta?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Repetir manualmente pasos en una consola abierta.",
+        "explanation": "No resuelve la ejecución reproducible del trabajo."
+      },
+      {
+        "id": "b",
+        "text": "Jobs para ejecutar el trabajo repetible.",
+        "explanation": "Encapsulan tareas de procesamiento o evaluación."
+      },
+      {
+        "id": "c",
+        "text": "Model Catalog como ejecutor automático.",
+        "explanation": "Su responsabilidad es registrar modelos."
+      },
+      {
+        "id": "d",
+        "text": "Un filtro de moderación como sustituto de evaluación.",
+        "explanation": "Moderar contenido no mide el desempeño sobre ese lote."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "ai-portfolio",
+      "anchor": "errores-frecuentes",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-ai-portfolio-05",
+    "domain": "ai-portfolio",
+    "question": "Un entrenamiento distribuido sincroniza varias GPU entre nodos. ¿Por qué importa la red?",
+    "options": [
+      {
+        "id": "a",
+        "text": "La red garantiza datos libres de sesgo.",
+        "explanation": "No evalúa representatividad ni sesgo."
+      },
+      {
+        "id": "b",
+        "text": "Cada GPU crea todas las etiquetas correctas.",
+        "explanation": "Las etiquetas y su calidad provienen del proceso de datos."
+      },
+      {
+        "id": "c",
+        "text": "La comunicación puede limitar el rendimiento total.",
+        "explanation": "El cálculo paralelo necesita mover datos y sincronizar trabajo."
+      },
+      {
+        "id": "d",
+        "text": "Una red rápida hace innecesaria la memoria GPU.",
+        "explanation": "Comunicación y memoria cumplen funciones diferentes."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "ai-portfolio",
+      "anchor": "infraestructura-e-ia-responsable",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-ai-portfolio-06",
+    "domain": "ai-portfolio",
+    "question": "Un modelo tiene buen promedio pero falla más en un grupo de usuarios. ¿Qué corresponde a IA responsable?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Publicar solo el promedio para simplificar.",
+        "explanation": "Oculta el problema e impide corregirlo."
+      },
+      {
+        "id": "b",
+        "text": "Duplicar GPU y asumir que desaparece el sesgo.",
+        "explanation": "Más cómputo no corrige automáticamente datos ni criterios."
+      },
+      {
+        "id": "c",
+        "text": "Eliminar ese grupo de la prueba.",
+        "explanation": "Sesga la evaluación y deja el problema sin medir."
+      },
+      {
+        "id": "d",
+        "text": "Evaluar subgrupos, investigar datos y definir mitigaciones y supervisión.",
+        "explanation": "El promedio puede ocultar diferencias relevantes para personas afectadas."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "ai-portfolio",
+      "anchor": "infraestructura-e-ia-responsable",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-oci-generative-ai-01",
+    "domain": "oci-generative-ai",
+    "question": "Quieres comparar prompts antes de integrar la API de un modelo gestionado. ¿Dónde puedes empezar?",
+    "options": [
+      {
+        "id": "a",
+        "text": "En Playground, probando entradas y parámetros.",
+        "explanation": "Permite explorar el comportamiento antes de escribir la integración."
+      },
+      {
+        "id": "b",
+        "text": "En una tabla VECTOR que despliega aplicaciones automáticamente.",
+        "explanation": "VECTOR almacena representaciones; no despliega aplicaciones."
+      },
+      {
+        "id": "c",
+        "text": "En una regla IAM como modelo de chat.",
+        "explanation": "IAM concede permisos y no genera respuestas."
+      },
+      {
+        "id": "d",
+        "text": "Asumir resultados por el nombre del modelo sin probar.",
+        "explanation": "La elección necesita evaluación con casos reales."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "oci-generative-ai",
+      "anchor": "conceptos-clave",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-oci-generative-ai-02",
+    "domain": "oci-generative-ai",
+    "question": "En el flujo de ajuste presentado, ¿qué distinción es correcta?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Todos los modelos admiten los mismos métodos de ajuste.",
+        "explanation": "La compatibilidad depende de la familia y versión."
+      },
+      {
+        "id": "b",
+        "text": "Fine-tuning ajusta el modelo; hosting atiende inferencias.",
+        "explanation": "Entrenamiento y servicio cumplen funciones distintas."
+      },
+      {
+        "id": "c",
+        "text": "El bucket de Object Storage hace todo el cómputo de entrenamiento.",
+        "explanation": "Almacena ejemplos; el recurso de entrenamiento aporta cómputo."
+      },
+      {
+        "id": "d",
+        "text": "El endpoint es el archivo con ejemplos etiquetados.",
+        "explanation": "El endpoint recibe solicitudes al modelo servido."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "oci-generative-ai",
+      "anchor": "personalizacion-y-clusters-dedicados",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-oci-generative-ai-03",
+    "domain": "oci-generative-ai",
+    "question": "Piden sumar órdenes pendientes por sede desde tablas relacionales. ¿Qué ruta es apropiada?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Entrenar un modelo para memorizar las órdenes de hoy.",
+        "explanation": "El dato cambia y debe consultarse en su fuente."
+      },
+      {
+        "id": "b",
+        "text": "Usar solo temperature baja.",
+        "explanation": "El parámetro no accede a las tablas ni realiza el conteo."
+      },
+      {
+        "id": "c",
+        "text": "SQL controlado o Select AI con contexto y permisos adecuados.",
+        "explanation": "Requiere filtros y agregación exacta sobre filas."
+      },
+      {
+        "id": "d",
+        "text": "Recuperar documentos similares y contar sus palabras.",
+        "explanation": "Los fragmentos no sustituyen el conteo de filas."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "oci-generative-ai",
+      "anchor": "ai-vector-search-y-select-ai",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-oci-generative-ai-04",
+    "domain": "oci-generative-ai",
+    "question": "Buscas párrafos sobre un problema similar aunque usen otras palabras. ¿Qué capacidad encaja?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Validación de longitud de identificador.",
+        "explanation": "Una regla sintáctica no mide similitud de significado."
+      },
+      {
+        "id": "b",
+        "text": "Select AI entendido como OCR de facturas.",
+        "explanation": "Select AI no es reconocimiento óptico documental."
+      },
+      {
+        "id": "c",
+        "text": "Hosting sin documentos ni recuperación.",
+        "explanation": "Servir un modelo no incorpora automáticamente los párrafos."
+      },
+      {
+        "id": "d",
+        "text": "AI Vector Search con embeddings compatibles y filtros pertinentes.",
+        "explanation": "Compara representaciones semánticas y admite filtros de negocio."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "oci-generative-ai",
+      "anchor": "ai-vector-search-y-select-ai",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-oci-generative-ai-05",
+    "domain": "oci-generative-ai",
+    "question": "Se reduce temperature al generar respuestas. ¿Qué conclusión es válida?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Se modifica el muestreo, pero los hechos necesitan verificación.",
+        "explanation": "Influye en la distribución sin certificar veracidad."
+      },
+      {
+        "id": "b",
+        "text": "El modelo recibe documentos actualizados automáticamente.",
+        "explanation": "Temperature no recupera información."
+      },
+      {
+        "id": "c",
+        "text": "Los pesos se ajustan permanentemente.",
+        "explanation": "Es generación, no entrenamiento."
+      },
+      {
+        "id": "d",
+        "text": "Se obtiene autorización sobre todas las tablas.",
+        "explanation": "El muestreo no cambia permisos."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "oci-generative-ai",
+      "anchor": "conceptos-clave",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-oci-generative-ai-06",
+    "domain": "oci-generative-ai",
+    "question": "La respuesta debe explicar la política de demoras y dar las órdenes actuales del usuario. ¿Qué diseño corresponde?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Ajustar el modelo una vez y eliminar futuras consultas.",
+        "explanation": "Los cambios requieren fuentes actualizadas."
+      },
+      {
+        "id": "b",
+        "text": "Recuperar la política vigente y consultar órdenes con filtros de identidad.",
+        "explanation": "Combina evidencia documental con datos autorizados actuales."
+      },
+      {
+        "id": "c",
+        "text": "Pedir ambos datos de memoria al LLM.",
+        "explanation": "No garantiza vigencia ni acceso a las órdenes."
+      },
+      {
+        "id": "d",
+        "text": "Usar un embedding como permiso para ver todas las sedes.",
+        "explanation": "La representación no concede autorización."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "oci-generative-ai",
+      "anchor": "ejercicio-de-diseno",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-ai-services-01",
+    "domain": "ai-services",
+    "question": "Quieres extraer entidades y sentimiento de reseñas que ya son texto. ¿Qué servicio corresponde?",
+    "options": [
+      {
+        "id": "a",
+        "text": "OCI Vision para cajas en fotografías.",
+        "explanation": "La tarea visual no corresponde a analizar reseñas."
+      },
+      {
+        "id": "b",
+        "text": "Object Storage como analizador de sentimiento.",
+        "explanation": "Almacena objetos, pero no realiza ese análisis por sí solo."
+      },
+      {
+        "id": "c",
+        "text": "OCI Language.",
+        "explanation": "Analiza texto para entidades, sentimiento y otras tareas."
+      },
+      {
+        "id": "d",
+        "text": "OCI Speech como paso obligatorio.",
+        "explanation": "Speech transforma voz; las reseñas ya son texto."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "ai-services",
+      "anchor": "language-y-speech",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-ai-services-02",
+    "domain": "ai-services",
+    "question": "Se necesitan subtítulos con tiempos desde una grabación. ¿Qué combinación corresponde?",
+    "options": [
+      {
+        "id": "a",
+        "text": "OCI Language y sentimiento sin texto transcrito.",
+        "explanation": "No proporciona la secuencia de palabras y tiempos."
+      },
+      {
+        "id": "b",
+        "text": "OCI Vision y cajas de objetos.",
+        "explanation": "Localiza objetos, no palabras en audio."
+      },
+      {
+        "id": "c",
+        "text": "Document Understanding y una tabla de importes.",
+        "explanation": "Extracción documental no transcribe la grabación."
+      },
+      {
+        "id": "d",
+        "text": "OCI Speech y una salida de transcripción como SRT.",
+        "explanation": "Texto con tiempos permite subtítulos sincronizados."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "ai-services",
+      "anchor": "language-y-speech",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-ai-services-03",
+    "domain": "ai-services",
+    "question": "Una foto de almacén debe devolver dónde está cada caja. ¿Qué capacidad corresponde?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Detección de objetos en OCI Vision.",
+        "explanation": "La localización se expresa con cajas o coordenadas."
+      },
+      {
+        "id": "b",
+        "text": "Sentimiento de OCI Language.",
+        "explanation": "No localiza objetos visuales."
+      },
+      {
+        "id": "c",
+        "text": "Extracción de campos de factura.",
+        "explanation": "La escena no es la estructura documental de una factura."
+      },
+      {
+        "id": "d",
+        "text": "Síntesis de voz del nombre del almacén.",
+        "explanation": "No produce posiciones de objetos."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "ai-services",
+      "anchor": "vision-y-document-understanding",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-ai-services-04",
+    "domain": "ai-services",
+    "question": "Necesitas líneas, cantidades e importes de una factura escaneada. ¿Qué servicio elegirías?",
+    "options": [
+      {
+        "id": "a",
+        "text": "OCI Language como sustituto del OCR y análisis de tabla.",
+        "explanation": "No obtiene por sí solo la estructura del documento escaneado."
+      },
+      {
+        "id": "b",
+        "text": "OCI Document Understanding.",
+        "explanation": "Está orientado a texto, campos y tablas documentales."
+      },
+      {
+        "id": "c",
+        "text": "OCI Speech para convertir imágenes en audio.",
+        "explanation": "No interpreta tablas de facturas."
+      },
+      {
+        "id": "d",
+        "text": "OCI Vision solo para contar objetos de una escena.",
+        "explanation": "Localizar objetos no equivale a extraer filas y columnas documentales."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "ai-services",
+      "anchor": "vision-y-document-understanding",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-ai-services-05",
+    "domain": "ai-services",
+    "question": "Quieres transcribir llamadas y después detectar entidades de lo dicho. ¿Qué secuencia es coherente?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Model Catalog calcula entidades sin texto.",
+        "explanation": "El catálogo no analiza el contenido."
+      },
+      {
+        "id": "b",
+        "text": "Document Understanding analiza la onda de audio.",
+        "explanation": "La onda no es una entrada documental para esa tarea."
+      },
+      {
+        "id": "c",
+        "text": "Speech produce la transcripción y Language analiza ese texto.",
+        "explanation": "La salida de una transformación alimenta la siguiente."
+      },
+      {
+        "id": "d",
+        "text": "Language produce audio y Vision lo transcribe.",
+        "explanation": "Invierte capacidades y modalidades."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "ai-services",
+      "anchor": "language-y-speech",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-ai-services-06",
+    "domain": "ai-services",
+    "question": "Se extrajo un total de factura con alta confianza. ¿Qué debe hacer la aplicación antes de contabilizarlo?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Aceptar cualquier total por su confianza alta.",
+        "explanation": "La predicción puede ser incorrecta."
+      },
+      {
+        "id": "b",
+        "text": "Borrar el original para no contrastar.",
+        "explanation": "Eliminar evidencia dificulta revisar errores."
+      },
+      {
+        "id": "c",
+        "text": "Cambiar a clasificación de imágenes y omitir la tabla.",
+        "explanation": "No resuelve la validación de importes."
+      },
+      {
+        "id": "d",
+        "text": "Comprobar reglas de negocio y derivar casos dudosos a revisión.",
+        "explanation": "La confianza no sustituye conciliación de importes y controles."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "ai-services",
+      "anchor": "errores-frecuentes",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-database-ai-01",
+    "domain": "database-ai",
+    "question": "¿Qué orden describe la preparación y consulta documental para búsqueda semántica?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Fragmentar, generar embeddings, almacenar y buscar con el vector de consulta.",
+        "explanation": "Crea representaciones comparables para recuperar contenido."
+      },
+      {
+        "id": "b",
+        "text": "Consultar vectores aún no generados ni almacenados.",
+        "explanation": "No existe una representación indexada que recuperar."
+      },
+      {
+        "id": "c",
+        "text": "Usar el permiso IAM como embedding del documento.",
+        "explanation": "Identidad y representación cumplen funciones distintas."
+      },
+      {
+        "id": "d",
+        "text": "Entrenar obligatoriamente un LLM nuevo por documento.",
+        "explanation": "La búsqueda no exige ese entrenamiento por documento."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "database-ai",
+      "anchor": "workflow-de-ai-vector-search",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-database-ai-02",
+    "domain": "database-ai",
+    "question": "Cambias el modelo de embedding de consultas, pero conservas vectores antiguos de documentos. ¿Qué riesgo aparece?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Siempre mejora por usar el modelo más reciente.",
+        "explanation": "Novedad no garantiza compatibilidad con los vectores existentes."
+      },
+      {
+        "id": "b",
+        "text": "Los vectores pueden pertenecer a espacios incompatibles.",
+        "explanation": "Consultas y documentos deben mantener representaciones compatibles."
+      },
+      {
+        "id": "c",
+        "text": "Los documentos pasan automáticamente a ser públicos.",
+        "explanation": "La representación no modifica permisos por sí misma."
+      },
+      {
+        "id": "d",
+        "text": "Las distancias se convierten en agregaciones SQL.",
+        "explanation": "No existe ese efecto sobre el lenguaje de consulta."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "database-ai",
+      "anchor": "errores-frecuentes",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-database-ai-03",
+    "domain": "database-ai",
+    "question": "¿Cómo interpretar un índice vectorial aproximado con precisión objetivo?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Como autorización para omitir filtros de acceso.",
+        "explanation": "La búsqueda no sustituye seguridad de datos."
+      },
+      {
+        "id": "b",
+        "text": "Como entrenamiento de un modelo generativo dentro del índice.",
+        "explanation": "Construir el índice no equivale a entrenar un LLM."
+      },
+      {
+        "id": "c",
+        "text": "Como un compromiso entre recuperación y rendimiento que debe evaluarse.",
+        "explanation": "No garantiza vecinos exactos en toda consulta."
+      },
+      {
+        "id": "d",
+        "text": "Como garantía de respuesta verdadera a cualquier pregunta.",
+        "explanation": "El índice no verifica hechos ni garantiza generación correcta."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "database-ai",
+      "anchor": "workflow-de-ai-vector-search",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-database-ai-04",
+    "domain": "database-ai",
+    "question": "¿Qué distingue AI Vector Search y Select AI Agent?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Ambos son exclusivamente servicios de transcripción.",
+        "explanation": "No se definen por convertir voz a texto."
+      },
+      {
+        "id": "b",
+        "text": "Vector Search concede permisos y Select AI Agent los elimina.",
+        "explanation": "Ambos deben respetar autorización."
+      },
+      {
+        "id": "c",
+        "text": "Todo índice contiene un agente listo para cualquier tarea.",
+        "explanation": "Un agente necesita lógica, herramientas y controles adicionales."
+      },
+      {
+        "id": "d",
+        "text": "Vector Search recupera por similitud; Select AI Agent coordina tareas y herramientas.",
+        "explanation": "La recuperación puede integrar un agente sin constituir toda su orquestación."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "database-ai",
+      "anchor": "agent-factory-select-ai-agent-y-mcp",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-database-ai-05",
+    "domain": "database-ai",
+    "question": "Una función PL/SQL consulta inventario y se quiere ofrecer por MCP. ¿Qué diseño corresponde?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Registrar una herramienta acotada con autenticación, privilegios y validación.",
+        "explanation": "Expone una operación concreta dentro del acceso autorizado."
+      },
+      {
+        "id": "b",
+        "text": "Dar acceso libre a todas las tablas por usar MCP.",
+        "explanation": "El protocolo no exige privilegios ilimitados."
+      },
+      {
+        "id": "c",
+        "text": "Incluir credenciales en la descripción pública.",
+        "explanation": "La descripción no es un almacén seguro de credenciales."
+      },
+      {
+        "id": "d",
+        "text": "Sustituir la función por un embedding y asumir que se ejecutará.",
+        "explanation": "Un vector no ejecuta PL/SQL."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "database-ai",
+      "anchor": "ejercicio-de-arquitectura",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "aif-database-ai-06",
+    "domain": "database-ai",
+    "question": "Un agente encuentra un manual parecido y necesita órdenes del equipo exacto. ¿Qué debe hacer?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Omitir filtros porque el agente está cerca de la base.",
+        "explanation": "La proximidad no autoriza acceso ajeno."
+      },
+      {
+        "id": "b",
+        "text": "Validar el manual con metadatos y consultar órdenes por identificador exacto.",
+        "explanation": "Similitud ayuda a recuperar; identidad exacta determina las órdenes pertinentes."
+      },
+      {
+        "id": "c",
+        "text": "Usar semejanza de nombres para autorizar el cierre de una orden.",
+        "explanation": "Parecido no demuestra identidad ni permiso."
+      },
+      {
+        "id": "d",
+        "text": "Tratar la primera coincidencia como prueba definitiva.",
+        "explanation": "Puede corresponder a otro modelo de equipo."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "database-ai",
+      "anchor": "ejemplo-paso-a-paso",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  }
+]

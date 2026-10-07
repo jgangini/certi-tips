@@ -4,7 +4,7 @@ import { validateSite } from '../scripts/check-site.mjs';
 
 function fixture() {
   const slugs = ['overview', 'agents', 'langchain', 'mcp', 'openai', 'oci-enterprise', 'oracle-database'];
-  const catalog = { base: '/certi-tips/', origin: 'https://example.test', courses: [{ id: 'course', exam: { code: 'course' }, modules: slugs.map((slug, i) => ({ slug, type: i ? 'module' : 'orientation' })), resources: [{ slug: 'practice' }] }] };
+  const catalog = { base: '/certi-tips/', origin: 'https://example.test', courses: [{ id: 'course', questionBank: 'questions', coverage: 'coverage', lessonCounts: [1, 7, 8, 8, 11, 9, 9], exam: { code: 'course' }, modules: slugs.map((slug, i) => ({ slug, type: i ? 'module' : 'orientation' })), resources: [{ slug: 'practice' }] }] };
   const files = new Map([['index.html', '<main id="main"><a href="/certi-tips/course/agents/#conceptos-clave">Guide</a><img src="/certi-tips/assets/logo.svg"><script type="module" src="/certi-tips/assets/main.js"></script></main>'], ['assets/logo.svg', '<svg></svg>'], ['assets/main.js', 'import { ready } from "./helper.js";'], ['assets/helper.js', 'export const ready = true;']]);
   for (const slug of [...slugs, 'practice']) files.set(`course/${slug}/index.html`, '<main id="conceptos-clave"><a href="#conceptos-clave">Section</a></main>');
   const diagrams = ['agent-loop', 'guardrails', 'langchain-flow', 'mcp-architecture', 'openai-stack', 'handoffs', 'oci-runtime', 'vector-search', 'database-capabilities'];
@@ -15,13 +15,31 @@ function fixture() {
   const questions = slugs.slice(1).flatMap(domain => Array.from({ length: 6 }, (_, i) => ({ id: `${domain}-${i + 1}`, domain, question: 'Which choice works?', options: ['a', 'b', 'c', 'd'].map(id => ({ id, text: `Choice ${id}`, explanation: `Reason ${id}` })), correctOption: 'b', reference: { module: domain, anchor: 'conceptos-clave', label: 'Review this concept' } })));
   files.set('assets/questions.json', JSON.stringify(questions));
   const coverage = [1, 7, 8, 8, 11, 9, 9].flatMap((count, group) => Array.from({ length: count }, (_, i) => ({ lesson: `01-${String(group + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}-lesson.md`, module: slugs[group], anchor: 'conceptos-clave' })));
-  return { files, catalog, questions, coverage };
+  return { files, catalog, questions: { course: questions }, coverage: { course: coverage } };
 }
 
 const includesIssue = (issues, pattern) => assert.ok(issues.some(issue => pattern.test(issue)), `Expected ${pattern}; got:\n${issues.join('\n')}`);
 
 test('accepts a self-contained course under the GitHub Pages base path', () => {
   assert.deepEqual(validateSite(fixture()), []);
+});
+
+test('validates a second course with independent coverage and bank, including its failures', () => {
+  const input = fixture();
+  const second = { ...input.catalog.courses[0], id: 'second', exam: { code: 'EXAM-2' }, questionBank: 'second-questions', coverage: 'second-coverage', lessonCounts: [1, 2], modules: input.catalog.courses[0].modules.slice(0, 2) };
+  input.catalog.courses.push(second);
+  input.questions.second = structuredClone(input.questions.course.slice(0, 6));
+  input.coverage.second = structuredClone(input.coverage.course.slice(0, 3));
+  for (const page of [...second.modules, ...second.resources]) input.files.set(`EXAM-2/${page.slug}/index.html`, '<main id="conceptos-clave"></main>');
+  input.files.set('assets/second-questions.json', JSON.stringify(input.questions.second));
+  assert.deepEqual(validateSite(input), []);
+  input.coverage.second[2].anchor = 'missing';
+  input.questions.second[0].options[0].explanation = '';
+  const issues = validateSite(input);
+  includesIssue(issues, /data\/second-coverage\.json\[2\].*missing anchor #missing/);
+  includesIssue(issues, /data\/second-questions\.json\[0\].*every alternative needs text and an explanation/);
+  includesIssue(issues, /assets\/second-questions\.json: published question bank differs/);
+  assert.ok(!issues.some(issue => /data\/(?:questions|coverage)\.json/.test(issue)));
 });
 
 test('reports broken assets and exact-case route mismatches', () => {
@@ -84,11 +102,11 @@ test('requires diagram use, accessible descriptions and self-contained SVG conte
 
 test('requires a complete bank with unique questions and four explained choices', () => {
   const input = fixture();
-  input.questions[1].id = input.questions[0].id;
-  input.questions[0].correctOption = 'e';
-  input.questions[0].options[0].explanation = '';
-  input.questions[2].options.pop();
-  input.questions.pop();
+  input.questions.course[1].id = input.questions.course[0].id;
+  input.questions.course[0].correctOption = 'e';
+  input.questions.course[0].options[0].explanation = '';
+  input.questions.course[2].options.pop();
+  input.questions.course.pop();
   const issues = validateSite(input);
   includesIssue(issues, /expected 36 questions, received 35/);
   includesIssue(issues, /question id must be nonempty and unique/);
@@ -128,9 +146,9 @@ test('validates newly added diagrams as well as the required originals', () => {
 
 test('checks study references against actual published module anchors', () => {
   const input = fixture();
-  input.questions[0].reference.anchor = 'missing-topic';
-  input.coverage[0].anchor = 'missing-intro';
-  input.coverage[1].module = 'unknown-module';
+  input.questions.course[0].reference.anchor = 'missing-topic';
+  input.coverage.course[0].anchor = 'missing-intro';
+  input.coverage.course[1].module = 'unknown-module';
   const issues = validateSite(input);
   includesIssue(issues, /data\/questions\.json\[0\].*missing anchor #missing-topic/);
   includesIssue(issues, /data\/coverage\.json\[0\].*missing anchor #missing-intro/);
@@ -139,15 +157,15 @@ test('checks study references against actual published module anchors', () => {
 
 test('rejects a stale published bank even when the source bank is valid', () => {
   const input = fixture();
-  input.files.set('assets/questions.json', JSON.stringify(input.questions.slice(1)));
+  input.files.set('assets/questions.json', JSON.stringify(input.questions.course.slice(1)));
   includesIssue(validateSite(input), /published question bank differs from source/);
 });
 
 test('checks all 53 lesson ids, filenames and their module mapping', () => {
   const input = fixture();
-  input.coverage[1].lesson = '01-01-01-another-name.md';
-  input.coverage[2].lesson = '01-02-02-Bad-Case.md';
-  input.coverage[3].module = 'overview';
+  input.coverage.course[1].lesson = '01-01-01-another-name.md';
+  input.coverage.course[2].lesson = '01-02-02-Bad-Case.md';
+  input.coverage.course[3].module = 'overview';
   const issues = validateSite(input);
   includesIssue(issues, /duplicate lesson id 01-01-01/);
   includesIssue(issues, /missing lesson 01-02-01/);

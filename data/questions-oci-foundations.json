@@ -1,0 +1,1388 @@
+[
+  {
+    "id": "ocif-oci-architecture-01",
+    "domain": "oci-architecture",
+    "question": "Una región tiene un solo AD. La tienda quiere reducir el impacto del mantenimiento de un grupo de hardware sobre sus dos VMs. ¿Qué decisión ayuda directamente?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Colocar las VMs en Fault Domains diferentes.",
+        "explanation": "Los FD separan grupos de hardware dentro del AD; el AD continúa siendo un ámbito compartido."
+      },
+      {
+        "id": "b",
+        "text": "Crear otro compartimento y conservar ambas VMs en el mismo FD.",
+        "explanation": "El compartimento cambia organización y permisos, no la separación física."
+      },
+      {
+        "id": "c",
+        "text": "Cambiar únicamente el nombre de las instancias.",
+        "explanation": "El nombre no modifica el hardware donde se ejecutan."
+      },
+      {
+        "id": "d",
+        "text": "Aumentar el presupuesto de la tenancy.",
+        "explanation": "Un umbral financiero no cambia la colocación de los recursos."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "oci-architecture",
+      "anchor": "regiones-y-dominios-de-fallo",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-oci-architecture-02",
+    "domain": "oci-architecture",
+    "question": "Los usuarios perciben demoras porque la aplicación está muy lejos. Al evaluar otra región, ¿qué criterio debe acompañar la proximidad?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Elegir solo por el nombre más parecido al del proyecto.",
+        "explanation": "El nombre no responde a requisitos técnicos o de residencia."
+      },
+      {
+        "id": "b",
+        "text": "Duplicar el compartimento en la región actual.",
+        "explanation": "El compartimento no acerca físicamente la aplicación a sus usuarios."
+      },
+      {
+        "id": "c",
+        "text": "Comprobar residencia de datos, disponibilidad de servicios y capacidad.",
+        "explanation": "La cercanía puede reducir latencia, pero debe cumplir también las restricciones del caso."
+      },
+      {
+        "id": "d",
+        "text": "Suponer que todas las regiones tienen los mismos AD y capacidad libre.",
+        "explanation": "La estructura regional y la capacidad disponible pueden variar."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "oci-architecture",
+      "anchor": "regiones-y-dominios-de-fallo",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-oci-architecture-03",
+    "domain": "oci-architecture",
+    "question": "Una operadora no encuentra una VM que otro miembro creó. ¿Cuál es el primer diagnóstico razonable?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Verificar tenancy, región, compartimento y permisos.",
+        "explanation": "Esas coordenadas y el acceso determinan qué recursos puede localizar."
+      },
+      {
+        "id": "b",
+        "text": "Crear inmediatamente una segunda VM.",
+        "explanation": "Puede duplicar un recurso que ya existe sin resolver el problema de contexto."
+      },
+      {
+        "id": "c",
+        "text": "Suponer que el recurso se borró porque la lista está vacía.",
+        "explanation": "Un listado vacío también puede deberse a región, compartimento o permisos."
+      },
+      {
+        "id": "d",
+        "text": "Convertir el bucket del proyecto en público.",
+        "explanation": "La visibilidad de un bucket no determina la lista de instancias."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "oci-architecture",
+      "anchor": "consola-y-formas-de-consumir-oci",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-oci-architecture-04",
+    "domain": "oci-architecture",
+    "question": "Una VM puede ampliarse manualmente, pero mantiene la misma capacidad durante semanas de demanda baja. ¿Qué distinción explica el caso?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Pay As You Go garantiza que una VM ociosa no consume nada.",
+        "explanation": "La capacidad aprovisionada puede seguir siendo facturable."
+      },
+      {
+        "id": "b",
+        "text": "La escalabilidad exige usar exclusivamente Functions.",
+        "explanation": "La capacidad puede ajustarse con diferentes servicios, también VMs."
+      },
+      {
+        "id": "c",
+        "text": "Es escalable, pero no está ajustando capacidad de forma elástica a la demanda.",
+        "explanation": "Poder cambiar tamaño es distinto de adaptar efectivamente la capacidad al uso."
+      },
+      {
+        "id": "d",
+        "text": "Es elástica porque su nombre puede cambiar.",
+        "explanation": "Renombrar no adapta recursos a la demanda."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "oci-architecture",
+      "anchor": "conceptos-clave",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-oci-architecture-05",
+    "domain": "oci-architecture",
+    "question": "Una organización necesita una región OCI en su propio centro de datos. ¿Qué oferta se relaciona con ese requisito?",
+    "options": [
+      {
+        "id": "a",
+        "text": "OCI Dedicated Region.",
+        "explanation": "La oferta lleva una región OCI al centro de datos del cliente bajo las condiciones del servicio."
+      },
+      {
+        "id": "b",
+        "text": "Oracle Interconnect for Azure.",
+        "explanation": "Conecta entornos de Oracle y Azure; no instala por sí mismo una región en el centro del cliente."
+      },
+      {
+        "id": "c",
+        "text": "OCI Load Balancer.",
+        "explanation": "Distribuye tráfico, pero no determina dónde se instala una región cloud."
+      },
+      {
+        "id": "d",
+        "text": "Un identity domain adicional.",
+        "explanation": "Organiza identidades; no despliega infraestructura física."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "oci-architecture",
+      "anchor": "consola-y-formas-de-consumir-oci",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-oci-architecture-06",
+    "domain": "oci-architecture",
+    "question": "La tienda duplicó sus VMs en dos FD de un AD, pero toda la aplicación depende de un único proceso de datos. ¿Qué conclusión es correcta?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Los FD replican automáticamente todos los datos de la aplicación.",
+        "explanation": "La colocación en FD no configura por sí sola esa replicación."
+      },
+      {
+        "id": "b",
+        "text": "Un OCID nuevo para cada VM resuelve la dependencia.",
+        "explanation": "Los identificadores únicos no proporcionan disponibilidad al proceso de datos."
+      },
+      {
+        "id": "c",
+        "text": "Debe revisar también la disponibilidad de datos y las dependencias compartidas.",
+        "explanation": "Separar frontends no elimina otros puntos únicos de fallo."
+      },
+      {
+        "id": "d",
+        "text": "Ya garantiza continuidad ante cualquier pérdida regional.",
+        "explanation": "Ambas VMs siguen en el mismo AD y existen dependencias compartidas."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "oci-architecture",
+      "anchor": "ejemplo-paso-a-paso",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-iam-01",
+    "domain": "iam",
+    "question": "Ana supera MFA, pero recibe una denegación al intentar terminar una instancia. ¿Cuál es la explicación más directa?",
+    "options": [
+      {
+        "id": "a",
+        "text": "El compartimento debe estar en otra región para aceptar MFA.",
+        "explanation": "Un compartimento no es un mecanismo regional de autenticación."
+      },
+      {
+        "id": "b",
+        "text": "La clave SSH reemplaza las políticas IAM de la consola.",
+        "explanation": "SSH autentica el acceso al sistema operativo, no autoriza la API de terminación."
+      },
+      {
+        "id": "c",
+        "text": "La autenticación tuvo éxito, pero falta autorización para esa operación.",
+        "explanation": "Verificar identidad y permitir una acción son comprobaciones diferentes."
+      },
+      {
+        "id": "d",
+        "text": "MFA siempre permite administrar todas las instancias.",
+        "explanation": "MFA añade verificación, no permisos sobre recursos."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "iam",
+      "anchor": "conceptos-clave",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-iam-02",
+    "domain": "iam",
+    "question": "Una administradora puede crear usuarios en un dominio, pero no administrar redes de Producción. ¿Qué debe revisarse?",
+    "options": [
+      {
+        "id": "a",
+        "text": "La política OCI que autoriza a su grupo sobre los recursos de Producción.",
+        "explanation": "El rol del dominio no implica por sí solo administración de todos los recursos OCI."
+      },
+      {
+        "id": "b",
+        "text": "El color y nombre del dominio en la consola.",
+        "explanation": "La presentación no determina permisos."
+      },
+      {
+        "id": "c",
+        "text": "Si creó un bucket público para ese dominio.",
+        "explanation": "Un bucket público no concede administración de redes."
+      },
+      {
+        "id": "d",
+        "text": "Si el grupo contiene al menos diez usuarios.",
+        "explanation": "El tamaño del grupo no concede permisos; lo hacen las políticas aplicables."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "iam",
+      "anchor": "compartimentos-y-dominios-de-identidad",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-iam-03",
+    "domain": "iam",
+    "question": "¿Qué expresa «in compartment Produccion» en una política de lectura de instancias?",
+    "options": [
+      {
+        "id": "a",
+        "text": "La shape que recibirán todas las instancias.",
+        "explanation": "La capacidad se elige al crear o modificar instancias, no con esa cláusula."
+      },
+      {
+        "id": "b",
+        "text": "Una clave criptográfica para descifrar volúmenes.",
+        "explanation": "El compartimento no sustituye una clave de Vault."
+      },
+      {
+        "id": "c",
+        "text": "El ámbito donde se concede el acceso a los recursos.",
+        "explanation": "La ubicación limita dónde se aplica la autorización."
+      },
+      {
+        "id": "d",
+        "text": "El método de autenticación que debe usar la persona.",
+        "explanation": "El ámbito no determina si se usa contraseña, federación o MFA."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "iam",
+      "anchor": "leer-y-construir-politicas",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-iam-04",
+    "domain": "iam",
+    "question": "Una aplicación en una instancia necesita leer objetos privados sin guardar la contraseña de un empleado. ¿Qué diseño corresponde?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Identidad de recurso, dynamic group apropiado y política de lectura acotada.",
+        "explanation": "El recurso actúa como principal; la política autoriza las operaciones necesarias."
+      },
+      {
+        "id": "b",
+        "text": "Copiar la contraseña del administrador dentro de la imagen de VM.",
+        "explanation": "Acopla la aplicación a credenciales personales y distribuye un secreto innecesario."
+      },
+      {
+        "id": "c",
+        "text": "Hacer público todo el bucket para evitar IAM.",
+        "explanation": "Expondría datos en vez de otorgar acceso específico a la aplicación."
+      },
+      {
+        "id": "d",
+        "text": "Crear un dynamic group sin ninguna política.",
+        "explanation": "La regla selecciona miembros, pero no concede permisos por sí sola."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "iam",
+      "anchor": "leer-y-construir-politicas",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-iam-05",
+    "domain": "iam",
+    "question": "Un equipo solo necesita consultar las instancias de Producción. ¿Qué enfoque aplica mejor el mínimo privilegio?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Añadir el equipo a un grupo sin revisar sus políticas heredadas.",
+        "explanation": "Podría no tener acceso o heredar permisos demasiado amplios."
+      },
+      {
+        "id": "b",
+        "text": "Compartir la cuenta de administración de la tenancy.",
+        "explanation": "Reduce trazabilidad y concede privilegios que el equipo no necesita."
+      },
+      {
+        "id": "c",
+        "text": "Conceder lectura al grupo en Producción y verificar acciones permitidas y denegadas.",
+        "explanation": "Acota función y ámbito, y comprueba que la restricción tenga efecto."
+      },
+      {
+        "id": "d",
+        "text": "Conceder manage all-resources in tenancy para evitar errores.",
+        "explanation": "Da más operaciones y alcance que los requeridos."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "iam",
+      "anchor": "ejemplo-paso-a-paso",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-iam-06",
+    "domain": "iam",
+    "question": "Un operador tiene autorización IAM y no logra conectarse por SSH a una VM privada. ¿Qué debe comprobar además?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Ruta de acceso, reglas de red, servicio SSH y clave del usuario del sistema.",
+        "explanation": "IAM no sustituye conectividad ni autenticación del sistema operativo."
+      },
+      {
+        "id": "b",
+        "text": "Que el presupuesto de la VM supere cierto importe.",
+        "explanation": "El presupuesto no habilita SSH."
+      },
+      {
+        "id": "c",
+        "text": "Que su grupo IAM tenga exactamente el nombre de la VM.",
+        "explanation": "No existe esa condición general para autenticar SSH."
+      },
+      {
+        "id": "d",
+        "text": "Que el bucket de backups use Archive.",
+        "explanation": "El nivel de backups no determina la conexión SSH actual."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "iam",
+      "anchor": "errores-frecuentes",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-networking-01",
+    "domain": "networking",
+    "question": "Una VM privada debe descargar paquetes públicos sin aceptar conexiones iniciadas desde internet. ¿Qué camino corresponde?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Una ruta a NAT Gateway con las reglas necesarias.",
+        "explanation": "NAT permite salida iniciada desde la red privada y sus respuestas."
+      },
+      {
+        "id": "b",
+        "text": "Service Gateway para cualquier sitio de internet.",
+        "explanation": "Ese gateway está destinado a servicios compatibles de Oracle, no a sitios arbitrarios."
+      },
+      {
+        "id": "c",
+        "text": "Solo una Security List con todos los puertos abiertos.",
+        "explanation": "Permitir tráfico no crea una ruta ni traduce direcciones."
+      },
+      {
+        "id": "d",
+        "text": "Un DRG sin conexión configurada a otra red.",
+        "explanation": "El DRG conecta redes según el diseño; por sí solo no proporciona esa salida pública."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "networking",
+      "anchor": "rutas-gateways-y-seguridad",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-networking-02",
+    "domain": "networking",
+    "question": "La aplicación debe acceder a Object Storage de su región sin atravesar internet. ¿Qué componente debes evaluar?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Una dirección pública obligatoria para cada VM.",
+        "explanation": "No es requisito para el acceso por Service Gateway."
+      },
+      {
+        "id": "b",
+        "text": "Una quota para el bucket.",
+        "explanation": "La cuota controla cantidades, no el camino de red."
+      },
+      {
+        "id": "c",
+        "text": "Service Gateway y la ruta hacia los servicios compatibles.",
+        "explanation": "Proporciona ese camino privado; los permisos de objetos siguen siendo necesarios."
+      },
+      {
+        "id": "d",
+        "text": "Internet Gateway como único mecanismo posible.",
+        "explanation": "Existe un camino privado mediante Service Gateway para los servicios compatibles."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "networking",
+      "anchor": "rutas-gateways-y-seguridad",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-networking-03",
+    "domain": "networking",
+    "question": "Varios servidores de una misma subred tienen funciones distintas. Quieres aplicar reglas solo a las VNIC de la aplicación. ¿Qué agrupación encaja?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Un Network Security Group para esas VNIC.",
+        "explanation": "Un NSG permite agrupar por función los recursos compatibles."
+      },
+      {
+        "id": "b",
+        "text": "Una Security List que deje de afectar a las otras VNIC de esa subred.",
+        "explanation": "Las listas de la subred se aplican a sus VNIC; no seleccionan solo ese subconjunto."
+      },
+      {
+        "id": "c",
+        "text": "Una route table usada como lista de usuarios autorizados.",
+        "explanation": "Las rutas no son políticas de identidad ni filtros de puertos."
+      },
+      {
+        "id": "d",
+        "text": "Un compartimento con el mismo nombre del puerto.",
+        "explanation": "Un nombre organizativo no define reglas de tráfico."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "networking",
+      "anchor": "rutas-gateways-y-seguridad",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-networking-04",
+    "domain": "networking",
+    "question": "Una VM está Running, pero su backend falla el health check. ¿Qué interpretación debe hacer el equipo?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Los health checks solo sirven para facturación.",
+        "explanation": "Se utilizan para evaluar la disponibilidad de los backends."
+      },
+      {
+        "id": "b",
+        "text": "Debe eliminar toda autenticación del sitio inmediatamente.",
+        "explanation": "No es una respuesta fundamentada al fallo de salud y puede debilitar la aplicación."
+      },
+      {
+        "id": "c",
+        "text": "El proceso o su conectividad pueden fallar aunque la VM esté encendida.",
+        "explanation": "Hay que revisar aplicación, puerto y reglas; el estado de la VM no prueba salud del servicio."
+      },
+      {
+        "id": "d",
+        "text": "El balanceador debe enviarle tráfico porque Running garantiza HTTP sano.",
+        "explanation": "El estado de cómputo no sustituye la comprobación de aplicación."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "networking",
+      "anchor": "balanceadores-y-salud-de-la-aplicacion",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-networking-05",
+    "domain": "networking",
+    "question": "Dos backends usan Round Robin con pesos 1 y 3. ¿Qué reparto aproximado esperas cuando ambos están sanos y sin otros factores?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Una de cada cuatro peticiones al primero y tres al segundo.",
+        "explanation": "Los pesos relativos modifican el reparto esperado; no obligan a un 50/50."
+      },
+      {
+        "id": "b",
+        "text": "La mitad exacta a cada uno porque los pesos no están soportados.",
+        "explanation": "Load Balancer admite pesos; Round Robin puede distribuir de forma ponderada."
+      },
+      {
+        "id": "c",
+        "text": "Todas las peticiones al backend con peso 1.",
+        "explanation": "El peso menor no lo convierte en destino exclusivo."
+      },
+      {
+        "id": "d",
+        "text": "El backend con peso 3 se vuelve una IP pública.",
+        "explanation": "El peso afecta distribución, no visibilidad de red."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "networking",
+      "anchor": "balanceadores-y-salud-de-la-aplicacion",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-networking-06",
+    "domain": "networking",
+    "question": "La web de la tienda debe ser pública, pero sus servidores deben permanecer privados. ¿Qué diseño tiene sentido?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Usar NAT como listener HTTPS de entrada.",
+        "explanation": "NAT no publica el servicio para conexiones nuevas desde internet."
+      },
+      {
+        "id": "b",
+        "text": "Quitar los health checks para que los backends privados sean accesibles.",
+        "explanation": "La salud no sustituye conectividad y sigue siendo necesaria para balancear correctamente."
+      },
+      {
+        "id": "c",
+        "text": "Balanceador público y backends en subred privada con reglas y rutas apropiadas.",
+        "explanation": "El frontend público puede recibir clientes y distribuir a servidores privados."
+      },
+      {
+        "id": "d",
+        "text": "Asignar obligatoriamente una IP pública a cada backend.",
+        "explanation": "No es necesario para que el balanceador llegue a backends privados."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "networking",
+      "anchor": "ejemplo-paso-a-paso",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-compute-01",
+    "domain": "compute",
+    "question": "Una aplicación necesita Linux y cierta capacidad de CPU y memoria. ¿Qué piezas debes relacionar al lanzar la VM?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Shape para los usuarios IAM y grupo para la CPU.",
+        "explanation": "La shape no crea las identidades y el grupo no asigna hardware."
+      },
+      {
+        "id": "b",
+        "text": "El nombre de la instancia como único parámetro necesario.",
+        "explanation": "El nombre no especifica sistema, capacidad, red ni acceso."
+      },
+      {
+        "id": "c",
+        "text": "Imagen para el software inicial y shape para los recursos de cómputo.",
+        "explanation": "La imagen y la capacidad deben ser compatibles, incluida la arquitectura del procesador."
+      },
+      {
+        "id": "d",
+        "text": "Imagen para la cuota y presupuesto para el sistema operativo.",
+        "explanation": "Esos elementos no definen respectivamente cuota y sistema."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "compute",
+      "anchor": "conceptos-clave",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-compute-02",
+    "domain": "compute",
+    "question": "La campaña exige pasar de dos a cinco servidores de aplicación. ¿Qué tipo de escalamiento es?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Horizontal: cambia la cantidad de instancias.",
+        "explanation": "Añadir instancias amplía el conjunto; requiere distribuir tráfico y gestionar estado."
+      },
+      {
+        "id": "b",
+        "text": "Vertical: cambia necesariamente la memoria de la misma VM.",
+        "explanation": "El caso modifica el número de servidores, no el tamaño de uno."
+      },
+      {
+        "id": "c",
+        "text": "Live Migration: crea tres regiones nuevas.",
+        "explanation": "Live Migration cambia host físico de una VM compatible; no crea regiones."
+      },
+      {
+        "id": "d",
+        "text": "Online Resizing: amplía el sistema de archivos.",
+        "explanation": "Ese concepto corresponde a capacidad de volumen, no al número de VMs."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "compute",
+      "anchor": "lanzar-conectar-y-escalar",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-compute-03",
+    "domain": "compute",
+    "question": "¿Qué relación describe correctamente una instance configuration y un instance pool?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Ambos son nombres de Security Lists.",
+        "explanation": "Son componentes de administración de Compute."
+      },
+      {
+        "id": "b",
+        "text": "El pool contiene solo usuarios que pueden iniciar sesión.",
+        "explanation": "Los usuarios se administran con IAM, no como miembros de un pool de instancias."
+      },
+      {
+        "id": "c",
+        "text": "La configuración guarda parámetros de lanzamiento; el pool administra un conjunto de instancias.",
+        "explanation": "Son una plantilla de parámetros y los recursos administrados a partir de una configuración."
+      },
+      {
+        "id": "d",
+        "text": "La configuración guarda todos los pedidos y el pool es su backup.",
+        "explanation": "No reemplazan el almacenamiento y respaldo de datos de la aplicación."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "compute",
+      "anchor": "conceptos-clave",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-compute-04",
+    "domain": "compute",
+    "question": "El equipo quiere ejecutar un contenedor sin operar un clúster Kubernetes. ¿Qué servicio conviene evaluar primero?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Container Instances.",
+        "explanation": "Permite ejecutar contenedores sin administrar un clúster Kubernetes para ese fin."
+      },
+      {
+        "id": "b",
+        "text": "OKE obligatoriamente, porque todo contenedor exige Kubernetes.",
+        "explanation": "Los contenedores no requieren necesariamente un orquestador Kubernetes."
+      },
+      {
+        "id": "c",
+        "text": "Un Load Balancer como runtime del contenedor.",
+        "explanation": "Distribuye tráfico; no ejecuta el proceso del contenedor."
+      },
+      {
+        "id": "d",
+        "text": "Un identity domain como servidor de aplicaciones.",
+        "explanation": "El dominio administra identidades, no ejecuta el workload."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "compute",
+      "anchor": "contenedores-kubernetes-y-funciones",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-compute-05",
+    "domain": "compute",
+    "question": "Cada objeto nuevo debe desencadenar una transformación breve de imagen. ¿Qué alternativa encaja con una tarea por evento?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Una route table que lea y modifique el objeto.",
+        "explanation": "La tabla dirige tráfico, no transforma archivos."
+      },
+      {
+        "id": "b",
+        "text": "Una VM obligatoria por cada foto almacenada.",
+        "explanation": "El requisito no exige administrar una VM individual por objeto."
+      },
+      {
+        "id": "c",
+        "text": "Functions invocada mediante la integración de eventos apropiada.",
+        "explanation": "Su modelo encaja con ejecuciones acotadas disparadas por llamadas o eventos."
+      },
+      {
+        "id": "d",
+        "text": "Una quota de almacenamiento como ejecutor de código.",
+        "explanation": "La cuota limita recursos, no procesa imágenes."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "compute",
+      "anchor": "contenedores-kubernetes-y-funciones",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-compute-06",
+    "domain": "compute",
+    "question": "¿Qué afirmación sobre Live Migration es correcta?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Puede mover una VM compatible entre hosts físicos mientras funciona, con una pausa breve posible.",
+        "explanation": "Debes revisar elegibilidad; no promete ausencia universal de interrupciones."
+      },
+      {
+        "id": "b",
+        "text": "Siempre mueve cualquier VM a otra región sin preparar datos.",
+        "explanation": "No es un mecanismo universal de migración regional."
+      },
+      {
+        "id": "c",
+        "text": "Es sinónimo de aumentar el número de instancias del pool.",
+        "explanation": "Cambiar de host físico no equivale a escalar horizontalmente."
+      },
+      {
+        "id": "d",
+        "text": "Elimina la necesidad de diseñar alta disponibilidad.",
+        "explanation": "El mantenimiento de una VM no cubre todos los fallos ni dependencias."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "compute",
+      "anchor": "lanzar-conectar-y-escalar",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-storage-01",
+    "domain": "storage",
+    "question": "La tienda consume fotos por nombre mediante una API. ¿Qué opción se ajusta a esa interfaz?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Object Storage con objetos dentro de un bucket.",
+        "explanation": "Es un patrón de objetos identificados por nombre y consumidos mediante API."
+      },
+      {
+        "id": "b",
+        "text": "Un Block Volume como sustituto directo de cualquier API de objetos.",
+        "explanation": "Presenta bloques a una instancia; tiene otra interfaz de uso."
+      },
+      {
+        "id": "c",
+        "text": "Una Security List para guardar los bytes.",
+        "explanation": "Define reglas de tráfico, no almacena las fotos."
+      },
+      {
+        "id": "d",
+        "text": "Un dynamic group como carpeta de imágenes.",
+        "explanation": "Agrupa identidades de recursos, no archivos."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "storage",
+      "anchor": "conceptos-clave",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-storage-02",
+    "domain": "storage",
+    "question": "Un dato se consulta poco, pero debe entregarse inmediatamente cuando se solicita. ¿Qué nivel debes evaluar antes que Archive?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Solo Standard porque ningún otro nivel permite acceso inmediato.",
+        "explanation": "Infrequent Access también lo permite; debe evaluarse el costo completo."
+      },
+      {
+        "id": "b",
+        "text": "Cualquier nivel, porque todos tienen exactamente las mismas condiciones.",
+        "explanation": "Latencia de recuperación, cargos y retención importan en la elección."
+      },
+      {
+        "id": "c",
+        "text": "Infrequent Access, considerando recuperación y retención.",
+        "explanation": "Ofrece acceso inmediato para patrones menos frecuentes con condiciones de costo propias."
+      },
+      {
+        "id": "d",
+        "text": "Archive sin considerar su proceso de restauración.",
+        "explanation": "La espera de restauración puede incumplir el requisito de acceso inmediato."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "storage",
+      "anchor": "objetos-niveles-y-acceso",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-storage-03",
+    "domain": "storage",
+    "question": "¿Qué transición describe Auto-Tiering para objetos elegibles?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Entre Standard e Infrequent Access según patrones de acceso.",
+        "explanation": "Auto-Tiering evalúa acceso para mover entre esos dos niveles."
+      },
+      {
+        "id": "b",
+        "text": "Entre Standard y Archive como único mecanismo.",
+        "explanation": "Archive no forma parte de esas transiciones automáticas de Auto-Tiering."
+      },
+      {
+        "id": "c",
+        "text": "De Block Volume a File Storage sin intervención.",
+        "explanation": "Auto-Tiering es una función de Object Storage, no una conversión de interfaces."
+      },
+      {
+        "id": "d",
+        "text": "De un bucket privado a uno público para acelerar descargas.",
+        "explanation": "No cambia visibilidad ni autorización de ese modo."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "storage",
+      "anchor": "objetos-niveles-y-acceso",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-storage-04",
+    "domain": "storage",
+    "question": "OCI muestra un volumen iSCSI adjunto, pero la aplicación no encuentra un directorio de datos. ¿Qué falta comprobar?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Si existe una alerta de presupuesto al 80 %.",
+        "explanation": "El presupuesto no conecta dispositivos de almacenamiento."
+      },
+      {
+        "id": "b",
+        "text": "Formatearlo de inmediato, aunque tenga datos.",
+        "explanation": "Puede destruir datos; primero hay que identificar y diagnosticar el dispositivo."
+      },
+      {
+        "id": "c",
+        "text": "Conexión del dispositivo en el sistema operativo y montaje del sistema de archivos.",
+        "explanation": "El adjunto de control no garantiza que haya archivos accesibles dentro de la instancia."
+      },
+      {
+        "id": "d",
+        "text": "Únicamente el texto del nombre del compartimento.",
+        "explanation": "El nombre no completa la conexión iSCSI ni el montaje."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "storage",
+      "anchor": "volumenes-y-sistemas-de-archivos",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-storage-05",
+    "domain": "storage",
+    "question": "Dos servidores necesitan acceder a la misma carpeta usando NFS. ¿Qué servicio encaja?",
+    "options": [
+      {
+        "id": "a",
+        "text": "File Storage con mount target, exportación y controles apropiados.",
+        "explanation": "Proporciona un sistema de archivos compartido mediante NFS."
+      },
+      {
+        "id": "b",
+        "text": "Un bucket porque todo nombre con barras ya es una carpeta NFS.",
+        "explanation": "Un nombre de objeto no otorga semántica ni protocolo NFS."
+      },
+      {
+        "id": "c",
+        "text": "Un boot volume distinto y aislado para cada servidor como única copia compartida.",
+        "explanation": "Dos discos separados no crean automáticamente una carpeta compartida."
+      },
+      {
+        "id": "d",
+        "text": "Un listener HTTPS para sustituir el sistema de archivos.",
+        "explanation": "El listener recibe tráfico; no proporciona por sí mismo almacenamiento NFS."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "storage",
+      "anchor": "volumenes-y-sistemas-de-archivos",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-storage-06",
+    "domain": "storage",
+    "question": "Ampliaste un volumen de 100 a 200 unidades, pero el sistema de archivos sigue mostrando 100. ¿Qué explicación encaja?",
+    "options": [
+      {
+        "id": "a",
+        "text": "OCI reduce siempre a la mitad toda ampliación.",
+        "explanation": "No existe esa regla; hay que verificar las capas del sistema operativo."
+      },
+      {
+        "id": "b",
+        "text": "Debes cambiar el bucket de Standard a Archive.",
+        "explanation": "Un nivel de objetos no amplía el sistema de archivos del volumen."
+      },
+      {
+        "id": "c",
+        "text": "Puede faltar redetectar capacidad y ampliar la partición o sistema de archivos.",
+        "explanation": "La ampliación del volumen y la del espacio utilizable son capas distintas."
+      },
+      {
+        "id": "d",
+        "text": "Online Resizing solo cambia el nombre visible del disco.",
+        "explanation": "La operación amplía capacidad real del volumen."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "storage",
+      "anchor": "errores-frecuentes",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-security-01",
+    "domain": "security",
+    "question": "¿Quién debe configurar el acceso de empleados a los datos de la tienda y parchear el sistema invitado de sus VMs?",
+    "options": [
+      {
+        "id": "a",
+        "text": "El proveedor de internet únicamente.",
+        "explanation": "Transportar tráfico no administra las identidades ni el sistema invitado."
+      },
+      {
+        "id": "b",
+        "text": "Nadie, porque la nube elimina esas tareas.",
+        "explanation": "Las tareas cambian de distribución, no desaparecen."
+      },
+      {
+        "id": "c",
+        "text": "El cliente, dentro de las responsabilidades del servicio utilizado.",
+        "explanation": "En IaaS el cliente administra accesos, aplicaciones y sistema operativo invitado."
+      },
+      {
+        "id": "d",
+        "text": "Oracle decide automáticamente qué empleado puede leer cada pedido.",
+        "explanation": "El proveedor opera IAM, pero el cliente define sus accesos."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "security",
+      "anchor": "conceptos-clave",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-security-02",
+    "domain": "security",
+    "question": "El requisito es denegar una creación de bucket público que viole una política establecida. ¿Qué control se relaciona directamente?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Security Zones con una receta que prohíba esa operación.",
+        "explanation": "Puede impedir operaciones que incumplan políticas aplicables en su ámbito."
+      },
+      {
+        "id": "b",
+        "text": "Cost Analysis.",
+        "explanation": "Analiza gasto, no valida esa configuración de seguridad."
+      },
+      {
+        "id": "c",
+        "text": "Cloud Guard entendido como garantía de bloqueo preventivo de toda operación.",
+        "explanation": "Su papel de detección y respuesta no equivale a esa denegación preventiva."
+      },
+      {
+        "id": "d",
+        "text": "Una etiqueta con valor Privado sin ninguna política.",
+        "explanation": "Una etiqueta declarativa no asegura por sí sola la visibilidad del bucket."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "security",
+      "anchor": "prevenir-detectar-y-responder",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-security-03",
+    "domain": "security",
+    "question": "Cloud Guard identifica una configuración riesgosa. ¿Qué diferencia hay entre detector y responder?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Ambos equivalen a una Security List de subred.",
+        "explanation": "Son componentes de postura de seguridad, no listas de reglas de red."
+      },
+      {
+        "id": "b",
+        "text": "El responder garantiza corregir cualquier riesgo sin configuración.",
+        "explanation": "Las respuestas dependen de configuración, capacidades y permisos."
+      },
+      {
+        "id": "c",
+        "text": "El detector identifica el problema; el responder puede ejecutar una acción según configuración y permisos.",
+        "explanation": "Un hallazgo no demuestra que la corrección se haya ejecutado."
+      },
+      {
+        "id": "d",
+        "text": "El detector cifra todos los discos y el responder crea usuarios.",
+        "explanation": "Esas no son sus funciones generales en Cloud Guard."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "security",
+      "anchor": "prevenir-detectar-y-responder",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-security-04",
+    "domain": "security",
+    "question": "La tienda quiere filtrar solicitudes HTTP con patrones de SQL injection. ¿Qué servicio debe evaluar?",
+    "options": [
+      {
+        "id": "a",
+        "text": "WAF, acompañado de controles seguros en la aplicación.",
+        "explanation": "Inspecciona solicitudes web; no sustituye validación ni consultas seguras."
+      },
+      {
+        "id": "b",
+        "text": "Un NAT Gateway como analizador de SQL.",
+        "explanation": "NAT permite salida privada; no analiza la lógica de solicitudes HTTP."
+      },
+      {
+        "id": "c",
+        "text": "Un Block Volume con más capacidad.",
+        "explanation": "Más almacenamiento no inspecciona solicitudes maliciosas."
+      },
+      {
+        "id": "d",
+        "text": "Una regla que permita el puerto 443 como protección completa.",
+        "explanation": "Permitir el puerto no valida el contenido de las solicitudes."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "security",
+      "anchor": "prevenir-detectar-y-responder",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-security-05",
+    "domain": "security",
+    "question": "La aplicación necesita almacenar un token fuera del código. ¿Qué concepto de Vault corresponde?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Un OCID usado como si fuera siempre una contraseña.",
+        "explanation": "Un identificador de recurso no es por sí mismo una credencial secreta."
+      },
+      {
+        "id": "b",
+        "text": "Una etiqueta pública con el token como valor.",
+        "explanation": "Distribuye información sensible donde no corresponde."
+      },
+      {
+        "id": "c",
+        "text": "Un secreto con acceso controlado.",
+        "explanation": "El token es un valor sensible que puede administrarse como secreto."
+      },
+      {
+        "id": "d",
+        "text": "Un compartimento entendido como almacén cifrado de credenciales.",
+        "explanation": "El compartimento organiza recursos; no reemplaza la función de secretos."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "security",
+      "anchor": "cifrado-claves-y-secretos",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-security-06",
+    "domain": "security",
+    "question": "Un bucket está cifrado en reposo y permite lectura pública. ¿Cuál es la conclusión correcta?",
+    "options": [
+      {
+        "id": "a",
+        "text": "El cifrado no impide que el servicio entregue datos a quien tenga acceso de lectura.",
+        "explanation": "La autorización y visibilidad deben protegerse además del almacenamiento cifrado."
+      },
+      {
+        "id": "b",
+        "text": "Los objetos son necesariamente privados porque están cifrados.",
+        "explanation": "La visibilidad sigue permitiendo acceso a través del servicio."
+      },
+      {
+        "id": "c",
+        "text": "Los lectores necesitan siempre la clave maestra exportada del HSM.",
+        "explanation": "El servicio puede servir datos autorizados sin entregar esa clave al lector."
+      },
+      {
+        "id": "d",
+        "text": "No hace falta revisar políticas ni visibilidad.",
+        "explanation": "Ambos controles siguen siendo decisivos para la confidencialidad."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "security",
+      "anchor": "errores-frecuentes",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-governance-01",
+    "domain": "governance",
+    "question": "El gasto alcanzó el umbral del presupuesto y se envió una alerta. ¿Qué ocurrió necesariamente con las VMs?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Nada implica que se hayan detenido: el presupuesto es un umbral informativo.",
+        "explanation": "La alerta no constituye un apagado automático."
+      },
+      {
+        "id": "b",
+        "text": "Todas se terminaron de inmediato.",
+        "explanation": "Budgets no elimina automáticamente recursos al cruzar el umbral."
+      },
+      {
+        "id": "c",
+        "text": "Su cuota aumentó para compensar el gasto.",
+        "explanation": "Una alerta monetaria no modifica cuotas."
+      },
+      {
+        "id": "d",
+        "text": "Pasaron automáticamente a otro compartimento.",
+        "explanation": "El presupuesto no mueve recursos."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "governance",
+      "anchor": "presupuestos-cuotas-y-limites",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-governance-02",
+    "domain": "governance",
+    "question": "Desarrollo debe consumir como máximo cierta cantidad de un recurso. ¿Qué mecanismo del administrador encaja?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Una etiqueta Cantidad=4 sin política de cuota.",
+        "explanation": "La etiqueta sola no impone ese límite."
+      },
+      {
+        "id": "b",
+        "text": "Un aumento del service limit como única restricción.",
+        "explanation": "Aumentar el techo no impone un máximo menor a Desarrollo."
+      },
+      {
+        "id": "c",
+        "text": "Una compartment quota compatible con los límites del servicio.",
+        "explanation": "Permite acotar cantidades de recursos en el compartimento."
+      },
+      {
+        "id": "d",
+        "text": "Un budget usado como límite de número de instancias.",
+        "explanation": "El presupuesto sigue dinero y alertas, no esa cantidad."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "governance",
+      "anchor": "presupuestos-cuotas-y-limites",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-governance-03",
+    "domain": "governance",
+    "question": "El gasto subió y el equipo quiere compararlo por servicio y periodo. ¿Qué herramienta corresponde?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Cost Analysis.",
+        "explanation": "Permite visualizar y desglosar gasto según dimensiones del análisis."
+      },
+      {
+        "id": "b",
+        "text": "Security Zones.",
+        "explanation": "Deniega operaciones incompatibles con políticas de seguridad."
+      },
+      {
+        "id": "c",
+        "text": "Un health check del balanceador.",
+        "explanation": "Comprueba disponibilidad de backends, no desglose financiero."
+      },
+      {
+        "id": "d",
+        "text": "Una clave de Vault.",
+        "explanation": "Protege datos o secretos; no genera por sí sola el análisis de gasto."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "governance",
+      "anchor": "analizar-etiquetar-y-optimizar",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-governance-04",
+    "domain": "governance",
+    "question": "Una aplicación usa Compute, Object Storage y un balanceador. Quieres atribuir su consumo al mismo proyecto. ¿Qué práctica ayuda?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Esperar que la cercanía de sus IP determine automáticamente su proyecto.",
+        "explanation": "La topología de red no representa necesariamente la atribución financiera."
+      },
+      {
+        "id": "b",
+        "text": "Usar contraseñas como valores de etiqueta.",
+        "explanation": "Las etiquetas no son el lugar para almacenar secretos."
+      },
+      {
+        "id": "c",
+        "text": "Aplicar etiquetas de proyecto coherentes y configurar el seguimiento de costos apropiado.",
+        "explanation": "Las etiquetas pueden reunir recursos de distintos servicios para analizar consumo."
+      },
+      {
+        "id": "d",
+        "text": "Dar a todos los recursos el mismo OCID.",
+        "explanation": "Los OCID identifican recursos de forma única; no se reutilizan como etiqueta de proyecto."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "governance",
+      "anchor": "analizar-etiquetar-y-optimizar",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-governance-05",
+    "domain": "governance",
+    "question": "Una empresa tiene licencias elegibles y quiere utilizarlas en OCI. ¿Qué concepto debe revisar?",
+    "options": [
+      {
+        "id": "a",
+        "text": "BYOL y sus condiciones de elegibilidad.",
+        "explanation": "Permite aprovechar licencias existentes elegibles en los servicios y condiciones aplicables."
+      },
+      {
+        "id": "b",
+        "text": "Budget como mecanismo de transferencia de licencias.",
+        "explanation": "Budgets define umbrales y alertas de gasto."
+      },
+      {
+        "id": "c",
+        "text": "Auto-Tiering como conversión de licencias.",
+        "explanation": "Auto-Tiering administra niveles de objetos."
+      },
+      {
+        "id": "d",
+        "text": "Support Rewards como garantía de licencias nuevas gratuitas.",
+        "explanation": "Los beneficios de soporte no equivalen a esa garantía."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "governance",
+      "anchor": "conceptos-clave",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "ocif-governance-06",
+    "domain": "governance",
+    "question": "Cloud Advisor recomienda ajustar una VM poco utilizada. ¿Qué debe hacer el equipo antes de eliminarla?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Desactivar todas las alertas de gasto.",
+        "explanation": "No resuelve el consumo innecesario ni evalúa dependencias."
+      },
+      {
+        "id": "b",
+        "text": "Suponer que detenerla elimina también todos los costos asociados.",
+        "explanation": "Volúmenes y otros recursos pueden seguir generando consumo."
+      },
+      {
+        "id": "c",
+        "text": "Comprobar su función, picos y dependencias, y validar una acción apropiada.",
+        "explanation": "La recomendación informa una decisión que debe respetar las necesidades reales."
+      },
+      {
+        "id": "d",
+        "text": "Eliminarla sin revisión porque una recomendación siempre es autorización.",
+        "explanation": "Podría interrumpir una función necesaria o destruir datos si se actúa sin comprobar."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "governance",
+      "anchor": "errores-frecuentes",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  }
+]

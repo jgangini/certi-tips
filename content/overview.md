@@ -6,7 +6,7 @@ Al terminar podrás explicar el ciclo de un agente; seguir llamadas a herramient
 
 | Dato | Información verificada |
 | --- | --- |
-| Examen | Oracle Agentic AI Foundations Associate 2026 |
+| Examen | Oracle Agentic AI Foundations Associate |
 | Código | 1Z0-1157-26 |
 | Preguntas | 40 |
 | Tiempo | 60 minutos |
@@ -23,4 +23,4 @@ Comprueba tres puntos: ¿puedes explicar por qué una respuesta fluida no garant
 
 ## Acceso al recorrido oficial
 
-Abre [Oracle MyLearn: curso Agentic AI Foundations 2026](https://mylearn.oracle.com/ou/course/oracle-agentic-ai-foundations-2026/163240/273946), inicia sesión con tu cuenta Oracle y localiza la ruta de aprendizaje correspondiente al código 1Z0-1157-26. Completa los módulos y sus skill checks, revisa el temario oficial y utiliza la práctica oficial antes de seleccionar el examen. La publicación de Oracle enlaza esos recursos; la disponibilidad y los pasos de acceso se confirman dentro de tu cuenta.
+Abre [Oracle MyLearn: curso Agentic AI Foundations](https://mylearn.oracle.com/ou/course/oracle-agentic-ai-foundations-2026/163240/273946), inicia sesión con tu cuenta Oracle y localiza la ruta de aprendizaje correspondiente al código 1Z0-1157-26. Completa los módulos y sus skill checks, revisa el temario oficial y utiliza la práctica oficial antes de seleccionar el examen. La publicación de Oracle enlaza esos recursos; la disponibilidad y los pasos de acceso se confirman dentro de tu cuenta.

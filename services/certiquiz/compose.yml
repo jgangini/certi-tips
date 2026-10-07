@@ -1,0 +1,189 @@
+services:
+  api:
+    image: certiquiz-api:${CERTIQUIZ_IMAGE_TAG:-local}
+    build:
+      context: .
+      dockerfile: services/certiquiz/Dockerfile
+      target: runtime
+    command:
+      - uvicorn
+      - app.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --workers
+      - "2"
+      - --proxy-headers
+      - --forwarded-allow-ips
+      - ${CERTIQUIZ_TRUSTED_PROXY_IPS:-127.0.0.1}
+      - --limit-concurrency
+      # Includes idle keep-alives; each worker's DB pool stays capped at 20 (40 total).
+      - "1024"
+      - --timeout-keep-alive
+      - "5"
+      - --no-server-header
+    environment:
+      CERTIQUIZ_DATABASE_URL: ${CERTIQUIZ_DATABASE_URL:?Generate the private CertiQuiz environment first}
+      CERTIQUIZ_PUBLIC_ORIGIN: ${CERTIQUIZ_PUBLIC_ORIGIN:?Set the CertiQuiz public origin}
+      CERTIQUIZ_ALLOWED_ORIGINS: ${CERTIQUIZ_ALLOWED_ORIGINS:?Set the exact CertiTips frontend origin}
+      CERTIQUIZ_SECURE_COOKIES: ${CERTIQUIZ_SECURE_COOKIES:-true}
+      CERTIQUIZ_DATA_DIR: /app/data
+      CERTIQUIZ_CATALOG_SOURCE: ${CERTIQUIZ_CATALOG_SOURCE:-github}
+    ports:
+      - "127.0.0.1:${CERTIQUIZ_PORT:-18740}:8000"
+    networks: [app, data]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1770,uid=10001,gid=10001
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 128
+    cpus: 2.0
+    mem_limit: 512m
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3).read()"]
+      interval: 10s
+      timeout: 4s
+      retries: 12
+      start_period: 10s
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+
+  postgres:
+    image: postgres:16-alpine
+    user: postgres
+    environment:
+      POSTGRES_USER: certiquiz_admin
+      POSTGRES_PASSWORD: ${CERTIQUIZ_POSTGRES_ADMIN_PASSWORD:?Generate the private CertiQuiz environment first}
+      POSTGRES_DB: certiquiz
+    command: [postgres, -c, max_connections=60, -c, shared_buffers=128MB]
+    networks: [data]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+      - /var/run/postgresql:size=16m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 128
+    cpus: 2.0
+    mem_limit: 512m
+    healthcheck:
+      test: [CMD, pg_isready, -U, certiquiz_admin, -d, certiquiz]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+
+  migrate:
+    image: certiquiz-api:${CERTIQUIZ_IMAGE_TAG:-local}
+    profiles: [ops]
+    command: [python, /app/migrate.py]
+    environment:
+      CERTIQUIZ_POSTGRES_ADMIN_PASSWORD: ${CERTIQUIZ_POSTGRES_ADMIN_PASSWORD:?Generate the private CertiQuiz environment first}
+      CERTIQUIZ_POSTGRES_RUNTIME_PASSWORD: ${CERTIQUIZ_POSTGRES_RUNTIME_PASSWORD:?Generate the private CertiQuiz environment first}
+    networks: [data]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 32
+    cpus: 0.5
+    mem_limit: 128m
+
+  # ponytail: test databases use disposable tmpfs, never the application volume or credentials.
+  test-postgres:
+    image: postgres:16-alpine
+    profiles: [test]
+    user: postgres
+    environment:
+      POSTGRES_USER: certiquiz_admin
+      POSTGRES_PASSWORD: certiquiz-disposable-test-admin-password
+      POSTGRES_DB: certiquiz
+    networks: [test]
+    read_only: true
+    tmpfs:
+      - /var/lib/postgresql/data:size=256m,mode=0700,uid=70,gid=70
+      - /var/run/postgresql:size=16m,mode=1777
+      - /tmp:size=32m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 96
+    cpus: 1.0
+    mem_limit: 512m
+    healthcheck:
+      test: [CMD, pg_isready, -U, certiquiz_admin, -d, certiquiz]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  test-migrate:
+    image: certiquiz-api:${CERTIQUIZ_IMAGE_TAG:-local}
+    profiles: [test]
+    command: [python, /app/migrate.py]
+    environment:
+      CERTIQUIZ_POSTGRES_HOST: test-postgres
+      CERTIQUIZ_POSTGRES_ADMIN_PASSWORD: certiquiz-disposable-test-admin-password
+      CERTIQUIZ_POSTGRES_RUNTIME_PASSWORD: certiquiz-disposable-test-runtime-password
+    networks: [test]
+    depends_on:
+      test-postgres:
+        condition: service_healthy
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 32
+    cpus: 0.5
+    mem_limit: 128m
+
+  test:
+    image: certiquiz-test:${CERTIQUIZ_IMAGE_TAG:-local}
+    profiles: [test]
+    build:
+      context: .
+      dockerfile: services/certiquiz/Dockerfile
+      target: test
+    environment:
+      CERTIQUIZ_TEST_DATABASE_URL: postgresql://certiquiz_runtime:certiquiz-disposable-test-runtime-password@test-postgres:5432/certiquiz
+      CERTIQUIZ_DATABASE_URL: postgresql://certiquiz_runtime:certiquiz-disposable-test-runtime-password@test-postgres:5432/certiquiz
+      CERTIQUIZ_PUBLIC_ORIGIN: http://testserver
+      CERTIQUIZ_ALLOWED_ORIGINS: http://testserver
+      CERTIQUIZ_SECURE_COOKIES: "false"
+      CERTIQUIZ_DATA_DIR: /app/data
+      CERTIQUIZ_CATALOG_SOURCE: bundled
+    networks: [test]
+    depends_on:
+      test-migrate:
+        condition: service_completed_successfully
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1770,uid=10001,gid=10001
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 128
+    cpus: 1.0
+    mem_limit: 512m
+
+volumes:
+  postgres_data:
+
+networks:
+  app:
+  data:
+    internal: true
+  test:
+    internal: true

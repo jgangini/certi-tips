@@ -10,3 +10,9 @@ output/
 videos/*/renders/
 videos/*/.hyperframes/
 videos/*/.thumbnails/
+.env
+.env.*
+!.env.example
+.private/
+__pycache__/
+.pytest_cache/

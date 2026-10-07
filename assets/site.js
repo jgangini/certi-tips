@@ -24,15 +24,7 @@ const completed = new Set(
     ? stored.filter((value) => typeof value === "string")
     : [],
 );
-const lessonSlugs = [
-  "overview",
-  "agents",
-  "langchain",
-  "mcp",
-  "openai",
-  "oci-enterprise",
-  "oracle-database",
-];
+const lessonSlugs = [...document.querySelectorAll('[data-completion]')].map(link => link.dataset.completion);
 
 function showProgress() {
   const count = lessonSlugs.filter((slug) => completed.has(slug)).length;

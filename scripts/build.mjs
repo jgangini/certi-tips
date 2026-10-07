@@ -2,13 +2,16 @@ import { readFile, readdir, mkdir, writeFile, cp, realpath, rm } from "node:fs/p
 import { existsSync } from "node:fs";
 import path from "node:path";
 import MarkdownIt from "markdown-it";
-import { layout, homeBody, escapeHtml } from "./layout.mjs";
+import { layout, homeBody, certiquizBody, escapeHtml } from "./layout.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const output = path.join(root, "dist");
 const site = JSON.parse(
   await readFile(path.join(root, "data/catalog.json"), "utf8"),
 );
+const certiquizApi = new URL(process.env.CERTIQUIZ_API_ORIGIN || "https://certiquiz.cloudtechnext.net");
+if ((certiquizApi.protocol !== "https:" && !(certiquizApi.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(certiquizApi.hostname))) || certiquizApi.username || certiquizApi.password || certiquizApi.pathname !== "/" || certiquizApi.search || certiquizApi.hash)
+  throw new Error("CERTIQUIZ_API_ORIGIN must be an HTTPS origin (HTTP only on loopback), without credentials, path, query, or fragment.");
 const md = new MarkdownIt({ html: true, linkify: true });
 const slug = (text) =>
   text
@@ -77,16 +80,13 @@ for (const file of await readdir(diagramDirectory)) {
   }
   if (embedded !== source) await writeFile(destination, embedded);
 }
-await cp(
-  path.join(root, "data/questions.json"),
-  path.join(output, "assets/questions.json"),
-);
 for (const course of site.courses) {
+  await cp(path.join(root, "data", `${course.questionBank}.json`), path.join(output, "assets", `${course.questionBank}.json`));
   const publicPath = course.exam.code;
   const pages = [...course.modules, ...course.resources];
   const rendered = new Map(await Promise.all(pages.map(async (page) => [
     page.slug,
-    renderMarkdown(await readFile(path.join(root, "content", `${page.slug}.md`), "utf8")),
+    renderMarkdown(await readFile(path.join(root, "content", course.contentDir || "", `${page.slug}.md`), "utf8")),
   ])));
   const tocByPage = new Map([...rendered].map(([slug, { toc }]) => [slug, toc]));
   for (const page of pages) {
@@ -127,6 +127,15 @@ await save(
     page: { slug: "home" },
     home: true,
     body: homeBody(site, existsSync(path.join(root, "assets/motion/certification-path.mp4"))),
+  }),
+);
+await save(
+  "certiquiz/index.html",
+  layout({
+    site,
+    course: site.courses[0],
+    page: { slug: "certiquiz", title: "CertiQuiz · Aprende en equipo", description: "Practica en grupo: crea una sala, comparte el código y aprende con cada respuesta." },
+    body: certiquizBody(certiquizApi.origin),
   }),
 );
 await save(

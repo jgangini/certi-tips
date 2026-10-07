@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import MarkdownIt from "markdown-it";
-import { layout, sidebar, homeBody } from "../scripts/layout.mjs";
+import { layout, sidebar, homeBody, certiquizBody } from "../scripts/layout.mjs";
 
 const site = {
   base: "/certi-tips/", origin: "https://example.test", repository: "https://example.test/repo",
@@ -24,6 +24,32 @@ const course = {
   ],
   resources: [{ slug: "review", short: "Repaso final", title: "Repaso", description: "Prepara el examen" }],
 };
+site.courses = [course];
+test("home keeps CertiQuiz beside GitHub inside the site in the same tab", () => {
+  const html = homeBody(site);
+  assert.match(html, /class="hero-actions"><a class="button github-link"[^]*?<a class="button button-secondary certiquiz-link" href="\/certi-tips\/certiquiz\/">/);
+  assert.match(html, /certiquiz-link"[^>]*><svg viewBox="0 0 1920 1920" width="20" height="20" fill="currentColor"[^]*?m746\.255 1466\.764/);
+  assert.doesNotMatch(html.match(/<a class="button button-secondary certiquiz-link"[^>]*>/)[0], /target=/);
+});
+test("CertiQuiz shares site navigation and theme without a course sidebar", () => {
+  const html = layout({ site, course, page: { slug: 'certiquiz', title: 'CertiQuiz', description: 'Practica en equipo.' }, body: certiquizBody('https://api.example.test') });
+  assert.match(html, /<title>CertiQuiz · CertiTips<\/title>/);
+  assert.match(html, /rel="canonical" href="https:\/\/example\.test\/certi-tips\/certiquiz\/"/);
+  assert.match(html, /class="home-page certiquiz-page"/);
+  assert.match(html, /class="site-header"/);
+  assert.match(html, /class="site-footer"/);
+  assert.match(html, /data-theme-toggle/);
+  assert.match(html, /src="\/certi-tips\/assets\/site\.js"/);
+  assert.match(html, /src="\/certi-tips\/assets\/certiquiz\.js"/);
+  assert.match(html, /href="\/certi-tips\/assets\/certiquiz\.css"/);
+  assert.match(html, /data-api-origin="https:\/\/api\.example\.test"/);
+  assert.match(html, /<div id="app" aria-busy="true"><section class="card loading">/);
+  assert.doesNotMatch(certiquizBody('https://api.example.test'), /id="(?:error|connection|announcement)"/);
+  const errorRocket = certiquizBody('https://api.example.test').match(/<template id="certiquiz-rocket">([^]*?)<\/template>/)[1];
+  const homeRocket = homeBody(site).match(/certiquiz-link"[^>]*>(<svg[^]*?<\/svg>)/)[1];
+  assert.deepEqual([...errorRocket.matchAll(/<path d="([^"]+)"/g)].map(match => match[1]), [...homeRocket.matchAll(/<path d="([^"]+)"/g)].map(match => match[1]));
+  assert.doesNotMatch(html, /id="course-navigation"|class="menu-toggle"|src="[^\"]*\/quiz\.js"/);
+});
 const tocByPage = new Map([
   ["overview", [{ id: "primeros-pasos", title: "Primeros pasos" }]],
   ["agents", [{ id: "conceptos-clave", title: "Conceptos <clave> & seguridad" }]],
@@ -57,6 +83,11 @@ test("mobile course navigation keeps the grid icon next to the certification men
   assert.match(css, /\.menu-toggle \{[\s\S]*?width: 44px;[\s\S]*?height: 44px;/);
   assert.match(css, /\.menu-toggle:is\(:hover, \[aria-expanded="true"\]\)\s*\{\s*background: var\(--selected-surface\);\s*color: var\(--selected-ink\);/);
   assert.match(css, /@media \(max-width: 800px\) \{[\s\S]*?\.menu-toggle \{\s*display: inline-flex;\s*margin-left: auto;\s*\}[\s\S]*?\.path-nav-mobile \{\s*margin-left: 0;\s*\}/);
+});
+
+test("mobile home groups header controls and hides the suggested certification flow", () => {
+  const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
+  assert.match(css, /@media \(max-width: 800px\) \{[\s\S]*?\.home-page \.path-nav-mobile \{\s*margin-left: auto;\s*\}[\s\S]*?\.hero-flow \{\s*display: none;\s*\}/);
 });
 
 test("desktop path navigation opens the category reached by a pointing device", () => {
@@ -134,11 +165,11 @@ test("hero animation follows the catalog's Foundation Sprint order and levels", 
 
 test("every technical section has a captioned local graphic and exercise solutions stay hidden", () => {
   const catalog = JSON.parse(readFileSync(new URL("../data/catalog.json", import.meta.url), "utf8"));
-  const modules = catalog.courses[0].modules.filter((module) => module.type === "module");
-  assert.equal(modules.length, 6);
+  const modules = catalog.courses.flatMap((entry) => entry.modules.filter((module) => module.type === "module").map((module) => ({ ...module, contentDir: entry.contentDir || "" })));
+  assert.equal(modules.length, 22);
   const markdown = new MarkdownIt({ html: true });
   for (const module of modules) {
-    const source = readFileSync(new URL(`../content/${module.slug}.md`, import.meta.url), "utf8");
+    const source = readFileSync(new URL(`../content/${module.contentDir}/${module.slug}.md`, import.meta.url), "utf8");
     const tokens = markdown.parse(source, {});
     const sections = [];
     let section;
@@ -198,7 +229,7 @@ test("layout moves the contents into the sidebar while preserving reading and si
   assert.match(html, /<aside[^]*href="\/certi-tips\/EXAM-1\/agents\/#conceptos-clave"[^]*<\/aside>/);
   assert.match(html, /<article class="prose"><h2 id="conceptos-clave">Conceptos<\/h2><\/article>/);
   assert.match(html, /class="site-footer"/);
-  assert.match(html, /Made with .* at CertiTips .* Developed by <a href="https:\/\/www\.linkedin\.com\/in\/jgangini\/"[^>]*>Joel Gangini<\/a>/);
+  assert.match(html, /Made with .* at Certi<span class="brand-accent">Tips<\/span> .* Developed by <a href="https:\/\/www\.linkedin\.com\/in\/jgangini\/"[^>]*>Joel Gangini<\/a>/);
   assert.doesNotMatch(html, /Mejorar esta guía/);
   assert.match(html, /id="diagram-viewer"/);
   assert.match(html, /data-mark-complete="agents"/);
@@ -206,7 +237,7 @@ test("layout moves the contents into the sidebar while preserving reading and si
   assert.match(html, /<article class="prose">[^]*<\/article><div data-completion-trigger aria-hidden="true"><\/div><button[^>]+data-mark-complete="agents"[^>]+hidden>/);
   assert.match(html, /<summary>Foundation Sprint<\/summary>/);
   assert.doesNotMatch(html, /Ver grupo completo/);
-  assert.match(html, /href="\/certi-tips\/course\/overview\/"><span class="path-title">Course<\/span><\/a>/);
+  assert.match(html, /href="\/certi-tips\/EXAM-1\/overview\/"><span class="path-title">Course<\/span><\/a>/);
   assert.match(html, /href="https:\/\/mylearn\.oracle\.com\/pending" target="_blank" rel="noopener noreferrer"[^>]*><span class="path-title">Pending course<\/span><span class="coming-soon"/);
   assert.doesNotMatch(html, /href="\/certi-tips\/#(?:course|pending)"/);
   assert.match(html, /data-theme-toggle aria-pressed="false"/);
@@ -245,8 +276,8 @@ test("the certification breadcrumb identifies LangChain by its module label", ()
   const currentCourse = catalog.courses[0];
   assert.equal(`${currentCourse.title} ${currentCourse.edition}`, catalog.paths[0].items.find((item) => item.guide === currentCourse.id).title);
   const html = layout({ site: catalog, course: currentCourse, page: currentCourse.modules.find((item) => item.slug === "langchain"), body: "" });
-  assert.match(html, /<nav class="breadcrumb"[^>]*><a href="\/certi-tips\/1Z0-1157-26\/overview\/">Oracle Agentic AI Foundations Associate 2026<\/a><span aria-hidden="true">\/<\/span><span aria-current="page">LangChain<\/span>/);
-  assert.match(html, /<body data-course="agentic-ai-foundations-2026"/);
+  assert.match(html, /<nav class="breadcrumb"[^>]*><a href="\/certi-tips\/1Z0-1157-26\/overview\/">Oracle Agentic AI Foundations Associate<\/a><span aria-hidden="true">\/<\/span><span aria-current="page">LangChain<\/span>/);
+  assert.match(html, /<body[^>]* data-course="agentic-ai-foundations-2026"/);
 });
 
 test("completed modules use a blue block without adding a width-consuming badge", () => {
@@ -270,7 +301,7 @@ test("search lists certifications before typing and keeps study topics available
   assert.doesNotMatch(search, /Escribe para buscar certificaciones/);
 });
 
-test("home shows each FY27 certification once and links only the available guide locally", () => {
+test("home shows each FY27 certification once and links all three available guides locally", () => {
   const catalog = JSON.parse(readFileSync(new URL("../data/catalog.json", import.meta.url), "utf8"));
   const items = catalog.paths.flatMap((path) => path.items);
   assert.deepEqual(catalog.paths.map((path) => path.id), ["foundation-sprint", "ai-first", "ai-data-layer", "oci-enablers"]);
@@ -278,15 +309,23 @@ test("home shows each FY27 certification once and links only the available guide
   assert.equal(items.length, 11);
   assert.equal(new Set(items.map((item) => item.title)).size, items.length);
   assert.equal(new Set(items.map((item) => item.id)).size, items.length);
-  assert.deepEqual(catalog.paths[0].items.map((item) => item.level), [1, 1, 1, 1]);
+  assert.deepEqual(catalog.paths[0].items.map((item) => item.level), [1, 1, 1]);
   assert.ok(catalog.paths.slice(1).every((path) => path.items.every((item, index) => item.level >= 2 && (index === 0 || item.level >= path.items[index - 1].level))));
-  assert.equal(items.filter((item) => item.level === 3).length, 2);
-  assert.deepEqual(items.filter((item) => item.guide).map((item) => item.guide), ["agentic-ai-foundations-2026"]);
+  assert.equal(items.filter((item) => item.level === 3).length, 3);
+  assert.ok(items.every((item) => !/\b20\d{2}\b/.test(item.title)));
+  assert.ok(catalog.courses.every((item) => !/\b20\d{2}\b/.test(`${item.title} ${item.edition}`)));
+  assert.ok(items.every((item) => !/Essentials/i.test(item.title)));
+  const platform = catalog.paths.find((path) => path.id === "ai-data-layer").items.find((item) => item.id === "ai-data-platform-professional");
+  assert.equal(platform.title, "Oracle AI Data Platform Professional");
+  assert.equal(platform.level, 3);
+  assert.match(platform.description, /1Z0-1154-26/);
+  assert.equal(platform.officialUrl, "https://mylearn.oracle.com/ou/learning-path/become-an-oracle-ai-data-platform-professional/164914");
+  assert.deepEqual(items.filter((item) => item.guide).map((item) => item.guide).sort(), ["agentic-ai-foundations-2026", "oci-ai-foundations-2026", "oci-foundations-2026"]);
   assert.ok(items.every((item) => item.officialUrl.startsWith("https://mylearn.oracle.com/")));
   const html = homeBody(catalog);
   assert.equal((html.match(/class="certification-item/g) || []).length, 11);
-  assert.equal((html.match(/class="button button-small certitips-button" href=/g) || []).length, 1);
-  assert.equal((html.match(/class="button button-small certitips-button" type="button" disabled/g) || []).length, 10);
+  assert.equal((html.match(/class="button button-small certitips-button" href=/g) || []).length, 3);
+  assert.equal((html.match(/class="button button-small certitips-button" type="button" disabled/g) || []).length, 8);
   assert.equal((html.match(/<section class="path-section/g) || []).length, 4);
   assert.match(html, /data-group-carousel/);
   assert.match(html, /data-group-next/);
@@ -295,7 +334,7 @@ test("home shows each FY27 certification once and links only the available guide
   assert.equal((html.match(/class="group-carousel-controls"/g) || []).length, 1);
   assert.match(html, /class="path-section path-foundation is-active"/);
   assert.match(html, /<h2 id="foundation-sprint-title">Foundation<\/h2>/);
-  assert.match(html, /Foundation reúne cuatro certificaciones de nivel 1/);
+  assert.match(html, /Foundation reúne tres certificaciones de nivel 1/);
   assert.match(html, /Foundation · 1 de 4/);
   assert.match(html, /<svg viewBox="0 0 16 16"[^>]*fill="currentColor"/);
   assert.match(html, /href="\/certi-tips\/1Z0-1157-26\/overview\/"/);
@@ -308,8 +347,9 @@ test("home shows each FY27 certification once and links only the available guide
   assert.match(withMotion, /assets\/motion\/certification-path\.mp4/);
   assert.match(withMotion, /data-hero-flow autoplay loop muted playsinline/);
   assert.doesNotMatch(withMotion, /data-hero-replay|Repetir animación/);
-  assert.match(withMotion, /Cuatro certificaciones de nivel 1/);
-  assert.match(html, /OCI AI Foundations Associate 2026/);
+  assert.match(withMotion, /3 certificaciones de nivel 1/);
+  assert.match(html, /OCI AI Foundations Associate/);
+  assert.doesNotMatch(html, /Essentials|AI → AI Data Platform/);
   assert.match(html, /class="button github-link"[^>]*>.*?GitHub<\/a>/);
   assert.doesNotMatch(html, /View on GitHub|button-secondary github-link/);
   assert.doesNotMatch(html, /Ver el recorrido|30 de septiembre de 2026|catalog-disclaimer/);
@@ -322,5 +362,5 @@ test("home shows each FY27 certification once and links only the available guide
     const destination = item.guide ? `${catalog.base}${catalog.courses.find((course) => course.id === item.guide).exam.code}/overview/` : item.officialUrl;
     assert.ok(navigation.includes(`href="${destination}"`), `${item.title} does not link directly to its certification`);
   }
-  assert.equal((navigation.match(/class="coming-soon"/g) || []).length, 10);
+  assert.equal((navigation.match(/class="coming-soon"/g) || []).length, 8);
 });
