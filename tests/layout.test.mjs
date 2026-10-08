@@ -83,8 +83,9 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.match(css, /\.certiquiz-app \.role-icon svg\s*\{[^}]*width:\s*52px;[^}]*height:\s*52px;/);
   assert.match(css, /\.certiquiz-app \.role-card:is\(:hover, :focus-visible\)\s*\{[^}]*border-color:\s*var\(--accent\);/);
   assert.match(css, /\.certiquiz-app \.welcome\s*\{\s*margin:\s*28px 0 35px;/);
-  assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb\s*\{[^}]*width:\s*100%;[^}]*padding:\s*18px 24px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*var\(--radius\);/);
-  assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb \.certiquiz-mark\s*\{[^}]*color:\s*var\(--ink\);[^}]*font-weight:\s*700;/);
+  assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb\s*\{[^}]*width:\s*100%;[^}]*padding:\s*18px 24px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*var\(--radius\);[^}]*font-weight:\s*400;/);
+  assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb a\s*\{[^}]*color:\s*var\(--ink\);[^}]*font-weight:\s*inherit;/);
+  assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb \.certiquiz-mark\s*\{[^}]*color:\s*var\(--ink\);[^}]*font-weight:\s*inherit;/);
   assert.match(siteCss, /\.search-toggle\s*\{[^}]*background:\s*var\(--paper\);/);
   assert.match(siteCss, /\.search-toggle kbd\s*\{[^}]*display:\s*inline-flex;[^}]*padding:\s*2px 5px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*4px;[^}]*background:\s*var\(--chrome-bg\);[^}]*font-size:\s*0\.62rem;/);
 });
