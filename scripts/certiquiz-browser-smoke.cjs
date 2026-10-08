@@ -234,7 +234,7 @@ async (page) => {
     await host.reload(); await host.locator('[data-start]').waitFor();
     assert((await snapshot(host, code)).role === 'host', 'Host room was not restored after refresh');
     const exitRoom = host.locator('[data-exit]');
-    assert(await exitRoom.evaluate(node => node.closest('.actions') && node.nextElementSibling?.hasAttribute('data-start') && node.textContent === 'Salir' && node.nextElementSibling.textContent === 'Comenzar'), 'Exit action is not before Comenzar in the lobby actions');
+    assert(await exitRoom.evaluate(node => node.closest('.actions') && node.nextElementSibling?.hasAttribute('data-start') && node.textContent === 'Finalizar' && node.nextElementSibling.textContent === 'Comenzar'), 'Finish action is not before Comenzar in the lobby actions');
     await exitRoom.click();
     const confirmation = host.locator('dialog[data-confirm]');
     assert(await confirmation.evaluate(node => node.open && node.matches(':modal')), 'Room exit did not open a native modal');
