@@ -475,32 +475,36 @@ html[data-theme="dark"] .theme-moon { display: none; }
 .home-hero {
   display: grid;
   grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr);
-  align-items: center;
+  align-items: stretch;
   gap: clamp(32px, 4vw, 56px);
   padding: 66px 0 48px;
 }
-.hero-copy { min-width: 0; }
+.home-hero .hero-copy { display: flex; min-width: 0; align-self: stretch; flex-direction: column; align-items: flex-start; justify-content: center; }
 .home-hero .oracle-badge {
   display: inline-flex;
   align-items: center;
   gap: 10px;
   min-height: 44px;
   padding: 8px 12px;
-  border: 1px solid #353535;
+  border: 1px solid rgba(199, 70, 52, .45);
   border-radius: 8px;
-  background: #171717;
-  color: #f2f2f2;
+  background: linear-gradient(135deg, rgba(255, 255, 255, .7), rgba(255, 231, 222, .42) 55%, rgba(243, 228, 255, .46));
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .65), inset 0 -1px 0 rgba(199, 70, 52, .08), 0 3px 8px rgba(199, 70, 52, .08);
+  color: #5b2b29;
   font-size: 0.85rem;
   font-weight: 500;
   line-height: 1;
 }
 .home-hero .oracle-badge svg { width: 27px; height: 27px; flex: 0 0 auto; color: var(--red); }
 .home-hero h1 {
-  font-size: clamp(2.6rem, 4.4vw, 3.7rem);
+  font-size: clamp(2.4rem, 3.5vw, 3rem);
   line-height: 1.08;
   margin: 18px 0;
   letter-spacing: -0.055em;
 }
+.home-hero h1 span { display: block; }
 .home-hero p {
   color: var(--muted);
   font-size: 1.05rem;
@@ -541,6 +545,12 @@ html[data-theme="dark"] .hero-actions .certiquiz-link {
   border-color: rgba(255, 217, 199, .65);
   background: linear-gradient(135deg, rgba(255, 255, 255, .13), rgba(199, 70, 52, .18) 55%, rgba(146, 91, 180, .2));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 3px 8px rgba(0, 0, 0, .2), 0 0 12px rgba(223, 107, 78, .09);
+}
+html[data-theme="dark"] .home-hero .oracle-badge {
+  border-color: rgba(255, 217, 199, .65);
+  background: linear-gradient(135deg, rgba(255, 255, 255, .13), rgba(199, 70, 52, .18) 55%, rgba(146, 91, 180, .2));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 3px 8px rgba(0, 0, 0, .2);
+  color: #ffe9df;
 }
 html[data-theme="dark"] .hero-actions .certiquiz-link:is(:hover, :focus-visible) {
   border-color: rgba(255, 217, 199, .65);

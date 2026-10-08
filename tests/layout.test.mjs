@@ -426,12 +426,16 @@ test("home shows each FY27 certification once and links all three available guid
   assert.match(html, /href="\/certi-tips\/1Z0-1157-26\/overview\/"/);
   assert.match(html, /id="oci-enablers"/);
   assert.match(html, /class="oracle-badge"><svg viewBox="0 0 32 32" fill="currentColor"[^>]*><path d="M21\.272 22\.141h-10\.538/);
-  assert.match(html, /<span>Oracle Cloud Infrastructure<\/span><\/div><h1>/);
+  assert.match(html, /<span>Oracle Cloud Infrastructure<\/span><\/div><h1><span>De los Fundamentos<\/span><span>a tu Especialidad<\/span><\/h1>/);
   assert.match(html, /class="hero-copy"/);
   assert.match(html, /class="hero-flow is-unavailable"/);
   const siteCss = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
-  assert.match(siteCss, /\.home-hero \.oracle-badge\s*\{[^}]*display:\s*inline-flex;[^}]*border:\s*1px solid #353535;[^}]*background:\s*#171717;/);
+  assert.match(siteCss, /\.home-hero\s*\{[^}]*align-items:\s*stretch;/);
+  assert.match(siteCss, /\.home-hero \.hero-copy\s*\{[^}]*align-self:\s*stretch;[^}]*justify-content:\s*center;/);
+  assert.match(siteCss, /\.home-hero \.oracle-badge\s*\{[^}]*display:\s*inline-flex;[^}]*border:\s*1px solid rgba\(199, 70, 52, \.45\);[^}]*backdrop-filter:\s*blur\(16px\) saturate\(160%\);/);
   assert.match(siteCss, /\.home-hero \.oracle-badge svg\s*\{[^}]*color:\s*var\(--red\);/);
+  assert.match(siteCss, /\.home-hero h1\s*\{[^}]*font-size:\s*clamp\(2\.4rem, 3\.5vw, 3rem\);/);
+  assert.match(siteCss, /\.home-hero h1 span\s*\{\s*display:\s*block;/);
   assert.match(siteCss, /\.hero-flow\s*\{[^}]*border:\s*1px solid var\(--line\);/);
   assert.doesNotMatch(html, /assets\/motion\/certification-path\.mp4/);
   const withMotion = homeBody(catalog, true);
