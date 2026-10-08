@@ -67,7 +67,7 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.match(script, /history\.replaceState\(null, '', `\$\{siteBase\}certiquiz\/\$\{role === 'host' \? '#host' : role === 'player' \? '#participant' : ''\}`\)/);
   assert.doesNotMatch(script, /role-action/);
   assert.doesNotMatch(script, /ORGANIZA LA PARTIDA|APRENDE CON TU EQUIPO/);
-  assert.match(script, /const welcome = role => `[^`]*<nav class="certiquiz-breadcrumb" aria-label="Ruta de navegación"><a href="\$\{siteBase\}">Home<\/a><span aria-hidden="true">\/<\/span>\$\{role \? `<a href="\$\{siteBase\}certiquiz\/">CertiQuiz<\/a><span aria-hidden="true">\/<\/span><span aria-current="page">\$\{role === 'host' \? 'Anfitrión' : 'Participante'\}<\/span>` : '<span aria-current="page">CertiQuiz<\/span>'\}/);
+  assert.match(script, /const welcome = role => `[^`]*<nav class="certiquiz-breadcrumb" aria-label="Ruta de navegación"><a href="\$\{siteBase\}">Home<\/a><span aria-hidden="true">\/<\/span>\$\{role \? `<a href="\$\{siteBase\}certiquiz\/#entry">CertiQuiz<\/a><span aria-hidden="true">\/<\/span><span aria-current="page">\$\{role === 'host' \? 'Anfitrión' : 'Participante'\}<\/span>` : '<span aria-current="page">CertiQuiz<\/span>'\}/);
   assert.doesNotMatch(script, /data-change-role|Cambiar rol/);
   assert.match(css, /\.certiquiz-app \.role-card\s*\{[^}]*width:\s*100%;[^}]*cursor:\s*pointer;/);
   assert.match(css, /\.certiquiz-app \.role-icon\s*\{[^}]*flex:\s*0 0 64px;[^}]*width:\s*64px;[^}]*height:\s*64px;/);
@@ -101,7 +101,12 @@ test("CertiQuiz shares site navigation and theme without a course sidebar", () =
   assert.match(html, /data-api-origin="https:\/\/api\.example\.test"/);
   assert.match(html, /<div id="app" aria-busy="true"><section class="loading loading-full"><h1>Preparando tu próxima partida…<\/h1><p role="status">Conectando con la sala de práctica\.<\/p><\/section>/);
   const certiquizCss = readFileSync(new URL("../assets/certiquiz.css", import.meta.url), "utf8");
+  const certiquizScript = readFileSync(new URL("../assets/certiquiz.js", import.meta.url), "utf8");
   assert.match(certiquizCss, /\.certiquiz-app \.loading-full\s*\{[^}]*width:\s*100%;[^}]*min-height:\s*calc\(100dvh - var\(--header\) - var\(--footer-height\)\);[^}]*border:\s*0;/);
+  assert.match(certiquizScript, /certiquiz\/#entry/);
+  assert.match(certiquizScript, /entryUrl\.hash !== '#entry'/);
+  assert.match(certiquizScript, /const initialLoadingDuration = 320;/);
+  assert.match(certiquizScript, /await finishLoading\(\); entry\(\);/);
   assert.doesNotMatch(certiquizBody('https://api.example.test'), /id="(?:error|connection|announcement)"/);
   const errorRocket = certiquizBody('https://api.example.test').match(/<template id="certiquiz-rocket">([^]*?)<\/template>/)[1];
   const homeRocket = homeBody(site).match(/certiquiz-link"[^>]*>(<svg[^]*?<\/svg>)/)[1];

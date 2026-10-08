@@ -197,7 +197,7 @@ async (page) => {
     await courseSummary.waitFor();
     assert(await host.locator('#join-form').count() === 0 && await host.locator('#create-form').count() === 1, 'Host role does not isolate its form');
     assert(new URL(host.url()).hash === '#host', 'Host role does not have a shareable URL fragment');
-    assert(await host.locator('.certiquiz-breadcrumb').innerText() === 'Home / CertiQuiz / Anfitrión' && await host.locator('.certiquiz-breadcrumb a[href$="certiquiz/"]').count() === 1, 'Host breadcrumb does not provide a path back to CertiQuiz');
+    assert(await host.locator('.certiquiz-breadcrumb').innerText() === 'Home / CertiQuiz / Anfitrión' && await host.locator('.certiquiz-breadcrumb a[href$="certiquiz/#entry"]').count() === 1, 'Host breadcrumb does not provide a path back to CertiQuiz');
     assert(await host.locator('[type="password"]').count() === 0, 'Guest hosting still asks for a private key');
     assert(await host.getByLabel('Segundos por pregunta').inputValue() === '10', 'Host duration is not ten seconds by default');
     assert((await host.locator('#create-form .hint').innerText()).includes('Hasta 500 participantes'), 'Host hint does not advertise the 500-participant limit');

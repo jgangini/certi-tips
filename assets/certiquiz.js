@@ -3,7 +3,7 @@ const apiOrigin = document.querySelector('.certiquiz-app').dataset.apiOrigin;
 const siteBase = document.body.dataset.base;
 const nameSegments = new Intl.Segmenter('es', { granularity: 'grapheme' });
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
-const welcome = role => `<section class="welcome"><h1>Certi<span class="brand-accent">Quiz</span></h1><p class="lead">Practica certificaciones, comparte una sala y aprende con tu equipo.</p><nav class="certiquiz-breadcrumb" aria-label="Ruta de navegación"><a href="${siteBase}">Home</a><span aria-hidden="true">/</span>${role ? `<a href="${siteBase}certiquiz/">CertiQuiz</a><span aria-hidden="true">/</span><span aria-current="page">${role === 'host' ? 'Anfitrión' : 'Participante'}</span>` : '<span aria-current="page">CertiQuiz</span>'}</nav></section>`;
+const welcome = role => `<section class="welcome"><h1>Certi<span class="brand-accent">Quiz</span></h1><p class="lead">Practica certificaciones, comparte una sala y aprende con tu equipo.</p><nav class="certiquiz-breadcrumb" aria-label="Ruta de navegación"><a href="${siteBase}">Home</a><span aria-hidden="true">/</span>${role ? `<a href="${siteBase}certiquiz/#entry">CertiQuiz</a><span aria-hidden="true">/</span><span aria-current="page">${role === 'host' ? 'Anfitrión' : 'Participante'}</span>` : '<span aria-current="page">CertiQuiz</span>'}</nav></section>`;
 const hostRoleIcon = '<svg viewBox="0 0 31.381 31.381" fill="currentColor" aria-hidden="true" focusable="false"><circle cx="5.2" cy="25.988" r="3.638"/><circle cx="15.767" cy="25.988" r="3.638"/><circle cx="26.158" cy="25.988" r="3.638"/><rect x="24.253" y="18.292" width=".769" height="1.57"/><path d="M0 1.754v18.107h22.064v-2.779h-.193l-.287-5.589h-5.256V9.987h7.221l1.165 1.352 1.128-1.352 2.475.325.16 5.629h-1.267v3.92h4.171V1.754H0zm24.661 7.773a3.058 3.058 0 1 1 0-6.115 3.058 3.058 0 0 1 0 6.115z"/></svg>';
 const playerRoleIcon = '<svg viewBox="0 0 297 297" fill="currentColor" aria-hidden="true" focusable="false"><path d="m119.306 51.203-1.612 21.974a4.94 4.94 0 0 0 2.037 4.387 4.94 4.94 0 0 0 4.801.582l20.401-8.325 20.401 8.325a4.94 4.94 0 0 0 4.801-.582 4.94 4.94 0 0 0 2.037-4.387l-1.612-21.974 14.221-16.831a4.94 4.94 0 0 0 .93-4.745 4.94 4.94 0 0 0-3.542-3.293l-21.397-5.257-11.613-18.725A4.94 4.94 0 0 0 144.933 0a4.94 4.94 0 0 0-4.226 2.352l-11.611 18.725-21.399 5.257a4.94 4.94 0 0 0-3.542 3.293 4.94 4.94 0 0 0 .93 4.745z"/><path d="M288.732 177.902h-71.919V97.219a6.962 6.962 0 0 0-6.962-6.962H87.148a6.962 6.962 0 0 0-6.962 6.962v45.625H8.268a6.962 6.962 0 0 0-6.962 6.962v140.232a6.962 6.962 0 0 0 6.962 6.962h280.465a6.962 6.962 0 0 0 6.962-6.962V184.864a6.962 6.962 0 0 0-6.963-6.962zM74.799 239.825a7.459 7.459 0 0 1-7.459 7.459H54.252v6.969H67.34a7.459 7.459 0 1 1 0 14.918H46.793a7.459 7.459 0 0 1-7.459-7.459v-21.887a7.459 7.459 0 0 1 7.459-7.459h13.088v-7.415H46.793a7.459 7.459 0 1 1 0-14.918H67.34a7.459 7.459 0 0 1 7.459 7.459zm81.16-73.793a7.459 7.459 0 1 1-14.918 0v-24.274h-1.676a7.459 7.459 0 1 1 0-14.918h9.135a7.459 7.459 0 0 1 7.459 7.459zm103.762 95.68a7.459 7.459 0 0 1-7.459 7.459h-20.548a7.459 7.459 0 1 1 0-14.918h13.089v-6.969h-13.089a7.459 7.459 0 1 1 0-14.918h13.089v-7.415h-13.089a7.459 7.459 0 1 1 0-14.918h20.548a7.459 7.459 0 0 1 7.459 7.459z"/></svg>';
 const roomIcon = `<svg class="room-icon" fill="currentColor" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M17.7540247,11 C18.720523,11 19.5040247,11.7835017 19.5040247,12.75 L19.5040247,19.4989513 C19.5040247,22.5370966 17.0411213,25 14.002976,25 C10.9648308,25 8.50192738,22.5370966 8.50192738,19.4989513 L8.50192738,12.75 C8.50192738,11.7835017 9.28542907,11 10.2519274,11 L17.7540247,11 Z M3.75,11 L8.13210827,10.9980646 C7.78221386,11.420954 7.55643325,11.9502867 7.51057947,12.5302496 L7.50192738,12.75 L7.50192738,19.4989513 C7.50192738,20.6323434 7.79196393,21.6979939 8.30186513,22.6257307 C7.75085328,22.8662539 7.14166566,23 6.50123996,23 C4.01527377,23 2,20.9847262 2,18.49876 L2,12.75 C2,11.7835017 2.78350169,11 3.75,11 Z M19.8738438,10.9980646 L24.25,11 C25.2164983,11 26,11.7835017 26,12.75 L26,18.5 C26,20.9852814 23.9852814,23 21.5,23 C20.8609276,23 20.2529701,22.8667819 19.7023824,22.6266008 L19.7581025,22.5253735 C20.1867892,21.7118524 20.4480368,20.7963864 20.4959995,19.8248213 L20.5040247,19.4989513 L20.5040247,12.75 C20.5040247,12.084283 20.267475,11.4738152 19.8738438,10.9980646 Z M14,3 C15.9329966,3 17.5,4.56700338 17.5,6.5 C17.5,8.43299662 15.9329966,10 14,10 C12.0670034,10 10.5,8.43299662 10.5,6.5 C10.5,4.56700338 12.0670034,3 14,3 Z M22.0029842,4 C23.6598384,4 25.0029842,5.34314575 25.0029842,7 C25.0029842,8.65685425 23.6598384,10 22.0029842,10 C20.3461299,10 19.0029842,8.65685425 19.0029842,7 C19.0029842,5.34314575 20.3461299,4 22.0029842,4 Z M5.99701582,4 C7.65387007,4 8.99701582,5.34314575 8.99701582,7 C8.99701582,8.65685425 7.65387007,10 5.99701582,10 C4.34016157,10 2.99701582,8.65685425 2.99701582,7 C2.99701582,5.34314575 4.34016157,4 5.99701582,4 Z"/></svg>`;
@@ -21,6 +21,7 @@ const entryUrl = new URL(location.href);
 const prefilledCode = entryUrl.searchParams.get('room') || '';
 let draftCode = /^\d{6}$/.test(prefilledCode) ? prefilledCode : '';
 let selectedRole = draftCode ? 'player' : ({ '#host': 'host', '#participant': 'player' }[entryUrl.hash] || null);
+const initialLoadingDuration = 320;
 
 function prepareNotices() {
   const target = app.querySelector('form') || app.querySelector('section.card');
@@ -379,14 +380,16 @@ async function poll() {
 }
 
 async function load() {
+  const loadingUntil = performance.now() + initialLoadingDuration;
+  const finishLoading = () => new Promise(resolve => setTimeout(resolve, Math.max(0, loadingUntil - performance.now())));
   showError(''); app.setAttribute('aria-busy', 'true');
   try {
     [catalog, session] = await Promise.all([request('/api/catalog'), request('/api/session')]);
-    if (session.roomCode && (!prefilledCode || prefilledCode === session.roomCode)) {
-      try { showRoom(await request(`/api/rooms/${encodeURIComponent(session.roomCode)}`)); schedulePoll(); return; }
+    if (session.roomCode && entryUrl.hash !== '#entry' && (!prefilledCode || prefilledCode === session.roomCode)) {
+      try { const snapshot = await request(`/api/rooms/${encodeURIComponent(session.roomCode)}`); await finishLoading(); showRoom(snapshot); schedulePoll(); return; }
       catch (error) { if (![401, 403, 404, 410].includes(error.status)) throw error; session.roomCode = null; }
     }
-    entry();
+    await finishLoading(); entry();
   } catch {
     app.innerHTML = `<section class="loading loading-full loading-error"><h1><span>Volvamos a intentarlo.</span></h1><p class="muted" role="alert">CertiQuiz no se pudo cargar. Revisa tu conexión e inténtalo de nuevo.</p><p class="hint">Recarga la página desde tu navegador o pulsa <kbd>F5</kbd> para volver a intentarlo.</p></section>`;
     app.querySelector('h1').prepend(document.querySelector('#certiquiz-rocket').content.cloneNode(true));
