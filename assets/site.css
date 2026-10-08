@@ -488,7 +488,7 @@ html[data-theme="dark"] .theme-moon { display: none; }
   gap: 10px;
   min-height: 44px;
   padding: 8px 12px;
-  border: 1px solid var(--accent);
+  border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--scrollbar);
   color: #fff;

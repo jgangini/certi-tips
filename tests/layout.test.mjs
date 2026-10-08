@@ -458,7 +458,7 @@ test("home shows each FY27 certification once and links all three available guid
   assert.match(siteCss, /\.home-hero\s*\{[^}]*align-items:\s*stretch;/);
   assert.match(siteCss, /\.home-hero \.hero-copy\s*\{[^}]*align-self:\s*stretch;[^}]*justify-content:\s*center;/);
   const oracleBadge = siteCss.match(/\.home-hero \.oracle-badge\s*\{([^}]*)\}/)[1];
-  assert.match(oracleBadge, /display:\s*inline-flex;[\s\S]*border:\s*1px solid var\(--accent\);[\s\S]*background:\s*var\(--scrollbar\);[\s\S]*color:\s*#fff;/);
+  assert.match(oracleBadge, /display:\s*inline-flex;[\s\S]*border:\s*1px solid var\(--line\);[\s\S]*background:\s*var\(--scrollbar\);[\s\S]*color:\s*#fff;/);
   assert.doesNotMatch(oracleBadge, /backdrop-filter|box-shadow/);
   assert.match(siteCss, /--scrollbar:\s*#59616e;/);
   assert.match(siteCss, /html\[data-theme="dark"\]\s*\{[^}]*--scrollbar:\s*#454855;[^}]*--red:\s*#c74634;[^}]*--red-dark:\s*#a6382b;/);
