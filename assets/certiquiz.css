@@ -218,7 +218,7 @@ html[data-theme="dark"] .certiquiz-app .leaderboard tbody tr { --row-shadow: #00
 .certiquiz-app .loading-full h1 { display: flex; align-items: center; justify-content: center; gap: 18px; font-size: clamp(28px, 4vw, 44px); }
 .certiquiz-app .loading-full h1 svg { width: 46px; height: 46px; flex: 0 0 auto; color: var(--ink); animation: certiquiz-rocket-float 3s ease-in-out infinite; }
 .certiquiz-app .loading-error .hint { margin-bottom: 0; }
-.certiquiz-app kbd { padding: 2px 5px; border: 1px solid var(--line); border-radius: 4px; font: inherit; }
+.certiquiz-app kbd { display: inline-flex; align-items: center; padding: 2px 5px; border: 1px solid var(--line); border-radius: 4px; background: var(--chrome-bg); color: var(--muted); font-size: 0.62rem; white-space: nowrap; }
 @keyframes certiquiz-rocket-float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(2px, -3px); } }
 @media (max-width: 720px) { .certiquiz-app .room-exit { float: none; display: block; margin: 0 0 20px auto; } .certiquiz-app .host-entry .certification-item { grid-template-columns: minmax(0, 1fr); gap: 14px; padding-left: 28px; } .certiquiz-app .host-entry .certification-item input { max-width: none; } .certiquiz-app .setup-actions .certification-number { top: 23px; transform: none; } }
 @media (max-width: 720px) { .certiquiz-app .invite-code { grid-template-columns: minmax(0, 1fr) 52px; } .certiquiz-app .lobby-footer { align-items: flex-start; flex-direction: column; } .certiquiz-app .lobby-footer .actions { justify-content: flex-start; } }

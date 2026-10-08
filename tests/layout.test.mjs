@@ -117,6 +117,7 @@ test("CertiQuiz shares site navigation and theme without a course sidebar", () =
   assert.match(certiquizCss, /\.certiquiz-app \.loading-full\s*\{[^}]*width:\s*100%;[^}]*min-height:\s*calc\(100dvh - var\(--header\) - var\(--footer-height\)\);[^}]*border:\s*0;/);
   assert.match(certiquizCss, /\.certiquiz-app \.loading-full h1\s*\{[^}]*display:\s*flex;[^}]*justify-content:\s*center;[^}]*font-size:\s*clamp\(28px, 4vw, 44px\);/);
   assert.match(certiquizCss, /\.certiquiz-app \.loading-full h1 svg\s*\{[^}]*color:\s*var\(--ink\);[^}]*animation:\s*certiquiz-rocket-float 3s ease-in-out infinite;/);
+  assert.match(certiquizCss, /\.certiquiz-app kbd\s*\{[^}]*display:\s*inline-flex;[^}]*align-items:\s*center;[^}]*padding:\s*2px 5px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*4px;[^}]*background:\s*var\(--chrome-bg\);[^}]*color:\s*var\(--muted\);[^}]*font-size:\s*0\.62rem;/);
   assert.match(certiquizScript, /certiquiz\/#entry/);
   assert.match(certiquizScript, /entryUrl\.hash !== '#entry'/);
   assert.match(certiquizScript, /const initialLoadingDuration = 320;/);
