@@ -94,20 +94,20 @@ html[data-theme="dark"] .certiquiz-app { --success: #9bd8b8; --success-bg: #1b35
 .certiquiz-app .room-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(260px, 1fr); gap: 24px; align-items: start; }
 .certiquiz-app .room-side { display: grid; min-width: 0; gap: 24px; }
 .certiquiz-app .invite-overview { width: 100%; }
-.certiquiz-app .invite-code { display: grid; grid-template-columns: minmax(0, 1fr) 132px; gap: 12px; align-items: center; margin: 18px 0; padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); }
+.certiquiz-app .invite-code { display: grid; grid-template-columns: minmax(0, 1fr) 66px; gap: 12px; align-items: center; margin: 18px 0; padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); }
 .certiquiz-app .pin { display: block; min-width: 0; margin: 0; padding: 0; border: 0; background: transparent; font-size: clamp(42px, 6vw, 64px); font-weight: 800; letter-spacing: .09em; line-height: 1.25; font-variant-numeric: tabular-nums; }
 .certiquiz-app .invite-qr { position: relative; width: 100%; margin: 0; }
 .certiquiz-app .invite-qr-toggle { display: block; width: 100%; padding: 0; border: 0; border-radius: 14px; background: transparent; cursor: pointer; }
 .certiquiz-app .invite-qr-toggle:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
 .certiquiz-app .invite-qr-code { display: block; overflow: hidden; border-radius: 14px; }
 .certiquiz-app .invite-qr-code > svg { display: block; width: 100%; height: auto; border-radius: 14px; background: #fff; }
-.certiquiz-app .invite-qr-logo { position: absolute; top: 50%; left: 50%; display: grid; place-items: center; width: 46px; height: 46px; transform: translate(-50%, -50%); border-radius: 12px; background: #fff; color: #111; pointer-events: none; }
-.certiquiz-app .invite-qr-logo svg { width: 31px; height: 31px; }
-.certiquiz-app .invite-qr figcaption { margin-top: 10px; color: var(--muted); font-size: 12px; font-weight: 650; line-height: 1.35; text-align: center; }
+.certiquiz-app .invite-qr-logo { position: absolute; top: 50%; left: 50%; display: grid; place-items: center; width: 30px; height: 30px; transform: translate(-50%, -50%); border-radius: 8px; background: #fff; color: #111; pointer-events: none; }
+.certiquiz-app .invite-qr-logo svg { width: 24px; height: 24px; }
 .certiquiz-app .invite-code.qr-expanded { grid-template-columns: minmax(0, 1fr); padding: 0; }
 .certiquiz-app .invite-code.qr-expanded .pin { display: none; }
-.certiquiz-app .invite-code.qr-expanded .invite-qr-logo { width: min(20%, 96px); height: auto; aspect-ratio: 1; }
-.certiquiz-app .invite-code.qr-expanded .invite-qr figcaption { padding: 0 12px 12px; }
+.certiquiz-app .invite-code.qr-expanded .invite-qr { width: 50%; margin: 0 auto; }
+.certiquiz-app .invite-code.qr-expanded .invite-qr-logo { width: 72px; height: 72px; border-radius: 16px; }
+.certiquiz-app .invite-code.qr-expanded .invite-qr-logo svg { width: 46px; height: 46px; }
 .certiquiz-app .invite-link { display: flex; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 .certiquiz-app .invite-link input { min-width: 0; border: 0; border-radius: 10px 0 0 10px; background: transparent; font-size: 14px; font-weight: 650; }
 .certiquiz-app .invite-link button { display: grid; place-items: center; flex: 0 0 52px; min-height: 52px; padding: 12px; border: 0; border-left: 1px solid var(--line); border-radius: 0 10px 10px 0; background: var(--paper); color: var(--muted); cursor: pointer; }
@@ -221,8 +221,8 @@ html[data-theme="dark"] .certiquiz-app .leaderboard tbody tr { --row-shadow: #00
 .certiquiz-app kbd { padding: 2px 5px; border: 1px solid var(--line); border-radius: 4px; font: inherit; }
 @keyframes certiquiz-rocket-float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(2px, -3px); } }
 @media (max-width: 720px) { .certiquiz-app .room-exit { float: none; display: block; margin: 0 0 20px auto; } .certiquiz-app .host-entry .certification-item { grid-template-columns: minmax(0, 1fr); gap: 14px; padding-left: 28px; } .certiquiz-app .host-entry .certification-item input { max-width: none; } .certiquiz-app .setup-actions .certification-number { top: 23px; transform: none; } }
-@media (max-width: 720px) { .certiquiz-app .invite-code { grid-template-columns: minmax(0, 1fr) 112px; } .certiquiz-app .lobby-footer { align-items: flex-start; flex-direction: column; } .certiquiz-app .lobby-footer .actions { justify-content: flex-start; } }
+@media (max-width: 720px) { .certiquiz-app .invite-code { grid-template-columns: minmax(0, 1fr) 52px; } .certiquiz-app .lobby-footer { align-items: flex-start; flex-direction: column; } .certiquiz-app .lobby-footer .actions { justify-content: flex-start; } }
 @media (max-width: 720px) { .certiquiz-app .host-entry .setup-actions .button { width: 100%; } }
 @media (max-width: 720px) { .certiquiz-app .entry-grid, .certiquiz-app .room-grid, .certiquiz-app .options { grid-template-columns: 1fr; } .certiquiz-app .welcome { margin-top: 16px; } .certiquiz-app .card { padding: 23px; } .certiquiz-app .pin { font-size: 48px; } .certiquiz-app .option { min-height: 80px; padding: 15px; } .certiquiz-app .result-banner { padding: 23px; } }
-@media (max-width: 370px) { .certiquiz-app .field-row { grid-template-columns: 1fr; gap: 0; } .certiquiz-app .card { padding: 18px; } .certiquiz-app .actions .button { width: 100%; } .certiquiz-app .invite-code { grid-template-columns: minmax(0, 1fr) 94px; } .certiquiz-app .pin { font-size: 40px; } }
+@media (max-width: 370px) { .certiquiz-app .field-row { grid-template-columns: 1fr; gap: 0; } .certiquiz-app .card { padding: 18px; } .certiquiz-app .actions .button { width: 100%; } .certiquiz-app .invite-code { grid-template-columns: minmax(0, 1fr) 44px; } .certiquiz-app .pin { font-size: 40px; } }
 @media (prefers-reduced-motion: reduce) { .certiquiz-app .confetti { display: none; } .certiquiz-app *, .certiquiz-app *::before, .certiquiz-app *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }

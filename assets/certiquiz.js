@@ -99,7 +99,7 @@ function invitationQr(url) {
   if (typeof window.qrcode !== 'function') return '';
   const qr = window.qrcode(0, 'H');
   qr.addData(url); qr.make();
-  return `<figure class="invite-qr"><button class="invite-qr-toggle" type="button" data-invite-qr aria-pressed="false" aria-label="Ampliar código QR de invitación"><span class="invite-qr-code">${qr.createSvgTag({ cellSize: 4, margin: 10, scalable: true, title: 'Código QR de invitación', alt: 'Escanea para abrir la sala' })}</span></button><span class="invite-qr-logo" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none"><path d="M13 13h12a8 8 0 0 1 8 8v14H21a8 8 0 0 1-8-8Z" stroke="currentColor" stroke-width="3"/><path d="m19 24 4 4 9-10" stroke="currentColor" stroke-width="3"/></svg></span><figcaption data-invite-qr-caption>Escanea o selecciona para ampliar</figcaption></figure>`;
+  return `<figure class="invite-qr"><button class="invite-qr-toggle" type="button" data-invite-qr aria-pressed="false" aria-label="Ampliar código QR de invitación"><span class="invite-qr-code">${qr.createSvgTag({ cellSize: 4, margin: 10, scalable: true, title: 'Código QR de invitación', alt: 'Escanea para abrir la sala' })}</span></button><span class="invite-qr-logo" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none"><path d="M13 13h12a8 8 0 0 1 8 8v14H21a8 8 0 0 1-8-8Z" stroke="currentColor" stroke-width="3"/><path d="m19 24 4 4 9-10" stroke="currentColor" stroke-width="3"/></svg></span></figure>`;
 }
 
 function entry(role = selectedRole) {
@@ -334,7 +334,6 @@ function bindRoom() {
     const expanded = invitation.classList.toggle('qr-expanded');
     button.setAttribute('aria-pressed', String(expanded));
     button.setAttribute('aria-label', expanded ? 'Mostrar código de invitación' : 'Ampliar código QR de invitación');
-    invitation.querySelector('[data-invite-qr-caption]').textContent = expanded ? 'Selecciona para ver el código' : 'Escanea o selecciona para ampliar';
     announce(expanded ? 'Código QR ampliado.' : 'Código de invitación mostrado.');
   });
   document.querySelector('[data-copy]')?.addEventListener('click', event => {

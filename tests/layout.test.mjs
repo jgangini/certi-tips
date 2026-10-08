@@ -133,7 +133,7 @@ test("CertiQuiz renders a branded local invitation QR", () => {
   assert.match(css, /\.certiquiz-app \.pin\s*\{[^}]*font-size:\s*clamp\(42px, 6vw, 64px\);/);
   assert.match(script, /class="invite-qr-logo"/);
   assert.match(script, /data-invite-qr aria-pressed="false" aria-label="Ampliar código QR de invitación"/);
-  assert.match(script, /<figcaption data-invite-qr-caption>Escanea o selecciona para ampliar<\/figcaption>/);
+  assert.doesNotMatch(script, /data-invite-qr-caption|Escanea o selecciona para ampliar/);
   assert.match(script, /aria-hidden="true"/);
   assert.doesNotMatch(script, /Escanea para unirte|assets\/favicon\.svg/);
   assert.match(script, /const hostInvitation = `<div class="invite-overview"><div class="invite-code"><strong class="pin">/);
@@ -142,13 +142,14 @@ test("CertiQuiz renders a branded local invitation QR", () => {
   assert.match(script, /button\.setAttribute\('aria-pressed', String\(expanded\)\)/);
   assert.match(css, /\.certiquiz-app \.room-side\s*\{[^}]*display:\s*grid;[^}]*min-width:\s*0;/);
   assert.match(css, /\.certiquiz-app \.invite-overview\s*\{\s*width:\s*100%;/);
-  assert.match(css, /\.certiquiz-app \.invite-code\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) 132px;/);
+  assert.match(css, /\.certiquiz-app \.invite-code\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) 66px;/);
   assert.match(css, /\.certiquiz-app \.invite-code\.qr-expanded\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);[^}]*padding:\s*0;/);
   assert.match(css, /\.certiquiz-app \.invite-code\.qr-expanded \.pin\s*\{\s*display:\s*none;/);
+  assert.match(css, /\.certiquiz-app \.invite-code\.qr-expanded \.invite-qr\s*\{\s*width:\s*50%;\s*margin:\s*0 auto;/);
   assert.match(css, /\.certiquiz-app \.invite-qr-code\s*\{[^}]*overflow:\s*hidden;[^}]*border-radius:\s*14px;/);
   assert.match(css, /\.certiquiz-app \.invite-qr-code > svg\s*\{[^}]*display:\s*block;[^}]*width:\s*100%;[^}]*border-radius:\s*14px;[^}]*background:\s*#fff;/);
-  assert.match(css, /\.certiquiz-app \.invite-qr-logo\s*\{[^}]*position:\s*absolute;[^}]*width:\s*46px;[^}]*height:\s*46px;[^}]*border-radius:\s*12px;[^}]*background:\s*#fff;[^}]*color:\s*#111;/);
-  assert.match(css, /\.certiquiz-app \.invite-qr figcaption\s*\{[^}]*text-align:\s*center;/);
+  assert.match(css, /\.certiquiz-app \.invite-qr-logo\s*\{[^}]*position:\s*absolute;[^}]*width:\s*30px;[^}]*height:\s*30px;[^}]*border-radius:\s*8px;[^}]*background:\s*#fff;[^}]*color:\s*#111;/);
+  assert.match(css, /\.certiquiz-app \.invite-code\.qr-expanded \.invite-qr-logo svg\s*\{\s*width:\s*46px;\s*height:\s*46px;/);
   assert.match(css, /\.certiquiz-app \.option:has\(input:focus-visible\)\s*\{[^}]*outline:\s*3px solid var\(--accent\);/);
   assert.match(build, /node_modules", "qrcode-generator", "qrcode\.js"/);
 });
