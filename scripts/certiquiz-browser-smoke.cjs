@@ -146,7 +146,7 @@ async (page) => {
     });
     assert(await host.locator('script[src$="/certiquiz.js"]').getAttribute('src') === '/certi-tips/assets/certiquiz.js', 'CertiQuiz JavaScript is not hosted by CertiTips');
     assert(await host.locator('link[href$="/certiquiz.css"]').getAttribute('href') === '/certi-tips/assets/certiquiz.css', 'CertiQuiz CSS is not hosted by CertiTips');
-    assert(await host.locator('.welcome > .eyebrow').count() === 0, 'Entry still displays the removed CertiQuiz eyebrow');
+    assert(await host.locator('.welcome > :is(h1, .lead, .eyebrow)').count() === 0, 'Entry retains removed CertiQuiz heading, lead or eyebrow');
     const breadcrumb = host.getByRole('navigation', { name: 'Ruta de navegación' });
     assert(await breadcrumb.getByRole('link', { name: 'Home' }).getAttribute('href') === '/certi-tips/' && await breadcrumb.locator('[aria-current="page"]').textContent() === 'CertiQuiz', 'CertiQuiz lacks its home breadcrumb');
     const roleCards = host.locator('.role-options > .role-card');
@@ -232,7 +232,7 @@ async (page) => {
     await duration.fill(String(Number(await duration.getAttribute('max')) + 1));
     assert(await duration.evaluate(node => node.validity.rangeOverflow), 'Host duration allows values beyond the service limit');
     const code = await createRoom(host, 2, 10);
-    assert(await host.locator('.welcome h1').innerText() === 'CertiQuiz', 'Room creation lost the CertiQuiz header');
+    assert(await host.locator('.welcome .certiquiz-mark').innerText() === 'CertiQuiz', 'Room creation lost the CertiQuiz breadcrumb mark');
     const created = await snapshot(host, code);
     assert(created.role === 'host' && created.questionCount === 2 && created.secondsPerQuestion === 10 && /^\d{6}$/.test(code), 'Guest room did not preserve host settings or generate a PIN');
     assert(await host.locator('#stage-title').evaluate(node => node !== document.activeElement), 'Lobby title unexpectedly receives focus when entering the room');

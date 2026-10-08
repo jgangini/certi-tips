@@ -68,8 +68,11 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.match(script, /history\.replaceState\(null, '', `\$\{siteBase\}certiquiz\/\$\{role === 'host' \? '#host' : role === 'player' \? '#participant' : ''\}`\)/);
   assert.doesNotMatch(script, /role-action/);
   assert.doesNotMatch(script, /ORGANIZA LA PARTIDA|APRENDE CON TU EQUIPO/);
+  assert.doesNotMatch(script, /Practica certificaciones, comparte una sala y aprende con tu equipo\./);
+  assert.match(script, /const certiQuizBrand = 'Certi<span class="brand-accent">Quiz<\/span>';/);
   assert.match(script, /<nav class="certiquiz-breadcrumb" aria-label="Ruta de navegación">/);
-  assert.match(script, /<a href="\$\{siteBase\}certiquiz\/">CertiQuiz<\/a>/);
+  assert.match(script, /<a class="certiquiz-mark" href="\$\{siteBase\}certiquiz\/">\$\{certiQuizBrand\}<\/a>/);
+  assert.match(script, /<span class="certiquiz-mark" aria-current="page">\$\{certiQuizBrand\}<\/span>/);
   assert.match(script, /href="\$\{siteBase\}certiquiz\/#\$\{role === 'host' \? 'host' : 'participant'\}" data-entry-role="\$\{role\}">\$\{role === 'host' \? 'Anfitrión' : 'Participante'\}<\/a>/);
   assert.match(script, /document\.querySelector\('\[data-entry-role\]'\)\?\.addEventListener\('click', event => \{ event\.preventDefault\(\); if \(!busy\) entry\(event\.currentTarget\.dataset\.entryRole\); \}\);/);
   assert.match(script, /window\.addEventListener\('hashchange', \(\) => \{ if \(catalog && !busy\) entry\(routeRole\(\)\); \}\);/);
@@ -81,6 +84,7 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.match(css, /\.certiquiz-app \.role-card:is\(:hover, :focus-visible\)\s*\{[^}]*border-color:\s*var\(--accent\);/);
   assert.match(css, /\.certiquiz-app \.welcome\s*\{\s*margin:\s*28px 0 35px;/);
   assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb\s*\{[^}]*width:\s*100%;[^}]*padding:\s*18px 24px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*var\(--radius\);/);
+  assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb \.certiquiz-mark\s*\{[^}]*color:\s*var\(--ink\);[^}]*font-weight:\s*700;/);
   assert.match(siteCss, /\.search-toggle\s*\{[^}]*background:\s*var\(--paper\);/);
   assert.match(siteCss, /\.search-toggle kbd\s*\{[^}]*display:\s*inline-flex;[^}]*padding:\s*2px 5px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*4px;[^}]*background:\s*var\(--chrome-bg\);[^}]*font-size:\s*0\.62rem;/);
 });
