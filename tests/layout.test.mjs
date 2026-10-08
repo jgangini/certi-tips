@@ -78,12 +78,14 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.match(script, /window\.addEventListener\('hashchange', \(\) => \{ if \(catalog && !busy\) entry\(routeRole\(\)\); \}\);/);
   assert.match(script, /function roomHeader\(\) \{ return room\.status === 'lobby' \|\| room\.status === 'finished' \? welcome\(room\.role, true\) : ''; \}/);
   assert.match(script, /const joinForm = `<span class="eyebrow">INGRESO DE PARTICIPANTE<\/span><h2 id="form-title">Únete a la Sala<\/h2>/);
+  assert.match(script, /id="room-code" name="code" aria-label="Código de la sala"/);
   assert.match(script, /id="nickname"[^>]*maxlength="25"/);
   assert.ok(script.includes("nickname.value = nickname.value.replace(/[^\\p{L}\\p{N} ]/gu, '').slice(0, 25);"));
   assert.match(script, /const joinFacts = roomFacts\(12, 10\);/);
   assert.match(script, /<div class="actions join-actions">\$\{joinFacts\}<button class="button" type="submit">Entrar<\/button><\/div>/);
   assert.match(script, /function roomFacts\(questionCount, secondsPerQuestion\) \{ return `<div class="fact-row"><span><strong>\$\{questionCount\}<\/strong> preguntas<\/span><span><strong>\$\{secondsPerQuestion\} s<\/strong> por pregunta<\/span><\/div>`; \}/);
   assert.doesNotMatch(script, /Entrar a la sala|Tu alias aparecerá en la sala y en los resultados\./);
+  assert.doesNotMatch(script, /¿Ya tienes el código\? Solo falta tu nombre\./);
   assert.doesNotMatch(script, /data-change-role|Cambiar rol/);
   assert.match(css, /\.certiquiz-app \.role-card\s*\{[^}]*width:\s*100%;[^}]*cursor:\s*pointer;/);
   assert.match(css, /\.certiquiz-app \.role-icon\s*\{[^}]*flex:\s*0 0 64px;[^}]*width:\s*64px;[^}]*height:\s*64px;/);
@@ -94,6 +96,7 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb a\s*\{[^}]*color:\s*var\(--ink\);[^}]*font-weight:\s*inherit;/);
   assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb \.certiquiz-mark\s*\{[^}]*color:\s*var\(--ink\);[^}]*font-weight:\s*inherit;/);
   assert.match(css, /\.certiquiz-app \.player-entry input:focus-visible\s*\{\s*outline-color:\s*var\(--blue\);/);
+  assert.match(css, /\.certiquiz-app \.player-entry #room-code:focus-visible\s*\{\s*outline:\s*none;/);
   assert.match(css, /\.certiquiz-app \.player-entry \.join-actions\s*\{[^}]*justify-content:\s*space-between;[^}]*border-top:\s*1px solid var\(--line\);[^}]*margin-top:\s*24px;[^}]*padding-top:\s*20px;/);
   assert.match(css, /\.certiquiz-app \.player-entry \.join-actions \.fact-row\s*\{\s*margin:\s*0;\s*padding:\s*0;\s*border:\s*0;/);
   assert.match(css, /\.certiquiz-app \.player-entry \.join-actions \.button\s*\{\s*width:\s*140px;/);

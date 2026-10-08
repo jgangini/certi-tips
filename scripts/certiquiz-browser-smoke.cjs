@@ -71,15 +71,13 @@ async (page) => {
     });
     assert(focus.visible && focus.color === focus.accent && focus.width === '3px', `${label}: keyboard focus does not use the site's accent outline`);
   };
-  const blueFocus = async (tab, control, label) => {
+  const noFocusOutline = async (tab, control, label) => {
     await tab.keyboard.press('Tab'); await control.focus();
     const focus = await control.evaluate(node => {
-      const probe = document.createElement('span'); probe.style.color = 'var(--blue)'; node.parentElement.append(probe);
-      const blue = getComputedStyle(probe).color; probe.remove();
       const style = getComputedStyle(node);
-      return { visible: node.matches(':focus-visible'), color: style.outlineColor, width: style.outlineWidth, blue };
+      return { visible: node.matches(':focus-visible'), style: style.outlineStyle, width: style.outlineWidth };
     });
-    assert(focus.visible && focus.color === focus.blue && focus.width === '3px', `${label}: keyboard focus does not use the site's blue outline`);
+    assert(focus.visible && focus.style === 'none' && focus.width === '0px', `${label}: selected input retains a focus outline`);
   };
   const join = async (tab, code, nickname) => {
     await tab.goto(`${appUrl}?room=${code}`);
@@ -204,7 +202,7 @@ async (page) => {
       return { aligned: Math.abs(action.left - factsBox.left) < 1 && Math.abs(action.right - enterBox.right) < 1, border: getComputedStyle(node).borderTopWidth, buttonWidth: enterBox.width, wide: enter.classList.contains('wide'), facts: facts.textContent.replace(/\s+/g, ' ').trim() };
     });
     assert(participantAction.aligned && participantAction.border === '1px' && participantAction.buttonWidth === 140 && !participantAction.wide && participantAction.facts === '12 preguntas10 s por pregunta', 'Participant facts do not match the compact lobby footer');
-    await blueFocus(host, host.getByLabel('Código de la sala'), 'Participant room code');
+    await noFocusOutline(host, host.getByLabel('Código de la sala'), 'Participant room code');
     const participantNickname = host.getByLabel('Tu nombre o alias');
     await participantNickname.fill('Ana! 123$');
     assert(await participantNickname.inputValue() === 'Ana 123', 'Participant nickname retains symbols');
