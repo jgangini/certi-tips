@@ -1,6 +1,6 @@
 <!DOCTYPE html><!-- hyperframes-registry-item: hw-pipeline -->
 
-<html lang="es">
+<html lang="es" data-composition-variables='[{"id":"theme","type":"enum","label":"Theme","default":"light","options":[{"value":"light","label":"Light"},{"value":"dark","label":"Dark"}]}]'>
   <head>
     <meta charset="utf-8">
   </head>
@@ -25,6 +25,13 @@
           color: var(--ink);
           /* ponytail: system-ui keeps the embed offline and close to Inter; bundle Inter locally when exact brand metrics matter. */
           font-family: system-ui, sans-serif;
+        }
+        #hw-pl-root[data-theme="dark"] {
+          --paper: #1b1d25;
+          --pale: #262730;
+          --ink: #fafafa;
+          --heading: #c5c8d2;
+          --muted: #c5c8d2;
         }
         #hw-pl-scene, #hw-pl-svg, #hw-pl-base-labels, #hw-pl-branch-labels {
           position: absolute;
@@ -118,6 +125,8 @@
           const branchSvg = document.getElementById("hw-pl-branch-svg");
           const baseLabels = document.getElementById("hw-pl-base-labels");
           const branchLabels = document.getElementById("hw-pl-branch-labels");
+          const root = document.getElementById("hw-pl-root");
+          if (window.__hyperframes.getVariables().theme === "dark") root.dataset.theme = "dark";
           const tl = gsap.timeline({ paused: true });
           const base = [
             { title: "OCI Foundations Associate", label: "OCI", x: 115, at: 1.0 },

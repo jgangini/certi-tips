@@ -8,7 +8,15 @@ if (footer) new ResizeObserver(() => {
 
 const course = document.body.dataset.course;
 const heroFlow = document.querySelector("[data-hero-flow]");
+const syncHeroFlowTheme = () => {
+  const source = heroFlow?.querySelector("source");
+  const src = document.documentElement.dataset.theme === "dark" ? heroFlow?.dataset.darkSrc : heroFlow?.dataset.lightSrc;
+  if (!source || !src || source.getAttribute("src") === src) return;
+  source.setAttribute("src", src);
+  heroFlow.load();
+};
 if (heroFlow) {
+  syncHeroFlowTheme();
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   if (reducedMotion.matches) heroFlow.removeAttribute("autoplay");
   heroFlow.addEventListener("loadedmetadata", () => {
@@ -79,6 +87,7 @@ function syncTheme() {
   const dark = document.documentElement.dataset.theme === "dark";
   themeToggle?.setAttribute("aria-pressed", String(dark));
   themeToggle?.setAttribute("aria-label", dark ? "Activar modo claro" : "Activar modo oscuro");
+  syncHeroFlowTheme();
 }
 themeToggle?.addEventListener("click", () => {
   const dark = document.documentElement.dataset.theme !== "dark";

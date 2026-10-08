@@ -538,7 +538,10 @@ test("home shows each FY27 certification once and links all three available guid
   assert.doesNotMatch(html, /assets\/motion\/certification-path\.mp4/);
   const withMotion = homeBody(catalog, true);
   assert.match(withMotion, /assets\/motion\/certification-path\.mp4/);
-  assert.match(withMotion, /data-hero-flow autoplay loop muted playsinline/);
+  assert.match(withMotion, /data-hero-flow data-light-src="\/certi-tips\/assets\/motion\/certification-path\.mp4" data-dark-src="\/certi-tips\/assets\/motion\/certification-path-dark\.mp4" autoplay loop muted playsinline/);
+  const siteScript = readFileSync(new URL("../assets/site.js", import.meta.url), "utf8");
+  assert.match(siteScript, /const syncHeroFlowTheme = \(\) => \{[\s\S]*?heroFlow\.load\(\);/);
+  assert.match(siteScript, /function syncTheme\(\) \{[\s\S]*?syncHeroFlowTheme\(\);/);
   assert.doesNotMatch(withMotion, /data-hero-replay|Repetir animación/);
   assert.match(withMotion, /3 certificaciones de nivel 1/);
   assert.match(html, /OCI AI Foundations Associate/);
