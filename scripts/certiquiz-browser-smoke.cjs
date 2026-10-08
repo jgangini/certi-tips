@@ -292,6 +292,20 @@ async (page) => {
     assert(invitationCodeLayout.centered && invitationCodeLayout.fontSize === '72px' && invitationCodeLayout.lineHeight === '72px', 'Invitation PIN is not enlarged and aligned with its QR code');
     const invitationQr = host.locator('.invite-qr');
     assert(await invitationQr.locator('svg[role="img"]').count() === 1 && await invitationQr.locator('.invite-qr-logo svg').count() === 1 && await invitationQr.locator('figcaption').count() === 0, 'Invitation QR lacks its CertiTips mark or retains removed copy');
+    assert(await invitationQr.locator('.invite-qr-logo svg rect[fill="currentColor"]').count() === 1 && await invitationQr.locator('.invite-qr-logo svg path[stroke="#fff"]').count() === 2, 'Invitation QR does not use the high-contrast CertiTips mark');
+    const compactQrLogo = await invitationQr.locator('.invite-qr-logo').evaluate(node => {
+      const svg = node.querySelector('svg');
+      return { logo: getComputedStyle(node).width, icon: getComputedStyle(svg).width };
+    });
+    assert(compactQrLogo.logo === '24px' && compactQrLogo.icon === '21px', 'Compact QR mark leaves too much white protection');
+    const qrToggle = invitationQr.locator('[data-invite-qr]');
+    await qrToggle.click();
+    const expandedQrLogo = await invitationQr.locator('.invite-qr-logo').evaluate(node => {
+      const svg = node.querySelector('svg');
+      return { logo: getComputedStyle(node).width, icon: getComputedStyle(svg).width, expanded: node.closest('.invite-code').classList.contains('qr-expanded') };
+    });
+    assert(expandedQrLogo.expanded && expandedQrLogo.logo === '48px' && expandedQrLogo.icon === '42px', 'Expanded QR mark is not scaled to its protected logo area');
+    await qrToggle.click();
     assert(await host.locator('.lobby-footer').evaluate(node => {
       const facts = node.querySelector('.fact-row').getBoundingClientRect();
       const actions = node.querySelector('.game-actions').getBoundingClientRect();

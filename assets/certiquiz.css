@@ -105,13 +105,13 @@ html[data-theme="dark"] .certiquiz-app { --success: #9bd8b8; --success-bg: #1b35
 .certiquiz-app .invite-qr-toggle:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
 .certiquiz-app .invite-qr-code { display: block; overflow: hidden; border-radius: 14px; }
 .certiquiz-app .invite-qr-code > svg { display: block; width: 100%; height: auto; border-radius: 14px; background: #fff; }
-.certiquiz-app .invite-qr-logo { position: absolute; top: 50%; left: 50%; display: grid; place-items: center; width: 28px; height: 28px; transform: translate(-50%, -50%); border-radius: 7px; background: #fff; color: #111; pointer-events: none; }
-.certiquiz-app .invite-qr-logo svg { width: 26px; height: 26px; }
+.certiquiz-app .invite-qr-logo { position: absolute; top: 50%; left: 50%; display: grid; place-items: center; width: 24px; height: 24px; transform: translate(-50%, -50%); border-radius: 6px; background: #fff; color: #111; pointer-events: none; }
+.certiquiz-app .invite-qr-logo svg { width: 21px; height: 21px; }
 .certiquiz-app .invite-code.qr-expanded { grid-template-columns: minmax(0, 1fr); padding: 0; }
 .certiquiz-app .invite-code.qr-expanded .pin { display: none; }
 .certiquiz-app .invite-code.qr-expanded .invite-qr { width: 50%; margin: 0 auto; }
-.certiquiz-app .invite-code.qr-expanded .invite-qr-logo { width: 64px; height: 64px; border-radius: 14px; }
-.certiquiz-app .invite-code.qr-expanded .invite-qr-logo svg { width: 56px; height: 56px; }
+.certiquiz-app .invite-code.qr-expanded .invite-qr-logo { width: 48px; height: 48px; border-radius: 12px; }
+.certiquiz-app .invite-code.qr-expanded .invite-qr-logo svg { width: 42px; height: 42px; }
 .certiquiz-app .invite-link { display: flex; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 .certiquiz-app .invite-link input { min-width: 0; border: 0; border-radius: 10px 0 0 10px; background: transparent; font-size: 14px; font-weight: 650; }
 .certiquiz-app .invite-link button { display: grid; place-items: center; flex: 0 0 52px; min-height: 52px; padding: 12px; border: 0; border-left: 1px solid var(--line); border-radius: 0 10px 10px 0; background: var(--paper); color: var(--muted); cursor: pointer; }
