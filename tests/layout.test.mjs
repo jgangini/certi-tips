@@ -144,7 +144,13 @@ test("CertiQuiz host lobby keeps facts beside its actions and uses a compact con
   assert.doesNotMatch(script, /500–1000 puntos por acierto/);
   assert.match(script, /const hostFooter = `<div class="lobby-footer">\$\{facts\}<div class="actions game-actions">/);
   assert.match(script, /room\.status !== 'lobby' && !document\.querySelector\('\[data-confirm\]\[open\]'\)/);
+  assert.match(script, /const warningNoticeIcon = '<svg viewBox="-0\.5 0 25 25"/);
+  assert.match(script, /const errorNoticeIcon = '<svg viewBox="0 0 64 64"/);
+  assert.match(script, /function showWarning\(message\) \{ showNotice\(message, 'warning'\); \}/);
+  assert.match(script, /showWarning\('La sala o tu acceso ya no están disponibles/);
   assert.match(css, /\.certiquiz-app \.lobby-footer\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*justify-content:\s*space-between;/);
+  assert.match(css, /\.certiquiz-app \.notice > svg\s*\{[^}]*width:\s*20px;[^}]*height:\s*20px;/);
+  assert.match(css, /\.certiquiz-app \.warning\s*\{[^}]*color:\s*var\(--warning\);[^}]*background:\s*var\(--warning-bg\);/);
   assert.match(css, /\.certiquiz-app \.confirmation\s*\{[^}]*width: min\(400px, calc\(100vw - 32px\)\);/);
   assert.match(css, /\.certiquiz-app \.confirmation-icon\s*\{[^}]*width: 76px;[^}]*height: 76px;/);
   assert.match(css, /\.certiquiz-app \.confirmation-actions \.button\s*\{[^}]*min-height: 52px;/);
