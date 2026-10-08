@@ -67,6 +67,7 @@ await mkdir(output, { recursive: true });
 await cp(path.join(root, "assets"), path.join(output, "assets"), {
   recursive: true,
 });
+await cp(path.join(root, "node_modules", "qrcode-generator", "qrcode.js"), path.join(output, "assets", "qrcode-generator.js"));
 // SVGs loaded through <img> cannot fetch sibling images; embed local PNG illustrations at build time.
 const diagramDirectory = path.join(output, "assets/diagrams");
 for (const file of await readdir(diagramDirectory)) {

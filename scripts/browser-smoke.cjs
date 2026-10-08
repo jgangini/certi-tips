@@ -239,7 +239,7 @@ async (page) => {
   assert(!await page.locator('.hero-flow').evaluate(element => element.classList.contains('is-unavailable')), 'Animated path fell back to static text');
   const palette = await page.evaluate(() => {
     const style = selector => getComputedStyle(document.querySelector(selector));
-    return { accent: style('.home-hero .eyebrow').color, github: style('.github-link').color,
+    return { oracleIcon: style('.home-hero .oracle-badge svg').color, github: style('.github-link').color,
       githubBackground: style('.github-link').backgroundColor,
       githubIcon: style('.github-link svg').color,
       level: style('.certification-level').color,
@@ -249,7 +249,7 @@ async (page) => {
       footer: style('.site-footer').backgroundColor,
       toggleText: document.querySelector('[data-theme-toggle]').textContent.trim() };
   });
-  assert(palette.accent === 'rgb(199, 70, 52)' && palette.level === 'rgb(199, 70, 52)', 'Oracle corporate red is not applied to labels and levels');
+  assert(palette.oracleIcon === 'rgb(199, 70, 52)' && palette.level === 'rgb(199, 70, 52)', 'Oracle corporate red is not applied to the badge and levels');
   assert(palette.github === 'rgb(255, 255, 255)' && palette.githubIcon === palette.github && palette.githubBackground === 'rgb(199, 70, 52)' && await page.getByRole('link', { name: 'GitHub', exact: true }).count() === 1, 'GitHub button needs red background, white icon and concise label');
   assert(palette.guide === 'rgb(255, 255, 255)' && palette.guideIcon === palette.guide, 'Red guide button needs white text and icon');
   assert(palette.header === 'rgb(241, 239, 237)' && palette.footer === palette.header && palette.body !== palette.header, 'Header and footer are not differentiated by neutral gray');

@@ -83,7 +83,7 @@ async (page) => {
   const createRoom = async (host, count, seconds) => {
     await host.getByLabel('Número de preguntas', { exact: true }).fill(String(count));
     await host.getByLabel('Segundos por pregunta').fill(String(seconds));
-    await host.getByRole('button', { name: 'Generar Sala', exact: true }).click();
+    await host.getByRole('button', { name: 'Comenzar', exact: true }).click();
     await host.locator('[data-start]').waitFor();
     assert(await host.locator('.room-header, [data-player-count]').count() === 0, 'Lobby still shows the secondary heading or team count');
     assert(await host.locator('[data-players]').evaluate(node => !node.closest('.card') && node.childElementCount === 0 && !node.textContent.trim()), 'Empty roster still shows a card or waiting message');
@@ -92,6 +92,27 @@ async (page) => {
     return currentRoomCode;
   };
   try {
+    const opening = await createPage({ width: 1280, height: 900 });
+    await opening.route(`${apiOrigin}/api/catalog`, async route => {
+      await new Promise(resolve => setTimeout(resolve, 250));
+      await route.continue();
+    });
+    const openingLoad = opening.goto(appUrl);
+    const loading = opening.locator('.loading-full');
+    await loading.waitFor();
+    const loadingLayout = await loading.evaluate(async node => {
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const rect = node.getBoundingClientRect();
+      const footer = document.querySelector('.site-footer').getBoundingClientRect();
+      const header = document.querySelector('.site-header').getBoundingClientRect();
+      const style = getComputedStyle(node);
+      return { border: style.borderTopWidth, textAlign: style.textAlign, eyebrow: node.querySelector('.eyebrow'), width: rect.width, viewport: innerWidth, top: rect.top, headerBottom: header.bottom, bottom: rect.bottom, footerTop: footer.top };
+    });
+    assert(loadingLayout.border === '0px' && loadingLayout.textAlign === 'center' && !loadingLayout.eyebrow && loadingLayout.width === loadingLayout.viewport && Math.abs(loadingLayout.top - loadingLayout.headerBottom) < 1 && Math.abs(loadingLayout.bottom - loadingLayout.footerTop) < 1, 'Initial loading does not fill the centered borderless view');
+    await openingLoad;
+    await opening.locator('[data-role="host"]').waitFor();
+    checks.push('Initial loading: centered full view without a card, border or eyebrow');
+
     const host = await createPage({ width: 1280, height: 900 });
     const first = await createPage({ width: 390, height: 844 });
     const second = await createPage({ width: 320, height: 800 });
@@ -100,8 +121,14 @@ async (page) => {
     await host.getByRole('heading', { name: 'Volvamos a intentarlo.' }).waitFor();
     const failureCard = host.locator('.loading-error');
     assert(await failureCard.locator('[role="alert"]').count() === 1 && await host.locator('#app [role="alert"]').count() === 1, 'Initial failure has a duplicate/global error banner');
+    assert(await failureCard.locator('.eyebrow').count() === 0, 'Initial failure retains the CertiQuiz eyebrow');
+    assert(await failureCard.getByRole('alert').textContent() === 'CertiQuiz no se pudo cargar. Revisa tu conexión e inténtalo de nuevo.', 'Initial failure does not identify CertiQuiz clearly');
     assert(await failureCard.locator('button').count() === 0 && await failureCard.locator('kbd').textContent() === 'F5', 'Initial failure should explain reload instead of offering another connect button');
-    assert(await failureCard.evaluate(node => getComputedStyle(node).textAlign) === 'center', 'Initial failure is not centered');
+    const failureLayout = await failureCard.evaluate(node => {
+      const style = getComputedStyle(node);
+      return { border: style.borderTopWidth, width: node.getBoundingClientRect().width, viewport: innerWidth, textAlign: style.textAlign };
+    });
+    assert(failureLayout.border === '0px' && failureLayout.width === failureLayout.viewport && failureLayout.textAlign === 'center', 'Initial failure does not fill the view cleanly without a border');
     const failureRocket = failureCard.locator('h1 svg');
     const rocketPaths = await failureRocket.locator('path').evaluateAll(nodes => nodes.map(node => node.getAttribute('d')));
     assert(await failureRocket.getAttribute('viewBox') === '0 0 1920 1920' && await failureRocket.getAttribute('aria-hidden') === 'true', 'Initial failure is missing the decorative rocket');
@@ -119,6 +146,15 @@ async (page) => {
     });
     assert(await host.locator('script[src$="/certiquiz.js"]').getAttribute('src') === '/certi-tips/assets/certiquiz.js', 'CertiQuiz JavaScript is not hosted by CertiTips');
     assert(await host.locator('link[href$="/certiquiz.css"]').getAttribute('href') === '/certi-tips/assets/certiquiz.css', 'CertiQuiz CSS is not hosted by CertiTips');
+    assert(await host.locator('.welcome > .eyebrow').count() === 0, 'Entry still displays the removed CertiQuiz eyebrow');
+    const breadcrumb = host.getByRole('navigation', { name: 'Ruta de navegación' });
+    assert(await breadcrumb.getByRole('link', { name: 'Inicio' }).getAttribute('href') === '/certi-tips/' && await breadcrumb.locator('[aria-current="page"]').textContent() === 'CertiQuiz', 'CertiQuiz lacks its home breadcrumb');
+    const roleCards = host.locator('.role-options > .role-card');
+    assert(await roleCards.count() === 2 && await roleCards.evaluateAll(nodes => nodes.every(node => node.tagName === 'BUTTON' && node.getAttribute('data-role'))), 'Role choices are not full-card buttons');
+    assert(await host.locator('.role-card .role-action').count() === 0, 'Role cards retain duplicate action buttons');
+    assert(await host.locator('.role-card > .eyebrow').count() === 0, 'Role cards still display their removed eyebrows');
+    const search = host.locator('.search-toggle');
+    assert(await search.evaluate(node => getComputedStyle(node).backgroundColor) === 'rgb(255, 255, 255)', 'Search control does not have a white background in the light theme');
     const apiSurface = await host.evaluate(async apiOrigin => {
       const root = await fetch(`${apiOrigin}/`, { credentials: 'include' });
       const oldAsset = await fetch(`${apiOrigin}/app.js`, { credentials: 'include' });
@@ -146,7 +182,8 @@ async (page) => {
     await host.locator('#join-form [data-error]').waitFor({ state: 'visible' });
     assert(await host.locator('[data-error]').evaluate(node => Boolean(node.closest('#join-form') && node.closest('.card'))), 'Invalid PIN error appeared outside its form/card');
     assert(await host.locator('.certiquiz-app > [role="alert"]').count() === 0, 'A global error banner remains');
-    await host.locator('[data-change-role]').click();
+    await host.goto(appUrl);
+    await host.locator('[data-role="host"]').waitFor();
     await host.locator('[data-role="host"]').focus(); await host.keyboard.press('Enter');
     const coursePicker = host.locator('.course-picker');
     const courseSummary = coursePicker.locator('summary#course');
@@ -156,6 +193,10 @@ async (page) => {
     assert(await host.getByLabel('Segundos por pregunta').inputValue() === '10', 'Host duration is not ten seconds by default');
     assert((await host.locator('#create-form .hint').innerText()).includes('Hasta 500 participantes'), 'Host hint does not advertise the 500-participant limit');
     assert(await host.locator('#create-form > ol > li.certification-item').count() === 4 && await host.locator('#create-form > ol > li:last-child.setup-actions .certification-number').count() === 1, 'Generate action is not the fourth numbered setup step');
+    const setupAction = host.locator('#create-form .setup-actions');
+    assert(await setupAction.locator('.setup-label').textContent() === 'Generar Sala' && await setupAction.getByRole('button', { name: 'Comenzar', exact: true }).locator('svg').count() === 0, 'Host setup action lacks its title or retains the room icon');
+    const setupWidth = await setupAction.evaluate(node => ({ button: node.querySelector('button').getBoundingClientRect().width, input: document.querySelector('#seconds').getBoundingClientRect().width }));
+    assert(Math.abs(setupWidth.button - setupWidth.input) < 1, 'Host setup action button does not match the numeric input width');
     await blueFocus(host, host.getByLabel('Número de preguntas', { exact: true }), 'Dark host form');
     checks.push('Keyboard role selection, one form, inline PIN error, no key, default ten seconds, limit500 and standard blue focus');
 
@@ -188,6 +229,12 @@ async (page) => {
     const confirmation = host.locator('dialog[data-confirm]');
     assert(await confirmation.evaluate(node => node.open && node.matches(':modal')), 'Room exit did not open a native modal');
     assert(await confirmation.locator('[data-confirm-no]').evaluate(node => node === document.activeElement), 'Destructive confirmation did not focus Cancel');
+    const confirmationSize = await confirmation.evaluate(node => ({
+      width: node.getBoundingClientRect().width,
+      icon: node.querySelector('.confirmation-icon').getBoundingClientRect().width,
+      action: node.querySelector('.confirmation-actions .button').getBoundingClientRect().height
+    }));
+    assert(confirmationSize.width <= 400 && confirmationSize.icon <= 76 && confirmationSize.action >= 44, 'Room exit confirmation is too large or loses a usable action target');
     await confirmation.locator('[data-confirm-no]').click(); await confirmation.waitFor({ state: 'hidden' });
     assert(await exitRoom.evaluate(node => node === document.activeElement), 'Cancelling room exit did not restore focus');
     checks.push('Anonymous room creation, generated PIN/settings, HttpOnly cookies, host refresh and Salir before Comenzar with cancellable native modal');
@@ -196,6 +243,8 @@ async (page) => {
     const copyButton = host.locator('.invite-link [data-copy]');
     assert(await address.inputValue() === invite && await address.evaluate(node => node.readOnly), 'Invitation field is not readonly or has the wrong site URL');
     assert(await host.locator('.room-code').count() === 0 && await host.locator('.pin').textContent() === code, 'The header repeats the PIN or the primary PIN disappeared');
+    const invitationQr = host.locator('.invite-qr');
+    assert(await invitationQr.locator('svg[role="img"]').count() === 1 && await invitationQr.locator('.invite-qr-logo img[src$="/assets/favicon.svg"]').count() === 1, 'Invitation QR or its CertiTips mark is missing');
     for (const theme of ['dark', 'light']) {
       if (theme === 'light') await host.getByRole('button', { name: 'Activar modo claro' }).click();
       for (const width of [1280, 390, 320]) {
@@ -432,6 +481,18 @@ async (page) => {
     assert(await link.getAttribute('target') === null, 'CertiQuiz opens an unwanted second tab');
     assert(await link.locator('svg').getAttribute('viewBox') === '0 0 1920 1920', 'Home button is missing the requested rocket');
     assert(JSON.stringify(await link.locator('svg path').evaluateAll(nodes => nodes.map(node => node.getAttribute('d')))) === JSON.stringify(rocketPaths), 'Initial failure changed the requested rocket paths');
+    const homeDetails = await host.evaluate(() => {
+      const flow = document.querySelector('.hero-flow');
+      const previous = document.querySelector('[data-group-prev] svg path');
+      const next = document.querySelector('[data-group-next] svg path');
+      const quizLink = document.querySelector('.certiquiz-link');
+      const probe = document.createElement('i'); probe.style.color = 'var(--red)'; document.body.append(probe);
+      const red = getComputedStyle(probe).color; probe.remove();
+      return { flowBorder: getComputedStyle(flow).borderTopWidth, previous: previous?.getAttribute('d'), next: next?.getAttribute('d'), quizBorder: getComputedStyle(quizLink).borderTopColor, red };
+    });
+    assert(homeDetails.flowBorder === '1px', 'Suggested certification flow lacks the section-style border');
+    assert(homeDetails.previous === 'M6 12H18M6 12L11 7M6 12L11 17' && homeDetails.next === 'M6 12H18M18 12L13 7M18 12L13 17', 'Carousel arrows do not use the requested arrow paths');
+    assert(homeDetails.quizBorder === homeDetails.red, 'CertiQuiz home button border is not visible in the accent color');
     for (const width of [1280, 390, 320]) { await host.setViewportSize({ width, height: 900 }); await geometry(host, `Home actions ${width}px`); }
     await link.click();
     await host.waitForURL(appUrl);

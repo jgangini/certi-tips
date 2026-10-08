@@ -364,7 +364,7 @@ html[data-theme="dark"] .theme-moon { display: none; }
   padding: 8px 12px;
   border: 1px solid var(--line);
   border-radius: 7px;
-  background: var(--sidebar-bg);
+  background: var(--paper);
   color: var(--ink);
   font-size: 0.8rem;
   text-align: left;
@@ -372,6 +372,12 @@ html[data-theme="dark"] .theme-moon { display: none; }
 .search-toggle:hover { border-color: var(--red); }
 .search-toggle kbd {
   margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--hover);
   color: var(--muted);
   font-size: 0.68rem;
   white-space: nowrap;
@@ -474,10 +480,21 @@ html[data-theme="dark"] .theme-moon { display: none; }
   padding: 66px 0 48px;
 }
 .hero-copy { min-width: 0; }
-.home-hero .eyebrow {
-  color: var(--accent);
-  font-size: 0.64rem;
+.home-hero .oracle-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid #353535;
+  border-radius: 8px;
+  background: #171717;
+  color: #f2f2f2;
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1;
 }
+.home-hero .oracle-badge svg { width: 27px; height: 27px; flex: 0 0 auto; color: var(--red); }
 .home-hero h1 {
   font-size: clamp(2.6rem, 4.4vw, 3.7rem);
   line-height: 1.08;
@@ -496,7 +513,7 @@ html[data-theme="dark"] .theme-moon { display: none; }
   position: relative;
   isolation: isolate;
   color: #8f2c25;
-  border: 1px solid rgba(255, 255, 255, .86);
+  border: 1px solid var(--red);
   background: linear-gradient(135deg, rgba(255, 255, 255, .88), rgba(255, 231, 222, .56) 55%, rgba(243, 228, 255, .64));
   -webkit-backdrop-filter: blur(16px) saturate(160%);
   backdrop-filter: blur(16px) saturate(160%);
@@ -516,12 +533,12 @@ html[data-theme="dark"] .theme-moon { display: none; }
 }
 .hero-actions .certiquiz-link:is(:hover, :focus-visible) {
   transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 1);
+  border-color: var(--red-dark);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .75), 0 4px 12px rgba(199, 70, 52, .12), 0 0 16px rgba(231, 131, 108, .16);
 }
 html[data-theme="dark"] .hero-actions .certiquiz-link {
   color: #ffe9df;
-  border-color: rgba(255, 217, 199, .3);
+  border-color: rgba(255, 217, 199, .65);
   background: linear-gradient(135deg, rgba(255, 255, 255, .13), rgba(199, 70, 52, .18) 55%, rgba(146, 91, 180, .2));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 3px 8px rgba(0, 0, 0, .2), 0 0 12px rgba(223, 107, 78, .09);
 }
@@ -538,6 +555,7 @@ html[data-theme="dark"] .hero-actions .certiquiz-link:is(:hover, :focus-visible)
   min-width: 0;
   margin: 0;
   background: #fff;
+  border: 1px solid var(--line);
   border-radius: var(--radius);
   overflow: hidden;
 }

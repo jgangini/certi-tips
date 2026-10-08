@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import vm from "node:vm";
 import MarkdownIt from "markdown-it";
 import { layout, sidebar, homeBody, certiquizBody } from "../scripts/layout.mjs";
 
@@ -46,9 +47,36 @@ test("sharing uses an English Oracle overview and a public PNG icon on every pag
 });
 test("home keeps CertiQuiz beside GitHub inside the site in the same tab", () => {
   const html = homeBody(site);
+  const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
   assert.match(html, /class="hero-actions"><a class="button github-link"[^]*?<a class="button button-secondary certiquiz-link" href="\/certi-tips\/certiquiz\/">/);
   assert.match(html, /certiquiz-link"[^>]*><svg viewBox="0 0 1920 1920" width="20" height="20" fill="currentColor"[^]*?m746\.255 1466\.764/);
   assert.doesNotMatch(html.match(/<a class="button button-secondary certiquiz-link"[^>]*>/)[0], /target=/);
+  assert.match(css, /\.hero-actions \.certiquiz-link\s*\{[^}]*border:\s*1px solid var\(--red\);/);
+});
+test("CertiQuiz role choices are full-card buttons without duplicate actions", () => {
+  const script = readFileSync(new URL("../assets/certiquiz.js", import.meta.url), "utf8");
+  const css = readFileSync(new URL("../assets/certiquiz.css", import.meta.url), "utf8");
+  const siteCss = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
+  assert.match(script, /<button class="card join-card role-card" type="button" data-role="host" aria-label="Crear una partida como anfitrión">/);
+  assert.match(script, /<button class="card join-card role-card" type="button" data-role="player" aria-label="Unirme a una partida como participante">/);
+  assert.doesNotMatch(script, /role-action/);
+  assert.doesNotMatch(script, /ORGANIZA LA PARTIDA|APRENDE CON TU EQUIPO/);
+  assert.match(script, /<nav class="certiquiz-breadcrumb" aria-label="Ruta de navegación"><a href="\$\{siteBase\}">Inicio<\/a><span aria-hidden="true">\/<\/span><span aria-current="page">CertiQuiz<\/span><\/nav>/);
+  assert.doesNotMatch(script, /data-change-role|Cambiar rol/);
+  assert.match(css, /\.certiquiz-app \.role-card\s*\{[^}]*width:\s*100%;[^}]*cursor:\s*pointer;/);
+  assert.match(css, /\.certiquiz-app \.role-card:is\(:hover, :focus-visible\)\s*\{[^}]*border-color:\s*var\(--accent\);/);
+  assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb\s*\{[^}]*border-top:\s*1px solid var\(--line\);/);
+  assert.match(siteCss, /\.search-toggle\s*\{[^}]*background:\s*var\(--paper\);/);
+  assert.match(siteCss, /\.search-toggle kbd\s*\{[^}]*display:\s*inline-flex;[^}]*padding:\s*3px 6px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*999px;[^}]*background:\s*var\(--hover\);/);
+});
+test("CertiQuiz host setup labels the room step and aligns its submit control", () => {
+  const script = readFileSync(new URL("../assets/certiquiz.js", import.meta.url), "utf8");
+  const css = readFileSync(new URL("../assets/certiquiz.css", import.meta.url), "utf8");
+  assert.match(script, /<li class="certification-item setup-actions"><div><span class="certification-number" aria-hidden="true"><\/span><span class="setup-label">Generar Sala<\/span><p class="hint">Hasta \$\{limits\.maxPlayers\}/);
+  assert.match(script, /<button class="button" type="submit" \$\{catalog\.courses\.length \? '' : 'disabled'\}>Comenzar<\/button>/);
+  assert.doesNotMatch(script, /\$\{roomIcon\} Generar Sala/);
+  assert.match(css, /\.certiquiz-app \.host-entry \.setup-actions \.button\s*\{\s*width:\s*140px;\s*justify-self:\s*end;/);
+  assert.match(css, /@media \(max-width: 720px\) \{ \.certiquiz-app \.host-entry \.setup-actions \.button \{ width: 100%; \} \}/);
 });
 test("CertiQuiz shares site navigation and theme without a course sidebar", () => {
   const html = layout({ site, course, page: { slug: 'certiquiz', title: 'CertiQuiz', description: 'Practica en equipo.' }, body: certiquizBody('https://api.example.test') });
@@ -59,15 +87,45 @@ test("CertiQuiz shares site navigation and theme without a course sidebar", () =
   assert.match(html, /class="site-footer"/);
   assert.match(html, /data-theme-toggle/);
   assert.match(html, /src="\/certi-tips\/assets\/site\.js"/);
+  assert.match(html, /src="\/certi-tips\/assets\/qrcode-generator\.js"/);
   assert.match(html, /src="\/certi-tips\/assets\/certiquiz\.js"/);
   assert.match(html, /href="\/certi-tips\/assets\/certiquiz\.css"/);
   assert.match(html, /data-api-origin="https:\/\/api\.example\.test"/);
-  assert.match(html, /<div id="app" aria-busy="true"><section class="card loading">/);
+  assert.match(html, /<div id="app" aria-busy="true"><section class="loading loading-full"><h1>Preparando tu próxima partida…<\/h1><p role="status">Conectando con la sala de práctica\.<\/p><\/section>/);
+  const certiquizCss = readFileSync(new URL("../assets/certiquiz.css", import.meta.url), "utf8");
+  assert.match(certiquizCss, /\.certiquiz-app \.loading-full\s*\{[^}]*width:\s*100%;[^}]*min-height:\s*calc\(100dvh - var\(--header\) - var\(--footer-height\)\);[^}]*border:\s*0;/);
   assert.doesNotMatch(certiquizBody('https://api.example.test'), /id="(?:error|connection|announcement)"/);
   const errorRocket = certiquizBody('https://api.example.test').match(/<template id="certiquiz-rocket">([^]*?)<\/template>/)[1];
   const homeRocket = homeBody(site).match(/certiquiz-link"[^>]*>(<svg[^]*?<\/svg>)/)[1];
   assert.deepEqual([...errorRocket.matchAll(/<path d="([^"]+)"/g)].map(match => match[1]), [...homeRocket.matchAll(/<path d="([^"]+)"/g)].map(match => match[1]));
   assert.doesNotMatch(html, /id="course-navigation"|class="menu-toggle"|src="[^\"]*\/quiz\.js"/);
+});
+test("CertiQuiz renders a local invitation QR with its own logo", () => {
+  const script = readFileSync(new URL("../assets/certiquiz.js", import.meta.url), "utf8");
+  const css = readFileSync(new URL("../assets/certiquiz.css", import.meta.url), "utf8");
+  const build = readFileSync(new URL("../scripts/build.mjs", import.meta.url), "utf8");
+  assert.match(script, /window\.qrcode\(0, 'H'\)/);
+  assert.match(script, /class="invite-qr-code"/);
+  assert.match(script, /assets\/favicon\.svg/);
+  assert.match(css, /\.certiquiz-app \.invite-overview\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) 166px;/);
+  assert.match(css, /\.certiquiz-app \.invite-qr-logo\s*\{[^}]*position:\s*absolute;[^}]*background:\s*#fff;/);
+  assert.match(build, /node_modules", "qrcode-generator", "qrcode\.js"/);
+});
+test("the local QR generator encodes an invitation URL as SVG", () => {
+  const context = {};
+  vm.runInNewContext(readFileSync(new URL("../node_modules/qrcode-generator/qrcode.js", import.meta.url), "utf8"), context);
+  const qr = context.qrcode(0, "H");
+  qr.addData("https://example.test/certi-tips/certiquiz/?room=601518");
+  qr.make();
+  assert.match(qr.createSvgTag({ scalable: true, title: "Código QR", alt: "Invitación" }), /<svg[^>]*role="img"[^>]*><title[^>]*>Código QR<\/title>/);
+});
+test("CertiQuiz host lobby keeps only the room facts and uses a compact confirmation dialog", () => {
+  const script = readFileSync(new URL("../assets/certiquiz.js", import.meta.url), "utf8");
+  const css = readFileSync(new URL("../assets/certiquiz.css", import.meta.url), "utf8");
+  assert.doesNotMatch(script, /500–1000 puntos por acierto/);
+  assert.match(css, /\.certiquiz-app \.confirmation\s*\{[^}]*width: min\(400px, calc\(100vw - 32px\)\);/);
+  assert.match(css, /\.certiquiz-app \.confirmation-icon\s*\{[^}]*width: 76px;[^}]*height: 76px;/);
+  assert.match(css, /\.certiquiz-app \.confirmation-actions \.button\s*\{[^}]*min-height: 52px;/);
 });
 const tocByPage = new Map([
   ["overview", [{ id: "primeros-pasos", title: "Primeros pasos" }]],
@@ -351,6 +409,9 @@ test("home shows each FY27 certification once and links all three available guid
   assert.match(html, /data-group-carousel><section[^]*?<nav class="group-carousel-controls"/);
   assert.doesNotMatch(html, /data-group-carousel><nav class="group-carousel-controls"/);
   assert.equal((html.match(/class="group-carousel-controls"/g) || []).length, 1);
+  assert.match(html, /data-group-prev[^>]*><svg viewBox="0 0 24 24" width="22" height="22"[^]*?<path d="M6 12H18M6 12L11 7M6 12L11 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"\/><\/svg><\/button>/);
+  assert.match(html, /data-group-next[^>]*><svg viewBox="0 0 24 24" width="22" height="22"[^]*?<path d="M6 12H18M18 12L13 7M18 12L13 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"\/><\/svg><\/button>/);
+  assert.doesNotMatch(html, /data-group-(?:prev|next)[^>]*>[←→]</);
   assert.match(html, /class="path-section path-foundation is-active"/);
   assert.match(html, /<h2 id="foundation-sprint-title">Foundation<\/h2>/);
   assert.match(html, /Foundation reúne tres certificaciones de nivel 1/);
@@ -358,9 +419,14 @@ test("home shows each FY27 certification once and links all three available guid
   assert.match(html, /<svg viewBox="0 0 16 16"[^>]*fill="currentColor"/);
   assert.match(html, /href="\/certi-tips\/1Z0-1157-26\/overview\/"/);
   assert.match(html, /id="oci-enablers"/);
-  assert.match(html, /ORACLE CLOUD INFRASTRUCTURE/);
+  assert.match(html, /class="oracle-badge"><svg viewBox="0 0 32 32" fill="currentColor"[^>]*><path d="M21\.272 22\.141h-10\.538/);
+  assert.match(html, /<span>Oracle Cloud Infrastructure<\/span><\/div><h1>/);
   assert.match(html, /class="hero-copy"/);
   assert.match(html, /class="hero-flow is-unavailable"/);
+  const siteCss = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
+  assert.match(siteCss, /\.home-hero \.oracle-badge\s*\{[^}]*display:\s*inline-flex;[^}]*border:\s*1px solid #353535;[^}]*background:\s*#171717;/);
+  assert.match(siteCss, /\.home-hero \.oracle-badge svg\s*\{[^}]*color:\s*var\(--red\);/);
+  assert.match(siteCss, /\.hero-flow\s*\{[^}]*border:\s*1px solid var\(--line\);/);
   assert.doesNotMatch(html, /assets\/motion\/certification-path\.mp4/);
   const withMotion = homeBody(catalog, true);
   assert.match(withMotion, /assets\/motion\/certification-path\.mp4/);
