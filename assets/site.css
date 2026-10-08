@@ -5,6 +5,7 @@
   --ink: #31333f;
   --muted: #606574;
   --line: #d9dde6;
+  --scrollbar: #59616e;
   --accent: #c74634;
   --selected-surface: #59616e;
   --selected-ink: #fff;
@@ -36,9 +37,10 @@ html[data-theme="dark"] {
   --ink: #fafafa;
   --muted: #c5c8d2;
   --line: #454855;
+  --scrollbar: #454855;
   --accent: #c74634;
-  --red: #ff8181;
-  --red-dark: #ffadad;
+  --red: #c74634;
+  --red-dark: #a6382b;
   --tint: #46272d;
   --blue: #8bc6ff;
   --blue-tint: #1b2d44;
@@ -486,14 +488,15 @@ html[data-theme="dark"] .theme-moon { display: none; }
   gap: 10px;
   min-height: 44px;
   padding: 8px 12px;
-  border: 1px solid var(--red);
+  border: 1px solid var(--accent);
   border-radius: 8px;
-  color: var(--red);
+  background: var(--scrollbar);
+  color: #fff;
   font-size: 0.85rem;
   font-weight: 500;
   line-height: 1;
 }
-.home-hero .oracle-badge svg { width: 27px; height: 27px; flex: 0 0 auto; color: var(--red); }
+.home-hero .oracle-badge svg { width: 27px; height: 27px; flex: 0 0 auto; color: var(--accent); }
 .home-hero h1 {
   font-size: clamp(2.4rem, 3.5vw, 3rem);
   line-height: 1.08;
@@ -764,7 +767,7 @@ html[data-theme="dark"] .hero-actions .certiquiz-link:is(:hover, :focus-visible)
   padding-right: 18px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-color: var(--line) transparent;
+  scrollbar-color: var(--scrollbar) transparent;
   scrollbar-width: thin;
   padding-bottom: 26px;
 }
@@ -1233,7 +1236,7 @@ dialog::backdrop {
   overflow-y: auto;
   min-height: 0;
   overscroll-behavior: contain;
-  scrollbar-color: var(--line) transparent;
+  scrollbar-color: var(--scrollbar) transparent;
 }
 .search-results [hidden] { display: none !important; }
 .search-results li + li { border-top: 1px solid var(--line); }

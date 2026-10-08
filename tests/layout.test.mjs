@@ -204,7 +204,7 @@ test("desktop path navigation opens the category reached by a pointing device", 
 
 test("course navigation keeps its scrollbar within the narrower sidebar padding", () => {
   const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
-  assert.match(css, /\.sidebar > nav \{[\s\S]*?margin-right: -18px;[\s\S]*?padding-right: 18px;[\s\S]*?scrollbar-color: var\(--line\) transparent;[\s\S]*?scrollbar-width: thin;/);
+  assert.match(css, /\.sidebar > nav \{[\s\S]*?margin-right: -18px;[\s\S]*?padding-right: 18px;[\s\S]*?scrollbar-color: var\(--scrollbar\) transparent;[\s\S]*?scrollbar-width: thin;/);
   assert.match(css, /@media \(max-width: 1100px\) \{[\s\S]*?\.sidebar \{\s*padding: 22px 12px 0;\s*\}[\s\S]*?\.sidebar > nav \{\s*margin-right: -12px;\s*padding-right: 12px;\s*\}/);
 });
 
@@ -458,9 +458,11 @@ test("home shows each FY27 certification once and links all three available guid
   assert.match(siteCss, /\.home-hero\s*\{[^}]*align-items:\s*stretch;/);
   assert.match(siteCss, /\.home-hero \.hero-copy\s*\{[^}]*align-self:\s*stretch;[^}]*justify-content:\s*center;/);
   const oracleBadge = siteCss.match(/\.home-hero \.oracle-badge\s*\{([^}]*)\}/)[1];
-  assert.match(oracleBadge, /display:\s*inline-flex;[\s\S]*border:\s*1px solid var\(--red\);[\s\S]*color:\s*var\(--red\);/);
-  assert.doesNotMatch(oracleBadge, /background|backdrop-filter|box-shadow/);
-  assert.match(siteCss, /\.home-hero \.oracle-badge svg\s*\{[^}]*color:\s*var\(--red\);/);
+  assert.match(oracleBadge, /display:\s*inline-flex;[\s\S]*border:\s*1px solid var\(--accent\);[\s\S]*background:\s*var\(--scrollbar\);[\s\S]*color:\s*#fff;/);
+  assert.doesNotMatch(oracleBadge, /backdrop-filter|box-shadow/);
+  assert.match(siteCss, /--scrollbar:\s*#59616e;/);
+  assert.match(siteCss, /html\[data-theme="dark"\]\s*\{[^}]*--scrollbar:\s*#454855;[^}]*--red:\s*#c74634;[^}]*--red-dark:\s*#a6382b;/);
+  assert.match(siteCss, /\.home-hero \.oracle-badge svg\s*\{[^}]*color:\s*var\(--accent\);/);
   assert.match(siteCss, /\.home-hero h1\s*\{[^}]*font-size:\s*clamp\(2\.4rem, 3\.5vw, 3rem\);/);
   assert.match(siteCss, /\.home-hero h1 span\s*\{\s*display:\s*block;/);
   assert.match(siteCss, /\.hero-flow\s*\{[^}]*border:\s*1px solid var\(--line\);/);
