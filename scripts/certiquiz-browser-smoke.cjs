@@ -182,6 +182,7 @@ async (page) => {
     await host.locator('[data-role="player"]').focus(); await host.keyboard.press('Enter');
     await host.getByLabel('Código de la sala').waitFor();
     assert(await host.locator('#create-form').count() === 0 && await host.locator('#join-form').count() === 1, 'Participant role does not isolate its form');
+    assert(new URL(host.url()).hash === '#participant', 'Participant role does not have a shareable URL fragment');
     await host.getByLabel('Código de la sala').fill('000000');
     await host.getByLabel('Tu nombre o alias').fill('QA Código inválido');
     await host.getByRole('button', { name: 'Entrar a la sala' }).click();
@@ -195,6 +196,7 @@ async (page) => {
     const courseSummary = coursePicker.locator('summary#course');
     await courseSummary.waitFor();
     assert(await host.locator('#join-form').count() === 0 && await host.locator('#create-form').count() === 1, 'Host role does not isolate its form');
+    assert(new URL(host.url()).hash === '#host', 'Host role does not have a shareable URL fragment');
     assert(await host.locator('.certiquiz-breadcrumb').innerText() === 'Home / CertiQuiz / Anfitrión' && await host.locator('.certiquiz-breadcrumb a[href$="certiquiz/"]').count() === 1, 'Host breadcrumb does not provide a path back to CertiQuiz');
     assert(await host.locator('[type="password"]').count() === 0, 'Guest hosting still asks for a private key');
     assert(await host.getByLabel('Segundos por pregunta').inputValue() === '10', 'Host duration is not ten seconds by default');

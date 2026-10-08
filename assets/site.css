@@ -486,9 +486,9 @@ html[data-theme="dark"] .theme-moon { display: none; }
   gap: 10px;
   min-height: 44px;
   padding: 8px 12px;
-  border: 1px solid rgba(199, 70, 52, .45);
+  border: 1px solid var(--red);
   border-radius: 8px;
-  color: #5b2b29;
+  color: var(--red);
   font-size: 0.85rem;
   font-weight: 500;
   line-height: 1;
@@ -541,10 +541,6 @@ html[data-theme="dark"] .hero-actions .certiquiz-link {
   border-color: rgba(255, 217, 199, .65);
   background: linear-gradient(135deg, rgba(255, 255, 255, .13), rgba(199, 70, 52, .18) 55%, rgba(146, 91, 180, .2));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 3px 8px rgba(0, 0, 0, .2), 0 0 12px rgba(223, 107, 78, .09);
-}
-html[data-theme="dark"] .home-hero .oracle-badge {
-  border-color: rgba(255, 217, 199, .65);
-  color: #ffe9df;
 }
 html[data-theme="dark"] .hero-actions .certiquiz-link:is(:hover, :focus-visible) {
   border-color: rgba(255, 217, 199, .65);

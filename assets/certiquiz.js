@@ -17,9 +17,10 @@ let busy = false;
 let pollTimer;
 let clock = { server: 0, received: 0 };
 let remaining = 0;
-const prefilledCode = new URL(location.href).searchParams.get('room') || '';
+const entryUrl = new URL(location.href);
+const prefilledCode = entryUrl.searchParams.get('room') || '';
 let draftCode = /^\d{6}$/.test(prefilledCode) ? prefilledCode : '';
-let selectedRole = draftCode ? 'player' : null;
+let selectedRole = draftCode ? 'player' : ({ '#host': 'host', '#participant': 'player' }[entryUrl.hash] || null);
 
 function prepareNotices() {
   const target = app.querySelector('form') || app.querySelector('section.card');
@@ -88,7 +89,7 @@ function entry(role = selectedRole) {
   document.querySelector('[data-confirm]')?.close();
   clearTimeout(pollTimer); stage = ''; room = null; rankingOrder = [];
   selectedRole = role;
-  if (role !== 'player' || !draftCode) history.replaceState(null, '', `${siteBase}certiquiz/`);
+  if (role !== 'player' || !draftCode) history.replaceState(null, '', `${siteBase}certiquiz/${role === 'host' ? '#host' : role === 'player' ? '#participant' : ''}`);
   const limits = catalog.limits;
   if (!role) {
     app.innerHTML = `${welcome()}<div class="entry-grid role-options"><button class="card join-card role-card" type="button" data-role="host" aria-label="Crear una partida como anfitrión"><span class="role-icon" aria-hidden="true">${hostRoleIcon}</span><span class="role-copy"><strong class="role-title">Anfitrión</strong><span class="muted">Elige un quiz, genera el código e invita a tu equipo.</span></span></button><button class="card join-card role-card" type="button" data-role="player" aria-label="Unirme a una partida como participante"><span class="role-icon" aria-hidden="true">${playerRoleIcon}</span><span class="role-copy"><strong class="role-title">Participante</strong><span class="muted">Ingresa el código de la sala y pon a prueba tus ideas.</span></span></button></div>`;

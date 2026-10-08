@@ -63,6 +63,8 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.match(script, /const playerRoleIcon = '<svg viewBox="0 0 297 297" fill="currentColor" aria-hidden="true" focusable="false">/);
   assert.match(script, /<span class="role-icon" aria-hidden="true">\${hostRoleIcon}<\/span><span class="role-copy">/);
   assert.match(script, /<span class="role-icon" aria-hidden="true">\${playerRoleIcon}<\/span><span class="role-copy">/);
+  assert.match(script, /let selectedRole = draftCode \? 'player' : \(\{ '#host': 'host', '#participant': 'player' \}\[entryUrl\.hash\] \|\| null\);/);
+  assert.match(script, /history\.replaceState\(null, '', `\$\{siteBase\}certiquiz\/\$\{role === 'host' \? '#host' : role === 'player' \? '#participant' : ''\}`\)/);
   assert.doesNotMatch(script, /role-action/);
   assert.doesNotMatch(script, /ORGANIZA LA PARTIDA|APRENDE CON TU EQUIPO/);
   assert.match(script, /const welcome = role => `[^`]*<nav class="certiquiz-breadcrumb" aria-label="Ruta de navegación"><a href="\$\{siteBase\}">Home<\/a><span aria-hidden="true">\/<\/span>\$\{role \? `<a href="\$\{siteBase\}certiquiz\/">CertiQuiz<\/a><span aria-hidden="true">\/<\/span><span aria-current="page">\$\{role === 'host' \? 'Anfitrión' : 'Participante'\}<\/span>` : '<span aria-current="page">CertiQuiz<\/span>'\}/);
@@ -440,9 +442,8 @@ test("home shows each FY27 certification once and links all three available guid
   assert.match(siteCss, /\.home-hero\s*\{[^}]*align-items:\s*stretch;/);
   assert.match(siteCss, /\.home-hero \.hero-copy\s*\{[^}]*align-self:\s*stretch;[^}]*justify-content:\s*center;/);
   const oracleBadge = siteCss.match(/\.home-hero \.oracle-badge\s*\{([^}]*)\}/)[1];
-  const darkOracleBadge = siteCss.match(/html\[data-theme="dark"\] \.home-hero \.oracle-badge\s*\{([^}]*)\}/)[1];
-  assert.match(oracleBadge, /display:\s*inline-flex;[\s\S]*border:\s*1px solid rgba\(199, 70, 52, \.45\);/);
-  assert.doesNotMatch(`${oracleBadge}${darkOracleBadge}`, /background|backdrop-filter|box-shadow/);
+  assert.match(oracleBadge, /display:\s*inline-flex;[\s\S]*border:\s*1px solid var\(--red\);[\s\S]*color:\s*var\(--red\);/);
+  assert.doesNotMatch(oracleBadge, /background|backdrop-filter|box-shadow/);
   assert.match(siteCss, /\.home-hero \.oracle-badge svg\s*\{[^}]*color:\s*var\(--red\);/);
   assert.match(siteCss, /\.home-hero h1\s*\{[^}]*font-size:\s*clamp\(2\.4rem, 3\.5vw, 3rem\);/);
   assert.match(siteCss, /\.home-hero h1 span\s*\{\s*display:\s*block;/);
