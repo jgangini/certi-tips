@@ -45,8 +45,8 @@ export function layout({
     (item) => item.slug === page.slug,
   );
   const isLesson = !isCertiquiz && moduleNumber >= 0;
-  const previousArrow = '<span class="page-navigation-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none"><path d="M6 12H18M6 12L11 7M6 12L11 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
-  const nextArrow = '<span class="page-navigation-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none"><path d="M6 12H18M18 12L13 7M18 12L13 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+  const previousArrow = '<span class="page-navigation-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M6 12H18M6 12L11 7M6 12L11 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+  const nextArrow = '<span class="page-navigation-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M6 12H18M18 12L13 7M18 12L13 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
   const pager = !isLesson
     ? ""
     : `<nav class="page-navigation" aria-label="Continuar aprendizaje">${previous ? `<a href="${courseRoot}${previous.slug}/"><small>ANTERIOR</small><span class="page-navigation-title">${previousArrow}${escapeHtml(previous.short)}</span></a>` : "<span></span>"}${next ? `<a href="${courseRoot}${next.slug}/"><small>SIGUIENTE</small><span class="page-navigation-title">${escapeHtml(next.short)}${nextArrow}</span></a>` : `<a href="${courseRoot}practice/"><small>SIGUIENTE</small><span class="page-navigation-title">Práctica${nextArrow}</span></a>`}</nav>`;

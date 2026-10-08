@@ -400,7 +400,7 @@ test("lesson completion floats above the next-page navigation", () => {
   assert.match(css, /\.course-main\.lesson-main\s*\{\s*padding-bottom:\s*40px;/);
 });
 
-test("lesson navigation uses the shared circular arrow controls", () => {
+test("lesson navigation uses compact unframed arrow controls", () => {
   const pagerCourse = {
     ...course,
     modules: [
@@ -418,10 +418,11 @@ test("lesson navigation uses the shared circular arrow controls", () => {
     next: pagerCourse.modules[2],
   });
   const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
-  assert.match(html, /<small>ANTERIOR<\/small><span class="page-navigation-title"><span class="page-navigation-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none"><path d="M6 12H18M6 12L11 7M6 12L11 17"[^]*?<\/span>Empieza aquí<\/span>/);
-  assert.match(html, /<small>SIGUIENTE<\/small><span class="page-navigation-title">Identidad y acceso<span class="page-navigation-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none"><path d="M6 12H18M18 12L13 7M18 12L13 17"[^]*?<\/span><\/span>/);
+  assert.match(html, /<small>ANTERIOR<\/small><span class="page-navigation-title"><span class="page-navigation-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M6 12H18M6 12L11 7M6 12L11 17"[^]*?<\/span>Empieza aquí<\/span>/);
+  assert.match(html, /<small>SIGUIENTE<\/small><span class="page-navigation-title">Identidad y acceso<span class="page-navigation-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M6 12H18M18 12L13 7M18 12L13 17"[^]*?<\/span><\/span>/);
   assert.doesNotMatch(html, /(?:Empieza aquí|Identidad y acceso) <span aria-hidden="true">[←→]<\/span>/);
-  assert.match(css, /\.group-carousel-controls button,\s*\.page-navigation-arrow\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;[^}]*border-radius:\s*50%;/);
+  assert.match(css, /\.page-navigation-arrow\s*\{[^}]*flex:\s*0 0 18px;[^}]*width:\s*18px;[^}]*height:\s*18px;[^}]*background:\s*transparent;/);
+  assert.doesNotMatch(css, /\.page-navigation-arrow\s*\{[^}]*border(?:-radius)?:/);
 });
 
 test("path menu headings change on interaction without retaining an open-state fill", () => {
@@ -505,7 +506,8 @@ test("home shows each FY27 certification once and links all three available guid
   assert.match(html, /data-group-next[^>]*><svg viewBox="0 0 24 24" width="22" height="22"[^]*?<path d="M6 12H18M18 12L13 7M18 12L13 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"\/><\/svg><\/button>/);
   assert.doesNotMatch(html, /data-group-(?:prev|next)[^>]*>[←→]</);
   const carouselCss = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
-  assert.match(carouselCss, /\.group-carousel-controls button,\s*\.page-navigation-arrow\s*\{[^}]*display:\s*grid;[^}]*place-items:\s*center;[^}]*padding:\s*0;[^}]*line-height:\s*0;/);
+  assert.match(carouselCss, /\.group-carousel-controls button\s*\{[^}]*display:\s*grid;[^}]*place-items:\s*center;[^}]*padding:\s*0;[^}]*line-height:\s*0;/);
+  assert.match(carouselCss, /\.page-navigation-arrow\s*\{[^}]*display:\s*grid;[^}]*place-items:\s*center;[^}]*padding:\s*0;[^}]*line-height:\s*0;/);
   assert.match(carouselCss, /\.group-carousel-controls button svg,\s*\.page-navigation-arrow svg\s*\{\s*display:\s*block;/);
   assert.match(html, /class="path-section path-foundation is-active"/);
   assert.match(html, /<h2 id="foundation-sprint-title">Foundation<\/h2>/);

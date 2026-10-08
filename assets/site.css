@@ -612,8 +612,7 @@ html[data-theme="dark"] .hero-actions .certiquiz-link:is(:hover, :focus-visible)
   font-size: 0.78rem;
 }
 .path-carousel { touch-action: pan-y; padding-bottom: 32px; }
-.group-carousel-controls button,
-.page-navigation-arrow {
+.group-carousel-controls button {
   display: grid;
   place-items: center;
   width: 44px;
@@ -628,8 +627,7 @@ html[data-theme="dark"] .hero-actions .certiquiz-link:is(:hover, :focus-visible)
 }
 .group-carousel-controls button svg,
 .page-navigation-arrow svg { display: block; }
-.group-carousel-controls button:not(:disabled):hover,
-.page-navigation a:hover .page-navigation-arrow { border-color: var(--red); color: var(--red); }
+.group-carousel-controls button:not(:disabled):hover { border-color: var(--red); color: var(--red); }
 .group-carousel-controls button:disabled { opacity: 0.4; }
 @media (max-width: 700px) {
   .path-section { grid-template-columns: 1fr; }
@@ -1133,7 +1131,8 @@ progress::-webkit-progress-value {
   margin-bottom: 4px;
 }
 .page-navigation-title { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; color: var(--ink); }
-.page-navigation-arrow { flex: 0 0 44px; }
+.page-navigation-arrow { display: grid; place-items: center; flex: 0 0 18px; width: 18px; height: 18px; padding: 0; background: transparent; color: var(--ink); line-height: 0; }
+.page-navigation a:hover .page-navigation-arrow { color: var(--red); }
 .site-footer {
   position: fixed;
   inset: auto 0 0;
