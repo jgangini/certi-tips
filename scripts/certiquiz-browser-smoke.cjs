@@ -71,15 +71,15 @@ async (page) => {
     });
     assert(focus.visible && focus.color === focus.accent && focus.width === '3px', `${label}: keyboard focus does not use the site's accent outline`);
   };
-  const inkFocus = async (tab, control, label) => {
+  const blueFocus = async (tab, control, label) => {
     await tab.keyboard.press('Tab'); await control.focus();
     const focus = await control.evaluate(node => {
-      const probe = document.createElement('span'); probe.style.color = 'var(--ink)'; node.parentElement.append(probe);
-      const ink = getComputedStyle(probe).color; probe.remove();
+      const probe = document.createElement('span'); probe.style.color = 'var(--blue)'; node.parentElement.append(probe);
+      const blue = getComputedStyle(probe).color; probe.remove();
       const style = getComputedStyle(node);
-      return { visible: node.matches(':focus-visible'), color: style.outlineColor, width: style.outlineWidth, ink };
+      return { visible: node.matches(':focus-visible'), color: style.outlineColor, width: style.outlineWidth, blue };
     });
-    assert(focus.visible && focus.color === focus.ink && focus.width === '3px', `${label}: keyboard focus does not use the site's ink outline`);
+    assert(focus.visible && focus.color === focus.blue && focus.width === '3px', `${label}: keyboard focus does not use the site's blue outline`);
   };
   const join = async (tab, code, nickname) => {
     await tab.goto(`${appUrl}?room=${code}`);
@@ -203,9 +203,14 @@ async (page) => {
       return { aligned: Math.abs(action.left - finishBox.left) < 1 && Math.abs(action.right - enterBox.right) < 1, border: getComputedStyle(node).borderTopWidth, buttonWidth: enterBox.width, wide: enter.classList.contains('wide'), finalButton: finish.textContent };
     });
     assert(participantAction.aligned && participantAction.border === '1px' && participantAction.buttonWidth === 140 && !participantAction.wide && participantAction.finalButton === 'Finalizar', 'Participant actions do not match the compact lobby footer');
-    await inkFocus(host, host.getByLabel('Código de la sala'), 'Participant room code');
+    await blueFocus(host, host.getByLabel('Código de la sala'), 'Participant room code');
+    const participantNickname = host.getByLabel('Tu nombre o alias');
+    await participantNickname.fill('Ana! 123$');
+    assert(await participantNickname.inputValue() === 'Ana 123', 'Participant nickname retains symbols');
+    await participantNickname.fill('A'.repeat(26));
+    assert((await participantNickname.inputValue()).length === 25, 'Participant nickname exceeds 25 characters');
     await host.getByLabel('Código de la sala').fill('000000');
-    await host.getByLabel('Tu nombre o alias').fill('QA Código inválido');
+    await participantNickname.fill('QA Código inválido');
     await host.getByRole('button', { name: 'Entrar', exact: true }).click();
     await host.locator('#join-form [data-error]').waitFor({ state: 'visible' });
     assert(await host.locator('[data-error]').evaluate(node => Boolean(node.closest('#join-form') && node.closest('.card'))), 'Invalid PIN error appeared outside its form/card');
@@ -347,9 +352,9 @@ async (page) => {
       assert(await host.evaluate(() => navigator.clipboard.readText()) === invite, 'Copy did not recover after restoring native permission');
     } finally { await cdp.detach(); }
     checks.push('Readonly invitation, integrated SVG copy, native clipboard success/denial/recovery, one PIN, responsive light/dark geometry');
-    const xssName = '<b>Jugador Uno</b>';
-    await join(first, code, xssName);
-    const firstAvatar = host.getByRole('img', { name: xssName, exact: true });
+    const playerName = 'Jugador Uno';
+    await join(first, code, playerName);
+    const firstAvatar = host.getByRole('img', { name: playerName, exact: true });
     await firstAvatar.waitFor();
     const retainedAvatar = await firstAvatar.elementHandle();
     const retainedAnimation = await firstAvatar.evaluateHandle(node => node.getAnimations()[0]);
@@ -358,7 +363,7 @@ async (page) => {
     const retainedList = await playerList.elementHandle();
     await playerList.focus();
     await second.goto(`${appUrl}?room=${code}`);
-    await second.getByLabel('Tu nombre o alias').fill(xssName.toUpperCase());
+    await second.getByLabel('Tu nombre o alias').fill(playerName.toUpperCase());
     await second.getByLabel('Tu nombre o alias').press('Enter');
     const duplicateNameError = second.locator('#join-form [data-error]');
     await duplicateNameError.waitFor({ state: 'visible' });
@@ -378,7 +383,7 @@ async (page) => {
     assert(await retainedAvatar.evaluate(node => node.isConnected && node === document.querySelector('[data-players] .player-avatar')), 'A new participant replaced the existing avatar');
     assert(await retainedList.evaluate(node => node.isConnected && node === document.activeElement && node === document.querySelector('.player-list')), 'A new participant replaced the roster or stole its focus');
     assert(await retainedAvatar.evaluate((node, animation) => node.getAnimations()[0] === animation, retainedAnimation), 'A new participant restarted the existing avatar animation');
-    assert(await firstAvatar.getAttribute('aria-label') === xssName && await firstAvatar.locator('.avatar-initials').textContent() === '<U' && await firstAvatar.locator('.avatar-name').textContent() === xssName, 'Literal alias is missing from its accessible avatar, initials or expanded name');
+    assert(await firstAvatar.getAttribute('aria-label') === playerName && await firstAvatar.locator('.avatar-initials').textContent() === 'JU' && await firstAvatar.locator('.avatar-name').textContent() === playerName, 'Participant alias is missing from its accessible avatar, initials or expanded name');
     const unicodeAvatar = host.getByRole('img', { name: unicodeName, exact: true });
     assert(await unicodeAvatar.getAttribute('aria-label') === unicodeName && await unicodeAvatar.locator('.avatar-initials').textContent() === 'ÁN' && await unicodeAvatar.locator('.avatar-name').textContent() === unicodeName, 'Unicode first/last initials or complete expanded name are incorrect');
     assert(await host.locator('[data-players] b').count() === 0, 'Alias created HTML elements');
@@ -438,7 +443,7 @@ async (page) => {
     await first.context().setOffline(false);
     await first.waitForFunction(() => document.querySelector('#connection')?.textContent === '', null, { timeout: 7000 });
     assert(await first.locator('#connection, #announcement').evaluateAll(nodes => nodes.every(node => node.closest('.card'))), 'Connection/announcements escaped the active card');
-    assert((await snapshot(first, code)).me.nickname === xssName, 'Reconnection lost participant membership');
+    assert((await snapshot(first, code)).me.nickname === playerName, 'Reconnection lost participant membership');
     const forbidden = await post(first, `/api/rooms/${code}/start`, {});
     assert([401, 403].includes(forbidden.status), `Participant start should be denied, received HTTP ${forbidden.status}`);
     checks.push('PIN invitation, inline duplicate rejection, stable Unicode avatars, accessible tooltips, focus/hover/reduced motion, bounded 500-avatar DOM fixture, cookie restoration, quiet reconnection, host-only start');
@@ -512,7 +517,7 @@ async (page) => {
     await host.locator('[data-next]').click();
     await first.locator('[data-exit]').waitFor(); await second.locator('[data-exit]').waitFor();
     const final = await snapshot(first, code);
-    assert(final.status === 'finished' && final.leaderboard[0].nickname === xssName && final.leaderboard[0].score === firstPoints && final.leaderboard[1].score === 0, 'Final winner/ranking is incorrect');
+    assert(final.status === 'finished' && final.leaderboard[0].nickname === playerName && final.leaderboard[0].score === firstPoints && final.leaderboard[1].score === 0, 'Final winner/ranking is incorrect');
     assert(new URL(first.url()).origin === origin && new URL(first.url()).pathname === '/certi-tips/certiquiz/', 'The game navigated outside CertiTips');
     await geometry(first, '390px results'); await geometry(second, '320px results');
     checks.push('Server deadline, unanswered question, late-answer rejection, active refresh, final winner');

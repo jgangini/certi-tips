@@ -78,6 +78,8 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.match(script, /window\.addEventListener\('hashchange', \(\) => \{ if \(catalog && !busy\) entry\(routeRole\(\)\); \}\);/);
   assert.match(script, /function roomHeader\(\) \{ return room\.status === 'lobby' \|\| room\.status === 'finished' \? welcome\(room\.role, true\) : ''; \}/);
   assert.match(script, /const joinForm = `<span class="eyebrow">INGRESO DE PARTICIPANTE<\/span><h2 id="form-title">Únete a la Sala<\/h2>/);
+  assert.match(script, /id="nickname"[^>]*maxlength="25"/);
+  assert.ok(script.includes("nickname.value = nickname.value.replace(/[^\\p{L}\\p{N} ]/gu, '').slice(0, 25);"));
   assert.match(script, /<div class="actions join-actions"><button class="button secondary" type="button" data-entry-finish>Finalizar<\/button><button class="button" type="submit">Entrar<\/button><\/div>/);
   assert.match(script, /app\.querySelector\('\[data-entry-finish\]'\)\?\.addEventListener\('click', \(\) => \{ if \(!busy\) entry\(null\); \}\);/);
   assert.doesNotMatch(script, /Entrar a la sala|Tu alias aparecerá en la sala y en los resultados\./);
@@ -90,7 +92,7 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb\s*\{[^}]*width:\s*100%;[^}]*padding:\s*18px 24px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*var\(--radius\);[^}]*font-weight:\s*400;/);
   assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb a\s*\{[^}]*color:\s*var\(--ink\);[^}]*font-weight:\s*inherit;/);
   assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb \.certiquiz-mark\s*\{[^}]*color:\s*var\(--ink\);[^}]*font-weight:\s*inherit;/);
-  assert.match(css, /\.certiquiz-app \.player-entry input:focus-visible\s*\{\s*outline-color:\s*var\(--ink\);/);
+  assert.match(css, /\.certiquiz-app \.player-entry input:focus-visible\s*\{\s*outline-color:\s*var\(--blue\);/);
   assert.match(css, /\.certiquiz-app \.player-entry \.join-actions\s*\{[^}]*justify-content:\s*space-between;[^}]*border-top:\s*1px solid var\(--line\);[^}]*margin-top:\s*24px;[^}]*padding-top:\s*20px;/);
   assert.match(css, /\.certiquiz-app \.player-entry \.join-actions \.button\s*\{\s*width:\s*140px;/);
   assert.match(siteCss, /\.search-toggle\s*\{[^}]*background:\s*var\(--paper\);/);

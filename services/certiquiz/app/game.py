@@ -18,8 +18,10 @@ def nickname_value(value: str) -> tuple[str, str]:
     if any(unicodedata.category(char).startswith("C") for char in normalized):
         raise GameError("Usa un nombre sin caracteres de control.", 422)
     nickname = " ".join(normalized.split())
-    if not 2 <= len(nickname) <= 24:
-        raise GameError("El nombre debe tener entre 2 y 24 caracteres.", 422)
+    if not all(char.isalnum() or char == " " for char in nickname):
+        raise GameError("Usa solo letras, números y espacios.", 422)
+    if not 2 <= len(nickname) <= 25:
+        raise GameError("El nombre debe tener entre 2 y 25 caracteres.", 422)
     return nickname, nickname.casefold()
 
 
