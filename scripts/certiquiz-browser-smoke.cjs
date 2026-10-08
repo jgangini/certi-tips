@@ -55,10 +55,10 @@ async (page) => {
       const mainBottom = document.querySelector('main').getBoundingClientRect().bottom;
       const footerTop = document.querySelector('.site-footer').getBoundingClientRect().top;
       scrollTo({ top: previous, behavior: 'instant' });
-      return { width: innerWidth, scroll: document.documentElement.scrollWidth, headings: document.querySelectorAll('h1').length, activeStage: Boolean(document.querySelector('#question-title, .ranking-card #stage-title')), mainBottom, footerTop };
+      return { width: innerWidth, scroll: document.documentElement.scrollWidth, headings: document.querySelectorAll('h1').length, loadingError: Boolean(document.querySelector('.loading-error')), mainBottom, footerTop };
     });
     assert(dimensions.scroll <= dimensions.width + 1, `${label}: horizontal overflow ${dimensions.scroll}/${dimensions.width}`);
-    assert(dimensions.headings === (dimensions.activeStage ? 0 : 1), `${label}: unexpected welcome heading for the current stage`);
+    assert(dimensions.headings === (dimensions.loadingError ? 1 : 0), `${label}: unexpected page heading for the current stage`);
     assert(dimensions.mainBottom <= dimensions.footerTop + 1, `${label}: content bottom ${dimensions.mainBottom} extends below footer top ${dimensions.footerTop}`);
   };
   const accentFocus = async (tab, control, label) => {
@@ -75,9 +75,9 @@ async (page) => {
     await tab.keyboard.press('Tab'); await control.focus();
     const focus = await control.evaluate(node => {
       const style = getComputedStyle(node);
-      return { visible: node.matches(':focus-visible'), style: style.outlineStyle, width: style.outlineWidth };
+      return { visible: node.matches(':focus-visible'), style: style.outlineStyle, shadow: style.boxShadow };
     });
-    assert(focus.visible && focus.style === 'none' && focus.width === '0px', `${label}: selected input retains a focus outline`);
+    assert(focus.visible && focus.style === 'none' && focus.shadow === 'none', `${label}: selected input retains a visible focus treatment`);
   };
   const join = async (tab, code, nickname) => {
     await tab.goto(`${appUrl}?room=${code}`);
@@ -192,17 +192,21 @@ async (page) => {
     assert(await host.locator('#create-form').count() === 0 && await host.locator('#join-form').count() === 1, 'Participant role does not isolate its form');
     assert(new URL(host.url()).hash === '#participant', 'Participant role does not have a shareable URL fragment');
     assert(await host.getByRole('heading', { name: 'Únete a la Sala', exact: true }).count() === 1 && await host.locator('.player-entry > .eyebrow').textContent() === 'INGRESO DE PARTICIPANTE', 'Participant form does not use the room heading and entry eyebrow');
-    assert(await host.locator('#join-form .hint').count() === 1, 'Participant form retains the removed alias hint');
+    assert(await host.locator('#join-form .hint, #join-form .fact-row').count() === 0, 'Participant form exposes room details before joining');
     const participantAction = await host.locator('#join-form .join-actions').evaluate(node => {
       const enter = node.querySelector('.button');
-      const facts = node.querySelector('.fact-row');
       const action = node.getBoundingClientRect();
-      const factsBox = facts.getBoundingClientRect();
       const enterBox = enter.getBoundingClientRect();
-      return { aligned: Math.abs(action.left - factsBox.left) < 1 && Math.abs(action.right - enterBox.right) < 1, border: getComputedStyle(node).borderTopWidth, buttonWidth: enterBox.width, wide: enter.classList.contains('wide'), facts: facts.textContent.replace(/\s+/g, ' ').trim() };
+      return { rightAligned: Math.abs(action.right - enterBox.right) < 1, border: getComputedStyle(node).borderTopWidth, buttonWidth: enterBox.width, wide: enter.classList.contains('wide') };
     });
-    assert(participantAction.aligned && participantAction.border === '1px' && participantAction.buttonWidth === 140 && !participantAction.wide && participantAction.facts === '12 preguntas10 s por pregunta', 'Participant facts do not match the compact lobby footer');
-    await noFocusOutline(host, host.getByLabel('Código de la sala'), 'Participant room code');
+    assert(participantAction.rightAligned && participantAction.border === '1px' && participantAction.buttonWidth === 140 && !participantAction.wide, 'Participant action does not align with the compact lobby footer');
+    const participantCode = host.getByLabel('Código de la sala');
+    const participantCodeStyle = await participantCode.evaluate(node => {
+      const style = getComputedStyle(node);
+      return { height: style.height, fontSize: style.fontSize, lineHeight: style.lineHeight, fontWeight: style.fontWeight };
+    });
+    assert(participantCodeStyle.height === '98px' && participantCodeStyle.fontSize === '72px' && participantCodeStyle.lineHeight === '72px' && Number(participantCodeStyle.fontWeight) >= 800, 'Participant PIN does not match the host PIN dimensions');
+    await noFocusOutline(host, participantCode, 'Participant room code');
     const participantNickname = host.getByLabel('Tu nombre o alias');
     await participantNickname.fill('Ana! 123$');
     assert(await participantNickname.inputValue() === 'Ana 123', 'Participant nickname retains symbols');
@@ -224,7 +228,7 @@ async (page) => {
     assert(await host.locator('#join-form').count() === 0 && await host.locator('#create-form').count() === 1, 'Host role does not isolate its form');
     assert(new URL(host.url()).hash === '#host', 'Host role does not have a shareable URL fragment');
     const certiQuizBreadcrumb = host.getByRole('navigation', { name: 'Ruta de navegación' }).getByRole('link', { name: 'CertiQuiz' });
-    assert(await host.locator('.certiquiz-breadcrumb').innerText() === 'Home / CertiQuiz / Anfitrión' && await certiQuizBreadcrumb.getAttribute('href') === '/certi-tips/certiquiz/', 'Host breadcrumb does not provide the CertiQuiz base route');
+    assert((await host.locator('.certiquiz-breadcrumb').innerText()).replace(/\s+/g, ' ').trim() === 'Home / CertiQuiz / Anfitrión' && await certiQuizBreadcrumb.getAttribute('href') === '/certi-tips/certiquiz/', 'Host breadcrumb does not provide the CertiQuiz base route');
     await certiQuizBreadcrumb.click();
     await host.waitForURL(url => new URL(url).pathname === '/certi-tips/certiquiz/' && new URL(url).hash === '');
     await host.locator('[data-role="host"]').waitFor();
