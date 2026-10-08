@@ -372,6 +372,30 @@ test("lesson completion floats above the next-page navigation", () => {
   assert.match(css, /\.course-main\.lesson-main\s*\{\s*padding-bottom:\s*40px;/);
 });
 
+test("lesson navigation uses the shared circular arrow controls", () => {
+  const pagerCourse = {
+    ...course,
+    modules: [
+      course.modules[0],
+      { ...course.modules[1], slug: "architecture", short: "Arquitectura de OCI" },
+      { ...course.modules[1], slug: "access", short: "Identidad y acceso" },
+    ],
+  };
+  const html = layout({
+    site,
+    course: pagerCourse,
+    page: pagerCourse.modules[1],
+    body: "",
+    previous: pagerCourse.modules[0],
+    next: pagerCourse.modules[2],
+  });
+  const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
+  assert.match(html, /<small>ANTERIOR<\/small><span class="page-navigation-title"><span class="page-navigation-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none"><path d="M6 12H18M6 12L11 7M6 12L11 17"[^]*?<\/span>Empieza aquí<\/span>/);
+  assert.match(html, /<small>SIGUIENTE<\/small><span class="page-navigation-title">Identidad y acceso<span class="page-navigation-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none"><path d="M6 12H18M18 12L13 7M18 12L13 17"[^]*?<\/span><\/span>/);
+  assert.doesNotMatch(html, /(?:Empieza aquí|Identidad y acceso) <span aria-hidden="true">[←→]<\/span>/);
+  assert.match(css, /\.group-carousel-controls button,\s*\.page-navigation-arrow\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;[^}]*border-radius:\s*50%;/);
+});
+
 test("path menu headings change on interaction without retaining an open-state fill", () => {
   const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
   assert.match(css, /--selected-surface:\s*#59616e;\s*--selected-ink:\s*#fff;/);
@@ -453,8 +477,8 @@ test("home shows each FY27 certification once and links all three available guid
   assert.match(html, /data-group-next[^>]*><svg viewBox="0 0 24 24" width="22" height="22"[^]*?<path d="M6 12H18M18 12L13 7M18 12L13 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"\/><\/svg><\/button>/);
   assert.doesNotMatch(html, /data-group-(?:prev|next)[^>]*>[←→]</);
   const carouselCss = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
-  assert.match(carouselCss, /\.group-carousel-controls button\s*\{[^}]*display:\s*grid;[^}]*place-items:\s*center;[^}]*padding:\s*0;[^}]*line-height:\s*0;/);
-  assert.match(carouselCss, /\.group-carousel-controls button svg\s*\{\s*display:\s*block;/);
+  assert.match(carouselCss, /\.group-carousel-controls button,\s*\.page-navigation-arrow\s*\{[^}]*display:\s*grid;[^}]*place-items:\s*center;[^}]*padding:\s*0;[^}]*line-height:\s*0;/);
+  assert.match(carouselCss, /\.group-carousel-controls button svg,\s*\.page-navigation-arrow svg\s*\{\s*display:\s*block;/);
   assert.match(html, /class="path-section path-foundation is-active"/);
   assert.match(html, /<h2 id="foundation-sprint-title">Foundation<\/h2>/);
   assert.match(html, /Foundation reúne tres certificaciones de nivel 1/);
