@@ -367,6 +367,8 @@ test("lesson completion floats above the next-page navigation", () => {
   const rule = css.match(/\.complete-button\s*\{([^}]*)\}/)?.[1];
   assert.match(rule, /position:\s*sticky;/);
   assert.match(rule, /margin:\s*24px 0 0 auto;/);
+  assert.match(rule, /border:\s*1px solid var\(--selected-surface\);\s*background:\s*var\(--selected-surface\);/);
+  assert.doesNotMatch(css, /\.complete-button\[aria-pressed="true"\]/);
   assert.match(css, /\.course-main\.lesson-main\s*\{\s*padding-bottom:\s*40px;/);
 });
 
@@ -393,10 +395,12 @@ test("the certification breadcrumb identifies LangChain by its module label", ()
   assert.match(html, /<body[^>]* data-course="agentic-ai-foundations-2026"/);
 });
 
-test("completed modules use a blue block without adding a width-consuming badge", () => {
+test("completed modules and progress use the red status color without adding a width-consuming badge", () => {
   const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
   const script = readFileSync(new URL("../assets/site.js", import.meta.url), "utf8");
-  assert.match(css, /\.nav-link\.is-complete\s*\{\s*background:\s*var\(--completed-surface\);\s*color:\s*#fff;/);
+  assert.match(css, /progress\s*\{[^}]*accent-color:\s*var\(--accent\);/);
+  assert.match(css, /progress::\-webkit-progress-value\s*\{\s*background:\s*var\(--accent\);/);
+  assert.match(css, /\.nav-link\.is-complete\s*\{\s*background:\s*var\(--accent\);\s*color:\s*#fff;/);
   assert.match(script, /link\.classList\.toggle\("is-complete", done\)/);
   assert.match(script, /aria-description/);
   assert.doesNotMatch(css, /completion-dot/);
