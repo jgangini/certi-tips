@@ -65,7 +65,7 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.match(script, /<span class="role-icon" aria-hidden="true">\${playerRoleIcon}<\/span><span class="role-copy">/);
   assert.doesNotMatch(script, /role-action/);
   assert.doesNotMatch(script, /ORGANIZA LA PARTIDA|APRENDE CON TU EQUIPO/);
-  assert.match(script, /<nav class="certiquiz-breadcrumb" aria-label="Ruta de navegación"><a href="\$\{siteBase\}">Inicio<\/a><span aria-hidden="true">\/<\/span><span aria-current="page">CertiQuiz<\/span><\/nav>/);
+  assert.match(script, /const welcome = role => `[^`]*<nav class="certiquiz-breadcrumb" aria-label="Ruta de navegación"><a href="\$\{siteBase\}">Home<\/a><span aria-hidden="true">\/<\/span>\$\{role \? `<a href="\$\{siteBase\}certiquiz\/">CertiQuiz<\/a><span aria-hidden="true">\/<\/span><span aria-current="page">\$\{role === 'host' \? 'Anfitrión' : 'Participante'\}<\/span>` : '<span aria-current="page">CertiQuiz<\/span>'\}/);
   assert.doesNotMatch(script, /data-change-role|Cambiar rol/);
   assert.match(css, /\.certiquiz-app \.role-card\s*\{[^}]*width:\s*100%;[^}]*cursor:\s*pointer;/);
   assert.match(css, /\.certiquiz-app \.role-icon\s*\{[^}]*flex:\s*0 0 64px;[^}]*width:\s*64px;[^}]*height:\s*64px;/);
@@ -106,15 +106,16 @@ test("CertiQuiz shares site navigation and theme without a course sidebar", () =
   assert.deepEqual([...errorRocket.matchAll(/<path d="([^"]+)"/g)].map(match => match[1]), [...homeRocket.matchAll(/<path d="([^"]+)"/g)].map(match => match[1]));
   assert.doesNotMatch(html, /id="course-navigation"|class="menu-toggle"|src="[^\"]*\/quiz\.js"/);
 });
-test("CertiQuiz renders a local invitation QR with its own logo", () => {
+test("CertiQuiz renders a plain local invitation QR", () => {
   const script = readFileSync(new URL("../assets/certiquiz.js", import.meta.url), "utf8");
   const css = readFileSync(new URL("../assets/certiquiz.css", import.meta.url), "utf8");
   const build = readFileSync(new URL("../scripts/build.mjs", import.meta.url), "utf8");
   assert.match(script, /window\.qrcode\(0, 'H'\)/);
   assert.match(script, /class="invite-qr-code"/);
-  assert.match(script, /assets\/favicon\.svg/);
+  assert.doesNotMatch(script, /invite-qr-logo|Escanea para unirte|assets\/favicon\.svg/);
   assert.match(css, /\.certiquiz-app \.invite-overview\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) 166px;/);
-  assert.match(css, /\.certiquiz-app \.invite-qr-logo\s*\{[^}]*position:\s*absolute;[^}]*background:\s*#fff;/);
+  assert.match(css, /\.certiquiz-app \.invite-qr svg\s*\{[^}]*display:\s*block;[^}]*width:\s*100%;[^}]*background:\s*#fff;/);
+  assert.doesNotMatch(css, /invite-qr-logo|\.invite-qr figcaption/);
   assert.match(build, /node_modules", "qrcode-generator", "qrcode\.js"/);
 });
 test("the local QR generator encodes an invitation URL as SVG", () => {
@@ -125,10 +126,13 @@ test("the local QR generator encodes an invitation URL as SVG", () => {
   qr.make();
   assert.match(qr.createSvgTag({ scalable: true, title: "Código QR", alt: "Invitación" }), /<svg[^>]*role="img"[^>]*><title[^>]*>Código QR<\/title>/);
 });
-test("CertiQuiz host lobby keeps only the room facts and uses a compact confirmation dialog", () => {
+test("CertiQuiz host lobby keeps facts beside its actions and uses a compact confirmation dialog", () => {
   const script = readFileSync(new URL("../assets/certiquiz.js", import.meta.url), "utf8");
   const css = readFileSync(new URL("../assets/certiquiz.css", import.meta.url), "utf8");
   assert.doesNotMatch(script, /500–1000 puntos por acierto/);
+  assert.match(script, /const hostFooter = `<div class="lobby-footer">\$\{facts\}<div class="actions game-actions">/);
+  assert.match(script, /room\.status !== 'lobby' && !document\.querySelector\('\[data-confirm\]\[open\]'\)/);
+  assert.match(css, /\.certiquiz-app \.lobby-footer\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*justify-content:\s*space-between;/);
   assert.match(css, /\.certiquiz-app \.confirmation\s*\{[^}]*width: min\(400px, calc\(100vw - 32px\)\);/);
   assert.match(css, /\.certiquiz-app \.confirmation-icon\s*\{[^}]*width: 76px;[^}]*height: 76px;/);
   assert.match(css, /\.certiquiz-app \.confirmation-actions \.button\s*\{[^}]*min-height: 52px;/);

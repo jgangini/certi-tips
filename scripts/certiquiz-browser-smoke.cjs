@@ -189,6 +189,7 @@ async (page) => {
     const courseSummary = coursePicker.locator('summary#course');
     await courseSummary.waitFor();
     assert(await host.locator('#join-form').count() === 0 && await host.locator('#create-form').count() === 1, 'Host role does not isolate its form');
+    assert(await host.locator('.certiquiz-breadcrumb').innerText() === 'Home / CertiQuiz / Anfitrión' && await host.locator('.certiquiz-breadcrumb a[href$="certiquiz/"]').count() === 1, 'Host breadcrumb does not provide a path back to CertiQuiz');
     assert(await host.locator('[type="password"]').count() === 0, 'Guest hosting still asks for a private key');
     assert(await host.getByLabel('Segundos por pregunta').inputValue() === '10', 'Host duration is not ten seconds by default');
     assert((await host.locator('#create-form .hint').innerText()).includes('Hasta 500 participantes'), 'Host hint does not advertise the 500-participant limit');
@@ -218,6 +219,7 @@ async (page) => {
     assert(await host.locator('.welcome h1').innerText() === 'CertiQuiz', 'Room creation lost the CertiQuiz header');
     const created = await snapshot(host, code);
     assert(created.role === 'host' && created.questionCount === 2 && created.secondsPerQuestion === 10 && /^\d{6}$/.test(code), 'Guest room did not preserve host settings or generate a PIN');
+    assert(await host.locator('#stage-title').evaluate(node => node !== document.activeElement), 'Lobby title unexpectedly receives focus when entering the room');
     const sessionCookies = (await host.context().cookies()).filter(cookie => cookie.name.startsWith('cq_'));
     assert(sessionCookies.length >= 2 && sessionCookies.every(cookie => cookie.httpOnly && cookie.sameSite === 'Strict'), 'Guest host cookies lack HttpOnly/SameSite protections');
     assert(!/cq_(?:host|room)=/.test(await host.evaluate(() => document.cookie)), 'Session cookie is visible to JavaScript');
@@ -244,7 +246,12 @@ async (page) => {
     assert(await address.inputValue() === invite && await address.evaluate(node => node.readOnly), 'Invitation field is not readonly or has the wrong site URL');
     assert(await host.locator('.room-code').count() === 0 && await host.locator('.pin').textContent() === code, 'The header repeats the PIN or the primary PIN disappeared');
     const invitationQr = host.locator('.invite-qr');
-    assert(await invitationQr.locator('svg[role="img"]').count() === 1 && await invitationQr.locator('.invite-qr-logo img[src$="/assets/favicon.svg"]').count() === 1, 'Invitation QR or its CertiTips mark is missing');
+    assert(await invitationQr.locator('svg[role="img"]').count() === 1 && await invitationQr.locator('.invite-qr-logo, figcaption').count() === 0, 'Invitation QR retains removed decoration');
+    assert(await host.locator('.lobby-footer').evaluate(node => {
+      const facts = node.querySelector('.fact-row').getBoundingClientRect();
+      const actions = node.querySelector('.game-actions').getBoundingClientRect();
+      return Math.abs(facts.top + facts.height / 2 - (actions.top + actions.height / 2)) <= 1;
+    }), 'Lobby facts and actions are not on the same row');
     for (const theme of ['dark', 'light']) {
       if (theme === 'light') await host.getByRole('button', { name: 'Activar modo claro' }).click();
       for (const width of [1280, 390, 320]) {
