@@ -83,10 +83,16 @@ test("CertiQuiz host setup labels the room step and aligns its submit control", 
   const css = readFileSync(new URL("../assets/certiquiz.css", import.meta.url), "utf8");
   assert.match(script, /<li class="certification-item setup-actions"><div><span class="certification-number" aria-hidden="true"><\/span><span class="setup-label">Generar Sala<\/span><p class="hint">Hasta \$\{limits\.maxPlayers\}/);
   assert.match(script, /<button class="button" type="submit" \$\{catalog\.courses\.length \? '' : 'disabled'\}>Comenzar<\/button>/);
-  assert.match(script, /const resume = app\.querySelector\('#create-form \.setup-actions \.button'\); resume\.type = 'button'; resume\.textContent = 'Retomar mi sala';/);
+  assert.match(script, /form\.querySelector\('#course-title'\)\.textContent = ownRoom\.courseTitle;/);
+  assert.match(script, /picker\.open = false; picker\.inert = true; picker\.setAttribute\('aria-disabled', 'true'\);/);
+  assert.match(script, /questionCount\.value = ownRoom\.questionCount; questionCount\.disabled = true;/);
+  assert.match(script, /seconds\.value = ownRoom\.secondsPerQuestion; seconds\.disabled = true;/);
+  assert.match(script, /const resume = form\.querySelector\('\.setup-actions \.button'\); resume\.type = 'button'; resume\.textContent = 'Retomar';/);
   assert.doesNotMatch(script, /data-resume/);
   assert.doesNotMatch(script, /\$\{roomIcon\} Generar Sala/);
   assert.match(css, /\.certiquiz-app \.host-entry \.setup-actions \.button\s*\{\s*width:\s*140px;\s*justify-self:\s*end;/);
+  assert.match(css, /\.certiquiz-app \.host-entry \.certification-item input\[type="number"\]\s*\{\s*text-align:\s*center;/);
+  assert.match(css, /\.certiquiz-app \.course-picker\[inert\]\s*\{\s*opacity:\s*\.7;/);
   assert.match(css, /@media \(max-width: 720px\) \{ \.certiquiz-app \.host-entry \.setup-actions \.button \{ width: 100%; \} \}/);
 });
 test("CertiQuiz shares site navigation and theme without a course sidebar", () => {

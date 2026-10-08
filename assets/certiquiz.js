@@ -122,7 +122,13 @@ function entry(role = selectedRole) {
           if (current.host && /^\d{6}$/.test(current.roomCode)) {
             const ownRoom = await request(`/api/rooms/${current.roomCode}`);
             if (ownRoom.role === 'host' && ownRoom.status !== 'finished') {
-              const resume = app.querySelector('#create-form .setup-actions .button'); resume.type = 'button'; resume.textContent = 'Retomar mi sala';
+              const form = app.querySelector('#create-form');
+              const picker = form.querySelector('.course-picker');
+              form.querySelector('#course-title').textContent = ownRoom.courseTitle;
+              picker.open = false; picker.inert = true; picker.setAttribute('aria-disabled', 'true');
+              const questionCount = form.querySelector('#question-count'); questionCount.value = ownRoom.questionCount; questionCount.disabled = true;
+              const seconds = form.querySelector('#seconds'); seconds.value = ownRoom.secondsPerQuestion; seconds.disabled = true;
+              const resume = form.querySelector('.setup-actions .button'); resume.type = 'button'; resume.textContent = 'Retomar';
               resume.onclick = () => action(() => enterRoom(ownRoom), resume);
             }
           }

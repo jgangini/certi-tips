@@ -40,6 +40,7 @@ html[data-theme="dark"] .certiquiz-app { --success: #9bd8b8; --success-bg: #1b35
 .certiquiz-app .host-entry .certification-item label, .certiquiz-app .setup-label { display: block; font-size: 17px; font-weight: 650; margin-bottom: 5px; }
 .certiquiz-app .host-entry .certification-item p { margin: 0; }
 .certiquiz-app .host-entry .certification-item input { max-width: 140px; justify-self: end; }
+.certiquiz-app .host-entry .certification-item input[type="number"] { text-align: center; }
 .certiquiz-app .host-entry .setup-actions { grid-template-columns: minmax(0, 1fr) auto; gap: 24px; padding-bottom: 0; }
 .certiquiz-app .setup-actions .certification-number { top: 50%; transform: translateY(-50%); }
 .certiquiz-app .setup-actions .hint { max-width: 540px; margin: 0; }
@@ -49,6 +50,8 @@ html[data-theme="dark"] .certiquiz-app { --success: #9bd8b8; --success-bg: #1b35
 .certiquiz-app .course-picker summary::after { flex: 0 0 6px; margin-left: 0; }
 .certiquiz-app .course-picker summary:is(:hover, :focus), .certiquiz-app .course-picker[open] > summary { background: var(--paper); color: var(--ink); }
 .certiquiz-app .course-picker summary:focus:not(:focus-visible) { outline: none; }
+.certiquiz-app .course-picker[inert] { opacity: .7; }
+.certiquiz-app .course-picker[inert] summary { cursor: not-allowed; }
 .certiquiz-app .course-picker .path-group-panel { width: 100%; z-index: 2; max-height: min(320px, 50vh); overflow-y: auto; box-shadow: var(--shadow); }
 .certiquiz-app .course-picker button { min-height: 44px; padding: 9px 12px; border: 0; border-radius: 6px; background: transparent; color: var(--ink); text-align: left; font-size: .8rem; line-height: 1.35; overflow-wrap: anywhere; cursor: pointer; }
 .certiquiz-app .course-picker button:is(:hover, :focus-visible, [aria-pressed="true"]) { background: var(--selected-surface); color: var(--selected-ink); }
