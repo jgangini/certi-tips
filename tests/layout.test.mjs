@@ -148,8 +148,8 @@ test("CertiQuiz renders a branded local invitation QR", () => {
   assert.match(css, /\.certiquiz-app \.invite-code\.qr-expanded \.invite-qr\s*\{\s*width:\s*50%;\s*margin:\s*0 auto;/);
   assert.match(css, /\.certiquiz-app \.invite-qr-code\s*\{[^}]*overflow:\s*hidden;[^}]*border-radius:\s*14px;/);
   assert.match(css, /\.certiquiz-app \.invite-qr-code > svg\s*\{[^}]*display:\s*block;[^}]*width:\s*100%;[^}]*border-radius:\s*14px;[^}]*background:\s*#fff;/);
-  assert.match(css, /\.certiquiz-app \.invite-qr-logo\s*\{[^}]*position:\s*absolute;[^}]*width:\s*30px;[^}]*height:\s*30px;[^}]*border-radius:\s*8px;[^}]*background:\s*#fff;[^}]*color:\s*#111;/);
-  assert.match(css, /\.certiquiz-app \.invite-code\.qr-expanded \.invite-qr-logo svg\s*\{\s*width:\s*46px;\s*height:\s*46px;/);
+  assert.match(css, /\.certiquiz-app \.invite-qr-logo\s*\{[^}]*position:\s*absolute;[^}]*width:\s*28px;[^}]*height:\s*28px;[^}]*border-radius:\s*7px;[^}]*background:\s*#fff;[^}]*color:\s*#111;/);
+  assert.match(css, /\.certiquiz-app \.invite-code\.qr-expanded \.invite-qr-logo svg\s*\{\s*width:\s*56px;\s*height:\s*56px;/);
   assert.match(css, /\.certiquiz-app \.option:has\(input:focus-visible\)\s*\{[^}]*outline:\s*3px solid var\(--accent\);/);
   assert.match(build, /node_modules", "qrcode-generator", "qrcode\.js"/);
 });
