@@ -193,15 +193,16 @@ async (page) => {
     await host.getByLabel('Código de la sala').waitFor();
     assert(await host.locator('#create-form').count() === 0 && await host.locator('#join-form').count() === 1, 'Participant role does not isolate its form');
     assert(new URL(host.url()).hash === '#participant', 'Participant role does not have a shareable URL fragment');
-    assert(await host.getByRole('heading', { name: 'Sala', exact: true }).count() === 1 && await host.locator('.player-entry > .eyebrow').textContent() === 'INGRESAR', 'Participant form does not use the room heading and entry eyebrow');
+    assert(await host.getByRole('heading', { name: 'Únete a la Sala', exact: true }).count() === 1 && await host.locator('.player-entry > .eyebrow').textContent() === 'INGRESO DE PARTICIPANTE', 'Participant form does not use the room heading and entry eyebrow');
     assert(await host.locator('#join-form .hint').count() === 1, 'Participant form retains the removed alias hint');
     const participantAction = await host.locator('#join-form .join-actions').evaluate(node => {
-      const button = node.querySelector('.button');
+      const [finish, enter] = node.querySelectorAll('.button');
       const action = node.getBoundingClientRect();
-      const buttonBox = button.getBoundingClientRect();
-      return { aligned: Math.abs(action.right - buttonBox.right) < 1, border: getComputedStyle(node).borderTopWidth, buttonWidth: buttonBox.width, wide: button.classList.contains('wide') };
+      const finishBox = finish.getBoundingClientRect();
+      const enterBox = enter.getBoundingClientRect();
+      return { aligned: Math.abs(action.left - finishBox.left) < 1 && Math.abs(action.right - enterBox.right) < 1, border: getComputedStyle(node).borderTopWidth, buttonWidth: enterBox.width, wide: enter.classList.contains('wide'), finalButton: finish.textContent };
     });
-    assert(participantAction.aligned && participantAction.border === '1px' && participantAction.buttonWidth === 140 && !participantAction.wide, 'Participant action does not match the compact right-aligned lobby footer');
+    assert(participantAction.aligned && participantAction.border === '1px' && participantAction.buttonWidth === 140 && !participantAction.wide && participantAction.finalButton === 'Finalizar', 'Participant actions do not match the compact lobby footer');
     await inkFocus(host, host.getByLabel('Código de la sala'), 'Participant room code');
     await host.getByLabel('Código de la sala').fill('000000');
     await host.getByLabel('Tu nombre o alias').fill('QA Código inválido');
@@ -209,8 +210,9 @@ async (page) => {
     await host.locator('#join-form [data-error]').waitFor({ state: 'visible' });
     assert(await host.locator('[data-error]').evaluate(node => Boolean(node.closest('#join-form') && node.closest('.card'))), 'Invalid PIN error appeared outside its form/card');
     assert(await host.locator('.certiquiz-app > [role="alert"]').count() === 0, 'A global error banner remains');
-    await host.goto(appUrl);
+    await host.getByRole('button', { name: 'Finalizar', exact: true }).click();
     await host.locator('[data-role="host"]').waitFor();
+    assert(new URL(host.url()).hash === '' && await host.locator('#join-form').count() === 0, 'Participant Finalizar did not return to CertiQuiz role selection');
     await host.locator('[data-role="host"]').focus(); await host.keyboard.press('Enter');
     const coursePicker = host.locator('.course-picker');
     const courseSummary = coursePicker.locator('summary#course');
