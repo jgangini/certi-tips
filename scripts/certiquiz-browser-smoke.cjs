@@ -207,6 +207,8 @@ async (page) => {
     });
     assert(participantCodeStyle.height === '98px' && participantCodeStyle.fontSize === '72px' && participantCodeStyle.lineHeight === '72px' && Number(participantCodeStyle.fontWeight) >= 800, 'Participant PIN does not match the host PIN dimensions');
     await noFocusOutline(host, participantCode, 'Participant room code');
+    await participantCode.fill('33r456!');
+    assert(await participantCode.inputValue() === '33456', 'Participant room code should retain only digits');
     const participantNickname = host.getByLabel('Tu nombre o alias');
     await participantNickname.fill('Ana! 123$');
     assert(await participantNickname.inputValue() === 'Ana 123', 'Participant nickname retains symbols');
