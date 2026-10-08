@@ -215,8 +215,8 @@ html[data-theme="dark"] .certiquiz-app .leaderboard tbody tr { --row-shadow: #00
 .certiquiz-app .loading { margin: 50px 0; }
 .certiquiz-page .certiquiz-main:has(.loading-full) { max-width: none; padding: 0; }
 .certiquiz-app .loading-full { width: 100%; min-height: calc(100dvh - var(--header) - var(--footer-height)); margin: 0; padding: 32px 24px; border: 0; border-radius: 0; background: transparent; box-shadow: none; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-.certiquiz-app .loading-error h1 { display: flex; align-items: center; justify-content: center; gap: 18px; font-size: clamp(28px, 4vw, 44px); }
-.certiquiz-app .loading-error svg { width: 46px; height: 46px; flex: 0 0 auto; color: var(--accent); animation: certiquiz-rocket-float 3s ease-in-out infinite; }
+.certiquiz-app .loading-full h1 { display: flex; align-items: center; justify-content: center; gap: 18px; font-size: clamp(28px, 4vw, 44px); }
+.certiquiz-app .loading-full h1 svg { width: 46px; height: 46px; flex: 0 0 auto; color: var(--ink); animation: certiquiz-rocket-float 3s ease-in-out infinite; }
 .certiquiz-app .loading-error .hint { margin-bottom: 0; }
 .certiquiz-app kbd { padding: 2px 5px; border: 1px solid var(--line); border-radius: 4px; font: inherit; }
 @keyframes certiquiz-rocket-float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(2px, -3px); } }
