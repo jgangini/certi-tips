@@ -99,7 +99,7 @@ function invitationQr(url) {
   if (typeof window.qrcode !== 'function') return '';
   const qr = window.qrcode(0, 'H');
   qr.addData(url); qr.make();
-  return `<figure class="invite-qr"><span class="invite-qr-code">${qr.createSvgTag({ cellSize: 4, margin: 10, scalable: true, title: 'Código QR de invitación', alt: 'Escanea para abrir la sala' })}</span><span class="invite-qr-logo" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none"><path d="M13 13h12a8 8 0 0 1 8 8v14H21a8 8 0 0 1-8-8Z" stroke="currentColor" stroke-width="3"/><path d="m19 24 4 4 9-10" stroke="currentColor" stroke-width="3"/></svg></span><figcaption>Escanea para participar</figcaption></figure>`;
+  return `<figure class="invite-qr"><button class="invite-qr-toggle" type="button" data-invite-qr aria-pressed="false" aria-label="Ampliar código QR de invitación"><span class="invite-qr-code">${qr.createSvgTag({ cellSize: 4, margin: 10, scalable: true, title: 'Código QR de invitación', alt: 'Escanea para abrir la sala' })}</span></button><span class="invite-qr-logo" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none"><path d="M13 13h12a8 8 0 0 1 8 8v14H21a8 8 0 0 1-8-8Z" stroke="currentColor" stroke-width="3"/><path d="m19 24 4 4 9-10" stroke="currentColor" stroke-width="3"/></svg></span><figcaption data-invite-qr-caption>Escanea o selecciona para ampliar</figcaption></figure>`;
 }
 
 function entry(role = selectedRole) {
@@ -173,10 +173,10 @@ document.addEventListener('click', event => {
 
 function lobby() {
   const invite = room.role === 'host' ? joinUrl() : '';
-  const hostInvitation = `<div class="invite-overview"><strong class="pin">${escape(room.code)}</strong><label for="join-address">Enlace de invitación</label><div class="invite-link"><input id="join-address" type="url" value="${escape(invite)}" readonly><button type="button" data-copy aria-label="Copiar enlace de invitación" title="Copiar enlace de invitación"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="4" y="8" width="12" height="13" rx="2"/><path d="M9 5V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2"/></svg></button></div></div>`;
+  const hostInvitation = `<div class="invite-overview"><div class="invite-code"><strong class="pin">${escape(room.code)}</strong>${invitationQr(invite)}</div><label for="join-address">Enlace de invitación</label><div class="invite-link"><input id="join-address" type="url" value="${escape(invite)}" readonly><button type="button" data-copy aria-label="Copiar enlace de invitación" title="Copiar enlace de invitación"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="4" y="8" width="12" height="13" rx="2"/><path d="M9 5V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2"/></svg></button></div></div>`;
   const facts = `<div class="fact-row"><span><strong>${room.questionCount}</strong> preguntas</span><span><strong>${room.secondsPerQuestion} s</strong> por pregunta</span></div>`;
   const hostFooter = `<div class="lobby-footer">${facts}<div class="actions game-actions"><button class="button secondary" type="button" data-exit>Finalizar</button><button class="button" type="button" data-start>Comenzar</button></div></div>`;
-  return `${roomHeader()}<div class="room-grid"><section class="card join-card">${room.role === 'player' ? '<button class="text-button room-exit" type="button" data-exit>Salir de la sala</button>' : ''}<span class="eyebrow">${room.role === 'host' ? 'INVITA A PARTICIPANTES' : 'YA ESTÁS DENTRO'}</span><h2 id="stage-title" tabindex="-1">${room.role === 'host' ? 'Comparte este código' : `¡Todo listo, ${escape(room.me?.nickname)}!`}</h2>${room.role === 'host' ? hostInvitation : '<p class="muted">El anfitrión iniciará la primera pregunta. Mantén esta página abierta para responder.</p>'}${room.role === 'host' ? hostFooter : facts}</section><div class="room-side">${room.role === 'host' ? invitationQr(invite) : ''}<div data-players></div></div></div>`;
+  return `${roomHeader()}<div class="room-grid"><section class="card join-card">${room.role === 'player' ? '<button class="text-button room-exit" type="button" data-exit>Salir de la sala</button>' : ''}<span class="eyebrow">${room.role === 'host' ? 'INVITA A PARTICIPANTES' : 'YA ESTÁS DENTRO'}</span><h2 id="stage-title" tabindex="-1">${room.role === 'host' ? 'Comparte este código' : `¡Todo listo, ${escape(room.me?.nickname)}!`}</h2>${room.role === 'host' ? hostInvitation : '<p class="muted">El anfitrión iniciará la primera pregunta. Mantén esta página abierta para responder.</p>'}${room.role === 'host' ? hostFooter : facts}</section><div class="room-side"><div data-players></div></div></div>`;
 }
 function questionView() {
   const question = room.question;
@@ -327,6 +327,16 @@ function tick() {
 }
 
 function bindRoom() {
+  document.querySelector('[data-invite-qr]')?.addEventListener('click', event => {
+    const button = event.currentTarget;
+    const invitation = button.closest('.invite-code');
+    if (!invitation) return;
+    const expanded = invitation.classList.toggle('qr-expanded');
+    button.setAttribute('aria-pressed', String(expanded));
+    button.setAttribute('aria-label', expanded ? 'Mostrar código de invitación' : 'Ampliar código QR de invitación');
+    invitation.querySelector('[data-invite-qr-caption]').textContent = expanded ? 'Selecciona para ver el código' : 'Escanea o selecciona para ampliar';
+    announce(expanded ? 'Código QR ampliado.' : 'Código de invitación mostrado.');
+  });
   document.querySelector('[data-copy]')?.addEventListener('click', event => {
     const button = event.currentTarget;
     action(async () => {
