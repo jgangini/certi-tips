@@ -439,7 +439,10 @@ test("home shows each FY27 certification once and links all three available guid
   const siteCss = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
   assert.match(siteCss, /\.home-hero\s*\{[^}]*align-items:\s*stretch;/);
   assert.match(siteCss, /\.home-hero \.hero-copy\s*\{[^}]*align-self:\s*stretch;[^}]*justify-content:\s*center;/);
-  assert.match(siteCss, /\.home-hero \.oracle-badge\s*\{[^}]*display:\s*inline-flex;[^}]*border:\s*1px solid rgba\(199, 70, 52, \.45\);[^}]*backdrop-filter:\s*blur\(16px\) saturate\(160%\);/);
+  const oracleBadge = siteCss.match(/\.home-hero \.oracle-badge\s*\{([^}]*)\}/)[1];
+  const darkOracleBadge = siteCss.match(/html\[data-theme="dark"\] \.home-hero \.oracle-badge\s*\{([^}]*)\}/)[1];
+  assert.match(oracleBadge, /display:\s*inline-flex;[\s\S]*border:\s*1px solid rgba\(199, 70, 52, \.45\);/);
+  assert.doesNotMatch(`${oracleBadge}${darkOracleBadge}`, /background|backdrop-filter|box-shadow/);
   assert.match(siteCss, /\.home-hero \.oracle-badge svg\s*\{[^}]*color:\s*var\(--red\);/);
   assert.match(siteCss, /\.home-hero h1\s*\{[^}]*font-size:\s*clamp\(2\.4rem, 3\.5vw, 3rem\);/);
   assert.match(siteCss, /\.home-hero h1 span\s*\{\s*display:\s*block;/);
