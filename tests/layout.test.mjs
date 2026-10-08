@@ -73,7 +73,7 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.match(css, /\.certiquiz-app \.role-card:is\(:hover, :focus-visible\)\s*\{[^}]*border-color:\s*var\(--accent\);/);
   assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb\s*\{[^}]*border-top:\s*1px solid var\(--line\);/);
   assert.match(siteCss, /\.search-toggle\s*\{[^}]*background:\s*var\(--paper\);/);
-  assert.match(siteCss, /\.search-toggle kbd\s*\{[^}]*display:\s*inline-flex;[^}]*padding:\s*3px 6px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*999px;[^}]*background:\s*var\(--hover\);/);
+  assert.match(siteCss, /\.search-toggle kbd\s*\{[^}]*display:\s*inline-flex;[^}]*padding:\s*2px 5px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*4px;[^}]*background:\s*var\(--chrome-bg\);[^}]*font-size:\s*0\.62rem;/);
 });
 test("CertiQuiz host setup labels the room step and aligns its submit control", () => {
   const script = readFileSync(new URL("../assets/certiquiz.js", import.meta.url), "utf8");

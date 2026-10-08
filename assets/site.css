@@ -374,12 +374,12 @@ html[data-theme="dark"] .theme-moon { display: none; }
   margin-left: auto;
   display: inline-flex;
   align-items: center;
-  padding: 3px 6px;
+  padding: 2px 5px;
   border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--hover);
+  border-radius: 4px;
+  background: var(--chrome-bg);
   color: var(--muted);
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   white-space: nowrap;
 }
 .button {

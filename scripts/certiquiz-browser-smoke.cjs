@@ -148,13 +148,19 @@ async (page) => {
     assert(await host.locator('link[href$="/certiquiz.css"]').getAttribute('href') === '/certi-tips/assets/certiquiz.css', 'CertiQuiz CSS is not hosted by CertiTips');
     assert(await host.locator('.welcome > .eyebrow').count() === 0, 'Entry still displays the removed CertiQuiz eyebrow');
     const breadcrumb = host.getByRole('navigation', { name: 'Ruta de navegación' });
-    assert(await breadcrumb.getByRole('link', { name: 'Inicio' }).getAttribute('href') === '/certi-tips/' && await breadcrumb.locator('[aria-current="page"]').textContent() === 'CertiQuiz', 'CertiQuiz lacks its home breadcrumb');
+    assert(await breadcrumb.getByRole('link', { name: 'Home' }).getAttribute('href') === '/certi-tips/' && await breadcrumb.locator('[aria-current="page"]').textContent() === 'CertiQuiz', 'CertiQuiz lacks its home breadcrumb');
     const roleCards = host.locator('.role-options > .role-card');
     assert(await roleCards.count() === 2 && await roleCards.evaluateAll(nodes => nodes.every(node => node.tagName === 'BUTTON' && node.getAttribute('data-role'))), 'Role choices are not full-card buttons');
     assert(await host.locator('.role-card .role-action').count() === 0, 'Role cards retain duplicate action buttons');
     assert(await host.locator('.role-card > .eyebrow').count() === 0, 'Role cards still display their removed eyebrows');
     const search = host.locator('.search-toggle');
     assert(await search.evaluate(node => getComputedStyle(node).backgroundColor) === 'rgb(255, 255, 255)', 'Search control does not have a white background in the light theme');
+    const shortcut = search.locator('kbd');
+    const shortcutStyle = await shortcut.evaluate(node => {
+      const style = getComputedStyle(node);
+      return { background: style.backgroundColor, header: getComputedStyle(document.querySelector('.site-header')).backgroundColor, radius: style.borderRadius, smaller: Number.parseFloat(style.fontSize) < Number.parseFloat(getComputedStyle(node.parentElement).fontSize) };
+    });
+    assert(shortcutStyle.background === shortcutStyle.header && shortcutStyle.radius === '4px' && shortcutStyle.smaller, 'Search shortcut does not match the compact rectangular header treatment');
     const apiSurface = await host.evaluate(async apiOrigin => {
       const root = await fetch(`${apiOrigin}/`, { credentials: 'include' });
       const oldAsset = await fetch(`${apiOrigin}/app.js`, { credentials: 'include' });
