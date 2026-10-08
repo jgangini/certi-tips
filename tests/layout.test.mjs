@@ -83,6 +83,8 @@ test("CertiQuiz host setup labels the room step and aligns its submit control", 
   const css = readFileSync(new URL("../assets/certiquiz.css", import.meta.url), "utf8");
   assert.match(script, /<li class="certification-item setup-actions"><div><span class="certification-number" aria-hidden="true"><\/span><span class="setup-label">Generar Sala<\/span><p class="hint">Hasta \$\{limits\.maxPlayers\}/);
   assert.match(script, /<button class="button" type="submit" \$\{catalog\.courses\.length \? '' : 'disabled'\}>Comenzar<\/button>/);
+  assert.match(script, /const resume = app\.querySelector\('#create-form \.setup-actions \.button'\); resume\.type = 'button'; resume\.textContent = 'Retomar mi sala';/);
+  assert.doesNotMatch(script, /data-resume/);
   assert.doesNotMatch(script, /\$\{roomIcon\} Generar Sala/);
   assert.match(css, /\.certiquiz-app \.host-entry \.setup-actions \.button\s*\{\s*width:\s*140px;\s*justify-self:\s*end;/);
   assert.match(css, /@media \(max-width: 720px\) \{ \.certiquiz-app \.host-entry \.setup-actions \.button \{ width: 100%; \} \}/);
