@@ -63,13 +63,16 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.match(script, /const playerRoleIcon = '<svg viewBox="0 0 297 297" fill="currentColor" aria-hidden="true" focusable="false">/);
   assert.match(script, /<span class="role-icon" aria-hidden="true">\${hostRoleIcon}<\/span><span class="role-copy">/);
   assert.match(script, /<span class="role-icon" aria-hidden="true">\${playerRoleIcon}<\/span><span class="role-copy">/);
-  assert.match(script, /let selectedRole = draftCode \? 'player' : \(\{ '#host': 'host', '#participant': 'player' \}\[entryUrl\.hash\] \|\| null\);/);
+  assert.match(script, /const routeRole = \(\) => \(\{ '#host': 'host', '#participant': 'player' \}\[location\.hash\] \|\| null\);/);
+  assert.match(script, /let selectedRole = draftCode \? 'player' : routeRole\(\);/);
   assert.match(script, /history\.replaceState\(null, '', `\$\{siteBase\}certiquiz\/\$\{role === 'host' \? '#host' : role === 'player' \? '#participant' : ''\}`\)/);
   assert.doesNotMatch(script, /role-action/);
   assert.doesNotMatch(script, /ORGANIZA LA PARTIDA|APRENDE CON TU EQUIPO/);
   assert.match(script, /<nav class="certiquiz-breadcrumb" aria-label="Ruta de navegación">/);
+  assert.match(script, /<a href="\$\{siteBase\}certiquiz\/">CertiQuiz<\/a>/);
   assert.match(script, /href="\$\{siteBase\}certiquiz\/#\$\{role === 'host' \? 'host' : 'participant'\}" data-entry-role="\$\{role\}">\$\{role === 'host' \? 'Anfitrión' : 'Participante'\}<\/a>/);
   assert.match(script, /document\.querySelector\('\[data-entry-role\]'\)\?\.addEventListener\('click', event => \{ event\.preventDefault\(\); if \(!busy\) entry\(event\.currentTarget\.dataset\.entryRole\); \}\);/);
+  assert.match(script, /window\.addEventListener\('hashchange', \(\) => \{ if \(catalog && !busy\) entry\(routeRole\(\)\); \}\);/);
   assert.match(script, /function roomHeader\(\) \{ return room\.status === 'lobby' \|\| room\.status === 'finished' \? welcome\(room\.role, true\) : ''; \}/);
   assert.doesNotMatch(script, /data-change-role|Cambiar rol/);
   assert.match(css, /\.certiquiz-app \.role-card\s*\{[^}]*width:\s*100%;[^}]*cursor:\s*pointer;/);
@@ -118,8 +121,8 @@ test("CertiQuiz shares site navigation and theme without a course sidebar", () =
   assert.match(certiquizCss, /\.certiquiz-app \.loading-full h1\s*\{[^}]*display:\s*flex;[^}]*justify-content:\s*center;[^}]*font-size:\s*clamp\(28px, 4vw, 44px\);/);
   assert.match(certiquizCss, /\.certiquiz-app \.loading-full h1 svg\s*\{[^}]*color:\s*var\(--ink\);[^}]*animation:\s*certiquiz-rocket-float 3s ease-in-out infinite;/);
   assert.match(certiquizCss, /\.certiquiz-app kbd\s*\{[^}]*display:\s*inline-flex;[^}]*align-items:\s*center;[^}]*padding:\s*2px 5px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*4px;[^}]*background:\s*var\(--chrome-bg\);[^}]*color:\s*var\(--muted\);[^}]*font-size:\s*0\.62rem;/);
-  assert.match(certiquizScript, /certiquiz\/#entry/);
-  assert.match(certiquizScript, /entryUrl\.hash !== '#entry'/);
+  assert.doesNotMatch(certiquizScript, /certiquiz\/#entry/);
+  assert.match(certiquizScript, /entryUrl\.searchParams\.has\('room'\)/);
   assert.match(certiquizScript, /const initialLoadingDuration = 320;/);
   assert.match(certiquizScript, /await finishLoading\(\); entry\(\);/);
   assert.doesNotMatch(certiquizBody('https://api.example.test'), /id="(?:error|connection|announcement)"/);
@@ -497,6 +500,7 @@ test("home shows each FY27 certification once and links all three available guid
   assert.equal((html.match(/class="certification-item/g) || []).length, 11);
   assert.equal((html.match(/class="button button-small certitips-button" href=/g) || []).length, 3);
   assert.equal((html.match(/class="button button-small certitips-button" type="button" disabled/g) || []).length, 8);
+  assert.match(html, /class="button button-small certitips-button" type="button" disabled[^>]*><svg viewBox="0 0 16 16" width="17" height="17" fill="currentColor"[^>]*><path d="M16 6\.28a1\.23 1\.23/);
   assert.equal((html.match(/<section class="path-section/g) || []).length, 4);
   assert.match(html, /data-group-carousel/);
   assert.match(html, /data-group-next/);
