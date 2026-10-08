@@ -99,7 +99,7 @@ html[data-theme="dark"] .certiquiz-app { --success: #9bd8b8; --success-bg: #1b35
 .certiquiz-app .room-side { display: grid; min-width: 0; gap: 24px; }
 .certiquiz-app .invite-overview { width: 100%; }
 .certiquiz-app .invite-code { display: grid; grid-template-columns: minmax(0, 1fr) 66px; gap: 12px; align-items: center; margin: 18px 0; padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); }
-.certiquiz-app .pin { display: block; min-width: 0; margin: 0; padding: 0; border: 0; background: transparent; font-size: clamp(42px, 6vw, 64px); font-weight: 800; letter-spacing: .09em; line-height: 1.25; font-variant-numeric: tabular-nums; }
+.certiquiz-app .pin { display: block; min-width: 0; margin: 0; padding: 0; border: 0; background: transparent; font-size: clamp(48px, 6vw, 72px); font-weight: 800; letter-spacing: .09em; line-height: 1; font-variant-numeric: tabular-nums; }
 .certiquiz-app .invite-qr { position: relative; width: 100%; margin: 0; }
 .certiquiz-app .invite-qr-toggle { display: block; width: 100%; padding: 0; border: 0; border-radius: 14px; background: transparent; cursor: pointer; }
 .certiquiz-app .invite-qr-toggle:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }

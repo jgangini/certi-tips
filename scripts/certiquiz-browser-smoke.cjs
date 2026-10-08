@@ -281,6 +281,15 @@ async (page) => {
     const copyButton = host.locator('.invite-link [data-copy]');
     assert(await address.inputValue() === invite && await address.evaluate(node => node.readOnly), 'Invitation field is not readonly or has the wrong site URL');
     assert(await host.locator('.room-code').count() === 0 && await host.locator('.pin').textContent() === code, 'The header repeats the PIN or the primary PIN disappeared');
+    const invitationCodeLayout = await host.locator('.invite-code').evaluate(node => {
+      const pin = node.querySelector('.pin');
+      const qr = node.querySelector('.invite-qr');
+      const pinBox = pin.getBoundingClientRect();
+      const qrBox = qr.getBoundingClientRect();
+      const style = getComputedStyle(pin);
+      return { centered: Math.abs((pinBox.top + pinBox.height / 2) - (qrBox.top + qrBox.height / 2)) < 1, fontSize: style.fontSize, lineHeight: style.lineHeight };
+    });
+    assert(invitationCodeLayout.centered && invitationCodeLayout.fontSize === '72px' && invitationCodeLayout.lineHeight === '72px', 'Invitation PIN is not enlarged and aligned with its QR code');
     const invitationQr = host.locator('.invite-qr');
     assert(await invitationQr.locator('svg[role="img"]').count() === 1 && await invitationQr.locator('.invite-qr-logo svg').count() === 1 && await invitationQr.locator('figcaption').count() === 0, 'Invitation QR lacks its CertiTips mark or retains removed copy');
     assert(await host.locator('.lobby-footer').evaluate(node => {

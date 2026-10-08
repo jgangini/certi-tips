@@ -149,7 +149,7 @@ test("CertiQuiz renders a branded local invitation QR", () => {
   assert.match(script, /window\.qrcode\(0, 'H'\)/);
   assert.match(script, /class="invite-qr-code"/);
   assert.match(css, /\.certiquiz-app \.invite-code\s*\{[^}]*padding:\s*12px 16px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*var\(--radius\);[^}]*background:\s*var\(--paper\);/);
-  assert.match(css, /\.certiquiz-app \.pin\s*\{[^}]*font-size:\s*clamp\(42px, 6vw, 64px\);/);
+  assert.match(css, /\.certiquiz-app \.pin\s*\{[^}]*font-size:\s*clamp\(48px, 6vw, 72px\);[^}]*line-height:\s*1;/);
   assert.match(script, /class="invite-qr-logo"/);
   assert.match(script, /data-invite-qr aria-pressed="false" aria-label="Ampliar código QR de invitación"/);
   assert.doesNotMatch(script, /data-invite-qr-caption|Escanea o selecciona para ampliar/);
