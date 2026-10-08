@@ -79,9 +79,9 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.match(script, /function roomHeader\(\) \{ return room\.status === 'lobby' \|\| room\.status === 'finished' \? welcome\(room\.role, true\) : ''; \}/);
   assert.match(script, /const joinForm = `<span class="eyebrow">INGRESO DE PARTICIPANTE<\/span><h2 id="form-title">Únete a la Sala<\/h2>/);
   assert.match(script, /id="room-code" name="code" aria-label="Código de la sala"/);
-  assert.match(script, /id="nickname"[^>]*maxlength="25"/);
+  assert.match(script, /id="nickname"[^>]*maxlength="30"/);
   assert.ok(script.includes("roomCode.value = roomCode.value.replace(/\\D/g, '').slice(0, 6);"));
-  assert.ok(script.includes("nickname.value = nickname.value.replace(/[^\\p{L}\\p{N} ]/gu, '').slice(0, 25);"));
+  assert.ok(script.includes("nickname.value = nickname.value.replace(/[^\\p{L}\\p{N} ]/gu, '').slice(0, 30);"));
   assert.doesNotMatch(script, /joinFacts|Los 6 números que comparte el anfitrión\./);
   assert.match(script, /<div class="actions join-actions"><button class="button" type="submit">Entrar<\/button><\/div>/);
   assert.match(script, /function roomFacts\(questionCount, secondsPerQuestion\) \{ return `<div class="fact-row"><span><strong>\$\{questionCount\}<\/strong> preguntas<\/span><span><strong>\$\{secondsPerQuestion\} s<\/strong> por pregunta<\/span><\/div>`; \}/);

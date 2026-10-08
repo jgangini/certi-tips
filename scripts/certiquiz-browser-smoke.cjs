@@ -213,8 +213,8 @@ async (page) => {
     await noFocusOutline(host, participantNickname, 'Participant nickname');
     await participantNickname.fill('Ana! 123$');
     assert(await participantNickname.inputValue() === 'Ana 123', 'Participant nickname retains symbols');
-    await participantNickname.fill('A'.repeat(26));
-    assert((await participantNickname.inputValue()).length === 25, 'Participant nickname exceeds 25 characters');
+    await participantNickname.fill('A'.repeat(31));
+    assert((await participantNickname.inputValue()).length === 30, 'Participant nickname exceeds 30 characters');
     await host.getByLabel('Código de la sala').fill('000000');
     await participantNickname.fill('QA Código inválido');
     await host.getByRole('button', { name: 'Entrar', exact: true }).click();

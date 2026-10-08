@@ -77,12 +77,13 @@ def test_nicknames_are_normalized_and_controls_are_rejected():
         game.join_room(room, "Alice\u202eevil")
 
 
-def test_nicknames_allow_letters_numbers_and_spaces_only_with_a_25_character_limit():
+def test_nicknames_allow_letters_numbers_and_spaces_only_with_a_30_character_limit():
     assert game.nickname_value("  Ana 7 María  ")[0] == "Ana 7 María"
+    assert game.nickname_value("A" * 30)[0] == "A" * 30
     with pytest.raises(game.GameError, match="solo letras"):
         game.nickname_value("Ana!")
-    with pytest.raises(game.GameError, match="2 y 25"):
-        game.nickname_value("A" * 26)
+    with pytest.raises(game.GameError, match="2 y 30"):
+        game.nickname_value("A" * 31)
 
 
 def test_room_cannot_start_empty_or_advance_during_question_or_join_late():

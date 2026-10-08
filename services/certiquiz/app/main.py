@@ -135,7 +135,7 @@ class RoomBody(StrictBody):
 
 
 class JoinBody(StrictBody):
-    nickname: str = Field(min_length=2, max_length=25)
+    nickname: str = Field(min_length=2, max_length=30)
 
 
 class AnswerBody(StrictBody):
