@@ -196,13 +196,14 @@ async (page) => {
     assert(await host.getByRole('heading', { name: 'Únete a la Sala', exact: true }).count() === 1 && await host.locator('.player-entry > .eyebrow').textContent() === 'INGRESO DE PARTICIPANTE', 'Participant form does not use the room heading and entry eyebrow');
     assert(await host.locator('#join-form .hint').count() === 1, 'Participant form retains the removed alias hint');
     const participantAction = await host.locator('#join-form .join-actions').evaluate(node => {
-      const [finish, enter] = node.querySelectorAll('.button');
+      const enter = node.querySelector('.button');
+      const facts = node.querySelector('.fact-row');
       const action = node.getBoundingClientRect();
-      const finishBox = finish.getBoundingClientRect();
+      const factsBox = facts.getBoundingClientRect();
       const enterBox = enter.getBoundingClientRect();
-      return { aligned: Math.abs(action.left - finishBox.left) < 1 && Math.abs(action.right - enterBox.right) < 1, border: getComputedStyle(node).borderTopWidth, buttonWidth: enterBox.width, wide: enter.classList.contains('wide'), finalButton: finish.textContent };
+      return { aligned: Math.abs(action.left - factsBox.left) < 1 && Math.abs(action.right - enterBox.right) < 1, border: getComputedStyle(node).borderTopWidth, buttonWidth: enterBox.width, wide: enter.classList.contains('wide'), facts: facts.textContent.replace(/\s+/g, ' ').trim() };
     });
-    assert(participantAction.aligned && participantAction.border === '1px' && participantAction.buttonWidth === 140 && !participantAction.wide && participantAction.finalButton === 'Finalizar', 'Participant actions do not match the compact lobby footer');
+    assert(participantAction.aligned && participantAction.border === '1px' && participantAction.buttonWidth === 140 && !participantAction.wide && participantAction.facts === '12 preguntas10 s por pregunta', 'Participant facts do not match the compact lobby footer');
     await blueFocus(host, host.getByLabel('Código de la sala'), 'Participant room code');
     const participantNickname = host.getByLabel('Tu nombre o alias');
     await participantNickname.fill('Ana! 123$');
@@ -215,9 +216,9 @@ async (page) => {
     await host.locator('#join-form [data-error]').waitFor({ state: 'visible' });
     assert(await host.locator('[data-error]').evaluate(node => Boolean(node.closest('#join-form') && node.closest('.card'))), 'Invalid PIN error appeared outside its form/card');
     assert(await host.locator('.certiquiz-app > [role="alert"]').count() === 0, 'A global error banner remains');
-    await host.getByRole('button', { name: 'Finalizar', exact: true }).click();
+    await host.getByRole('link', { name: 'CertiQuiz', exact: true }).click();
     await host.locator('[data-role="host"]').waitFor();
-    assert(new URL(host.url()).hash === '' && await host.locator('#join-form').count() === 0, 'Participant Finalizar did not return to CertiQuiz role selection');
+    assert(new URL(host.url()).hash === '' && await host.locator('#join-form').count() === 0, 'Participant breadcrumb did not return to CertiQuiz role selection');
     await host.locator('[data-role="host"]').focus(); await host.keyboard.press('Enter');
     const coursePicker = host.locator('.course-picker');
     const courseSummary = coursePicker.locator('summary#course');

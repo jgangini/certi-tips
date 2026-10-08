@@ -80,8 +80,9 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.match(script, /const joinForm = `<span class="eyebrow">INGRESO DE PARTICIPANTE<\/span><h2 id="form-title">Únete a la Sala<\/h2>/);
   assert.match(script, /id="nickname"[^>]*maxlength="25"/);
   assert.ok(script.includes("nickname.value = nickname.value.replace(/[^\\p{L}\\p{N} ]/gu, '').slice(0, 25);"));
-  assert.match(script, /<div class="actions join-actions"><button class="button secondary" type="button" data-entry-finish>Finalizar<\/button><button class="button" type="submit">Entrar<\/button><\/div>/);
-  assert.match(script, /app\.querySelector\('\[data-entry-finish\]'\)\?\.addEventListener\('click', \(\) => \{ if \(!busy\) entry\(null\); \}\);/);
+  assert.match(script, /const joinFacts = roomFacts\(12, 10\);/);
+  assert.match(script, /<div class="actions join-actions">\$\{joinFacts\}<button class="button" type="submit">Entrar<\/button><\/div>/);
+  assert.match(script, /function roomFacts\(questionCount, secondsPerQuestion\) \{ return `<div class="fact-row"><span><strong>\$\{questionCount\}<\/strong> preguntas<\/span><span><strong>\$\{secondsPerQuestion\} s<\/strong> por pregunta<\/span><\/div>`; \}/);
   assert.doesNotMatch(script, /Entrar a la sala|Tu alias aparecerá en la sala y en los resultados\./);
   assert.doesNotMatch(script, /data-change-role|Cambiar rol/);
   assert.match(css, /\.certiquiz-app \.role-card\s*\{[^}]*width:\s*100%;[^}]*cursor:\s*pointer;/);
@@ -94,6 +95,7 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb \.certiquiz-mark\s*\{[^}]*color:\s*var\(--ink\);[^}]*font-weight:\s*inherit;/);
   assert.match(css, /\.certiquiz-app \.player-entry input:focus-visible\s*\{\s*outline-color:\s*var\(--blue\);/);
   assert.match(css, /\.certiquiz-app \.player-entry \.join-actions\s*\{[^}]*justify-content:\s*space-between;[^}]*border-top:\s*1px solid var\(--line\);[^}]*margin-top:\s*24px;[^}]*padding-top:\s*20px;/);
+  assert.match(css, /\.certiquiz-app \.player-entry \.join-actions \.fact-row\s*\{\s*margin:\s*0;\s*padding:\s*0;\s*border:\s*0;/);
   assert.match(css, /\.certiquiz-app \.player-entry \.join-actions \.button\s*\{\s*width:\s*140px;/);
   assert.match(siteCss, /\.search-toggle\s*\{[^}]*background:\s*var\(--paper\);/);
   assert.match(siteCss, /\.search-toggle kbd\s*\{[^}]*display:\s*inline-flex;[^}]*padding:\s*2px 5px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*4px;[^}]*background:\s*var\(--chrome-bg\);[^}]*font-size:\s*0\.62rem;/);
