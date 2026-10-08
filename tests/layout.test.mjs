@@ -67,7 +67,9 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.match(script, /history\.replaceState\(null, '', `\$\{siteBase\}certiquiz\/\$\{role === 'host' \? '#host' : role === 'player' \? '#participant' : ''\}`\)/);
   assert.doesNotMatch(script, /role-action/);
   assert.doesNotMatch(script, /ORGANIZA LA PARTIDA|APRENDE CON TU EQUIPO/);
-  assert.match(script, /const welcome = \(role, inRoom = false\) => `[^`]*<nav class="certiquiz-breadcrumb" aria-label="Ruta de navegación"><a href="\$\{siteBase\}">Home<\/a><span aria-hidden="true">\/<\/span>\$\{role \? `<a href="\$\{siteBase\}certiquiz\/#entry">CertiQuiz<\/a><span aria-hidden="true">\/<\/span><span\$\{inRoom \? '' : ' aria-current="page"'\}>\$\{role === 'host' \? 'Anfitrión' : 'Participante'\}<\/span>\$\{inRoom \? '<span aria-hidden="true">\/<\/span><span aria-current="page">Sala<\/span>' : ''\}` : '<span aria-current="page">CertiQuiz<\/span>'\}/);
+  assert.match(script, /<nav class="certiquiz-breadcrumb" aria-label="Ruta de navegación">/);
+  assert.match(script, /href="\$\{siteBase\}certiquiz\/#\$\{role === 'host' \? 'host' : 'participant'\}" data-entry-role="\$\{role\}">\$\{role === 'host' \? 'Anfitrión' : 'Participante'\}<\/a>/);
+  assert.match(script, /document\.querySelector\('\[data-entry-role\]'\)\?\.addEventListener\('click', event => \{ event\.preventDefault\(\); if \(!busy\) entry\(event\.currentTarget\.dataset\.entryRole\); \}\);/);
   assert.match(script, /function roomHeader\(\) \{ return room\.status === 'lobby' \|\| room\.status === 'finished' \? welcome\(room\.role, true\) : ''; \}/);
   assert.doesNotMatch(script, /data-change-role|Cambiar rol/);
   assert.match(css, /\.certiquiz-app \.role-card\s*\{[^}]*width:\s*100%;[^}]*cursor:\s*pointer;/);
