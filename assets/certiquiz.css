@@ -152,7 +152,7 @@ html[data-theme="dark"] .certiquiz-app { --success: #9bd8b8; --success-bg: #1b35
 .certiquiz-app .option { margin: 0; display: flex; gap: 12px; align-items: center; padding: 18px; border: 2px solid var(--line); border-radius: 11px; font-size: 16px; font-weight: 500; cursor: pointer; min-height: 94px; }
 .certiquiz-app .option:hover:has(input:enabled) { background: var(--surface); }
 .certiquiz-app .option:has(input:checked):not(.correct) { border-color: var(--accent); background: var(--tint); }
-.certiquiz-app .option:has(input:focus-visible) { outline: 3px solid var(--blue); outline-offset: 3px; }
+.certiquiz-app .option:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 3px; }
 .certiquiz-app .option:has(input:disabled) { cursor: default; }
 .certiquiz-app .option input { flex: 0 0 auto; accent-color: var(--accent); width: 18px; height: 18px; }
 .certiquiz-app .option-letter { display: inline-flex; flex: 0 0 auto; width: 30px; height: 30px; border-radius: 6px; justify-content: center; align-items: center; background: var(--surface); font-weight: 800; font-size: 14px; }

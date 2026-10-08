@@ -130,6 +130,7 @@ test("CertiQuiz renders a branded local invitation QR", () => {
   assert.match(css, /\.certiquiz-app \.invite-qr-code > svg\s*\{[^}]*display:\s*block;[^}]*width:\s*100%;[^}]*border-radius:\s*14px;[^}]*background:\s*#fff;/);
   assert.match(css, /\.certiquiz-app \.invite-qr-logo\s*\{[^}]*position:\s*absolute;[^}]*width:\s*46px;[^}]*height:\s*46px;[^}]*border-radius:\s*12px;[^}]*background:\s*#fff;[^}]*color:\s*#111;/);
   assert.match(css, /\.certiquiz-app \.invite-qr figcaption\s*\{[^}]*text-align:\s*center;/);
+  assert.match(css, /\.certiquiz-app \.option:has\(input:focus-visible\)\s*\{[^}]*outline:\s*3px solid var\(--accent\);/);
   assert.match(build, /node_modules", "qrcode-generator", "qrcode\.js"/);
 });
 test("the local QR generator encodes an invitation URL as SVG", () => {
@@ -267,8 +268,8 @@ test("hero animation follows the catalog's Foundation Sprint order and levels", 
   assert.doesNotMatch(animation, /hw-pl-footnote|Tres rutas opcionales/);
   assert.match(animation, /data-duration="15\.5"/);
   assert.match(host, /data-duration="15\.5"/);
-  assert.match(animation, /--paper: #0e1117;[\s\S]*--ink: #fff;[\s\S]*--heading: #fff;[\s\S]*--muted: #fff;[\s\S]*--accent: #c74634;[\s\S]*--branch: #c74634;/);
-  assert.match(host, /background: #0e1117;/);
+  assert.match(animation, /--paper: #fff;[\s\S]*--ink: #31333f;[\s\S]*--heading: #4b5563;[\s\S]*--muted: #606574;[\s\S]*--accent: #c74634;[\s\S]*--branch: #a6382b;/);
+  assert.match(host, /background: #fff;/);
   assert.match(animation, /14\.75\);/);
 });
 
@@ -469,6 +470,7 @@ test("home shows each FY27 certification once and links all three available guid
   assert.match(siteCss, /\.home-hero \.oracle-badge svg\s*\{[^}]*color:\s*var\(--accent\);/);
   assert.match(siteCss, /\.home-hero h1\s*\{[^}]*font-size:\s*clamp\(2\.4rem, 3\.5vw, 3rem\);/);
   assert.match(siteCss, /\.home-hero h1 span\s*\{\s*display:\s*block;/);
+  assert.match(siteCss, /:focus-visible\s*\{[^}]*outline:\s*3px solid var\(--accent\);/);
   assert.match(siteCss, /\.hero-flow\s*\{[^}]*background:\s*var\(--paper\);[^}]*border:\s*1px solid var\(--line\);/);
   assert.doesNotMatch(siteCss, /\.hero-flow video\s*\{[^}]*filter:/);
   assert.doesNotMatch(html, /assets\/motion\/certification-path\.mp4/);

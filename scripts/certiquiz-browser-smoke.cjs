@@ -61,15 +61,15 @@ async (page) => {
     assert(dimensions.headings === (dimensions.activeStage ? 0 : 1), `${label}: unexpected welcome heading for the current stage`);
     assert(dimensions.mainBottom <= dimensions.footerTop + 1, `${label}: content bottom ${dimensions.mainBottom} extends below footer top ${dimensions.footerTop}`);
   };
-  const blueFocus = async (tab, control, label) => {
+  const accentFocus = async (tab, control, label) => {
     await tab.keyboard.press('Tab'); await control.focus();
     const focus = await control.evaluate(node => {
-      const probe = document.createElement('span'); probe.style.color = 'var(--blue)'; node.parentElement.append(probe);
-      const blue = getComputedStyle(probe).color; probe.remove();
+      const probe = document.createElement('span'); probe.style.color = 'var(--accent)'; node.parentElement.append(probe);
+      const accent = getComputedStyle(probe).color; probe.remove();
       const style = getComputedStyle(node);
-      return { visible: node.matches(':focus-visible'), color: style.outlineColor, width: style.outlineWidth, blue };
+      return { visible: node.matches(':focus-visible'), color: style.outlineColor, width: style.outlineWidth, accent };
     });
-    assert(focus.visible && focus.color === focus.blue && focus.width === '3px', `${label}: keyboard focus does not use the site's blue outline`);
+    assert(focus.visible && focus.color === focus.accent && focus.width === '3px', `${label}: keyboard focus does not use the site's accent outline`);
   };
   const join = async (tab, code, nickname) => {
     await tab.goto(`${appUrl}?room=${code}`);
@@ -206,8 +206,8 @@ async (page) => {
     assert(await setupAction.locator('.setup-label').textContent() === 'Generar Sala' && await setupAction.getByRole('button', { name: 'Comenzar', exact: true }).locator('svg').count() === 0, 'Host setup action lacks its title or retains the room icon');
     const setupWidth = await setupAction.evaluate(node => ({ button: node.querySelector('button').getBoundingClientRect().width, input: document.querySelector('#seconds').getBoundingClientRect().width }));
     assert(Math.abs(setupWidth.button - setupWidth.input) < 1, 'Host setup action button does not match the numeric input width');
-    await blueFocus(host, host.getByLabel('Número de preguntas', { exact: true }), 'Dark host form');
-    checks.push('Keyboard role selection, one form, inline PIN error, no key, default ten seconds, limit500 and standard blue focus');
+    await accentFocus(host, host.getByLabel('Número de preguntas', { exact: true }), 'Dark host form');
+    checks.push('Keyboard role selection, one form, inline PIN error, no key, default ten seconds, limit500 and standard accent focus');
 
     const bankResponse = await host.request.get('http://127.0.0.1:4173/certi-tips/assets/questions.json');
     assert(bankResponse.ok(), 'Start/rebuild the CertiTips preview on port 4173 before running this check');
@@ -274,7 +274,7 @@ async (page) => {
       }
     }
     await host.setViewportSize({ width: 1280, height: 900 });
-    await blueFocus(host, address, 'Light readonly invitation');
+    await accentFocus(host, address, 'Light readonly invitation');
     await host.context().grantPermissions(['clipboard-read', 'clipboard-write'], { origin });
     await copyButton.locator('svg').click();
     await host.waitForFunction(() => document.querySelector('[data-copy]')?.getAttribute('aria-label') === 'Enlace copiado');
@@ -399,7 +399,7 @@ async (page) => {
     assert(source, 'Question id is absent from the reused CertiTips bank');
     const correct = first.locator(`input[name="optionId"][value="${source.correctOption}"]`);
     await correct.check(); await correct.focus();
-    await blueFocus(first, correct, 'Light answer option');
+    await accentFocus(first, correct, 'Light answer option');
     const timerBefore = Number.parseInt(await first.locator('[data-timer]').textContent(), 10);
     const [unchanged] = await Promise.all([
       first.waitForResponse(response => response.status() === 204 && response.request().method() === 'GET' && new URL(response.url()).pathname === `/api/rooms/${code}` && new URL(response.url()).searchParams.has('version'), { timeout: 5000 }),
