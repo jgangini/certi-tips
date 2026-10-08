@@ -172,6 +172,13 @@ test("CertiQuiz host lobby keeps facts beside its actions and uses a compact con
   assert.match(css, /\.certiquiz-app \.confirmation-icon\s*\{[^}]*width: 76px;[^}]*height: 76px;/);
   assert.match(css, /\.certiquiz-app \.confirmation-actions \.button\s*\{[^}]*min-height: 52px;/);
 });
+test("CertiQuiz explains rate limits as warnings with the server retry delay", () => {
+  const script = readFileSync(new URL("../assets/certiquiz.js", import.meta.url), "utf8");
+  assert.match(script, /function retryAfterMessage\(seconds\) \{[\s\S]*?seconds % 3600 === 0[\s\S]*?seconds % 60 === 0[\s\S]*?Vuelve a intentarlo en \$\{amount\}/);
+  assert.match(script, /response\.headers\.get\('Retry-After'\)/);
+  assert.match(script, /detail\.startsWith\('Demasiados intentos\.'\) \? retryAfterMessage\(retryAfter\)/);
+  assert.match(script, /catch \(error\) \{ \(error\.status === 429 \? showWarning : showError\)\(error\.message\); \}/);
+});
 const tocByPage = new Map([
   ["overview", [{ id: "primeros-pasos", title: "Primeros pasos" }]],
   ["agents", [{ id: "conceptos-clave", title: "Conceptos <clave> & seguridad" }]],

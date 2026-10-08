@@ -40,6 +40,10 @@ function showError(message) { showNotice(message); }
 function showWarning(message) { showNotice(message, 'warning'); }
 function announce(message) { const node = app.querySelector('#announcement'); if (node) node.textContent = message; }
 function setConnection(message) { const node = app.querySelector('#connection'); if (node) node.textContent = message; }
+function retryAfterMessage(seconds) {
+  const [amount, unit] = seconds % 3600 === 0 ? [seconds / 3600, 'hora'] : seconds % 60 === 0 ? [seconds / 60, 'minuto'] : [seconds, 'segundo'];
+  return `Demasiados intentos. Vuelve a intentarlo en ${amount} ${unit}${amount === 1 ? '' : 's'}.`;
+}
 async function request(path, body) {
   const start = performance.now();
   let response;
@@ -49,7 +53,9 @@ async function request(path, body) {
   if (response.status === 204) return null;
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const message = typeof data.detail === 'string' ? data.detail : typeof data.error === 'string' ? data.error : response.status === 429 ? 'Demasiados intentos. Espera un momento antes de volver a probar.' : 'No se pudo completar la acción. Revisa los datos e inténtalo de nuevo.';
+    const retryAfter = Number(response.headers.get('Retry-After'));
+    const detail = typeof data.detail === 'string' ? data.detail : typeof data.error === 'string' ? data.error : '';
+    const message = response.status === 429 && Number.isInteger(retryAfter) && retryAfter > 0 && detail.startsWith('Demasiados intentos.') ? retryAfterMessage(retryAfter) : detail || (response.status === 429 ? 'Demasiados intentos. Espera un momento antes de volver a probar.' : 'No se pudo completar la acción. Revisa los datos e inténtalo de nuevo.');
     const error = new Error(message); error.status = response.status; throw error;
   }
   if (Number.isFinite(data.serverNow)) { data.clockServer = data.serverNow + (performance.now() - start) / 2; data.clockReceived = performance.now(); }
@@ -62,7 +68,7 @@ async function action(callback, button) {
   const disabled = button?.disabled;
   if (button) button.disabled = true;
   try { await callback(); }
-  catch (error) { showError(error.message); }
+  catch (error) { (error.status === 429 ? showWarning : showError)(error.message); }
   finally {
     busy = false; app.setAttribute('aria-busy', 'false');
     if (button?.isConnected) button.disabled = disabled;
