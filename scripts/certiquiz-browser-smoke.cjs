@@ -210,6 +210,7 @@ async (page) => {
     await participantCode.fill('33r456!');
     assert(await participantCode.inputValue() === '33456', 'Participant room code should retain only digits');
     const participantNickname = host.getByLabel('Tu nombre o alias');
+    await noFocusOutline(host, participantNickname, 'Participant nickname');
     await participantNickname.fill('Ana! 123$');
     assert(await participantNickname.inputValue() === 'Ana 123', 'Participant nickname retains symbols');
     await participantNickname.fill('A'.repeat(26));

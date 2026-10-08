@@ -87,8 +87,7 @@ html[data-theme="dark"] .certiquiz-app { --success: #9bd8b8; --success-bg: #1b35
 .certiquiz-app .actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 24px; }
 .certiquiz-app .actions.game-actions { justify-content: flex-end; }
 .certiquiz-app .actions.game-actions .button { width: auto; }
-.certiquiz-app .player-entry input:focus-visible { outline-color: var(--blue); }
-.certiquiz-app .player-entry #room-code:focus-visible { outline: none; }
+.certiquiz-app .player-entry input:focus-visible { outline: none; box-shadow: none; }
 .certiquiz-app .player-entry #join-form { padding-top: 6px; }
 .certiquiz-app .player-entry .join-actions { justify-content: flex-end; border-top: 1px solid var(--line); margin-top: 24px; padding-top: 20px; }
 .certiquiz-app .player-entry .join-actions .button { width: 140px; }
