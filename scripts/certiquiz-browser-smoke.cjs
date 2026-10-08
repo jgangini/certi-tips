@@ -118,7 +118,7 @@ async (page) => {
     const second = await createPage({ width: 320, height: 800 });
     await host.route(`${apiOrigin}/api/catalog`, route => route.abort('connectionfailed'));
     await host.goto(appUrl);
-    await host.getByRole('heading', { name: 'Volvamos a intentarlo.' }).waitFor();
+    await host.getByRole('heading', { name: 'Volvamos a intentarlo' }).waitFor();
     const failureCard = host.locator('.loading-error');
     assert(await failureCard.locator('[role="alert"]').count() === 1 && await host.locator('#app [role="alert"]').count() === 1, 'Initial failure has a duplicate/global error banner');
     assert(await failureCard.locator('.eyebrow').count() === 0, 'Initial failure retains the CertiQuiz eyebrow');

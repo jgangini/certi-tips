@@ -423,7 +423,7 @@ async function load() {
     }
     await finishLoading(); entry();
   } catch {
-    app.innerHTML = `<section class="loading loading-full loading-error"><h1><span>Volvamos a intentarlo.</span></h1><p class="muted" role="alert">CertiQuiz no se pudo cargar. Revisa tu conexión e inténtalo de nuevo.</p><p class="hint">Recarga la página desde tu navegador o pulsa <kbd>F5</kbd> para volver a intentarlo.</p></section>`;
+    app.innerHTML = `<section class="loading loading-full loading-error"><h1><span>Volvamos a intentarlo</span></h1><p class="muted" role="alert">CertiQuiz no se pudo cargar. Revisa tu conexión e inténtalo de nuevo.</p><p class="hint">Recarga la página desde tu navegador o pulsa <kbd>F5</kbd> para volver a intentarlo.</p></section>`;
     app.querySelector('h1').prepend(document.querySelector('#certiquiz-rocket').content.cloneNode(true));
   } finally { app.setAttribute('aria-busy', 'false'); }
 }
