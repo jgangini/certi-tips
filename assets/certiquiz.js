@@ -93,7 +93,7 @@ function invitationQr(url) {
   if (typeof window.qrcode !== 'function') return '';
   const qr = window.qrcode(0, 'H');
   qr.addData(url); qr.make();
-  return `<figure class="invite-qr"><span class="invite-qr-code">${qr.createSvgTag({ cellSize: 4, margin: 10, scalable: true, title: 'Código QR de invitación', alt: 'Escanea para abrir la sala' })}</span><span class="invite-qr-logo" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none"><path d="M13 13h12a8 8 0 0 1 8 8v14H21a8 8 0 0 1-8-8Z" stroke="currentColor" stroke-width="3"/><path d="m19 24 4 4 9-10" stroke="currentColor" stroke-width="3"/></svg></span></figure>`;
+  return `<figure class="invite-qr"><span class="invite-qr-code">${qr.createSvgTag({ cellSize: 4, margin: 10, scalable: true, title: 'Código QR de invitación', alt: 'Escanea para abrir la sala' })}</span><span class="invite-qr-logo" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none"><path d="M13 13h12a8 8 0 0 1 8 8v14H21a8 8 0 0 1-8-8Z" stroke="currentColor" stroke-width="3"/><path d="m19 24 4 4 9-10" stroke="currentColor" stroke-width="3"/></svg></span><figcaption>Escanea para participar</figcaption></figure>`;
 }
 
 function entry(role = selectedRole) {

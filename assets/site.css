@@ -490,8 +490,8 @@ html[data-theme="dark"] .theme-moon { display: none; }
   padding: 8px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--scrollbar);
-  color: #fff;
+  background: var(--chrome-bg);
+  color: var(--ink);
   font-size: 0.85rem;
   font-weight: 500;
   line-height: 1;
@@ -573,7 +573,6 @@ html[data-theme="dark"] .hero-actions .certiquiz-link:is(:hover, :focus-visible)
 .hero-flow-fallback strong { color: var(--accent); }
 .hero-flow-fallback p { color: var(--ink); margin: 14px 0; }
 .hero-flow-fallback span { color: var(--muted); }
-html[data-theme="dark"] .hero-flow video { filter: invert(1) hue-rotate(180deg); }
 .hero-flow.is-unavailable video { display: none; }
 .hero-flow.is-unavailable .hero-flow-fallback { display: block; }
 .path-section {

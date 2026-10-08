@@ -121,13 +121,15 @@ test("CertiQuiz renders a branded local invitation QR", () => {
   assert.match(script, /window\.qrcode\(0, 'H'\)/);
   assert.match(script, /class="invite-qr-code"/);
   assert.match(script, /class="invite-qr-logo"/);
+  assert.match(script, /<figcaption>Escanea para participar<\/figcaption>/);
   assert.match(script, /aria-hidden="true"/);
   assert.doesNotMatch(script, /Escanea para unirte|assets\/favicon\.svg/);
-  assert.match(css, /\.certiquiz-app \.invite-overview\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) 166px;/);
-  assert.match(css, /\.certiquiz-app \.invite-qr\s*\{[^}]*margin:\s*-58px 0 0;/);
-  assert.match(css, /\.certiquiz-app \.invite-qr-code > svg\s*\{[^}]*display:\s*block;[^}]*width:\s*100%;[^}]*background:\s*#fff;/);
-  assert.match(css, /\.certiquiz-app \.invite-qr-logo\s*\{[^}]*position:\s*absolute;[^}]*background:\s*#fff;[^}]*color:\s*#111;/);
-  assert.doesNotMatch(css, /\.invite-qr figcaption/);
+  assert.match(css, /\.certiquiz-app \.invite-overview\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) 184px;/);
+  assert.match(css, /\.certiquiz-app \.invite-qr\s*\{[^}]*width:\s*184px;[^}]*margin:\s*-42px 0 0;/);
+  assert.match(css, /\.certiquiz-app \.invite-qr-code\s*\{[^}]*overflow:\s*hidden;[^}]*border-radius:\s*14px;/);
+  assert.match(css, /\.certiquiz-app \.invite-qr-code > svg\s*\{[^}]*display:\s*block;[^}]*width:\s*100%;[^}]*border-radius:\s*14px;[^}]*background:\s*#fff;/);
+  assert.match(css, /\.certiquiz-app \.invite-qr-logo\s*\{[^}]*position:\s*absolute;[^}]*width:\s*46px;[^}]*height:\s*46px;[^}]*border-radius:\s*12px;[^}]*background:\s*#fff;[^}]*color:\s*#111;/);
+  assert.match(css, /\.certiquiz-app \.invite-qr figcaption\s*\{[^}]*text-align:\s*center;/);
   assert.match(build, /node_modules", "qrcode-generator", "qrcode\.js"/);
 });
 test("the local QR generator encodes an invitation URL as SVG", () => {
@@ -265,6 +267,8 @@ test("hero animation follows the catalog's Foundation Sprint order and levels", 
   assert.doesNotMatch(animation, /hw-pl-footnote|Tres rutas opcionales/);
   assert.match(animation, /data-duration="15\.5"/);
   assert.match(host, /data-duration="15\.5"/);
+  assert.match(animation, /--paper: #0e1117;[\s\S]*--ink: #fff;[\s\S]*--heading: #fff;[\s\S]*--muted: #fff;[\s\S]*--accent: #c74634;[\s\S]*--branch: #c74634;/);
+  assert.match(host, /background: #0e1117;/);
   assert.match(animation, /14\.75\);/);
 });
 
@@ -458,7 +462,7 @@ test("home shows each FY27 certification once and links all three available guid
   assert.match(siteCss, /\.home-hero\s*\{[^}]*align-items:\s*stretch;/);
   assert.match(siteCss, /\.home-hero \.hero-copy\s*\{[^}]*align-self:\s*stretch;[^}]*justify-content:\s*center;/);
   const oracleBadge = siteCss.match(/\.home-hero \.oracle-badge\s*\{([^}]*)\}/)[1];
-  assert.match(oracleBadge, /display:\s*inline-flex;[\s\S]*border:\s*1px solid var\(--line\);[\s\S]*background:\s*var\(--scrollbar\);[\s\S]*color:\s*#fff;/);
+  assert.match(oracleBadge, /display:\s*inline-flex;[\s\S]*border:\s*1px solid var\(--line\);[\s\S]*background:\s*var\(--chrome-bg\);[\s\S]*color:\s*var\(--ink\);/);
   assert.doesNotMatch(oracleBadge, /backdrop-filter|box-shadow/);
   assert.match(siteCss, /--scrollbar:\s*#59616e;/);
   assert.match(siteCss, /html\[data-theme="dark"\]\s*\{[^}]*--scrollbar:\s*#454855;[^}]*--red:\s*#c74634;[^}]*--red-dark:\s*#a6382b;/);
@@ -466,7 +470,7 @@ test("home shows each FY27 certification once and links all three available guid
   assert.match(siteCss, /\.home-hero h1\s*\{[^}]*font-size:\s*clamp\(2\.4rem, 3\.5vw, 3rem\);/);
   assert.match(siteCss, /\.home-hero h1 span\s*\{\s*display:\s*block;/);
   assert.match(siteCss, /\.hero-flow\s*\{[^}]*background:\s*var\(--paper\);[^}]*border:\s*1px solid var\(--line\);/);
-  assert.match(siteCss, /html\[data-theme="dark"\] \.hero-flow video\s*\{\s*filter:\s*invert\(1\) hue-rotate\(180deg\);\s*\}/);
+  assert.doesNotMatch(siteCss, /\.hero-flow video\s*\{[^}]*filter:/);
   assert.doesNotMatch(html, /assets\/motion\/certification-path\.mp4/);
   const withMotion = homeBody(catalog, true);
   assert.match(withMotion, /assets\/motion\/certification-path\.mp4/);
