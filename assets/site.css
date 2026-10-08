@@ -622,14 +622,19 @@ html[data-theme="dark"] .hero-actions .certiquiz-link:is(:hover, :focus-visible)
 }
 .path-carousel { touch-action: pan-y; padding-bottom: 32px; }
 .group-carousel-controls button {
+  display: grid;
+  place-items: center;
   width: 44px;
   height: 44px;
+  padding: 0;
   border: 1px solid var(--line);
   border-radius: 50%;
   background: var(--white);
   color: var(--ink);
   font-size: 1.15rem;
+  line-height: 0;
 }
+.group-carousel-controls button svg { display: block; }
 .group-carousel-controls button:not(:disabled):hover { border-color: var(--red); color: var(--red); }
 .group-carousel-controls button:disabled { opacity: 0.4; }
 @media (max-width: 700px) {

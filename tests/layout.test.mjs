@@ -418,6 +418,9 @@ test("home shows each FY27 certification once and links all three available guid
   assert.match(html, /data-group-prev[^>]*><svg viewBox="0 0 24 24" width="22" height="22"[^]*?<path d="M6 12H18M6 12L11 7M6 12L11 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"\/><\/svg><\/button>/);
   assert.match(html, /data-group-next[^>]*><svg viewBox="0 0 24 24" width="22" height="22"[^]*?<path d="M6 12H18M18 12L13 7M18 12L13 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"\/><\/svg><\/button>/);
   assert.doesNotMatch(html, /data-group-(?:prev|next)[^>]*>[←→]</);
+  const carouselCss = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
+  assert.match(carouselCss, /\.group-carousel-controls button\s*\{[^}]*display:\s*grid;[^}]*place-items:\s*center;[^}]*padding:\s*0;[^}]*line-height:\s*0;/);
+  assert.match(carouselCss, /\.group-carousel-controls button svg\s*\{\s*display:\s*block;/);
   assert.match(html, /class="path-section path-foundation is-active"/);
   assert.match(html, /<h2 id="foundation-sprint-title">Foundation<\/h2>/);
   assert.match(html, /Foundation reúne tres certificaciones de nivel 1/);
