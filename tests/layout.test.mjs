@@ -99,6 +99,7 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb \.certiquiz-mark\s*\{[^}]*color:\s*var\(--ink\);[^}]*font-weight:\s*inherit;/);
   assert.match(css, /\.certiquiz-app \.player-entry input:focus-visible\s*\{\s*outline-color:\s*var\(--blue\);/);
   assert.match(css, /\.certiquiz-app \.player-entry #room-code:focus-visible\s*\{\s*outline:\s*none;/);
+  assert.match(css, /\.certiquiz-app \.player-entry #join-form\s*\{\s*padding-top:\s*6px;/);
   assert.match(css, /\.certiquiz-app input\.code-input\s*\{[^}]*min-height:\s*0 !important;[^}]*height:\s*98px !important;[^}]*padding:\s*12px 16px !important;[^}]*font-size:\s*clamp\(48px, 6vw, 72px\) !important;[^}]*font-weight:\s*800;[^}]*letter-spacing:\s*\.09em;[^}]*line-height:\s*1;[^}]*font-variant-numeric:\s*tabular-nums;/);
   assert.match(css, /\.certiquiz-app input\.code-input\s*\{[^}]*text-align:\s*center;[^}]*background-image:\s*repeating-linear-gradient\(to right, var\(--line\) 0 \.5em, transparent \.5em \.7em\);[^}]*background-size:\s*4\.2em 2px;[^}]*background-position:\s*center calc\(50% \+ \.47em\);[^}]*background-repeat:\s*no-repeat;/);
   assert.match(css, /\.certiquiz-app \.player-entry \.join-actions\s*\{[^}]*justify-content:\s*flex-end;[^}]*border-top:\s*1px solid var\(--line\);[^}]*margin-top:\s*24px;[^}]*padding-top:\s*20px;/);

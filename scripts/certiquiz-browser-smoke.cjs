@@ -203,9 +203,9 @@ async (page) => {
     const participantCode = host.getByLabel('Código de la sala');
     const participantCodeStyle = await participantCode.evaluate(node => {
       const style = getComputedStyle(node);
-      return { height: style.height, fontSize: style.fontSize, lineHeight: style.lineHeight, fontWeight: style.fontWeight };
+      return { height: style.height, fontSize: style.fontSize, lineHeight: style.lineHeight, fontWeight: style.fontWeight, titleGap: node.getBoundingClientRect().top - document.querySelector('#form-title').getBoundingClientRect().bottom };
     });
-    assert(participantCodeStyle.height === '98px' && participantCodeStyle.fontSize === '72px' && participantCodeStyle.lineHeight === '72px' && Number(participantCodeStyle.fontWeight) >= 800, 'Participant PIN does not match the host PIN dimensions');
+    assert(participantCodeStyle.height === '98px' && participantCodeStyle.fontSize === '72px' && participantCodeStyle.lineHeight === '72px' && Number(participantCodeStyle.fontWeight) >= 800 && participantCodeStyle.titleGap === 18, 'Participant PIN does not match the host PIN layout');
     await noFocusOutline(host, participantCode, 'Participant room code');
     await participantCode.fill('33r456!');
     assert(await participantCode.inputValue() === '33456', 'Participant room code should retain only digits');
