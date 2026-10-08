@@ -123,12 +123,16 @@ test("CertiQuiz renders a branded local invitation QR", () => {
   assert.match(script, /window\.qrcode\(0, 'H'\)/);
   assert.match(script, /class="invite-qr-code"/);
   assert.match(css, /\.certiquiz-app \.pin\s*\{[^}]*padding:\s*12px 16px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*var\(--radius\);[^}]*background:\s*var\(--paper\);/);
+  assert.match(css, /\.certiquiz-app \.pin\s*\{[^}]*font-size:\s*clamp\(42px, 6vw, 64px\);/);
   assert.match(script, /class="invite-qr-logo"/);
   assert.match(script, /<figcaption>Escanea para participar<\/figcaption>/);
   assert.match(script, /aria-hidden="true"/);
   assert.doesNotMatch(script, /Escanea para unirte|assets\/favicon\.svg/);
-  assert.match(css, /\.certiquiz-app \.invite-overview\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) 184px;/);
-  assert.match(css, /\.certiquiz-app \.invite-qr\s*\{[^}]*width:\s*184px;[^}]*margin:\s*-42px 0 0;/);
+  assert.match(script, /const hostInvitation = `<div class="invite-overview"><strong class="pin">/);
+  assert.match(script, /<div class="room-side">\$\{room\.role === 'host' \? invitationQr\(invite\) : ''\}<div data-players><\/div><\/div>/);
+  assert.match(css, /\.certiquiz-app \.room-side\s*\{[^}]*display:\s*grid;[^}]*min-width:\s*0;/);
+  assert.match(css, /\.certiquiz-app \.invite-overview\s*\{\s*width:\s*100%;/);
+  assert.match(css, /\.certiquiz-app \.invite-qr\s*\{[^}]*width:\s*184px;[^}]*margin:\s*34px 0 0;/);
   assert.match(css, /\.certiquiz-app \.invite-qr-code\s*\{[^}]*overflow:\s*hidden;[^}]*border-radius:\s*14px;/);
   assert.match(css, /\.certiquiz-app \.invite-qr-code > svg\s*\{[^}]*display:\s*block;[^}]*width:\s*100%;[^}]*border-radius:\s*14px;[^}]*background:\s*#fff;/);
   assert.match(css, /\.certiquiz-app \.invite-qr-logo\s*\{[^}]*position:\s*absolute;[^}]*width:\s*46px;[^}]*height:\s*46px;[^}]*border-radius:\s*12px;[^}]*background:\s*#fff;[^}]*color:\s*#111;/);
