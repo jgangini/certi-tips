@@ -254,7 +254,7 @@ async (page) => {
     assert(await address.inputValue() === invite && await address.evaluate(node => node.readOnly), 'Invitation field is not readonly or has the wrong site URL');
     assert(await host.locator('.room-code').count() === 0 && await host.locator('.pin').textContent() === code, 'The header repeats the PIN or the primary PIN disappeared');
     const invitationQr = host.locator('.invite-qr');
-    assert(await invitationQr.locator('svg[role="img"]').count() === 1 && await invitationQr.locator('.invite-qr-logo, figcaption').count() === 0, 'Invitation QR retains removed decoration');
+    assert(await invitationQr.locator('svg[role="img"]').count() === 1 && await invitationQr.locator('.invite-qr-logo svg').count() === 1 && await invitationQr.locator('figcaption').count() === 0, 'Invitation QR lacks its CertiTips mark or retains removed copy');
     assert(await host.locator('.lobby-footer').evaluate(node => {
       const facts = node.querySelector('.fact-row').getBoundingClientRect();
       const actions = node.querySelector('.game-actions').getBoundingClientRect();

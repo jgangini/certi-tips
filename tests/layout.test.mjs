@@ -108,16 +108,20 @@ test("CertiQuiz shares site navigation and theme without a course sidebar", () =
   assert.deepEqual([...errorRocket.matchAll(/<path d="([^"]+)"/g)].map(match => match[1]), [...homeRocket.matchAll(/<path d="([^"]+)"/g)].map(match => match[1]));
   assert.doesNotMatch(html, /id="course-navigation"|class="menu-toggle"|src="[^\"]*\/quiz\.js"/);
 });
-test("CertiQuiz renders a plain local invitation QR", () => {
+test("CertiQuiz renders a branded local invitation QR", () => {
   const script = readFileSync(new URL("../assets/certiquiz.js", import.meta.url), "utf8");
   const css = readFileSync(new URL("../assets/certiquiz.css", import.meta.url), "utf8");
   const build = readFileSync(new URL("../scripts/build.mjs", import.meta.url), "utf8");
   assert.match(script, /window\.qrcode\(0, 'H'\)/);
   assert.match(script, /class="invite-qr-code"/);
-  assert.doesNotMatch(script, /invite-qr-logo|Escanea para unirte|assets\/favicon\.svg/);
+  assert.match(script, /class="invite-qr-logo"/);
+  assert.match(script, /aria-hidden="true"/);
+  assert.doesNotMatch(script, /Escanea para unirte|assets\/favicon\.svg/);
   assert.match(css, /\.certiquiz-app \.invite-overview\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) 166px;/);
-  assert.match(css, /\.certiquiz-app \.invite-qr svg\s*\{[^}]*display:\s*block;[^}]*width:\s*100%;[^}]*background:\s*#fff;/);
-  assert.doesNotMatch(css, /invite-qr-logo|\.invite-qr figcaption/);
+  assert.match(css, /\.certiquiz-app \.invite-qr\s*\{[^}]*margin:\s*-58px 0 0;/);
+  assert.match(css, /\.certiquiz-app \.invite-qr-code > svg\s*\{[^}]*display:\s*block;[^}]*width:\s*100%;[^}]*background:\s*#fff;/);
+  assert.match(css, /\.certiquiz-app \.invite-qr-logo\s*\{[^}]*position:\s*absolute;[^}]*background:\s*#fff;[^}]*color:\s*#111;/);
+  assert.doesNotMatch(css, /\.invite-qr figcaption/);
   assert.match(build, /node_modules", "qrcode-generator", "qrcode\.js"/);
 });
 test("the local QR generator encodes an invitation URL as SVG", () => {
