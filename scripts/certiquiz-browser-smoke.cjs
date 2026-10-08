@@ -71,6 +71,16 @@ async (page) => {
     });
     assert(focus.visible && focus.color === focus.accent && focus.width === '3px', `${label}: keyboard focus does not use the site's accent outline`);
   };
+  const inkFocus = async (tab, control, label) => {
+    await tab.keyboard.press('Tab'); await control.focus();
+    const focus = await control.evaluate(node => {
+      const probe = document.createElement('span'); probe.style.color = 'var(--ink)'; node.parentElement.append(probe);
+      const ink = getComputedStyle(probe).color; probe.remove();
+      const style = getComputedStyle(node);
+      return { visible: node.matches(':focus-visible'), color: style.outlineColor, width: style.outlineWidth, ink };
+    });
+    assert(focus.visible && focus.color === focus.ink && focus.width === '3px', `${label}: keyboard focus does not use the site's ink outline`);
+  };
   const join = async (tab, code, nickname) => {
     await tab.goto(`${appUrl}?room=${code}`);
     await tab.getByLabel('Tu nombre o alias').waitFor();
@@ -183,9 +193,19 @@ async (page) => {
     await host.getByLabel('Código de la sala').waitFor();
     assert(await host.locator('#create-form').count() === 0 && await host.locator('#join-form').count() === 1, 'Participant role does not isolate its form');
     assert(new URL(host.url()).hash === '#participant', 'Participant role does not have a shareable URL fragment');
+    assert(await host.getByRole('heading', { name: 'Sala', exact: true }).count() === 1 && await host.locator('.player-entry > .eyebrow').textContent() === 'INGRESAR', 'Participant form does not use the room heading and entry eyebrow');
+    assert(await host.locator('#join-form .hint').count() === 1, 'Participant form retains the removed alias hint');
+    const participantAction = await host.locator('#join-form .join-actions').evaluate(node => {
+      const button = node.querySelector('.button');
+      const action = node.getBoundingClientRect();
+      const buttonBox = button.getBoundingClientRect();
+      return { aligned: Math.abs(action.right - buttonBox.right) < 1, border: getComputedStyle(node).borderTopWidth, buttonWidth: buttonBox.width, wide: button.classList.contains('wide') };
+    });
+    assert(participantAction.aligned && participantAction.border === '1px' && participantAction.buttonWidth === 140 && !participantAction.wide, 'Participant action does not match the compact right-aligned lobby footer');
+    await inkFocus(host, host.getByLabel('Código de la sala'), 'Participant room code');
     await host.getByLabel('Código de la sala').fill('000000');
     await host.getByLabel('Tu nombre o alias').fill('QA Código inválido');
-    await host.getByRole('button', { name: 'Entrar a la sala' }).click();
+    await host.getByRole('button', { name: 'Entrar', exact: true }).click();
     await host.locator('#join-form [data-error]').waitFor({ state: 'visible' });
     assert(await host.locator('[data-error]').evaluate(node => Boolean(node.closest('#join-form') && node.closest('.card'))), 'Invalid PIN error appeared outside its form/card');
     assert(await host.locator('.certiquiz-app > [role="alert"]').count() === 0, 'A global error banner remains');
