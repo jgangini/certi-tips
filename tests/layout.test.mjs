@@ -59,11 +59,17 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   const siteCss = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
   assert.match(script, /<button class="card join-card role-card" type="button" data-role="host" aria-label="Crear una partida como anfitrión">/);
   assert.match(script, /<button class="card join-card role-card" type="button" data-role="player" aria-label="Unirme a una partida como participante">/);
+  assert.match(script, /const hostRoleIcon = '<svg viewBox="0 0 31\.381 31\.381" fill="currentColor" aria-hidden="true" focusable="false">/);
+  assert.match(script, /const playerRoleIcon = '<svg viewBox="0 0 297 297" fill="currentColor" aria-hidden="true" focusable="false">/);
+  assert.match(script, /<span class="role-icon" aria-hidden="true">\${hostRoleIcon}<\/span><span class="role-copy">/);
+  assert.match(script, /<span class="role-icon" aria-hidden="true">\${playerRoleIcon}<\/span><span class="role-copy">/);
   assert.doesNotMatch(script, /role-action/);
   assert.doesNotMatch(script, /ORGANIZA LA PARTIDA|APRENDE CON TU EQUIPO/);
   assert.match(script, /<nav class="certiquiz-breadcrumb" aria-label="Ruta de navegación"><a href="\$\{siteBase\}">Inicio<\/a><span aria-hidden="true">\/<\/span><span aria-current="page">CertiQuiz<\/span><\/nav>/);
   assert.doesNotMatch(script, /data-change-role|Cambiar rol/);
   assert.match(css, /\.certiquiz-app \.role-card\s*\{[^}]*width:\s*100%;[^}]*cursor:\s*pointer;/);
+  assert.match(css, /\.certiquiz-app \.role-icon\s*\{[^}]*flex:\s*0 0 64px;[^}]*width:\s*64px;[^}]*height:\s*64px;/);
+  assert.match(css, /\.certiquiz-app \.role-icon svg\s*\{[^}]*width:\s*52px;[^}]*height:\s*52px;/);
   assert.match(css, /\.certiquiz-app \.role-card:is\(:hover, :focus-visible\)\s*\{[^}]*border-color:\s*var\(--accent\);/);
   assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb\s*\{[^}]*border-top:\s*1px solid var\(--line\);/);
   assert.match(siteCss, /\.search-toggle\s*\{[^}]*background:\s*var\(--paper\);/);
