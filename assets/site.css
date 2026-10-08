@@ -557,7 +557,7 @@ html[data-theme="dark"] .hero-actions .certiquiz-link:is(:hover, :focus-visible)
 .hero-flow {
   min-width: 0;
   margin: 0;
-  background: #fff;
+  background: var(--paper);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   overflow: hidden;
@@ -567,12 +567,13 @@ html[data-theme="dark"] .hero-actions .certiquiz-link:is(:hover, :focus-visible)
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: contain;
-  background: #fff;
+  background: var(--paper);
 }
-.hero-flow-fallback { display: none; padding: 32px; color: #31333f; }
-.hero-flow-fallback strong { color: #a6382b; }
-.hero-flow-fallback p { color: #31333f; margin: 14px 0; }
-.hero-flow-fallback span { color: #606574; }
+.hero-flow-fallback { display: none; padding: 32px; color: var(--ink); }
+.hero-flow-fallback strong { color: var(--accent); }
+.hero-flow-fallback p { color: var(--ink); margin: 14px 0; }
+.hero-flow-fallback span { color: var(--muted); }
+html[data-theme="dark"] .hero-flow video { filter: invert(1) hue-rotate(180deg); }
 .hero-flow.is-unavailable video { display: none; }
 .hero-flow.is-unavailable .hero-flow-fallback { display: block; }
 .path-section {

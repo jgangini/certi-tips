@@ -465,7 +465,8 @@ test("home shows each FY27 certification once and links all three available guid
   assert.match(siteCss, /\.home-hero \.oracle-badge svg\s*\{[^}]*color:\s*var\(--accent\);/);
   assert.match(siteCss, /\.home-hero h1\s*\{[^}]*font-size:\s*clamp\(2\.4rem, 3\.5vw, 3rem\);/);
   assert.match(siteCss, /\.home-hero h1 span\s*\{\s*display:\s*block;/);
-  assert.match(siteCss, /\.hero-flow\s*\{[^}]*border:\s*1px solid var\(--line\);/);
+  assert.match(siteCss, /\.hero-flow\s*\{[^}]*background:\s*var\(--paper\);[^}]*border:\s*1px solid var\(--line\);/);
+  assert.match(siteCss, /html\[data-theme="dark"\] \.hero-flow video\s*\{\s*filter:\s*invert\(1\) hue-rotate\(180deg\);\s*\}/);
   assert.doesNotMatch(html, /assets\/motion\/certification-path\.mp4/);
   const withMotion = homeBody(catalog, true);
   assert.match(withMotion, /assets\/motion\/certification-path\.mp4/);
