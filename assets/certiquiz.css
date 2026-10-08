@@ -31,7 +31,7 @@ html[data-theme="dark"] .certiquiz-app { --success: #9bd8b8; --success-bg: #1b35
 .certiquiz-app .role-icon svg { display: block; width: 52px; height: 52px; }
 .certiquiz-app .role-copy { display: grid; gap: 10px; min-width: 0; }
 .certiquiz-app .role-title { font-size: 30px; letter-spacing: -.035em; line-height: 1.2; }
-.certiquiz-app .entry-card { max-width: 620px; }
+.certiquiz-app .entry-card { max-width: calc(56.521739% - 13.565217px); }
 .certiquiz-app .host-entry { max-width: none; padding: 24px 24px 30px; border-top-width: 1px; border-top-color: var(--line); border-radius: var(--radius); box-shadow: none; }
 .certiquiz-app .room-exit { float: right; margin: 0 0 16px 24px; }
 .certiquiz-app .room-exit { min-height: 44px; }
@@ -228,6 +228,6 @@ html[data-theme="dark"] .certiquiz-app .leaderboard tbody tr { --row-shadow: #00
 @media (max-width: 720px) { .certiquiz-app .room-exit { float: none; display: block; margin: 0 0 20px auto; } .certiquiz-app .host-entry .certification-item { grid-template-columns: minmax(0, 1fr); gap: 14px; padding-left: 28px; } .certiquiz-app .host-entry .certification-item input { max-width: none; } .certiquiz-app .setup-actions .certification-number { top: 23px; transform: none; } }
 @media (max-width: 720px) { .certiquiz-app .invite-code { grid-template-columns: minmax(0, 1fr) 52px; } .certiquiz-app .lobby-footer { align-items: flex-start; flex-direction: column; } .certiquiz-app .lobby-footer .actions { justify-content: flex-start; } }
 @media (max-width: 720px) { .certiquiz-app .host-entry .setup-actions .button { width: 100%; } }
-@media (max-width: 720px) { .certiquiz-app .entry-grid, .certiquiz-app .room-grid, .certiquiz-app .options { grid-template-columns: 1fr; } .certiquiz-app .welcome { margin-top: 16px; } .certiquiz-app .card { padding: 23px; } .certiquiz-app .pin { font-size: 48px; } .certiquiz-app .code-input { height: 74px !important; font-size: 48px !important; } .certiquiz-app .option { min-height: 80px; padding: 15px; } .certiquiz-app .result-banner { padding: 23px; } }
+@media (max-width: 720px) { .certiquiz-app .entry-grid, .certiquiz-app .room-grid, .certiquiz-app .options { grid-template-columns: 1fr; } .certiquiz-app .entry-card { max-width: none; } .certiquiz-app .welcome { margin-top: 16px; } .certiquiz-app .card { padding: 23px; } .certiquiz-app .pin { font-size: 48px; } .certiquiz-app .code-input { height: 74px !important; font-size: 48px !important; } .certiquiz-app .option { min-height: 80px; padding: 15px; } .certiquiz-app .result-banner { padding: 23px; } }
 @media (max-width: 370px) { .certiquiz-app .field-row { grid-template-columns: 1fr; gap: 0; } .certiquiz-app .card { padding: 18px; } .certiquiz-app .actions .button { width: 100%; } .certiquiz-app .invite-code { grid-template-columns: minmax(0, 1fr) 44px; } .certiquiz-app .pin { font-size: 40px; } .certiquiz-app .code-input { height: 66px !important; font-size: 40px !important; } }
 @media (prefers-reduced-motion: reduce) { .certiquiz-app .confetti { display: none; } .certiquiz-app *, .certiquiz-app *::before, .certiquiz-app *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }
