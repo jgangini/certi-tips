@@ -120,6 +120,7 @@ test("CertiQuiz renders a branded local invitation QR", () => {
   const build = readFileSync(new URL("../scripts/build.mjs", import.meta.url), "utf8");
   assert.match(script, /window\.qrcode\(0, 'H'\)/);
   assert.match(script, /class="invite-qr-code"/);
+  assert.match(css, /\.certiquiz-app \.pin\s*\{[^}]*padding:\s*12px 16px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*var\(--radius\);[^}]*background:\s*var\(--paper\);/);
   assert.match(script, /class="invite-qr-logo"/);
   assert.match(script, /<figcaption>Escanea para participar<\/figcaption>/);
   assert.match(script, /aria-hidden="true"/);
