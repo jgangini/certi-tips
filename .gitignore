@@ -1,7 +1,8 @@
 node_modules/
 dist/
 graphify-out/
-.sentrux/
+.sentrux/*
+!.sentrux/rules.toml
 .semble/
 *.log
 .DS_Store

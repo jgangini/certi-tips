@@ -13,8 +13,8 @@ from psycopg_pool import ConnectionPool
 from .game import GameError, host_action
 from .security import SESSION_SECONDS
 
-EMPTY_LOBBY_EXPIRED = "(cq_rooms.state->>'status'='lobby' AND cq_rooms.state->'players'='[]'::jsonb AND cq_rooms.created_at<=now()-interval '15 minutes')"
-LIVE_ROOM = f"cq_rooms.expires_at>now() AND NOT {EMPTY_LOBBY_EXPIRED}"
+WAITING_ROOM_EXPIRED = "(cq_rooms.state->>'status'='lobby' AND cq_rooms.created_at<=now()-interval '15 minutes')"
+LIVE_ROOM = f"cq_rooms.expires_at>now() AND NOT {WAITING_ROOM_EXPIRED}"
 ROOM_VIEW = f"""
 WITH source AS MATERIALIZED (
     SELECT owner_hash,created_at,expires_at,state||'{{}}'::jsonb AS progress,
@@ -71,9 +71,9 @@ class Store:
             return connection.execute("SELECT 1 AS ok").fetchone()["ok"] == 1
 
     @staticmethod
-    def expire_empty_lobbies(connection) -> None:
+    def expire_waiting_rooms(connection) -> None:
         connection.execute(f"UPDATE cq_rooms SET expires_at=LEAST(expires_at,created_at+interval '15 minutes') "
-                           f"WHERE expires_at>now() AND {EMPTY_LOBBY_EXPIRED}")
+                           f"WHERE expires_at>now() AND {WAITING_ROOM_EXPIRED}")
         connection.execute("DELETE FROM cq_sessions WHERE room_code IN (SELECT code FROM cq_rooms WHERE expires_at<=now())")
 
     @staticmethod
@@ -86,7 +86,7 @@ class Store:
         try:
             with self.connection() as connection:
                 if connection.execute("SELECT pg_try_advisory_xact_lock(61473201) AS held").fetchone()["held"]:
-                    self.expire_empty_lobbies(connection)
+                    self.expire_waiting_rooms(connection)
                     connection.execute("DELETE FROM cq_sessions WHERE expires_at <= now()")
                     connection.execute("DELETE FROM cq_rate_limits WHERE expires_at <= now()")
                     connection.execute("DELETE FROM cq_rooms WHERE expires_at <= now() - interval '16 hours'")
@@ -165,7 +165,7 @@ class Store:
         self.cleanup()
         with self.connection() as connection:
             connection.execute("SELECT pg_advisory_xact_lock(61473203)")
-            self.expire_empty_lobbies(connection)
+            self.expire_waiting_rooms(connection)
             counts = connection.execute(
                 "SELECT count(*) AS total,count(*) FILTER (WHERE owner_hash=%s) AS owned,"
                 "count(*) FILTER (WHERE owner_ip_hash=%s) AS network FROM cq_rooms WHERE expires_at>now() "

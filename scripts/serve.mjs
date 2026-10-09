@@ -3,6 +3,8 @@ import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 
 const root = path.resolve(import.meta.dirname, "../dist");
+// ponytail: the local preview and its API are paired by certiquiz-local.ps1.
+const previewApiOrigin = "http://127.0.0.1:18740";
 const { base } = JSON.parse(
   await readFile(new URL("../data/catalog.json", import.meta.url), "utf8"),
 );
@@ -41,7 +43,17 @@ http
       }
       if ((await stat(file)).isDirectory())
         file = path.join(file, "index.html");
-      const content = await readFile(file);
+      let content = await readFile(file);
+      if (file === path.join(root, "certiquiz", "index.html")) {
+        content = Buffer.from(
+          content
+            .toString("utf8")
+            .replace(
+              /data-api-origin="[^"]*"/,
+              `data-api-origin="${previewApiOrigin}"`,
+            ),
+        );
+      }
       response.writeHead(200, {
         "Content-Type": types[path.extname(file)] || "application/octet-stream",
         "Cache-Control": "no-store",

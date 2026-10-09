@@ -1,0 +1,54 @@
+# CertiTips / CertiQuiz architecture contract. See docs/architecture.md.
+# Sentrux 0.5.7 rejects imports from larger to smaller order values.
+# Order here follows consumers -> dependencies, verified by check-architecture-rules.ps1.
+[constraints]
+max_cycles = 0
+no_god_files = true
+
+# Specific paths precede directory fallbacks: Sentrux uses the first matching layer.
+[[layers]]
+name = "domain-and-security"
+paths = ["assets/quiz-core.js", "services/certiquiz/app/game.py", "services/certiquiz/app/security.py"]
+order = 30
+
+[[layers]]
+name = "adapters-and-rendering"
+paths = ["assets/storage.js", "scripts/layout.mjs", "services/certiquiz/app/store.py", "services/certiquiz/app/catalog.py"]
+order = 20
+
+[[layers]]
+name = "application-and-tools"
+paths = ["assets/**", "scripts/**", "services/certiquiz/app/**"]
+order = 10
+
+[[layers]]
+name = "tests"
+paths = ["tests/**", "services/certiquiz/tests/**"]
+order = 0
+
+# Browser assets are deployable without Node tooling or server implementation imports.
+[[boundaries]]
+from = "assets/**"
+to = "scripts/**"
+reason = "Browser code must not import build, deployment or verification tools."
+
+[[boundaries]]
+from = "assets/**"
+to = "services/**"
+reason = "The browser communicates with CertiQuiz through HTTP, not server implementation imports."
+
+# The API owns authoritative state and consumes catalog data, not browser modules.
+[[boundaries]]
+from = "services/certiquiz/app/**"
+to = "assets/**"
+reason = "The API must not depend on browser UI, local storage or client-side scoring."
+
+[[boundaries]]
+from = "services/certiquiz/app/**"
+to = "scripts/**"
+reason = "Serving a room must not depend on the static-site renderer or development tools."
+
+[[boundaries]]
+from = "scripts/**"
+to = "services/certiquiz/app/**"
+reason = "Site tooling and API verification use data, commands or HTTP, not API implementation imports."

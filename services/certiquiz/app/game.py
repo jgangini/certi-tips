@@ -178,6 +178,6 @@ def snapshot(code: str, room: dict, role: str, player_id: str | None, now: int,
                        if room["status"] == "lobby" else [],
             "answeredCount": room.get("answeredCount", len(room["answers"])), "question": question, "me": me,
             "leaderboard": leaderboard, "version": room["version"]}
-    if role == "host" and room["status"] == "lobby" and not room["players"] and lobby_deadline is not None:
+    if role == "host" and room["status"] == "lobby" and lobby_deadline is not None:
         result["lobbyDeadline"] = lobby_deadline
     return result

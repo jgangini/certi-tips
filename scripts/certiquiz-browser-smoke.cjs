@@ -1,6 +1,5 @@
 // Run against the local Docker service only:
-// Run the CertiTips preview on 4173. The check overrides only the DOM's public
-// API origin to 18740, so concurrent production builds cannot change the test target.
+// Run the CertiTips preview on 4173; it routes CertiQuiz to the local API on 18740.
 // npx --yes --package @playwright/cli playwright-cli -s=certiquiz open http://127.0.0.1:4173/certi-tips/certiquiz/
 // npx --yes --package @playwright/cli playwright-cli -s=certiquiz run-code --filename scripts/certiquiz-browser-smoke.cjs
 // Guests create their own rooms without a host key or account.
@@ -20,17 +19,6 @@ async (page) => {
   const createPage = async viewport => {
     const context = await browser.newContext({ viewport, colorScheme: 'light' });
     contexts.push(context);
-    // Keep the real network response: synthetic HTML responses can trigger Chrome's
-    // local-network protection. Set only public config before the deferred app module.
-    await context.addInitScript(({ apiOrigin }) => {
-      const override = () => {
-        const root = document.querySelector('.certiquiz-app');
-        if (root) { root.dataset.apiOrigin = apiOrigin; observer.disconnect(); }
-      };
-      const observer = new MutationObserver(override);
-      observer.observe(document, { childList: true, subtree: true });
-      override();
-    }, { apiOrigin });
     const tab = await context.newPage();
     tab.on('pageerror', error => errors.push(error.message));
     tab.on('console', message => { if (message.type() === 'error') loadingErrors.push(message.text()); });
@@ -91,7 +79,7 @@ async (page) => {
   const createRoom = async (host, count, seconds) => {
     await host.getByLabel('Número de preguntas', { exact: true }).fill(String(count));
     await host.getByLabel('Segundos por pregunta').fill(String(seconds));
-    await host.getByRole('button', { name: 'Comenzar', exact: true }).click();
+    await host.getByRole('button', { name: 'Entrar', exact: true }).click();
     await host.locator('[data-start]').waitFor();
     assert(await host.locator('.room-header, [data-player-count]').count() === 0, 'Lobby still shows the secondary heading or team count');
     assert(await host.locator('[data-players]').evaluate(node => !node.closest('.card') && node.childElementCount === 0 && !node.textContent.trim()), 'Empty roster still shows a card or waiting message');
@@ -152,6 +140,7 @@ async (page) => {
     await host.locator('[data-role="host"]').waitFor({ timeout: 8000 }).catch(async () => {
       throw new Error(`Entry did not load with API ${await host.locator('.certiquiz-app').getAttribute('data-api-origin')}: ${await host.locator('main').innerText()} ${loadingErrors.join('; ')}`);
     });
+    assert(await host.locator('.certiquiz-app').getAttribute('data-api-origin') === apiOrigin, 'Local preview did not route CertiQuiz to its local API');
     assert(await host.locator('script[src$="/certiquiz.js"]').getAttribute('src') === '/certi-tips/assets/certiquiz.js', 'CertiQuiz JavaScript is not hosted by CertiTips');
     assert(await host.locator('link[href$="/certiquiz.css"]').getAttribute('href') === '/certi-tips/assets/certiquiz.css', 'CertiQuiz CSS is not hosted by CertiTips');
     assert(await host.locator('.welcome > :is(h1, .lead, .eyebrow)').count() === 0, 'Entry retains removed CertiQuiz heading, lead or eyebrow');
@@ -203,6 +192,8 @@ async (page) => {
     });
     assert(participantAction.exitHref === appUrl && participantAction.leftAligned && participantAction.rightAligned && participantAction.border === '1px' && participantAction.buttonWidth === 140 && !participantAction.wide, 'Participant entry actions do not return to CertiQuiz or align with the lobby footer');
     const participantCode = host.getByLabel('Código de la sala');
+    const participantJoinButton = host.getByRole('button', { name: 'Entrar', exact: true });
+    assert(await participantJoinButton.isDisabled(), 'Participant join should be disabled until valid room and nickname values are entered');
     const participantCodeStyle = await participantCode.evaluate(node => {
       const style = getComputedStyle(node);
       return { height: style.height, fontSize: style.fontSize, lineHeight: style.lineHeight, fontWeight: style.fontWeight, titleGap: node.getBoundingClientRect().top - document.querySelector('#form-title').getBoundingClientRect().bottom };
@@ -211,15 +202,21 @@ async (page) => {
     await noFocusOutline(host, participantCode, 'Participant room code');
     await participantCode.fill('33r456!');
     assert(await participantCode.inputValue() === '33456', 'Participant room code should retain only digits');
+    assert(await participantJoinButton.isDisabled(), 'Participant join enabled with an incomplete room code');
     const participantNickname = host.getByLabel('Tu nombre o alias');
     await noFocusOutline(host, participantNickname, 'Participant nickname');
     await participantNickname.fill('Ana! 123$');
     assert(await participantNickname.inputValue() === 'Ana 123', 'Participant nickname retains symbols');
     await participantNickname.fill('A'.repeat(31));
     assert((await participantNickname.inputValue()).length === 30, 'Participant nickname exceeds 30 characters');
-    await host.getByLabel('Código de la sala').fill('000000');
+    await participantNickname.fill('');
+    await participantCode.fill('000000');
+    assert(await participantJoinButton.isDisabled(), 'Participant join enabled without a nickname');
+    await participantNickname.fill('   ');
+    assert(await participantJoinButton.isDisabled(), 'Participant join enabled for a whitespace-only nickname');
     await participantNickname.fill('QA Código inválido');
-    await host.getByRole('button', { name: 'Entrar', exact: true }).click();
+    assert(!(await participantJoinButton.isDisabled()), 'Participant join stayed disabled after both values became valid');
+    await participantJoinButton.click();
     await host.locator('#join-form [data-error]').waitFor({ state: 'visible' });
     assert(await host.locator('[data-error]').evaluate(node => Boolean(node.closest('#join-form') && node.closest('.card'))), 'Invalid PIN error appeared outside its form/card');
     assert(await host.locator('.certiquiz-app > [role="alert"]').count() === 0, 'A global error banner remains');
@@ -246,7 +243,7 @@ async (page) => {
     assert((await host.locator('#create-form .hint').innerText()).includes('Hasta 500 participantes'), 'Host hint does not advertise the 500-participant limit');
     assert(await host.locator('#create-form > ol > li.certification-item').count() === 4 && await host.locator('#create-form > ol > li:last-child.setup-actions .certification-number').count() === 1, 'Generate action is not the fourth numbered setup step');
     const setupAction = host.locator('#create-form .setup-actions');
-    assert(await setupAction.locator('.setup-label').textContent() === 'Generar Sala' && await setupAction.getByRole('button', { name: 'Comenzar', exact: true }).locator('svg').count() === 0, 'Host setup action lacks its title or retains the room icon');
+    assert(await setupAction.locator('.setup-label').textContent() === 'Generar Sala' && await setupAction.getByRole('button', { name: 'Entrar', exact: true }).locator('svg').count() === 0, 'Host setup action lacks its title or retains the room icon');
     const setupWidth = await setupAction.evaluate(node => ({ button: node.querySelector('button').getBoundingClientRect().width, input: document.querySelector('#seconds').getBoundingClientRect().width }));
     assert(Math.abs(setupWidth.button - setupWidth.input) < 1, 'Host setup action button does not match the numeric input width');
     await accentFocus(host, host.getByLabel('Número de preguntas', { exact: true }), 'Dark host form');
@@ -263,7 +260,16 @@ async (page) => {
     assert(await host.getByLabel('Número de preguntas', { exact: true }).evaluate(node => node.value === node.max), 'Course selection did not clamp an excessive question count');
     await host.getByLabel('Número de preguntas', { exact: true }).fill('0');
     assert(await host.getByLabel('Número de preguntas', { exact: true }).evaluate(node => node.validity.rangeUnderflow), 'Host question count allows zero');
+    const setupWarning = host.locator('#create-form > .notice.warning');
+    await host.getByRole('button', { name: 'Entrar', exact: true }).click();
+    await setupWarning.waitFor({ state: 'visible' });
+    assert(await setupWarning.innerText() === 'El valor debe ser superior o igual a 1.' && await setupWarning.evaluate(node => node.closest('form').noValidate && node.getBoundingClientRect().top >= node.closest('form').querySelector('ol').getBoundingClientRect().bottom), 'Invalid host question count did not show a yellow inline warning below the controls');
     const duration = host.getByLabel('Segundos por pregunta');
+    await host.getByLabel('Número de preguntas', { exact: true }).fill('2');
+    await duration.fill(String(Number(await duration.getAttribute('min')) - 1));
+    await host.getByRole('button', { name: 'Entrar', exact: true }).click();
+    await setupWarning.waitFor({ state: 'visible' });
+    assert(await setupWarning.innerText() === `El valor debe ser superior o igual a ${await duration.getAttribute('min')}.` && await setupWarning.evaluate(node => node.closest('form').noValidate && node.getBoundingClientRect().top >= node.closest('form').querySelector('ol').getBoundingClientRect().bottom), 'Invalid host duration did not show a yellow inline warning below the controls');
     await duration.fill(String(Number(await duration.getAttribute('max')) + 1));
     assert(await duration.evaluate(node => node.validity.rangeOverflow), 'Host duration allows values beyond the service limit');
     const code = await createRoom(host, 2, 10);
@@ -271,6 +277,17 @@ async (page) => {
     const created = await snapshot(host, code);
     assert(created.role === 'host' && created.questionCount === 2 && created.secondsPerQuestion === 10 && /^\d{6}$/.test(code), 'Guest room did not preserve host settings or generate a PIN');
     assert(await host.locator('#stage-title').evaluate(node => node !== document.activeElement), 'Lobby title unexpectedly receives focus when entering the room');
+    await host.goto(`${appUrl}#host`);
+    await host.waitForFunction(() => {
+      const form = document.querySelector('#create-form');
+      const button = form?.querySelector('[data-resume]');
+      return button && !button.disabled;
+    });
+    assert(await host.locator('#course-title').textContent() === created.courseTitle && await host.getByLabel('Número de preguntas', { exact: true }).inputValue() === '2' && await host.getByLabel('Segundos por pregunta').inputValue() === '10', 'Returning to #host did not restore the active room settings');
+    assert(await host.locator('.course-picker').evaluate(node => node.inert) && await host.getByLabel('Número de preguntas', { exact: true }).isDisabled() && await host.getByLabel('Segundos por pregunta').isDisabled(), 'Active room settings remain editable after returning to #host');
+    await host.getByRole('button', { name: 'Entrar', exact: true }).click();
+    await host.locator('[data-start]').waitFor();
+    assert(await host.locator('#stage-title').textContent() === 'Sala de Espera' && /^\d{2}:\d{2}$/.test(await host.locator('[data-lobby-wait-timer]').textContent()), 'Resuming the host room did not show its waiting-room title and countdown');
     const sessionCookies = (await host.context().cookies()).filter(cookie => cookie.name.startsWith('cq_'));
     assert(sessionCookies.length >= 2 && sessionCookies.every(cookie => cookie.httpOnly && cookie.sameSite === 'Strict'), 'Guest host cookies lack HttpOnly/SameSite protections');
     assert(!/cq_(?:host|room)=/.test(await host.evaluate(() => document.cookie)), 'Session cookie is visible to JavaScript');
@@ -314,12 +331,15 @@ async (page) => {
     });
     assert(compactQrLogo.logo === '24px' && compactQrLogo.icon === '21px', 'Compact QR mark leaves too much white protection');
     const qrToggle = invitationQr.locator('[data-invite-qr]');
+    const compactRoomHeight = await host.locator('.room-grid').evaluate(node => ({ card: node.querySelector('.card').getBoundingClientRect().height, side: node.querySelector('.room-side').getBoundingClientRect().height }));
     await qrToggle.click();
     const expandedQrLogo = await invitationQr.locator('.invite-qr-logo').evaluate(node => {
       const svg = node.querySelector('svg');
       return { logo: getComputedStyle(node).width, icon: getComputedStyle(svg).width, expanded: node.closest('.invite-code').classList.contains('qr-expanded') };
     });
     assert(expandedQrLogo.expanded && expandedQrLogo.logo === '48px' && expandedQrLogo.icon === '42px', 'Expanded QR mark is not scaled to its protected logo area');
+    const expandedRoomHeight = await host.locator('.room-grid').evaluate(node => ({ card: node.querySelector('.card').getBoundingClientRect().height, side: node.querySelector('.room-side').getBoundingClientRect().height }));
+    assert(expandedRoomHeight.card > compactRoomHeight.card && Math.abs(expandedRoomHeight.card - expandedRoomHeight.side) < 1, 'The participant panel did not grow with the card when QR expanded');
     await qrToggle.click();
     assert(await host.locator('.lobby-footer').evaluate(node => {
       const facts = node.querySelector('.fact-row').getBoundingClientRect();
@@ -385,62 +405,63 @@ async (page) => {
     assert(await host.locator('.team-total').textContent() === '2', 'Central participant count did not update');
     assert(await host.locator('.team-total').evaluate(node => {
       const counter = node.getBoundingClientRect(), card = document.querySelector('.room-grid > .card').getBoundingClientRect();
-      const avatar = document.querySelector('.player-avatar').getBoundingClientRect(), style = getComputedStyle(node);
-      return Math.abs(counter.y + counter.height / 2 - card.y - card.height / 2) < 1 && Math.abs(counter.top - avatar.bottom - 8) < 7 && style.backgroundColor === getComputedStyle(document.querySelector('.room-grid > .card')).backgroundColor && style.color === getComputedStyle(document.querySelector('.lead')).color && style.borderTopColor === getComputedStyle(document.querySelector('.room-grid > .card')).borderRightColor;
-    }), 'Counter is not centered beside the lobby card with nearby avatars and neutral theme colors');
+      const expectedColor = document.documentElement.dataset.theme === 'dark' ? 'rgb(255, 255, 255)' : 'rgb(89, 97, 110)';
+      const sphereStyle = getComputedStyle(node.querySelector('.team-count'));
+      const matchesTheme = sphereStyle.backgroundColor === expectedColor && sphereStyle.borderTopColor === expectedColor && sphereStyle.color !== expectedColor;
+      const foreground = Number(getComputedStyle(node.parentElement).zIndex) > Number(getComputedStyle(document.querySelector('[data-player-id]')).zIndex);
+      return Math.abs(counter.y + counter.height / 2 - card.y - card.height / 2) < 1 && foreground && matchesTheme && node.querySelectorAll('.energy-rays line').length === 96;
+    }), 'The counter is not centered in front of the spheres, lacks its radial halo, or does not use the correct theme color');
     assert(await retainedAvatar.evaluate(node => node.isConnected && node === document.querySelector('[data-players] .player-avatar')), 'A new participant replaced the existing avatar');
     assert(await retainedList.evaluate(node => node.isConnected && node === document.activeElement && node === document.querySelector('.player-list')), 'A new participant replaced the roster or stole its focus');
     assert(await retainedAvatar.evaluate((node, animation) => node.getAnimations()[0] === animation, retainedAnimation), 'A new participant restarted the existing avatar animation');
-    assert(await firstAvatar.getAttribute('aria-label') === playerName && await firstAvatar.locator('.avatar-initials').textContent() === 'JU' && await firstAvatar.locator('.avatar-name').textContent() === playerName, 'Participant alias is missing from its accessible avatar, initials or expanded name');
+    assert(await firstAvatar.getAttribute('aria-label') === playerName && !(await firstAvatar.textContent()).trim(), 'Participant sphere must retain its accessible alias without visible text');
     const unicodeAvatar = host.getByRole('img', { name: unicodeName, exact: true });
-    assert(await unicodeAvatar.getAttribute('aria-label') === unicodeName && await unicodeAvatar.locator('.avatar-initials').textContent() === 'ÁN' && await unicodeAvatar.locator('.avatar-name').textContent() === unicodeName, 'Unicode first/last initials or complete expanded name are incorrect');
+    assert(await unicodeAvatar.getAttribute('aria-label') === unicodeName && !(await unicodeAvatar.textContent()).trim(), 'The Unicode alias is missing from the sphere accessible name');
+    assert(await host.locator('[data-players] .avatar-name, [data-players] .avatar-initials').count() === 0, 'The participant roster still renders names or initials');
     assert(await host.locator('[data-players] b').count() === 0, 'Alias created HTML elements');
     const avatars = host.locator('[data-players] .player-avatar');
     assert(await avatars.evaluateAll(nodes => nodes.length === 2 && nodes.every(node => {
       const style = getComputedStyle(node);
-      return node.tabIndex < 0 && style.width === '56px' && style.height === '56px' && style.borderRadius === '50%' && style.backgroundColor !== 'rgba(0, 0, 0, 0)' && style.animationName !== 'none' && Number.parseFloat(style.animationDuration) >= 4;
-    })), 'Avatars are not colored 56px circles with subtle motion, or create unnecessary tab stops');
-    assert(await avatars.evaluateAll(nodes => nodes.every(node => {
-      const r = node.getBoundingClientRect(), name = node.querySelector('.avatar-name');
-      const hit = (x, y) => document.elementsFromPoint(r.left + x, r.top + y).some(element => element === name || name.contains(element));
-      return [[7, 7], [49, 7], [7, 49], [49, 49]].every(([x, y]) => !hit(x, y)) && [[28, 28], [12, 12], [44, 44]].every(([x, y]) => hit(x, y));
-    })), 'The name overlay changes the resting circle into a rounded rectangle');
-    assert(await playerList.evaluate(node => node.tabIndex === 0), 'The roster lacks a keyboard scroll target');
-    assert(await avatars.evaluateAll(nodes => nodes.every(node => getComputedStyle(node).animationPlayState === 'paused')), 'Roster keyboard focus did not pause every avatar');
+      const timing = node.getAnimations()[0]?.effect.getTiming();
+      return node.tabIndex < 0 && Number.parseFloat(style.width) > 0 && style.width === style.height && style.borderRadius === '50%' && style.backgroundColor !== 'rgba(0, 0, 0, 0)' && style.animationName === 'certiquiz-absorb' && timing?.iterations === 1 && timing.fill === 'both' && timing.duration >= 7000 && getComputedStyle(node.parentElement).animationName === 'certiquiz-orbit';
+    })), 'Participant spheres must have a finite orbit and absorption without extra tab stops');
+    assert(await playerList.evaluate(node => {
+      const list = node.getBoundingClientRect(), card = document.querySelector('.room-grid > .card').getBoundingClientRect();
+      return Math.abs(list.top - card.top) < 1 && Math.abs(list.height - card.height) < 1;
+    }), 'The participant roster does not match the height and top alignment of the room card');
+    assert(await avatars.evaluateAll(nodes => nodes.every(node => node.querySelector('.avatar-name') === null && getComputedStyle(node).borderRadius === '50%')), 'A participant avatar is not a plain circle');
+    assert(await playerList.evaluate(node => node.tabIndex === 0), 'The roster lacks its keyboard focus target');
     await host.keyboard.press('Tab');
     assert(await playerList.evaluate(node => !node.contains(document.activeElement)), 'Tab became trapped in individual avatars');
     await host.keyboard.press('Shift+Tab');
     assert(await playerList.evaluate(node => node === document.activeElement), 'Keyboard cannot return to the roster');
     await host.locator('[data-start]').focus();
-    // The avatar intentionally moves forever; use the pointer instead of waiting for a stable box.
-    const avatarBounds = await firstAvatar.boundingBox();
-    await host.mouse.move(avatarBounds.x + avatarBounds.width / 2, avatarBounds.y + avatarBounds.height / 2);
-    assert(await firstAvatar.evaluate(node => getComputedStyle(node).animationPlayState) === 'paused' && await unicodeAvatar.evaluate(node => getComputedStyle(node).animationPlayState) === 'running', 'Hover did not pause only the target avatar');
-    await host.waitForFunction(() => getComputedStyle(document.querySelector('.avatar-name > span')).opacity === '1' && getComputedStyle(document.querySelector('.avatar-name')).clipPath === 'inset(0px round 8px)');
-    assert(await firstAvatar.locator('.avatar-name').evaluate(node => { const style = getComputedStyle(node); return style.clipPath === 'inset(0px round 8px)' && node.getBoundingClientRect().width > 56 && Number.parseFloat(style.transitionDuration) > 0; }), 'Hovered avatar did not smoothly expand into a rounded rectangle');
-    await host.locator('[data-start]').focus(); await host.mouse.move(0, 0);
-    assert(await firstAvatar.evaluate(node => getComputedStyle(node).animationPlayState) === 'running', 'Avatar motion did not resume after hover/focus');
+    await playerList.evaluate(node => node.querySelectorAll('[data-player-id]').forEach(item => item.getAnimations({ subtree: true }).forEach(animation => animation.finish())));
+    await host.waitForFunction(() => document.querySelectorAll('[data-player-id][data-absorbed]').length === 2);
+    assert(await avatars.evaluateAll(nodes => nodes.every(node => getComputedStyle(node).opacity === '0')) && await host.locator('.team-count').textContent() === '2', 'Absorbed spheres must disappear while their participant count remains');
+    const coreSizeAtTwo = await playerList.evaluate(node => Number.parseFloat(node.style.getPropertyValue('--total-size')));
+    assert(await host.locator('[data-simulate-players], .roster-simulation').count() === 0, 'The host lobby still exposes the removed participant simulator');
+    assert(await playerList.evaluate((node, initialSize) => {
+      const avatars = [...node.querySelectorAll('.player-avatar')];
+      const colors = new Set(avatars.map(avatar => getComputedStyle(avatar).backgroundColor));
+      return Number.parseFloat(node.style.getPropertyValue('--total-size')) === initialSize && colors.size >= 2 && avatars.every(avatar => getComputedStyle(avatar).opacity === '0');
+    }, coreSizeAtTwo), 'New colored spheres must animate without growing the core before absorption');
+    assert(await retainedAvatar.evaluate((node, animation) => node.getAnimations()[0] === animation && animation.playState === 'finished', retainedAnimation), 'Polling restarted an absorbed participant animation');
+    assert((await snapshot(host, code)).playerCount === 2, 'The lobby UI changed the room participant count');
     await host.emulateMedia({ reducedMotion: 'reduce' });
-    assert(await avatars.evaluateAll(nodes => nodes.every(node => getComputedStyle(node).animationName === 'none')), 'Avatars ignore reduced-motion preference');
+    assert(await playerList.evaluate(node => [...node.querySelectorAll('[data-player-id], .player-avatar, .energy-rays, .energy-rays line')].every(item => item.getAnimations().length === 0)), 'Participant spheres or radial lines ignore reduced-motion preference');
     await host.emulateMedia({ reducedMotion: 'no-preference' });
     await host.getByRole('button', { name: 'Activar modo oscuro' }).click();
     for (const width of [1280, 390, 320]) {
       await host.setViewportSize({ width, height: 900 }); await geometry(host, `Dark avatars ${width}px`);
-      if (width === 320) {
-        // CSS-only capacity fixture: no API joins; append, measure and remove atomically before polling resumes.
-        const capacity = await host.locator('.player-list').evaluate(list => {
-          const clones = [];
-          try {
-            while (list.querySelectorAll('.player-avatar').length < 500) { const clone = list.querySelector('[data-player-id]').cloneNode(true); clones.push(clone); list.append(clone); }
-            return { count: list.querySelectorAll('.player-avatar').length, height: list.getBoundingClientRect().height, scroll: list.scrollHeight, client: list.clientHeight, page: document.documentElement.scrollWidth, width: innerWidth, tabStops: [list, ...list.querySelectorAll('[tabindex]')].filter(node => node.tabIndex >= 0).length };
-          } finally { clones.forEach(node => node.remove()); }
-        });
-        assert(capacity.count === 500 && capacity.height <= 360 && capacity.scroll > capacity.client && capacity.page <= capacity.width + 1 && capacity.tabStops === 1, '500-avatar DOM fixture exceeds its scroll panel, overflows at 320px or creates extra tab stops');
-      }
     }
     assert(await firstAvatar.evaluate(node => getComputedStyle(node).backgroundColor) === avatarColor, 'Avatar color changed across roster updates/theme');
     await host.setViewportSize({ width: 1280, height: 900 });
     await host.getByRole('button', { name: 'Activar modo claro' }).click();
+    for (const width of [1280, 390, 320]) {
+      await host.setViewportSize({ width, height: 900 }); await geometry(host, `Light avatars ${width}px`);
+    }
+    await host.setViewportSize({ width: 1280, height: 900 });
     assert(!/Zoom|Conectado a la sala/.test(await host.locator('#app').innerText()), 'The lobby still shows removed projection/connection messages');
     await geometry(host, 'Host lobby'); await geometry(first, '390px lobby'); await geometry(second, '320px lobby');
     await first.reload();
@@ -454,7 +475,7 @@ async (page) => {
     assert((await snapshot(first, code)).me.nickname === playerName, 'Reconnection lost participant membership');
     const forbidden = await post(first, `/api/rooms/${code}/start`, {});
     assert([401, 403].includes(forbidden.status), `Participant start should be denied, received HTTP ${forbidden.status}`);
-    checks.push('PIN invitation, inline duplicate rejection, stable Unicode avatars, accessible tooltips, focus/hover/reduced motion, bounded 500-avatar DOM fixture, cookie restoration, quiet reconnection, host-only start');
+    checks.push('PIN invitation, inline duplicate rejection, accessible Unicode aliases, stable sphere nodes/animations/focus, finite absorption, growing foreground core, 96 radial lines, reduced motion, responsive light/dark geometry, cookie restoration, quiet reconnection, host-only start');
 
     await host.locator('[data-start]').click();
     await first.locator('[data-send]').waitFor(); await second.locator('[data-send]').waitFor();

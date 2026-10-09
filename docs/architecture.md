@@ -1,4 +1,20 @@
-# Initial architecture decision · 2026-09-28
+# Architecture decisions
+
+## Active Sentrux contract · 2026-10-08
+
+`.sentrux/rules.toml` now defines the project contract; historical statements below about missing rules describe earlier revisions. The current source has no import cycles or god files, so both are prohibited. The five subsystem boundaries keep browser assets, site tools and the CertiQuiz API independent: the browser uses HTTP for live rooms, the server consumes catalog data, and deployment/verification tools use commands or HTTP rather than importing API implementation code.
+
+The dependency direction is tests → application/tools → adapters/rendering → domain/security. `quiz-core.js` and the server's `game.py` / `security.py` cannot depend on UI, storage or HTTP handlers. `storage.js`, `layout.mjs`, `store.py` and `catalog.py` provide adapters; entry points assemble them. Test-to-source imports are allowed; production-to-test imports are rejected. Specific file matches precede directory fallbacks, so new source files are covered as application code until explicitly assigned a more foundational role.
+
+Sentrux **0.5.7** rejects a larger layer order importing a smaller one. The contract therefore assigns tests `0`, entry points `10`, adapters `20` and domain/security `30`. This was verified with allowed and forbidden imports, because the [upstream README example](https://github.com/sentrux/sentrux#rules-engine) describes the opposite order. Re-run `pwsh -File scripts/check-architecture-rules.ps1` after upgrading Sentrux; it exercises the installed binary in temporary directories and checks both successful dependencies and actual cycle, layer and boundary violations without changing the real Git index.
+
+Function-size, complexity and coupling regressions remain governed by `sentrux gate` against the working application's preflight baseline. This change does not impose arbitrary global thresholds or waive existing regressions. Rules operate on resolved static imports; they do not validate dynamic imports, HTTP behavior, browser globals, authentication or CORS. Sentrux's normal Git scan covers tracked files: new source must also be included in architecture acceptance (an isolated temporary index can do this without staging user changes). Generated artifacts and the local baseline stay ignored; only `rules.toml` is eligible for version control.
+
+The installed Python plugin v0.2.0 only captures `dotted_name` imports in `queries/tags.scm`; an isolated probe confirmed that `from .store import Store` produces no import edge. The Python rules therefore apply to resolved absolute imports, but do **not** establish enforcement of the API's existing relative imports. The regression script requires resolved edges in every case and tests supported absolute imports explicitly. Fixing/upgrading that external parser and rechecking relative imports is needed before claiming full Python dependency coverage; no production imports were rewritten to accommodate the analyzer.
+
+The existing preflight/postflight wrappers already run `sentrux check .`, so this contract is enforced without adding a deployment or CI workflow. Run `sentrux check .` for all eight checks, `sentrux gate .` for regression comparison, and `scripts/arch-postflight.ps1` for the combined Graphify/check/gate workflow. The installed MCP `check_rules` response is limited to three checks; the CLI is required for full configured-rule acceptance.
+
+## Initial architecture decision · 2026-09-28
 
 CertiTips is a static site. Markdown and the course catalog enter a build script; markdown-it parses the chapters; a shared layout renders static HTML. The browser adds navigation, an accessible native diagram dialog and a quiz. A pure quiz module owns selection, confirmation, restoration and scoring. Storage failures fall back to memory. There is no backend or browser-loaded third-party runtime.
 

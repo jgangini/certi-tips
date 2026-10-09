@@ -8,7 +8,7 @@ Keep this file repo-specific. Do not duplicate universal rules that already live
 
 CertiTips publishes Spanish study guides and explained practice at `/certi-tips/` in `jgangini/certi-tips`. Use Node.js 24 and the existing Markdown build; no backend or browser framework is needed. Keep source transcripts outside this repository.
 
-Repository checks: `npm run build`, `npm test`, `npm run check`. The checker validates the 53 source lessons, 36 questions, 10 diagrams, paths and anchors. Rebuild/check even for headings-only edits. `dist/` is generated and replaced on build.
+Repository checks: `npm run build`, `npm test`, `npm run check`. The checker validates the 53 source lessons, 36 questions, 9 diagrams, paths and anchors. Rebuild/check even for headings-only edits. `dist/` is generated and replaced on build.
 
 Use `npm test` with its in-process Node runner: default test isolation hits `spawn EPERM` in this Windows sandbox. Tests must restore any changed global state. Browser QA uses the isolated CLI session and `scripts/browser-smoke.cjs`, without screenshots.
 
@@ -51,3 +51,7 @@ Quiz reviews must retain their exact original completed practice. The initial ar
 - Candidate explorer roles:
 - Candidate reviewer roles:
 - Candidate repo-specific skills or MCPs:
+
+## Diagram composition checks
+
+Repeated OCI reviews missed faint badges, detached captions and an off-center instance pool despite passing text-overlap checks. For native course SVGs, measure the complete artwork plus caption against its container, and the visible icon geometry against its nearest label. Check badge borders against both their fill and surrounding gradients. Use `scripts/diagram-check.cjs` for center, padding and horizontal/vertical proximity and `tests/diagram-design.test.mjs` for badge contrast; successful loading and collision-free text alone are insufficient.

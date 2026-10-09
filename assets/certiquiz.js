@@ -1,7 +1,6 @@
 const app = document.querySelector('#app');
 const apiOrigin = document.querySelector('.certiquiz-app').dataset.apiOrigin;
 const siteBase = document.body.dataset.base;
-const nameSegments = new Intl.Segmenter('es', { granularity: 'grapheme' });
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const certiQuizBrand = 'Certi<span class="brand-accent">Quiz</span>';
 const welcome = (role, inRoom = false) => `<section class="welcome"><nav class="certiquiz-breadcrumb" aria-label="Ruta de navegación"><a href="${siteBase}">Home</a><span aria-hidden="true">/</span>${role ? `<a class="certiquiz-mark" href="${siteBase}certiquiz/">${certiQuizBrand}</a><span aria-hidden="true">/</span>${inRoom ? `<a href="${siteBase}certiquiz/#${role === 'host' ? 'host' : 'participant'}" data-entry-role="${role}">${role === 'host' ? 'Anfitrión' : 'Participante'}</a>` : `<span aria-current="page">${role === 'host' ? 'Anfitrión' : 'Participante'}</span>`}${inRoom ? '<span aria-hidden="true">/</span><span aria-current="page">Sala</span>' : ''}` : `<span class="certiquiz-mark" aria-current="page">${certiQuizBrand}</span>`}</nav></section>`;
@@ -21,6 +20,8 @@ let pollTimer;
 let clock = { server: 0, received: 0 };
 let remaining = 0;
 let expiredLobbyCode = '';
+let noticeRetryDeadline = 0;
+let rosterObserver;
 const entryUrl = new URL(location.href);
 const prefilledCode = entryUrl.searchParams.get('room') || '';
 let draftCode = /^\d{6}$/.test(prefilledCode) ? prefilledCode : '';
@@ -32,15 +33,17 @@ function prepareNotices() {
   const target = app.querySelector('form') || app.querySelector('section.card');
   target?.insertAdjacentHTML('beforeend', '<div class="notice error" data-error role="alert" hidden></div><p class="connection" id="connection" role="status" aria-live="polite"></p><p class="visually-hidden" id="announcement" role="status" aria-live="polite"></p>');
 }
-function showNotice(message, tone = 'error') {
+function showNotice(message, tone = 'error', retryAfter = 0) {
   const notice = document.querySelector('[data-confirm][open] [data-error]') || app.querySelector('[data-error]');
   if (!notice) return;
   notice.className = `notice ${tone}`;
-  notice.innerHTML = message ? `${tone === 'warning' ? warningNoticeIcon : errorNoticeIcon}<span>${escape(message)}</span>` : '';
+  noticeRetryDeadline = message && Number.isFinite(retryAfter) && retryAfter > 0 ? performance.now() + retryAfter * 1000 : 0;
+  const countdown = noticeRetryDeadline ? `<output class="notice-countdown" data-notice-countdown role="timer" aria-live="off" aria-label="Tiempo de espera restante">${formatCountdown(Math.ceil(retryAfter))}</output>` : '';
+  notice.innerHTML = message ? `${tone === 'warning' ? warningNoticeIcon : errorNoticeIcon}<span>${escape(message)}</span>${countdown}` : '';
   notice.hidden = !message;
 }
 function showError(message) { showNotice(message); }
-function showWarning(message) { showNotice(message, 'warning'); }
+function showWarning(message, retryAfter) { showNotice(message, 'warning', retryAfter); }
 function announce(message) { const node = app.querySelector('#announcement'); if (node) node.textContent = message; }
 function setConnection(message) { const node = app.querySelector('#connection'); if (node) node.textContent = message; }
 function retryAfterMessage(seconds) {
@@ -59,7 +62,7 @@ async function request(path, body) {
     const retryAfter = Number(response.headers.get('Retry-After'));
     const detail = typeof data.detail === 'string' ? data.detail : typeof data.error === 'string' ? data.error : '';
     const message = response.status === 429 && Number.isInteger(retryAfter) && retryAfter > 0 && detail.startsWith('Demasiados intentos.') ? retryAfterMessage(retryAfter) : detail || (response.status === 429 ? 'Demasiados intentos. Espera un momento antes de volver a probar.' : 'No se pudo completar la acción. Revisa los datos e inténtalo de nuevo.');
-    const error = new Error(message); error.status = response.status; throw error;
+    const error = new Error(message); error.status = response.status; error.retryAfter = Number.isInteger(retryAfter) && retryAfter > 0 ? retryAfter : 0; throw error;
   }
   if (Number.isFinite(data.serverNow)) { data.clockServer = data.serverNow + (performance.now() - start) / 2; data.clockReceived = performance.now(); }
   return data;
@@ -71,7 +74,7 @@ async function action(callback, button) {
   const disabled = button?.disabled;
   if (button) button.disabled = true;
   try { await callback(); }
-  catch (error) { (error.status === 429 || error.tone === 'warning' ? showWarning : showError)(error.message); }
+  catch (error) { (error.status === 429 || error.tone === 'warning' ? showWarning : showError)(error.message, error.retryAfter); }
   finally {
     busy = false; app.setAttribute('aria-busy', 'false');
     if (button?.isConnected) button.disabled = disabled;
@@ -82,6 +85,23 @@ function bindForm(id, callback) {
   document.querySelector(`#${id}`)?.addEventListener('submit', event => {
     event.preventDefault();
     const form = event.currentTarget;
+    if (id === 'answer-form' && !form.querySelector('input[name="optionId"]:checked')) {
+      showWarning('Selecciona una de estas opciones.');
+      return;
+    }
+    if (id === 'create-form') {
+      const invalid = form.querySelector('input[type="number"]:invalid');
+      if (invalid) {
+        const message = invalid.validity.rangeUnderflow ? `El valor debe ser superior o igual a ${invalid.min}.`
+          : invalid.validity.rangeOverflow ? `El valor debe ser inferior o igual a ${invalid.max}.`
+            : invalid.validity.valueMissing ? 'Ingresa un valor en los campos numéricos.'
+              : invalid.validity.stepMismatch ? 'El valor debe ser un número entero.'
+                : 'Revisa el valor ingresado.';
+        showWarning(message);
+        invalid.focus({ preventScroll: true });
+        return;
+      }
+    }
     action(() => callback(new FormData(form), form), form.querySelector('[type="submit"]'));
   });
 }
@@ -90,7 +110,7 @@ function roomPath(suffix = '') { return `/api/rooms/${encodeURIComponent(room.co
 const cookieMessage = 'Tu navegador no pudo guardar el acceso seguro a CertiQuiz. Actualízalo y permite las cookies de CertiQuiz para este sitio antes de volver a intentarlo.';
 async function enterRoom(snapshot) {
   session = await request('/api/session');
-  if (session.roomCode !== snapshot.code || (snapshot.role === 'host' && !session.host)) throw new Error(cookieMessage);
+  if ((snapshot.role === 'host' ? session.hostRoomCode : session.roomCode) !== snapshot.code || (snapshot.role === 'host' && !session.host)) throw new Error(cookieMessage);
   let restored;
   try { restored = await request(`/api/rooms/${encodeURIComponent(snapshot.code)}`); }
   catch (error) { if ([401, 403].includes(error.status)) throw new Error(cookieMessage); throw error; }
@@ -117,7 +137,7 @@ function entry(role = selectedRole) {
   if (!role) {
     app.innerHTML = `${welcome()}<div class="entry-grid role-options"><button class="card join-card role-card" type="button" data-role="host" aria-label="Crear una partida como anfitrión"><span class="role-icon" aria-hidden="true">${hostRoleIcon}</span><span class="role-copy"><strong class="role-title">Anfitrión</strong><span class="muted">Elige un quiz, genera el código e invita a tu equipo.</span></span></button><button class="card join-card role-card" type="button" data-role="player" aria-label="Unirme a una partida como participante"><span class="role-icon" aria-hidden="true">${playerRoleIcon}</span><span class="role-copy"><strong class="role-title">Participante</strong><span class="muted">Ingresa el código de la sala y pon a prueba tus ideas.</span></span></button></div>`;
     const participantRole = app.querySelector('[data-role="player"]');
-    if (session.host && session.roomCode) {
+    if (session.host && session.hostRoomCode) {
       participantRole.disabled = true;
       participantRole.title = 'Finaliza tu sala activa antes de unirte como participante.';
     }
@@ -125,41 +145,96 @@ function entry(role = selectedRole) {
     return;
   }
   const maxQuestions = Math.min(limits.maxQuestions, catalog.courses[0]?.questionCount || 1);
-  const joinForm = `<span class="eyebrow">INGRESO DE PARTICIPANTE</span><h2 id="form-title">Únete a la Sala</h2><form id="join-form"><div class="field"><input class="code-input" id="room-code" name="code" aria-label="Código de la sala" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="off" placeholder="000000" value="${escape(draftCode)}" required></div><div class="field"><label for="nickname">Tu nombre o alias</label><input id="nickname" name="nickname" autocomplete="nickname" minlength="2" maxlength="30" pattern="[\\p{L}\\p{N} ]+" placeholder="¿Cómo te llamamos?" required></div><div class="actions join-actions"><a class="button secondary" href="${siteBase}certiquiz/" data-entry-exit>Salir</a><button class="button" type="submit">Entrar</button></div></form>`;
-  const hostForm = `<h2 id="form-title">Anfitrión</h2><p class="muted">Configura la partida y genera un código para invitar al equipo.</p><form id="create-form"><ol class="certification-list"><li class="certification-item"><div><span class="certification-number" aria-hidden="true"></span><span id="course-label" class="setup-label">Certificación</span><p id="course-hint">Elige qué certificación practicará tu equipo.</p></div><details class="path-group course-picker"><summary id="course" aria-labelledby="course-label course-title" aria-describedby="course-hint"><span id="course-title">${escape(catalog.courses[0]?.title || 'Sin certificaciones disponibles')}</span></summary><input type="hidden" name="courseId" value="${escape(catalog.courses[0]?.id)}"><div class="path-group-panel" role="group" aria-labelledby="course-label">${catalog.courses.map((course, index) => `<button type="button" data-course="${escape(course.id)}" aria-pressed="${index === 0}">${escape(course.title)}</button>`).join('')}</div></details></li><li class="certification-item"><div><span class="certification-number" aria-hidden="true"></span><label for="question-count">Número de preguntas</label><p id="question-count-hint">Las preguntas se seleccionan del banco de la certificación.</p></div><input id="question-count" name="questionCount" type="number" min="1" max="${maxQuestions}" value="${Math.min(12, maxQuestions)}" aria-describedby="question-count-hint" required></li><li class="certification-item"><div><span class="certification-number" aria-hidden="true"></span><label for="seconds">Segundos por pregunta</label><p id="seconds-hint">Tiempo que tendrá cada participante para responder.</p></div><input id="seconds" name="secondsPerQuestion" type="number" min="${limits.minSeconds}" max="${limits.maxSeconds}" value="${Math.min(limits.maxSeconds, Math.max(limits.minSeconds, 10))}" aria-describedby="seconds-hint" required></li><li class="certification-item setup-actions"><div><span class="certification-number" aria-hidden="true"></span><span class="setup-label">Generar Sala</span><p class="hint">Hasta ${limits.maxPlayers} participantes. Gana quien consigue más puntos; los empates comparten posición.</p></div><button class="button" type="submit" ${catalog.courses.length ? '' : 'disabled'}>Comenzar</button></li></ol></form>`;
+  const resumeCandidate = role === 'host' && session.host && /^\d{6}$/.test(session.hostRoomCode || '');
+  const joinForm = `<span class="eyebrow">INGRESO DE PARTICIPANTE</span><h2 id="form-title">Únete a la Sala</h2><form id="join-form"><div class="field"><input class="code-input" id="room-code" name="code" aria-label="Código de la sala" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="off"  value="${escape(draftCode)}" required></div><div class="field"><label for="nickname">Tu nombre o alias</label><input id="nickname" name="nickname" autocomplete="nickname" minlength="2" maxlength="30" pattern="[\\p{L}\\p{N} ]+" placeholder="¿Cómo te llamamos?" required></div><div class="actions join-actions"><a class="button secondary" href="${siteBase}certiquiz/" data-entry-exit>Salir</a><button class="button" type="submit" disabled>Entrar</button></div></form>`;
+  const hostForm = `<h2 id="form-title">Anfitrión</h2><p class="muted">${resumeCandidate ? 'Tu sala activa está lista para continuar.' : 'Configura la partida y genera un código para invitar al equipo.'}</p><form id="create-form" novalidate><ol class="certification-list"><li class="certification-item"><div><span class="certification-number" aria-hidden="true"></span><span id="course-label" class="setup-label">Certificación</span><p id="course-hint">Elige qué certificación practicará tu equipo.</p></div><details class="path-group course-picker"${resumeCandidate ? ' inert aria-disabled="true"' : ''}><summary id="course" aria-labelledby="course-label course-title" aria-describedby="course-hint"><span id="course-title">${escape(catalog.courses[0]?.title || 'Sin certificaciones disponibles')}</span></summary><input type="hidden" name="courseId" value="${escape(catalog.courses[0]?.id)}" ${resumeCandidate ? 'disabled' : ''}><div class="path-group-panel" role="group" aria-labelledby="course-label">${catalog.courses.map((course, index) => `<button type="button" data-course="${escape(course.id)}" aria-pressed="${index === 0}">${escape(course.title)}</button>`).join('')}</div></details></li><li class="certification-item"><div><span class="certification-number" aria-hidden="true"></span><label for="question-count">Número de preguntas</label><p id="question-count-hint">Las preguntas se seleccionan del banco de la certificación.</p></div><input id="question-count" name="questionCount" type="number" min="1" max="${maxQuestions}" value="${Math.min(12, maxQuestions)}" aria-describedby="question-count-hint" required ${resumeCandidate ? 'disabled' : ''}></li><li class="certification-item"><div><span class="certification-number" aria-hidden="true"></span><label for="seconds">Segundos por pregunta</label><p id="seconds-hint">Tiempo que tendrá cada participante para responder.</p></div><input id="seconds" name="secondsPerQuestion" type="number" min="${limits.minSeconds}" max="${limits.maxSeconds}" value="${Math.min(limits.maxSeconds, Math.max(limits.minSeconds, 10))}" aria-describedby="seconds-hint" required ${resumeCandidate ? 'disabled' : ''}></li><li class="certification-item setup-actions"><div><span class="certification-number" aria-hidden="true"></span><span class="setup-label">${resumeCandidate ? 'Sala activa' : 'Generar Sala'}</span><p class="hint">${resumeCandidate ? 'Cargando la configuración de la sala…' : `Hasta ${limits.maxPlayers} participantes. Gana quien consigue más puntos; los empates comparten posición.`}</p></div><button class="button" type="${resumeCandidate ? 'button' : 'submit'}" ${resumeCandidate ? 'data-resume disabled' : catalog.courses.length ? '' : 'disabled'}>Entrar</button></li></ol></form>`;
   app.innerHTML = `${welcome(role)}<section class="card join-card entry-card ${role}-entry" aria-labelledby="form-title">${role === 'host' ? hostForm : joinForm}</section>`;
   prepareNotices();
   const roomCode = app.querySelector('#room-code');
-  roomCode?.addEventListener('input', () => { roomCode.value = roomCode.value.replace(/\D/g, '').slice(0, 6); });
   const nickname = app.querySelector('#nickname');
-  nickname?.addEventListener('input', () => { nickname.value = nickname.value.replace(/[^\p{L}\p{N} ]/gu, '').slice(0, 30); });
+  const joinButton = app.querySelector('#join-form .join-actions button[type="submit"]');
+  const updateJoinButton = () => {
+    if (joinButton && roomCode && nickname) joinButton.disabled = !(roomCode.validity.valid && nickname.validity.valid && nickname.value.trim().length >= 2);
+  };
+  roomCode?.addEventListener('input', () => { roomCode.value = roomCode.value.replace(/\D/g, '').slice(0, 6); updateJoinButton(); });
+  nickname?.addEventListener('input', () => { nickname.value = nickname.value.replace(/[^\p{L}\p{N} ]/gu, '').slice(0, 30); updateJoinButton(); });
+  updateJoinButton();
   bindForm('join-form', async data => { const snapshot = await request(`/api/rooms/${encodeURIComponent(String(data.get('code')).trim())}/join`, { nickname: String(data.get('nickname')).trim() }); await enterRoom(snapshot); });
   bindForm('create-form', async data => {
     try { await enterRoom(await request('/api/rooms', { courseId: data.get('courseId'), questionCount: Number(data.get('questionCount')), secondsPerQuestion: Number(data.get('secondsPerQuestion')) })); }
     catch (error) {
       if (error.status === 409) {
         error.tone = 'warning';
+        let ownRoom;
         try {
           const current = await request('/api/session');
-          if (current.host && /^\d{6}$/.test(current.roomCode)) {
-            const ownRoom = await request(`/api/rooms/${current.roomCode}`);
-            if (ownRoom.role === 'host' && ownRoom.status !== 'finished') {
-              const form = app.querySelector('#create-form');
-              const picker = form.querySelector('.course-picker');
-              form.querySelector('#course-title').textContent = ownRoom.courseTitle;
-              picker.open = false; picker.inert = true; picker.setAttribute('aria-disabled', 'true');
-              const questionCount = form.querySelector('#question-count'); questionCount.value = ownRoom.questionCount; questionCount.disabled = true;
-              const seconds = form.querySelector('#seconds'); seconds.value = ownRoom.secondsPerQuestion; seconds.disabled = true;
-              const resume = form.querySelector('.setup-actions .button'); resume.type = 'button'; resume.textContent = 'Retomar';
-              resume.onclick = () => action(() => enterRoom(ownRoom), resume);
-            }
+          if (current.host && /^\d{6}$/.test(current.hostRoomCode || '')) {
+            ownRoom = await request(`/api/rooms/${current.hostRoomCode}`);
           }
         } catch {}
+        if (ownRoom?.role === 'host' && ownRoom.status !== 'finished') {
+          lockHostSetup(app.querySelector('#create-form'), ownRoom);
+          await enterRoom(ownRoom);
+          return;
+        }
       }
       throw error;
     }
   });
   bindCoursePicker();
+  if (resumeCandidate) void resumeHostRoom(session.hostRoomCode, app.querySelector('#create-form'));
+}
+
+function lockHostSetup(form, activeRoom) {
+  if (!form?.isConnected) return;
+  const picker = form.querySelector('.course-picker');
+  const courseId = form.querySelector('[name="courseId"]');
+  const questionCount = form.querySelector('#question-count');
+  const seconds = form.querySelector('#seconds');
+  const resume = form.querySelector('.setup-actions .button');
+  form.querySelector('#course-title').textContent = activeRoom.courseTitle;
+  picker.open = false; picker.inert = true; picker.setAttribute('aria-disabled', 'true');
+  courseId.disabled = true;
+  questionCount.value = activeRoom.questionCount; questionCount.disabled = true;
+  seconds.value = activeRoom.secondsPerQuestion; seconds.disabled = true;
+  form.querySelector('.setup-actions .setup-label').textContent = 'Sala activa';
+  form.querySelector('.setup-actions .hint').textContent = 'Retoma la sala existente con su configuración actual.';
+  resume.type = 'button'; resume.disabled = false;
+  resume.onclick = () => action(() => enterRoom(activeRoom), resume);
+}
+function unlockHostSetup(form) {
+  if (!form?.isConnected) return;
+  const picker = form.querySelector('.course-picker');
+  picker.inert = false; picker.removeAttribute('aria-disabled');
+  form.querySelector('[name="courseId"]').disabled = false;
+  form.querySelector('#question-count').disabled = false;
+  form.querySelector('#seconds').disabled = false;
+  form.querySelector('.setup-actions .setup-label').textContent = 'Generar Sala';
+  form.querySelector('.setup-actions .hint').textContent = `Hasta ${catalog.limits.maxPlayers} participantes. Gana quien consigue más puntos; los empates comparten posición.`;
+  const submit = form.querySelector('.setup-actions .button');
+  submit.type = 'submit'; submit.disabled = !catalog.courses.length; submit.onclick = null;
+}
+async function resumeHostRoom(code, form) {
+  try {
+    const activeRoom = await request(`/api/rooms/${encodeURIComponent(code)}`);
+    if (!form?.isConnected) return;
+    if (activeRoom.role === 'host' && activeRoom.status !== 'finished') lockHostSetup(form, activeRoom);
+    else {
+      if (session.hostRoomCode === code) session.hostRoomCode = null;
+      unlockHostSetup(form);
+    }
+  } catch (error) {
+    if (!form?.isConnected) return;
+    if ([401, 403, 404, 410].includes(error.status)) {
+      if (session.hostRoomCode === code) session.hostRoomCode = null;
+      unlockHostSetup(form);
+      return;
+    }
+    const resume = form.querySelector('.setup-actions .button');
+    resume.disabled = false;
+    resume.onclick = () => action(() => resumeHostRoom(code, form), resume);
+    showWarning(error.message, error.retryAfter);
+  }
 }
 
 function bindCoursePicker() {
@@ -191,15 +266,15 @@ function lobby() {
   const invite = room.role === 'host' ? joinUrl() : '';
   const hostInvitation = `<div class="invite-overview"><div class="invite-code"><strong class="pin">${escape(room.code)}</strong>${invitationQr(invite)}</div><label for="join-address">Enlace de invitación</label><div class="invite-link"><input id="join-address" type="url" value="${escape(invite)}" readonly><button type="button" data-copy aria-label="Copiar enlace de invitación" title="Copiar enlace de invitación"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="4" y="8" width="12" height="13" rx="2"/><path d="M9 5V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2"/></svg></button></div></div>`;
   const facts = roomFacts(room.questionCount, room.secondsPerQuestion);
-  const lobbyWaitTimer = room.role === 'host' && room.lobbyDeadline ? `<output class="lobby-wait-timer" data-lobby-wait-timer aria-label="Tiempo restante para iniciar la sala">${formatCountdown(lobbyWaitSeconds())}</output>` : '';
+  const lobbyWaitTimer = room.role === 'host' && room.lobbyDeadline ? `<output class="lobby-wait-timer" data-lobby-wait-timer role="timer" aria-live="off" aria-label="Tiempo restante para iniciar la sala">${formatCountdown(lobbyWaitSeconds())}</output>` : '';
   const hostFooter = `<div class="lobby-footer">${facts}<div class="actions game-actions">${lobbyWaitTimer}<button class="button secondary" type="button" data-exit>Finalizar</button><button class="button" type="button" data-start>Comenzar</button></div></div>`;
   const playerFooter = `<div class="lobby-footer">${facts}<div class="actions game-actions"><button class="button secondary" type="button" data-exit>Salir</button></div></div>`;
-  return `${roomHeader()}<div class="room-grid"><section class="card join-card"><span class="eyebrow">${room.role === 'host' ? 'INVITA A PARTICIPANTES' : 'YA ESTÁS DENTRO'}</span><h2 id="stage-title" tabindex="-1">${room.role === 'host' ? 'Comparte este código' : `¡Todo listo, ${escape(room.me?.nickname)}!`}</h2>${room.role === 'host' ? hostInvitation : '<p class="muted">El anfitrión iniciará la primera pregunta. Mantén esta página abierta para responder.</p>'}${room.role === 'host' ? hostFooter : playerFooter}</section><div class="room-side"><div data-players></div></div></div>`;
+  return `${roomHeader()}<div class="room-grid"><section class="card join-card"><span class="eyebrow">${room.role === 'host' ? 'INVITA A PARTICIPANTES' : 'YA ESTÁS DENTRO'}</span><h2 id="stage-title" tabindex="-1">${room.role === 'host' ? 'Sala de Espera' : `¡Todo listo, ${escape(room.me?.nickname)}!`}</h2>${room.role === 'host' ? hostInvitation : '<p class="muted">El anfitrión iniciará la primera pregunta. Mantén esta página abierta para responder.</p>'}${room.role === 'host' ? hostFooter : playerFooter}</section><div class="room-side"><div data-players></div></div></div>`;
 }
 function questionView() {
   const question = room.question;
   const revealed = room.status === 'reveal';
-  return `${roomHeader()}<section class="card"><div class="game-toolbar"><span data-answer-count></span><span class="${revealed ? 'brand' : 'timer'}"${revealed ? '' : ' data-timer role="timer" aria-live="off"'}>${revealed ? 'Certi<span class="brand-accent">Quiz</span>' : ''}</span></div><progress data-timer-meter max="${room.secondsPerQuestion}" value="${revealed ? 0 : room.secondsPerQuestion}" aria-label="Tiempo restante"></progress><h2 class="question" id="question-title" tabindex="-1">${room.questionIndex + 1}. ${escape(question.text)}</h2><form id="answer-form"><fieldset aria-labelledby="question-title"><div class="options">${question.options.map((option, index) => `<label class="option${revealed && option.id === question.correctOption ? ' correct' : ''}${revealed && option.id === room.me?.answer && option.id !== question.correctOption ? ' incorrect' : ''}"><input type="radio" name="optionId" value="${escape(option.id)}" ${room.me?.answer === option.id ? 'checked' : ''} ${revealed || room.role === 'host' || room.me?.answer ? 'disabled' : ''} required><span class="option-letter" aria-hidden="true">${String.fromCharCode(65 + index)}</span><span>${escape(option.text)}${revealed && option.id === question.correctOption ? '<span class="visually-hidden">Respuesta correcta</span>' : ''}</span></label>`).join('')}</div></fieldset>${room.role === 'player' && !revealed ? '<div class="actions game-actions"><button class="button" type="submit" data-send>Enviar</button></div>' : ''}</form>${!revealed ? '<p class="answer-note" data-answer-note role="status"></p>' : ''}${revealed ? `<div class="explanation"><strong>Explicación</strong><p>${escape(question.explanation || '')}</p></div>` : ''}${room.role === 'host' ? `<div class="actions game-actions"><button class="button secondary" type="button" data-finish>Finalizar</button>${revealed ? '<button class="button" type="button" data-next>Siguiente</button>' : ''}</div>` : ''}</section>`;
+  return `${roomHeader()}<section class="card"><div class="game-toolbar"><span data-answer-count></span><span class="${revealed ? 'brand' : 'timer'}"${revealed ? '' : ' data-timer role="timer" aria-live="off"'}>${revealed ? 'Certi<span class="brand-accent">Quiz</span>' : ''}</span></div><progress data-timer-meter max="${room.secondsPerQuestion}" value="${revealed ? 0 : room.secondsPerQuestion}" aria-label="Tiempo restante"></progress><h2 class="question" id="question-title" tabindex="-1">${room.questionIndex + 1}. ${escape(question.text)}</h2><form id="answer-form" novalidate><fieldset aria-labelledby="question-title"><div class="options">${question.options.map((option, index) => `<label class="option${revealed && option.id === question.correctOption ? ' correct' : ''}${revealed && option.id === room.me?.answer && option.id !== question.correctOption ? ' incorrect' : ''}"><input type="radio" name="optionId" value="${escape(option.id)}" ${room.me?.answer === option.id ? 'checked' : ''} ${revealed || room.role === 'host' || room.me?.answer ? 'disabled' : ''} required><span class="option-letter" aria-hidden="true">${String.fromCharCode(65 + index)}</span><span>${escape(option.text)}${revealed && option.id === question.correctOption ? '<span class="visually-hidden">Respuesta correcta</span>' : ''}</span></label>`).join('')}</div></fieldset>${room.role === 'player' && !revealed ? '<div class="actions game-actions"><button class="button" type="submit" data-send>Enviar</button></div>' : ''}</form>${!revealed ? '<p class="answer-note" data-answer-note role="status"></p>' : ''}${revealed ? `<div class="explanation"><strong>Explicación</strong><p>${escape(question.explanation || '')}</p></div>` : ''}${room.role === 'host' ? `<div class="actions game-actions"><button class="button secondary" type="button" data-finish>Finalizar</button>${revealed ? '<button class="button" type="button" data-next>Siguiente</button>' : ''}</div>` : ''}</section>`;
 }
 
 function ranking() {
@@ -207,7 +282,7 @@ function ranking() {
 }
 
 function leaderboard() {
-  return `<table class="leaderboard"><caption class="visually-hidden">Clasificación por puntos; los empates comparten posición.</caption><thead><tr><th scope="col">Ranking</th><th scope="col">Participante</th><th scope="col">Puntos</th></tr></thead><tbody>${room.leaderboard.map(player => `<tr data-player-id="${escape(player.id)}"${player.id === room.me?.id ? ' class="is-me"' : ''}><td class="place">#${String(player.rank).padStart(3, '0')}</td><th scope="row">${escape(player.nickname)}${player.id === room.me?.id ? ' (tú)' : ''}</th><td>${player.score}</td></tr>`).join('')}</tbody></table>`;
+  return `<table class="leaderboard"><caption class="visually-hidden">Clasificación por puntos; los empates comparten posición.</caption><thead><tr><th scope="col">Ranking</th><th scope="col">Participante</th><th scope="col">Puntos</th></tr></thead><tbody>${room.leaderboard.map(player => `<tr data-player-id="${escape(player.id)}"${player.id === room.me?.id ? ' class="is-me"' : ''}><td class="place">#${String(player.rank).padStart(3, '0')}</td><th scope="row">${escape(player.nickname)}</th><td>${player.score}</td></tr>`).join('')}</tbody></table>`;
 }
 
 function animateLeaderboard(previousOrder = room.code === rankingCode ? rankingOrder : []) {
@@ -241,7 +316,7 @@ function podium() {
   return `<ol class="podium" aria-label="Podio final">${[2, 1, 3].map(rank => {
     const players = room.leaderboard.filter(player => player.rank === rank);
     if (!players.length) return '';
-    return `<li class="podium-place podium-${rank}"><strong class="podium-name">${players.map(player => `<span>${escape(player.nickname)}${player.id === room.me?.id ? ' (tú)' : ''}</span>`).join('')}</strong><div class="podium-step"><img class="podium-medal" src="${siteBase}assets/certiquiz-medal-${rank}.svg" alt="${rank === 1 ? 'Primer' : rank === 2 ? 'Segundo' : 'Tercer'} puesto${players.length > 1 ? ' compartido' : ''}" width="88" height="88"><strong class="podium-score">${players[0].score}</strong><span>puntos</span></div></li>`;
+    return `<li class="podium-place podium-${rank}"><strong class="podium-name">${players.map(player => `<span>${escape(player.nickname)}</span>`).join('')}</strong><div class="podium-step"><img class="podium-medal" src="${siteBase}assets/certiquiz-medal-${rank}.svg" alt="${rank === 1 ? 'Primer' : rank === 2 ? 'Segundo' : 'Tercer'} puesto${players.length > 1 ? ' compartido' : ''}" width="88" height="88"><strong class="podium-score">${players[0].score}</strong><span>puntos</span></div></li>`;
   }).join('')}</ol>`;
 }
 
@@ -267,6 +342,7 @@ function showRoom(snapshot) {
   if (room.status === 'finished') document.querySelector('[data-confirm]')?.close();
   if (changed) {
     stage = nextStage;
+    rosterObserver?.disconnect(); rosterObserver = null;
     app.innerHTML = room.status === 'lobby' ? lobby() : room.status === 'ranking' ? ranking() : room.status === 'finished' ? finished() : questionView();
     animateLeaderboard();
     prepareNotices();
@@ -275,7 +351,7 @@ function showRoom(snapshot) {
     announce(room.status === 'question' ? `Pregunta ${room.questionIndex + 1}. Tienes ${room.secondsPerQuestion} segundos.` : room.status === 'reveal' ? 'Se cerró la pregunta. Puedes revisar la respuesta.' : room.status === 'ranking' ? 'Puntuaciones actualizadas. Puedes revisar la clasificación.' : room.status === 'finished' ? 'Partida terminada. Ya puedes consultar los resultados.' : 'Te has unido a la sala.');
   }
   updateRoom();
-  if (answered) { showError(''); announce('Respuesta registrada. Espera a que termine el tiempo.'); }
+  if (answered) { showError(''); announce('Respuesta enviada.'); }
   app.setAttribute('aria-busy', 'false');
 }
 
@@ -296,43 +372,95 @@ function updateRoom() {
   if (room.status === 'question') {
     const locked = answered || remaining <= 0 || room.role === 'host';
     document.querySelectorAll('#answer-form input').forEach(input => { input.disabled = locked; if (answered) input.checked = input.value === room.me.answer; });
-    const send = document.querySelector('[data-send]'); if (send) { send.disabled = locked || busy; send.textContent = answered ? 'Respuesta registrada ✓' : 'Enviar'; }
-    const message = room.role === 'host' ? 'Las respuestas se cierran al terminar el tiempo.' : answered ? 'Respuesta registrada. Espera a que termine el tiempo.' : remaining <= 0 ? 'Tiempo terminado. Preparando la respuesta…' : '';
+    const send = document.querySelector('[data-send]'); if (send) { send.disabled = locked || busy; send.textContent = 'Enviar'; }
+    const message = room.role === 'host' ? 'Las respuestas se cierran al terminar el tiempo.' : answered ? '' : remaining <= 0 ? 'Tiempo terminado. Preparando la respuesta…' : '';
     if (note.textContent !== message) note.textContent = message;
   }
 }
 
+function layoutRoster(list, count) {
+  const items = [...list.querySelectorAll('[data-player-id]')];
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) items.forEach(item => { item.dataset.absorbed = ''; });
+  const absorbed = items.filter(item => item.dataset.absorbed !== undefined).length;
+  const diameter = Math.min(list.clientWidth || 420, list.clientHeight || 420);
+  const coreSize = Math.min(220, 84 + Math.log2(absorbed + 1) * 24, diameter * .55);
+  list.dataset.rosterCount = String(count);
+  list.style.setProperty('--total-size', `${coreSize}px`);
+  items.forEach((item, index) => {
+    const seed = parseInt(item.dataset.playerId.slice(-4), 16) || index + 1;
+    const size = Math.min(56, diameter * .14) * (.45 + (seed * 13 % 17) / 28);
+    const outer = Math.max(0, diameter / 2 - size / 2 - 12);
+    const inner = Math.min(outer, coreSize / 2 + size * .2);
+    item.style.setProperty('--particle-size', `${size}px`);
+    item.style.setProperty('--orbit-radius', `${inner + (outer - inner) * (seed * 7 % 19) / 18}px`);
+    item.style.setProperty('--core-radius', `${coreSize / 2}px`);
+  });
+}
+
+function rosterRays() {
+  const lines = Array.from({ length: 96 }, (_, index) => {
+    const angle = index * Math.PI / 48;
+    const length = 22 + 12 * Math.sin(angle * 5) + 6 * Math.cos(angle * 3);
+    return `<g transform="rotate(${index * 3.75}) translate(0 -100)"><line x1="0" y1="0" x2="0" y2="${-length}" style="--ray-delay: -${index * .13}s" /></g>`;
+  });
+  return `<svg class="energy-rays" viewBox="-150 -150 300 300" aria-hidden="true" focusable="false">${lines.join('')}</svg>`;
+}
+
 function updatePlayers(container) {
   rankingOrder = room.players.map(player => player.id); rankingCode = room.code;
-  if (!room.players.length) {
-    if (container.firstChild) container.replaceChildren();
+  const players = room.players;
+  if (!players.length) {
+    rosterObserver?.disconnect(); rosterObserver = null;
+    container.querySelector('.player-list')?.remove();
     return;
   }
-  if (!container.querySelector('.player-list')) container.innerHTML = '<ul class="player-list" tabindex="0" aria-label="Participantes de la sala"><li class="player-total"><span class="team-total" role="status" aria-live="polite"></span></li></ul>';
+  if (!container.querySelector('.player-list')) {
+    container.innerHTML = `<ul class="player-list" tabindex="0" aria-label="Participantes de la sala"><li class="player-total"><span class="team-total" role="status" aria-live="polite">${rosterRays()}<span class="team-count"></span></span></li></ul>`;
+    const createdList = container.querySelector('.player-list');
+    createdList.addEventListener('animationend', event => {
+      if (event.animationName !== 'certiquiz-absorb') return;
+      const item = event.target.closest('[data-player-id]');
+      if (!createdList.isConnected || !item || item.dataset.absorbed !== undefined) return;
+      item.dataset.absorbed = '';
+      layoutRoster(createdList, Number(createdList.dataset.rosterCount));
+    });
+    rosterObserver = new ResizeObserver(() => layoutRoster(createdList, Number(createdList.dataset.rosterCount) || 1));
+    rosterObserver.observe(createdList);
+  }
   const list = container.querySelector('.player-list');
   const total = list.querySelector('.team-total');
+  const totalValue = total.querySelector('.team-count');
   const count = String(room.playerCount ?? room.players.length);
-  if (total.textContent !== count) {
-    total.textContent = count; total.setAttribute('aria-label', `${count} ${count === '1' ? 'participante' : 'participantes'}`);
-    // ponytail: cap growth at 124px; expand the roster layout before increasing this ceiling.
-    list.style.setProperty('--total-size', `${Math.min(124, 64 + Math.sqrt(Number(count)) * 6)}px`);
+  const countChanged = totalValue.textContent !== count;
+  if (countChanged) {
+    totalValue.textContent = count; total.setAttribute('aria-label', `${count} ${count === '1' ? 'participante' : 'participantes'}`);
   }
   const current = new Map([...list.querySelectorAll('[data-player-id]')].map(node => [node.dataset.playerId, node]));
-  for (const player of room.players) {
-    // ponytail: room nicknames cannot change; keep existing nodes to preserve focus and motion.
+  let arrivals = 0;
+  for (const [index, player] of players.entries()) {
+    // ponytail: retain absorbed nodes so polling never replays an existing participant's arrival.
     if (current.delete(player.id)) continue;
-    const words = player.nickname.split(' ');
-    const initials = (words.length > 1 ? [words[0], words.at(-1)] : words).map(word => [...nameSegments.segment(word)][0].segment).join('').toLocaleUpperCase('es');
     const seed = parseInt(player.id.slice(-4), 16);
     const item = document.createElement('li');
     item.dataset.playerId = player.id;
-    item.innerHTML = `<span class="player-avatar avatar-tone-${seed % 6}" role="img" aria-label="${escape(player.nickname)}" style="--float-delay: -${seed % 40 / 10}s; --float-duration: ${4 + seed % 4}s"><span class="avatar-initials" aria-hidden="true">${escape(initials)}</span><span class="avatar-name" aria-hidden="true"><span>${escape(player.nickname)}</span></span></span>`;
+    item.style.setProperty('--orbit-angle', `${index * 137.507764 + seed % 31}deg`);
+    item.style.setProperty('--orbit-turn', `${seed % 2 ? -260 : 310}deg`);
+    item.style.setProperty('--arrival-duration', `${7 + seed % 5 * .45}s`);
+    item.style.setProperty('--arrival-delay', `${arrivals++ % 10 * .09}s`);
+    item.innerHTML = `<span class="player-avatar avatar-tone-${seed % 8}" role="img" aria-label="${escape(player.nickname)}"></span>`;
     list.append(item);
   }
   for (const node of current.values()) node.remove();
+  layoutRoster(list, Number(count));
 }
 
 function tick() {
+  const retryTimer = app.querySelector('[data-notice-countdown]');
+  if (retryTimer) {
+    const seconds = Math.ceil(Math.max(0, noticeRetryDeadline - performance.now()) / 1000);
+    const label = formatCountdown(seconds);
+    if (retryTimer.textContent !== label) retryTimer.textContent = label;
+  }
   if (!room) return;
   const lobbyTimer = document.querySelector('[data-lobby-wait-timer]');
   if (lobbyTimer && room.lobbyDeadline) {
@@ -355,9 +483,9 @@ function expireLobby() {
   if (!room || expiredLobbyCode === room.code) return;
   expiredLobbyCode = room.code;
   clearTimeout(pollTimer);
-  const dialog = document.createElement('dialog'); dialog.className = 'confirmation'; dialog.dataset.lobbyExpired = '';
+  const dialog = document.createElement('dialog'); dialog.className = 'confirmation confirmation-expired'; dialog.dataset.lobbyExpired = '';
   dialog.setAttribute('aria-labelledby', 'lobby-expired-title'); dialog.setAttribute('aria-describedby', 'lobby-expired-message');
-  dialog.innerHTML = `<div class="confirmation-body"><span class="confirmation-icon" aria-hidden="true">${warningNoticeIcon}</span><h2 id="lobby-expired-title">Tiempo de espera agotado</h2><p id="lobby-expired-message">El tiempo de espera de 15 minutos de la sala expiró. Volverás a CertiQuiz y podrás crear una nueva sala.</p></div><div class="confirmation-actions"><button class="button" type="button" data-return-to-entry>Volver a CertiQuiz</button></div>`;
+  dialog.innerHTML = `<div class="confirmation-body"><span class="confirmation-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M12 13V9M21 6L19 4M10 2H14M12 21C7.58172 21 4 17.4183 4 13C4 8.58172 7.58172 5 12 5C16.4183 5 20 8.58172 20 13C20 17.4183 16.4183 21 12 21Z"/></svg></span><h2 id="lobby-expired-title">Tiempo de espera agotado</h2><p id="lobby-expired-message">El tiempo de espera de 15 minutos de la sala expiró. Volverás a CertiQuiz y podrás crear una nueva sala.</p></div><div class="confirmation-actions"><button class="button" type="button" data-return-to-entry>Aceptar</button></div>`;
   app.closest('.certiquiz-app').append(dialog);
   dialog.querySelector('[data-return-to-entry]').addEventListener('click', () => {
     dialog.close(); dialog.remove(); session = { host: false, roomCode: null }; draftCode = ''; entry(null);
@@ -446,7 +574,7 @@ async function poll() {
     if (!room || room.code !== code) return;
     if ([401, 403, 404, 410].includes(error.status)) {
       if (room.role === 'host' && room.status === 'lobby' && lobbyWaitSeconds() === 0) { expireLobby(); return; }
-      const role = room.role; draftCode = role === 'player' ? code : ''; session = { host: false, roomCode: null }; entry(role); showWarning('La sala o tu acceso ya no están disponibles. Puedes volver a entrar con el código o crear otra sala.'); return;
+      const role = room.role; draftCode = role === 'player' ? code : ''; session = { host: false, roomCode: null }; entry(role); showWarning('La sala o tu acceso ya no están disponibles. Solicita otro código.'); return;
     }
     setConnection('Reconectando… Tu respuesta solo se registra cuando recibes la confirmación.'); retry = 2500;
   }
@@ -459,9 +587,14 @@ async function load() {
   showError(''); app.setAttribute('aria-busy', 'true');
   try {
     [catalog, session] = await Promise.all([request('/api/catalog'), request('/api/session')]);
-    if (session.roomCode && entryUrl.searchParams.has('room') && (!prefilledCode || prefilledCode === session.roomCode)) {
-      try { const snapshot = await request(`/api/rooms/${encodeURIComponent(session.roomCode)}`); await finishLoading(); showRoom(snapshot); schedulePoll(); return; }
-      catch (error) { if (![401, 403, 404, 410].includes(error.status)) throw error; session.roomCode = null; }
+    const roomCode = session.host && (!prefilledCode || prefilledCode === session.hostRoomCode) ? session.hostRoomCode : session.roomCode;
+    if (roomCode && entryUrl.searchParams.has('room') && (!prefilledCode || prefilledCode === roomCode)) {
+      try { const snapshot = await request(`/api/rooms/${encodeURIComponent(roomCode)}`); await finishLoading(); showRoom(snapshot); schedulePoll(); return; }
+      catch (error) {
+        if (![401, 403, 404, 410].includes(error.status)) throw error;
+        session.roomCode = null;
+        if (session.hostRoomCode === roomCode) session.hostRoomCode = null;
+      }
     }
     await finishLoading(); entry();
   } catch {
@@ -470,6 +603,10 @@ async function load() {
   } finally { app.setAttribute('aria-busy', 'false'); }
 }
 requestAnimationFrame(function frame() { tick(); requestAnimationFrame(frame); });
+matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', () => {
+  const list = document.querySelector('.certiquiz-app .player-list');
+  if (list) layoutRoster(list, Number(list.dataset.rosterCount));
+});
 document.addEventListener('visibilitychange', () => { if (!document.hidden && room) schedulePoll(0); });
 window.addEventListener('hashchange', () => { if (catalog && !busy) entry(routeRole()); });
 load();

@@ -83,7 +83,8 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.ok(script.includes("roomCode.value = roomCode.value.replace(/\\D/g, '').slice(0, 6);"));
   assert.ok(script.includes("nickname.value = nickname.value.replace(/[^\\p{L}\\p{N} ]/gu, '').slice(0, 30);"));
   assert.doesNotMatch(script, /joinFacts|Los 6 números que comparte el anfitrión\./);
-  assert.match(script, /<div class="actions join-actions"><a class="button secondary" href="\$\{siteBase\}certiquiz\/" data-entry-exit>Salir<\/a><button class="button" type="submit">Entrar<\/button><\/div>/);
+  assert.match(script, /<div class="actions join-actions"><a class="button secondary" href="\$\{siteBase\}certiquiz\/" data-entry-exit>Salir<\/a><button class="button" type="submit" disabled>Entrar<\/button><\/div>/);
+  assert.match(script, /joinButton\.disabled = !\(roomCode\.validity\.valid && nickname\.validity\.valid && nickname\.value\.trim\(\)\.length >= 2\);/);
   assert.match(script, /function roomFacts\(questionCount, secondsPerQuestion\) \{ return `<div class="fact-row"><span><strong>\$\{questionCount\}<\/strong> preguntas<\/span><span><strong>\$\{secondsPerQuestion\} s<\/strong> por pregunta<\/span><\/div>`; \}/);
   assert.doesNotMatch(script, /Entrar a la sala|Tu alias aparecerá en la sala y en los resultados\./);
   assert.doesNotMatch(script, /¿Ya tienes el código\? Solo falta tu nombre\./);
@@ -92,7 +93,7 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.match(css, /\.certiquiz-app \.role-icon\s*\{[^}]*flex:\s*0 0 64px;[^}]*width:\s*64px;[^}]*height:\s*64px;/);
   assert.match(css, /\.certiquiz-app \.role-icon svg\s*\{[^}]*width:\s*52px;[^}]*height:\s*52px;/);
   assert.match(css, /\.certiquiz-app \.entry-card\s*\{\s*max-width:\s*calc\(56\.521739% - 13\.565217px\);/);
-  assert.match(css, /\.certiquiz-app \.role-card:is\(:hover, :focus-visible\)\s*\{[^}]*border-color:\s*var\(--accent\);/);
+  assert.match(css, /\.certiquiz-app \.role-card:is\(:hover, :focus-visible\):not\(:disabled\)\s*\{[^}]*border-color:\s*var\(--accent\);/);
   assert.match(css, /\.certiquiz-page \.certiquiz-main\s*\{[^}]*max-width:\s*1280px;/);
   assert.match(css, /\.certiquiz-app \.welcome\s*\{\s*margin:\s*9px 0 35px;/);
   assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb\s*\{[^}]*width:\s*100%;[^}]*padding:\s*18px 24px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*var\(--radius\);[^}]*font-weight:\s*400;/);
@@ -112,15 +113,20 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
 test("CertiQuiz host setup labels the room step and aligns its submit control", () => {
   const script = readFileSync(new URL("../assets/certiquiz.js", import.meta.url), "utf8");
   const css = readFileSync(new URL("../assets/certiquiz.css", import.meta.url), "utf8");
-  assert.match(script, /<li class="certification-item setup-actions"><div><span class="certification-number" aria-hidden="true"><\/span><span class="setup-label">Generar Sala<\/span><p class="hint">Hasta \$\{limits\.maxPlayers\}/);
-  assert.match(script, /<button class="button" type="submit" \$\{catalog\.courses\.length \? '' : 'disabled'\}>Comenzar<\/button>/);
-  assert.match(script, /form\.querySelector\('#course-title'\)\.textContent = ownRoom\.courseTitle;/);
+  assert.match(script, /<form id="create-form" novalidate>/);
+  assert.match(script, /id === 'create-form'[\s\S]*?input\[type="number"\]:invalid[\s\S]*?showWarning\(message\)/);
+  assert.match(script, /El valor debe ser superior o igual a \$\{invalid\.min\}/);
+  assert.match(script, /El valor debe ser inferior o igual a \$\{invalid\.max\}/);
+  assert.match(script, /<span class="setup-label">\$\{resumeCandidate \? 'Sala activa' : 'Generar Sala'\}<\/span>/);
+  assert.match(script, /<button class="button" type="\$\{resumeCandidate \? 'button' : 'submit'\}" \$\{resumeCandidate \? 'data-resume disabled' : catalog\.courses\.length \? '' : 'disabled'\}>Entrar<\/button>/);
+  assert.match(script, /form\.querySelector\('#course-title'\)\.textContent = activeRoom\.courseTitle;/);
   assert.match(script, /picker\.open = false; picker\.inert = true; picker\.setAttribute\('aria-disabled', 'true'\);/);
-  assert.match(script, /questionCount\.value = ownRoom\.questionCount; questionCount\.disabled = true;/);
-  assert.match(script, /seconds\.value = ownRoom\.secondsPerQuestion; seconds\.disabled = true;/);
-  assert.match(script, /const resume = form\.querySelector\('\.setup-actions \.button'\); resume\.type = 'button'; resume\.textContent = 'Retomar';/);
-  assert.doesNotMatch(script, /data-resume/);
-  assert.doesNotMatch(script, /\$\{roomIcon\} Generar Sala/);
+  assert.match(script, /questionCount\.value = activeRoom\.questionCount; questionCount\.disabled = true;/);
+  assert.match(script, /seconds\.value = activeRoom\.secondsPerQuestion; seconds\.disabled = true;/);
+  assert.match(script, /resume\.type = 'button'; resume\.disabled = false;/);
+  assert.match(script, /resume\.onclick = \(\) => action\(\(\) => enterRoom\(activeRoom\), resume\);/);
+  assert.match(script, /if \(resumeCandidate\) void resumeHostRoom\(session\.hostRoomCode, app\.querySelector\('#create-form'\)\);/);
+  assert.doesNotMatch(script, /(?:resume|submit)\.textContent = '(?:Entrar|Comenzar)'/);
   assert.match(css, /\.certiquiz-app \.host-entry \.setup-actions \.button\s*\{\s*width:\s*140px;\s*justify-self:\s*end;/);
   assert.match(css, /\.certiquiz-app \.host-entry \.certification-number, \.certiquiz-app \.host-entry \.certification-item label, \.certiquiz-app \.setup-label\s*\{[^}]*color:\s*var\(--ink\);[^}]*font-family:\s*monospace;[^}]*font-size:\s*17px;[^}]*font-weight:\s*700;[^}]*text-transform:\s*uppercase;/);
   assert.match(css, /\.certiquiz-app \.host-entry \.certification-item input\[type="number"\]\s*\{\s*text-align:\s*center;/);
@@ -183,7 +189,11 @@ test("CertiQuiz renders a branded local invitation QR", () => {
   assert.match(script, /<div class="room-side"><div data-players><\/div><\/div>/);
   assert.match(script, /invitation\.classList\.toggle\('qr-expanded'\)/);
   assert.match(script, /button\.setAttribute\('aria-pressed', String\(expanded\)\)/);
-  assert.match(css, /\.certiquiz-app \.room-side\s*\{[^}]*display:\s*grid;[^}]*min-width:\s*0;/);
+  assert.match(css, /\.certiquiz-app \.room-grid\s*\{[^}]*align-items:\s*stretch;/);
+  assert.match(css, /\.certiquiz-app \.room-side\s*\{[^}]*position:\s*absolute;[^}]*grid-column:\s*2;[^}]*inset:\s*0;[^}]*display:\s*flex;/);
+  assert.match(css, /@media \(max-width: 720px\)[^\r\n]*\.certiquiz-app \.room-side\s*\{ position: relative; grid-column: 1; grid-row: auto; min-height: 320px;/);
+  assert.doesNotMatch(script, /data-simulate-players|roster-simulation|simulatedRoster/);
+  assert.doesNotMatch(script, /avatar-name|positionAvatarLabel|data-expand-side|overlapsWithClearance|labelFits/);
   assert.match(css, /\.certiquiz-app \.invite-overview\s*\{\s*width:\s*100%;/);
   assert.match(css, /\.certiquiz-app \.invite-code\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) 66px;/);
   assert.match(css, /\.certiquiz-app \.invite-code\.qr-expanded\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);[^}]*padding:\s*0;/);
@@ -210,35 +220,110 @@ test("CertiQuiz host lobby keeps facts beside its actions and uses a compact con
   const css = readFileSync(new URL("../assets/certiquiz.css", import.meta.url), "utf8");
   assert.doesNotMatch(script, /500–1000 puntos por acierto/);
   assert.match(script, /const hostFooter = `<div class="lobby-footer">\$\{facts\}<div class="actions game-actions">\$\{lobbyWaitTimer\}/);
-  assert.match(script, /data-lobby-wait-timer aria-label="Tiempo restante para iniciar la sala">\$\{formatCountdown\(lobbyWaitSeconds\(\)\)\}/);
+  assert.match(script, /data-lobby-wait-timer role="timer" aria-live="off" aria-label="Tiempo restante para iniciar la sala">\$\{formatCountdown\(lobbyWaitSeconds\(\)\)\}/);
+  assert.match(script, /room\.role === 'host' \? 'Sala de Espera'/);
+  assert.match(script, /const resumeCandidate = role === 'host' && session\.host && \/\^\\d\{6\}\$\//);
+  assert.match(script, /session\.hostRoomCode : session\.roomCode/);
   assert.match(script, /dialog\.dataset\.lobbyExpired = ''/);
   assert.match(script, /El tiempo de espera de 15 minutos de la sala expiró/);
+  assert.match(script, /className = 'confirmation confirmation-expired'/);
+  assert.match(script, /viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"[^]*M12 13V9M21 6L19 4M10 2H14/);
+  assert.match(script, /data-return-to-entry>Aceptar<\/button>/);
   assert.match(script, /const playerFooter = `<div class="lobby-footer">\$\{facts\}<div class="actions game-actions"><button class="button secondary" type="button" data-exit>Salir/);
   assert.doesNotMatch(script, /class="text-button room-exit"/);
   assert.match(script, /error\.tone = 'warning'/);
   assert.match(script, /room\.status !== 'lobby' && !document\.querySelector\('\[data-confirm\]\[open\]'\)/);
   assert.match(script, /const warningNoticeIcon = '<svg viewBox="-0\.5 0 25 25"/);
   assert.match(script, /const errorNoticeIcon = '<svg viewBox="0 0 64 64"/);
-  assert.match(script, /function showWarning\(message\) \{ showNotice\(message, 'warning'\); \}/);
+  assert.match(script, /function showWarning\(message, retryAfter\) \{ showNotice\(message, 'warning', retryAfter\); \}/);
+  assert.match(script, /data-notice-countdown role="timer" aria-live="off" aria-label="Tiempo de espera restante"/);
+  assert.match(script, /error\.retryAfter = Number\.isInteger\(retryAfter\)/);
   assert.match(script, /showWarning\('La sala o tu acceso ya no están disponibles/);
   assert.match(css, /\.certiquiz-app \.lobby-footer\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*justify-content:\s*space-between;/);
   assert.match(css, /\.certiquiz-app \.lobby-wait-timer\s*\{[^}]*border-radius:\s*8px;[^}]*font-variant-numeric:\s*tabular-nums;/);
-  assert.match(css, /\.certiquiz-app \.team-total\s*\{[^}]*align-self:\s*center;[^}]*justify-self:\s*center;[^}]*line-height:\s*1;/);
-  assert.match(css, /\.certiquiz-app \.avatar-name\s*\{[^}]*left:\s*50%;[^}]*clip-path:\s*inset\(0 max\(0px, calc\(50% - 28px\)\) round 28px\);/);
+  assert.match(css, /\.certiquiz-app \.team-total\s*\{[^}]*left:\s*50%;[^}]*top:\s*50%;[^}]*transition:\s*width \.45s/);
+  assert.match(css, /\.certiquiz-app \.team-count\s*\{[^}]*font-family:\s*monospace;[^}]*font-size:\s*clamp\(26px, calc\(var\(--total-size\) \* \.25\), 50px\);[^}]*font-weight:\s*700;/);
+  assert.match(css, /\.certiquiz-app \.team-count::after\s*\{[^}]*content:\s*'Participantes';[^}]*font-family:\s*monospace;[^}]*font-weight:\s*700;[^}]*text-transform:\s*uppercase;/);
+  assert.match(css, /\.certiquiz-app \.player-list\s*\{[^}]*height:\s*100%;[^}]*overflow:\s*hidden;/);
+  assert.match(css, /\.certiquiz-app \.energy-rays line\s*\{[^}]*stroke:\s*var\(--core-color\);[^}]*certiquiz-ray-wave/);
+  assert.match(css, /@keyframes certiquiz-rays-turn\s*\{\s*to\s*\{\s*transform:\s*rotate\(360deg\);/);
+  assert.match(script, /function layoutRoster\(list, count\)/);
+  assert.match(script, /function rosterRays\(\)/);
+  assert.match(css, /prefers-reduced-motion: reduce/);
+  assert.match(script, /Math\.min\(220, 84 \+ Math\.log2\(absorbed \+ 1\) \* 24/);
+  assert.doesNotMatch(script, /gatherRosterEnergy|player-energy|rosterGridSlot|--ring-radius/);
+  assert.doesNotMatch(css, /avatar-name|data-expand-side|--expand-x|--expand-y/);
   assert.doesNotMatch(css, /player-list li:is\(:nth-child\(5\), :nth-child\(8\)/);
-  assert.match(css, /\.certiquiz-app \.avatar-tone-0, \.certiquiz-app \.avatar-tone-1[^}]*--avatar-color:\s*var\(--red\);/);
+  assert.equal(new Set([...css.matchAll(/\.avatar-tone-\d\s*\{\s*--avatar-color:\s*(#[a-f0-9]+);/g)].map(match => match[1])).size, 8);
   assert.match(css, /\.certiquiz-app \.notice > svg\s*\{[^}]*width:\s*20px;[^}]*height:\s*20px;/);
+  assert.match(css, /\.certiquiz-app \.notice-countdown\s*\{[^}]*font-variant-numeric:\s*tabular-nums;/);
+  assert.doesNotMatch(css, /--expand-[xy]|translate:\s*calc\(var\(--cluster-x\) \+ var\(--expand-x\)\)|data-expand-side/);
+  assert.doesNotMatch(css, /max-height:\s*420px|grid-auto-rows:\s*56px|grid-auto-flow:\s*dense|--ring-radius/);
+  assert.match(css, /\.certiquiz-app \.player-list > li\[data-player-id\]\s*\{[^}]*animation:\s*certiquiz-orbit/);
+  assert.match(css, /\.certiquiz-app \.player-avatar\s*\{[^}]*opacity:\s*0;[^}]*animation:\s*certiquiz-absorb/);
   assert.match(css, /\.certiquiz-app \.warning\s*\{[^}]*color:\s*var\(--warning\);[^}]*background:\s*var\(--warning-bg\);/);
   assert.match(css, /\.certiquiz-app \.confirmation\s*\{[^}]*width: min\(400px, calc\(100vw - 32px\)\);/);
   assert.match(css, /\.certiquiz-app \.confirmation-icon\s*\{[^}]*width: 76px;[^}]*height: 76px;/);
+  assert.match(css, /\.certiquiz-app \.confirmation-expired \.confirmation-actions \.button\s*\{\s*grid-column: 2;/);
   assert.match(css, /\.certiquiz-app \.confirmation-actions \.button\s*\{[^}]*min-height: 52px;/);
+  assert.doesNotMatch(script, /\(tú\)/);
+  assert.match(css, /\.certiquiz-app \.leaderboard \.is-me\s*\{[^}]*background:\s*var\(--chrome-bg\);/);
+  assert.match(script, /send\.disabled = locked \|\| busy; send\.textContent = 'Enviar';/);
+  assert.doesNotMatch(script, /Respuesta registrada ✓/);
+  assert.doesNotMatch(script, /Respuesta registrada\. Espera a que termine el tiempo\./);
+  assert.match(script, /<form id="answer-form" novalidate>/);
+  assert.match(script, /if \(id === 'answer-form' && !form\.querySelector\('input\[name="optionId"\]:checked'\)\) \{\s*showWarning\('Selecciona una de estas opciones\.'\);/);
+  assert.match(css, /\.certiquiz-app \.question\s*\{[^}]*outline:\s*none;/);
+});
+test("CertiQuiz sizes varied arrival orbits inside the canvas around a growing center", () => {
+  const script = readFileSync(new URL("../assets/certiquiz.js", import.meta.url), "utf8");
+  const source = script.match(/function layoutRoster\(list, count\) \{[\s\S]*?\n\}/)?.[0];
+  assert.ok(source, "The roster layout function is present");
+  const layoutRoster = vm.runInNewContext(`(${source})`, { matchMedia: () => ({ matches: false }) });
+  const makeList = (count, width, height) => {
+    const items = Array.from({ length: count }, (_, index) => {
+      const variables = {};
+      return { variables, style: { setProperty: (name, value) => { variables[name] = value; } }, dataset: { playerId: `sim-${(index + 1).toString(16).padStart(4, '0')}` } };
+    });
+    const variables = {};
+    return {
+      items, variables, clientWidth: width, clientHeight: height, parentElement: { clientWidth: width }, dataset: {},
+      style: { setProperty: (name, value) => { variables[name] = value; } },
+      querySelectorAll: selector => selector === "[data-player-id]" ? items : [],
+    };
+  };
+  const crowded = makeList(500, 284, 320);
+  layoutRoster(crowded, 500);
+  const core = Number.parseFloat(crowded.variables["--total-size"]);
+  assert.ok(core > 0 && core <= 284 * .55, "The core leaves room for the surrounding spheres");
+  assert.ok(new Set(crowded.items.map(item => item.variables["--particle-size"])).size > 10, "The cloud has varied sphere sizes");
+  for (const item of crowded.items) {
+    const size = Number.parseFloat(item.variables["--particle-size"]);
+    const radius = Number.parseFloat(item.variables["--orbit-radius"]);
+    assert.ok(size > 0 && radius > core / 2, "Arrivals start around the core");
+    assert.ok(radius + size / 2 <= 284 / 2 - 12 + .01, "Every orbit stays inside the roster canvas");
+  }
+  const small = makeList(2, 426, 400);
+  const large = makeList(22, 426, 400);
+  layoutRoster(small, 2);
+  layoutRoster(large, 22);
+  assert.equal(large.variables["--total-size"], small.variables["--total-size"], "Floating participants must not grow the center");
+  large.items[0].dataset.absorbed = '';
+  layoutRoster(large, 22);
+  assert.ok(Number.parseFloat(large.variables["--total-size"]) > Number.parseFloat(small.variables["--total-size"]), "The center grows after absorption");
+  const arrivedSize = large.variables["--total-size"];
+  layoutRoster(large, 22);
+  assert.equal(large.variables["--total-size"], arrivedSize, "Polling must not count an absorption twice");
+  large.items.shift();
+  layoutRoster(large, 21);
+  assert.equal(large.variables["--total-size"], small.variables["--total-size"], "A departed participant no longer contributes to the center");
 });
 test("CertiQuiz explains rate limits as warnings with the server retry delay", () => {
   const script = readFileSync(new URL("../assets/certiquiz.js", import.meta.url), "utf8");
   assert.match(script, /function retryAfterMessage\(seconds\) \{[\s\S]*?seconds % 3600 === 0[\s\S]*?seconds % 60 === 0[\s\S]*?Vuelve a intentarlo en \$\{amount\}/);
   assert.match(script, /response\.headers\.get\('Retry-After'\)/);
   assert.match(script, /detail\.startsWith\('Demasiados intentos\.'\) \? retryAfterMessage\(retryAfter\)/);
-  assert.match(script, /catch \(error\) \{ \(error\.status === 429 \|\| error\.tone === 'warning' \? showWarning : showError\)\(error\.message\); \}/);
+  assert.match(script, /catch \(error\) \{ \(error\.status === 429 \|\| error\.tone === 'warning' \? showWarning : showError\)\(error\.message, error\.retryAfter\); \}/);
 });
 const tocByPage = new Map([
   ["overview", [{ id: "primeros-pasos", title: "Primeros pasos" }]],

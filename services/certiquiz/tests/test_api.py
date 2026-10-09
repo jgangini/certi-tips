@@ -72,14 +72,15 @@ def join(make, code, nickname):
     return player, response.json()["me"]["id"]
 
 
-def test_room_deadline_is_exposed_only_for_an_empty_host_lobby(clients):
+def test_room_deadline_stays_visible_to_host_after_participants_join(clients):
     make, _ = clients
     host, code = host_room(make)
     snapshot = host.get(f"/api/rooms/{code}").json()
     assert 899_000 <= snapshot["lobbyDeadline"] - snapshot["serverNow"] <= 900_000
-    join(make, code, "Joel Enrique Gangini Garcia")
+    player, _ = join(make, code, "Joel Enrique Gangini Garcia")
     snapshot = host.get(f"/api/rooms/{code}").json()
-    assert "lobbyDeadline" not in snapshot
+    assert 899_000 <= snapshot["lobbyDeadline"] - snapshot["serverNow"] <= 900_000
+    assert "lobbyDeadline" not in player.get(f"/api/rooms/{code}").json()
 
 
 def test_join_accepts_a_valid_27_character_nickname(clients):
@@ -127,7 +128,7 @@ def test_host_ownership_cross_room_auth_and_fake_scores(clients):
     assert alice.get(f"/api/rooms/{second}").status_code == 403
     assert other_host.post(f"/api/rooms/{first}/finish", json={}).status_code == 403
     assert alice.post(f"/api/rooms/{first}/start", json={}).status_code == 401
-    assert unknown.get("/api/session").json() == {"host": False, "roomCode": None}
+    assert unknown.get("/api/session").json() == {"host": False, "roomCode": None, "hostRoomCode": None}
     state = host.post(f"/api/rooms/{first}/start", json={}).json()
     payload = {"questionId": state["question"]["id"], "optionId": "b"}
     assert host.post(f"/api/rooms/{first}/answers", json=payload).status_code == 403
@@ -186,7 +187,7 @@ def test_join_retries_alias_collision_and_logout_cleanup(clients):
     for header in response.headers.get_list("set-cookie"):
         assert "Max-Age=0" in header and "SameSite=none" in header and "Partitioned" in header
     assert player.get(f"/api/rooms/{code}").json()["status"] == "finished"
-    assert host.get("/api/session").json() == {"host": False, "roomCode": None}
+    assert host.get("/api/session").json() == {"host": False, "roomCode": None, "hostRoomCode": None}
 
 
 def test_concurrent_equivalent_nicknames_create_only_one_participant(clients, database_url):
@@ -300,9 +301,10 @@ def test_projected_reads_match_full_state_for_host_and_players_in_every_phase(cl
     bob, bob_id = join(make, code, "Bob")
 
     def compare():
-        for client, role, player_id in ((host, "host", None), (alice, "player", alice_id), (bob, "player", bob_id)):
-            with app.state.store.room(code) as (_, row, now):
-                expected = game.snapshot(code, row["state"], role, player_id, now)
+            for client, role, player_id in ((host, "host", None), (alice, "player", alice_id), (bob, "player", bob_id)):
+                with app.state.store.room(code) as (_, row, now):
+                    lobby_deadline = app.state.store.lobby_deadline(row) if role == "host" and row["state"]["status"] == "lobby" else None
+                    expected = game.snapshot(code, row["state"], role, player_id, now, lobby_deadline)
             response = client.get(f"/api/rooms/{code}")
             assert response.status_code == 200
             actual = response.json()
@@ -504,18 +506,25 @@ def reset_creation_minute(database_url):
 def test_public_creation_returns_host_cookies_without_a_login_or_browser_token(clients):
     make, _ = clients
     visitor = make()
-    assert visitor.get("/api/session").json() == {"host": False, "roomCode": None}
+    assert visitor.get("/api/session").json() == {"host": False, "roomCode": None, "hostRoomCode": None}
     assert visitor.post("/api/host/login", json={}).status_code == 404
     response = visitor.post("/api/rooms", json=CREATE_BODY)
     assert response.status_code == 201 and response.json()["role"] == "host"
-    assert visitor.get("/api/session").json() == {"host": True, "roomCode": response.json()["code"]}
+    assert visitor.get("/api/session").json() == {
+        "host": True, "roomCode": response.json()["code"], "hostRoomCode": response.json()["code"]}
     for name in (HOST_COOKIE, ROOM_COOKIE):
         assert visitor.cookies[name] not in response.text
     # Recover after losing the room cookie while retaining the existing host session.
     visitor.cookies.delete(ROOM_COOKIE)
     assert visitor.get("/api/session").json()["roomCode"] == response.json()["code"]
-    rejected = visitor.post("/api/rooms", json=CREATE_BODY)
-    assert rejected.status_code == 409 and "set-cookie" not in rejected.headers
+    for _ in range(3):
+        rejected = visitor.post("/api/rooms", json=CREATE_BODY)
+        assert rejected.status_code == 409 and "set-cookie" not in rejected.headers
+    _, other_code = host_room(make, ip="203.0.113.99")
+    visitor.post(f"/api/rooms/{other_code}/join", json={"nickname": "Participante"})
+    assert visitor.get("/api/session").json() == {
+        "host": True, "roomCode": other_code, "hostRoomCode": response.json()["code"]}
+    assert visitor.post("/api/rooms", json=CREATE_BODY).status_code == 409
 
 
 def test_failed_creation_rolls_back_both_sessions_and_room(clients, database_url, monkeypatch):
@@ -533,7 +542,7 @@ def test_failed_creation_rolls_back_both_sessions_and_room(clients, database_url
     assert make().post("/api/rooms", json=CREATE_BODY).status_code == 201
 
 
-def test_empty_lobby_expires_without_host_poll_extending_it(clients, database_url):
+def test_waiting_lobby_expires_after_fifteen_minutes_even_with_participants(clients, database_url):
     make, _ = clients
     host, code = host_room(make)
     occupied_host, occupied_code = host_room(make, ip="192.0.2.20")
@@ -543,8 +552,9 @@ def test_empty_lobby_expires_without_host_poll_extending_it(clients, database_ur
         connection.execute("UPDATE cq_rooms SET created_at=now()-interval '16 minutes' WHERE code=ANY(%s)",
                            ([code, occupied_code],))
     assert host.get(f"/api/rooms/{code}").status_code == 404
-    assert host.get("/api/session").json() == {"host": True, "roomCode": None}
-    assert occupied_host.get(f"/api/rooms/{occupied_code}").status_code == 200
+    assert host.get("/api/session").json() == {"host": True, "roomCode": None, "hostRoomCode": None}
+    assert occupied_host.get(f"/api/rooms/{occupied_code}").status_code == 404
+    assert occupied_host.get("/api/session").json() == {"host": True, "roomCode": None, "hostRoomCode": None}
     response = host.post("/api/rooms", json=CREATE_BODY)
     assert response.status_code == 201 and response.json()["code"] != code
 
@@ -560,7 +570,7 @@ def test_expired_participant_session_or_room_denies_access(clients, database_url
                                (token_digest(alice.cookies[ROOM_COOKIE]),))
         else:
             connection.execute("UPDATE cq_rooms SET expires_at=now()-interval '1 second' WHERE code=%s", (code,))
-    assert alice.get("/api/session").json() == {"host": False, "roomCode": None}
+    assert alice.get("/api/session").json() == {"host": False, "roomCode": None, "hostRoomCode": None}
     assert alice.get(f"/api/rooms/{code}").status_code == 403
     assert alice.get(f"/api/rooms/{code}?version=1").status_code == 403
     assert alice.post(f"/api/rooms/{code}/answers", json={"questionId": "q0", "optionId": "b"}).status_code == 403

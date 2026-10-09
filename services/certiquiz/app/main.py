@@ -254,10 +254,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @application.get("/api/session")
     def session(request: Request):
         host, room = identities(request)
-        room_code = room["room_code"] if room else None
-        if not room_code and host:
-            room_code = request.app.state.store.owned_active_room(host["token_hash"])
-        return {"host": host is not None, "roomCode": room_code}
+        host_room_code = request.app.state.store.owned_active_room(host["token_hash"]) if host else None
+        room_code = room["room_code"] if room else host_room_code
+        return {"host": host is not None, "roomCode": room_code, "hostRoomCode": host_room_code}
 
     @application.post("/api/logout")
     def logout(body: StrictBody, request: Request, response: Response):
@@ -269,11 +268,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @application.post("/api/rooms", status_code=201)
     def create_room(body: RoomBody, request: Request, response: Response):
-        throttle(request, "create-ip-minute", 2, 60)
-        throttle(request, "create-ip-hour", 10, 3600)
         host, _ = identities(request)
         host_token = request.cookies.get(cookie_name(request, HOST_COOKIE)) if host else new_token()
         host_hash = token_digest(host_token)
+        store = request.app.state.store
+        if host and store.owned_active_room(host_hash):
+            raise HTTPException(409, "Ya tienes una sala activa. Retómala o finalízala antes de crear otra.")
+        throttle(request, "create-ip-minute", 2, 60)
+        throttle(request, "create-ip-hour", 10, 3600)
         throttle(request, "create-host", 6, 3600, host_hash)
         throttle(request, "create-total", 60, 3600, "global")
         course = request.app.state.catalog.get().get(body.courseId)
@@ -284,7 +286,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         old_hash = token_digest(request.cookies.get(cookie_name(request, ROOM_COOKIE)))
         network = client_network(request.client.host if request.client else "unknown")
         ip_hash = hashlib.sha256(network.encode()).hexdigest()
-        store = request.app.state.store
         code, now, lobby_deadline = store.create_room(host_hash, ip_hash, state, token_digest(token),
                                                       host is None, old_hash)
         cookie(response, request, HOST_COOKIE, host_token)
