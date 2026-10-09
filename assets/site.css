@@ -1148,7 +1148,7 @@ progress::-webkit-progress-value {
   display: flex;
   justify-content: center;
   color: var(--muted);
-  font-size: 0.65rem;
+  font-size: 0.85rem;
   text-align: center;
 }
 .footer-heart,
