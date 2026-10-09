@@ -498,6 +498,7 @@ html[data-theme="dark"] .theme-moon { display: none; }
   font-weight: 500;
   line-height: 1;
 }
+html:not([data-theme="dark"]) .home-hero .oracle-badge { background: var(--white); }
 .home-hero .oracle-badge svg { width: 27px; height: 27px; flex: 0 0 auto; color: var(--accent); }
 .home-hero h1 {
   font-size: clamp(2.4rem, 3.5vw, 3rem);
