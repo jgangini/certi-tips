@@ -116,6 +116,11 @@ function entry(role = selectedRole) {
   const limits = catalog.limits;
   if (!role) {
     app.innerHTML = `${welcome()}<div class="entry-grid role-options"><button class="card join-card role-card" type="button" data-role="host" aria-label="Crear una partida como anfitrión"><span class="role-icon" aria-hidden="true">${hostRoleIcon}</span><span class="role-copy"><strong class="role-title">Anfitrión</strong><span class="muted">Elige un quiz, genera el código e invita a tu equipo.</span></span></button><button class="card join-card role-card" type="button" data-role="player" aria-label="Unirme a una partida como participante"><span class="role-icon" aria-hidden="true">${playerRoleIcon}</span><span class="role-copy"><strong class="role-title">Participante</strong><span class="muted">Ingresa el código de la sala y pon a prueba tus ideas.</span></span></button></div>`;
+    const participantRole = app.querySelector('[data-role="player"]');
+    if (session.host && session.roomCode) {
+      participantRole.disabled = true;
+      participantRole.title = 'Finaliza tu sala activa antes de unirte como participante.';
+    }
     app.querySelectorAll('[data-role]').forEach(button => button.addEventListener('click', () => { if (busy) return; entry(button.dataset.role); app.querySelector('#course, input:not([type="hidden"])')?.focus(); }));
     return;
   }
