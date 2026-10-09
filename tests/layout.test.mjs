@@ -106,6 +106,7 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.doesNotMatch(css, /\.certiquiz-app \.player-entry \.join-actions \[data-entry-exit\]\s*\{\s*margin-right:\s*auto;/);
   assert.match(css, /\.certiquiz-app \.player-entry \.join-actions \.button\s*\{\s*width:\s*140px;/);
   assert.match(siteCss, /\.search-toggle\s*\{[^}]*background:\s*var\(--paper\);/);
+  assert.match(siteCss, /input:not\(\[type="button"\]\):not\(\[type="checkbox"\]\):not\(\[type="color"\]\):not\(\[type="file"\]\):not\(\[type="hidden"\]\):not\(\[type="image"\]\):not\(\[type="radio"\]\):not\(\[type="range"\]\):not\(\[type="reset"\]\):not\(\[type="submit"\]\):enabled:hover,\s*textarea:enabled:hover,\s*\.search-toggle:hover\s*\{\s*border-color:\s*var\(--red\);/);
   assert.match(siteCss, /\.search-toggle kbd\s*\{[^}]*display:\s*inline-flex;[^}]*padding:\s*2px 5px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*4px;[^}]*background:\s*var\(--chrome-bg\);[^}]*font-size:\s*0\.62rem;/);
 });
 test("CertiQuiz host setup labels the room step and aligns its submit control", () => {
@@ -123,6 +124,7 @@ test("CertiQuiz host setup labels the room step and aligns its submit control", 
   assert.match(css, /\.certiquiz-app \.host-entry \.setup-actions \.button\s*\{\s*width:\s*140px;\s*justify-self:\s*end;/);
   assert.match(css, /\.certiquiz-app \.host-entry \.certification-number, \.certiquiz-app \.host-entry \.certification-item label, \.certiquiz-app \.setup-label\s*\{[^}]*color:\s*var\(--ink\);[^}]*font-family:\s*monospace;[^}]*font-size:\s*17px;[^}]*font-weight:\s*700;[^}]*text-transform:\s*uppercase;/);
   assert.match(css, /\.certiquiz-app \.host-entry \.certification-item input\[type="number"\]\s*\{\s*text-align:\s*center;/);
+  assert.match(css, /\.certiquiz-app \.course-picker summary:hover\s*\{\s*border-color:\s*var\(--red\);/);
   assert.match(css, /\.certiquiz-app \.course-picker\[inert\]\s*\{\s*opacity:\s*\.7;/);
   assert.match(css, /@media \(max-width: 720px\) \{ \.certiquiz-app \.host-entry \.setup-actions \.button \{ width: 100%; \} \}/);
 });

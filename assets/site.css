@@ -91,6 +91,11 @@ a {
 button {
   cursor: pointer;
 }
+input:not([type="button"]):not([type="checkbox"]):not([type="color"]):not([type="file"]):not([type="hidden"]):not([type="image"]):not([type="radio"]):not([type="range"]):not([type="reset"]):not([type="submit"]):enabled:hover,
+textarea:enabled:hover,
+.search-toggle:hover {
+  border-color: var(--red);
+}
 img {
   max-width: 100%;
   height: auto;
@@ -369,7 +374,6 @@ html[data-theme="dark"] .theme-moon { display: none; }
   font-size: 0.8rem;
   text-align: left;
 }
-.search-toggle:hover { border-color: var(--red); }
 .search-toggle kbd {
   margin-left: auto;
   display: inline-flex;

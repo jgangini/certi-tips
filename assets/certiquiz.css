@@ -51,6 +51,7 @@ html[data-theme="dark"] .certiquiz-app { --success: #9bd8b8; --success-bg: #1b35
 .certiquiz-app .course-picker summary { display: flex; justify-content: space-between; gap: 12px; min-height: 48px; padding: 10px 13px; border: 1px solid var(--line); border-radius: 8px; white-space: normal; font: inherit; line-height: 1.4; }
 .certiquiz-app .course-picker summary::after { flex: 0 0 6px; margin-left: 0; }
 .certiquiz-app .course-picker summary:is(:hover, :focus), .certiquiz-app .course-picker[open] > summary { background: var(--paper); color: var(--ink); }
+.certiquiz-app .course-picker summary:hover { border-color: var(--red); }
 .certiquiz-app .course-picker summary:focus:not(:focus-visible) { outline: none; }
 .certiquiz-app .course-picker[inert] { opacity: .7; }
 .certiquiz-app .course-picker[inert] summary { cursor: not-allowed; }
