@@ -160,13 +160,11 @@ test("CertiQuiz shares site navigation and theme without a course sidebar", () =
   assert.doesNotMatch(html, /id="course-navigation"|class="menu-toggle"|src="[^\"]*\/quiz\.js"/);
 });
 
-test("footer text matches the configuration hint size", () => {
+test("footer text uses the compact site size", () => {
   const siteCss = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
-  const hint = siteCss.match(/\.certification-item p\s*\{([^}]*)\}/)[1];
   const footer = siteCss.match(/\.site-footer\s*\{([^}]*)\}/)[1];
 
-  assert.match(hint, /font-size:\s*0\.85rem;/);
-  assert.match(footer, /font-size:\s*0\.85rem;/);
+  assert.match(footer, /font-size:\s*0\.78rem;/);
 });
 test("CertiQuiz renders a branded local invitation QR", () => {
   const script = readFileSync(new URL("../assets/certiquiz.js", import.meta.url), "utf8");
