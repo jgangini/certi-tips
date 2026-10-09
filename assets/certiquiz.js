@@ -20,6 +20,7 @@ let busy = false;
 let pollTimer;
 let clock = { server: 0, received: 0 };
 let remaining = 0;
+let expiredLobbyCode = '';
 const entryUrl = new URL(location.href);
 const prefilledCode = entryUrl.searchParams.get('room') || '';
 let draftCode = /^\d{6}$/.test(prefilledCode) ? prefilledCode : '';
@@ -70,7 +71,7 @@ async function action(callback, button) {
   const disabled = button?.disabled;
   if (button) button.disabled = true;
   try { await callback(); }
-  catch (error) { (error.status === 429 ? showWarning : showError)(error.message); }
+  catch (error) { (error.status === 429 || error.tone === 'warning' ? showWarning : showError)(error.message); }
   finally {
     busy = false; app.setAttribute('aria-busy', 'false');
     if (button?.isConnected) button.disabled = disabled;
@@ -104,10 +105,12 @@ function invitationQr(url) {
   return `<figure class="invite-qr"><button class="invite-qr-toggle" type="button" data-invite-qr aria-pressed="false" aria-label="Ampliar código QR de invitación"><span class="invite-qr-code">${qr.createSvgTag({ cellSize: 4, margin: 10, scalable: true, title: 'Código QR de invitación', alt: 'Escanea para abrir la sala' })}</span></button><span class="invite-qr-logo" aria-hidden="true"><svg viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="currentColor"/><path d="M13 13h12a8 8 0 0 1 8 8v14H21a8 8 0 0 1-8-8Z" fill="none" stroke="#fff" stroke-width="3"/><path d="m19 24 4 4 9-10" fill="none" stroke="#fff" stroke-width="3"/></svg></span></figure>`;
 }
 function roomFacts(questionCount, secondsPerQuestion) { return `<div class="fact-row"><span><strong>${questionCount}</strong> preguntas</span><span><strong>${secondsPerQuestion} s</strong> por pregunta</span></div>`; }
+function lobbyWaitSeconds() { return room?.lobbyDeadline ? Math.ceil(Math.max(0, room.lobbyDeadline - clock.server - (performance.now() - clock.received)) / 1000) : null; }
+function formatCountdown(seconds) { return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`; }
 
 function entry(role = selectedRole) {
   document.querySelector('[data-confirm]')?.close();
-  clearTimeout(pollTimer); stage = ''; room = null; rankingOrder = [];
+  clearTimeout(pollTimer); stage = ''; room = null; rankingOrder = []; expiredLobbyCode = '';
   selectedRole = role;
   if (role !== 'player' || !draftCode) history.replaceState(null, '', `${siteBase}certiquiz/${role === 'host' ? '#host' : role === 'player' ? '#participant' : ''}`);
   const limits = catalog.limits;
@@ -130,6 +133,7 @@ function entry(role = selectedRole) {
     try { await enterRoom(await request('/api/rooms', { courseId: data.get('courseId'), questionCount: Number(data.get('questionCount')), secondsPerQuestion: Number(data.get('secondsPerQuestion')) })); }
     catch (error) {
       if (error.status === 409) {
+        error.tone = 'warning';
         try {
           const current = await request('/api/session');
           if (current.host && /^\d{6}$/.test(current.roomCode)) {
@@ -182,8 +186,10 @@ function lobby() {
   const invite = room.role === 'host' ? joinUrl() : '';
   const hostInvitation = `<div class="invite-overview"><div class="invite-code"><strong class="pin">${escape(room.code)}</strong>${invitationQr(invite)}</div><label for="join-address">Enlace de invitación</label><div class="invite-link"><input id="join-address" type="url" value="${escape(invite)}" readonly><button type="button" data-copy aria-label="Copiar enlace de invitación" title="Copiar enlace de invitación"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="4" y="8" width="12" height="13" rx="2"/><path d="M9 5V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2"/></svg></button></div></div>`;
   const facts = roomFacts(room.questionCount, room.secondsPerQuestion);
-  const hostFooter = `<div class="lobby-footer">${facts}<div class="actions game-actions"><button class="button secondary" type="button" data-exit>Finalizar</button><button class="button" type="button" data-start>Comenzar</button></div></div>`;
-  return `${roomHeader()}<div class="room-grid"><section class="card join-card">${room.role === 'player' ? '<button class="text-button room-exit" type="button" data-exit>Salir de la sala</button>' : ''}<span class="eyebrow">${room.role === 'host' ? 'INVITA A PARTICIPANTES' : 'YA ESTÁS DENTRO'}</span><h2 id="stage-title" tabindex="-1">${room.role === 'host' ? 'Comparte este código' : `¡Todo listo, ${escape(room.me?.nickname)}!`}</h2>${room.role === 'host' ? hostInvitation : '<p class="muted">El anfitrión iniciará la primera pregunta. Mantén esta página abierta para responder.</p>'}${room.role === 'host' ? hostFooter : facts}</section><div class="room-side"><div data-players></div></div></div>`;
+  const lobbyWaitTimer = room.role === 'host' && room.lobbyDeadline ? `<output class="lobby-wait-timer" data-lobby-wait-timer aria-label="Tiempo restante para iniciar la sala">${formatCountdown(lobbyWaitSeconds())}</output>` : '';
+  const hostFooter = `<div class="lobby-footer">${facts}<div class="actions game-actions">${lobbyWaitTimer}<button class="button secondary" type="button" data-exit>Finalizar</button><button class="button" type="button" data-start>Comenzar</button></div></div>`;
+  const playerFooter = `<div class="lobby-footer">${facts}<div class="actions game-actions"><button class="button secondary" type="button" data-exit>Salir</button></div></div>`;
+  return `${roomHeader()}<div class="room-grid"><section class="card join-card"><span class="eyebrow">${room.role === 'host' ? 'INVITA A PARTICIPANTES' : 'YA ESTÁS DENTRO'}</span><h2 id="stage-title" tabindex="-1">${room.role === 'host' ? 'Comparte este código' : `¡Todo listo, ${escape(room.me?.nickname)}!`}</h2>${room.role === 'host' ? hostInvitation : '<p class="muted">El anfitrión iniciará la primera pregunta. Mantén esta página abierta para responder.</p>'}${room.role === 'host' ? hostFooter : playerFooter}</section><div class="room-side"><div data-players></div></div></div>`;
 }
 function questionView() {
   const question = room.question;
@@ -246,7 +252,7 @@ function finished() {
 
 function showRoom(snapshot) {
   if (room?.code === snapshot.code && snapshot.version < room.version) return;
-  const nextStage = `${snapshot.code}:${snapshot.status}:${snapshot.questionIndex}`;
+  const nextStage = `${snapshot.code}:${snapshot.status}:${snapshot.questionIndex}:${snapshot.lobbyDeadline ?? ''}`;
   const changed = stage !== nextStage;
   const answered = snapshot.me?.answer && snapshot.me.answer !== room?.me?.answer;
   room = snapshot; clock = { server: snapshot.clockServer || snapshot.serverNow, received: snapshot.clockReceived || performance.now() };
@@ -323,6 +329,13 @@ function updatePlayers(container) {
 
 function tick() {
   if (!room) return;
+  const lobbyTimer = document.querySelector('[data-lobby-wait-timer]');
+  if (lobbyTimer && room.lobbyDeadline) {
+    const seconds = lobbyWaitSeconds();
+    const label = formatCountdown(seconds);
+    if (lobbyTimer.textContent !== label) lobbyTimer.textContent = label;
+    if (seconds <= 0) expireLobby();
+  }
   const timer = document.querySelector('[data-timer]');
   if (!timer) return;
   const seconds = room.status === 'question' && room.deadline ? Math.max(0, (room.deadline - clock.server - (performance.now() - clock.received)) / 1000) : 0;
@@ -331,6 +344,22 @@ function tick() {
   timer.classList.toggle('urgent', room.status === 'question' && remaining <= 5);
   document.querySelector('[data-timer-meter]').value = seconds;
   if (remaining <= 0) { document.querySelectorAll('#answer-form input, [data-send]').forEach(input => { input.disabled = true; }); }
+}
+
+function expireLobby() {
+  if (!room || expiredLobbyCode === room.code) return;
+  expiredLobbyCode = room.code;
+  clearTimeout(pollTimer);
+  const dialog = document.createElement('dialog'); dialog.className = 'confirmation'; dialog.dataset.lobbyExpired = '';
+  dialog.setAttribute('aria-labelledby', 'lobby-expired-title'); dialog.setAttribute('aria-describedby', 'lobby-expired-message');
+  dialog.innerHTML = `<div class="confirmation-body"><span class="confirmation-icon" aria-hidden="true">${warningNoticeIcon}</span><h2 id="lobby-expired-title">Tiempo de espera agotado</h2><p id="lobby-expired-message">El tiempo de espera de 15 minutos de la sala expiró. Volverás a CertiQuiz y podrás crear una nueva sala.</p></div><div class="confirmation-actions"><button class="button" type="button" data-return-to-entry>Volver a CertiQuiz</button></div>`;
+  app.closest('.certiquiz-app').append(dialog);
+  dialog.querySelector('[data-return-to-entry]').addEventListener('click', () => {
+    dialog.close(); dialog.remove(); session = { host: false, roomCode: null }; draftCode = ''; entry(null);
+    app.querySelector('[data-role]')?.focus({ preventScroll: true });
+  });
+  dialog.addEventListener('cancel', event => event.preventDefault());
+  dialog.showModal();
 }
 
 function bindRoom() {
@@ -411,6 +440,7 @@ async function poll() {
   } catch (error) {
     if (!room || room.code !== code) return;
     if ([401, 403, 404, 410].includes(error.status)) {
+      if (room.role === 'host' && room.status === 'lobby' && lobbyWaitSeconds() === 0) { expireLobby(); return; }
       const role = room.role; draftCode = role === 'player' ? code : ''; session = { host: false, roomCode: null }; entry(role); showWarning('La sala o tu acceso ya no están disponibles. Puedes volver a entrar con el código o crear otra sala.'); return;
     }
     setConnection('Reconectando… Tu respuesta solo se registra cuando recibes la confirmación.'); retry = 2500;

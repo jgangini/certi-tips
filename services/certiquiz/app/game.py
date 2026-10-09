@@ -142,7 +142,8 @@ def answer_question(room: dict, player_id: str, question_id: str, option_id: str
         reveal(room)
 
 
-def snapshot(code: str, room: dict, role: str, player_id: str | None, now: int) -> dict:
+def snapshot(code: str, room: dict, role: str, player_id: str | None, now: int,
+             lobby_deadline: int | None = None) -> dict:
     advance_clock(room, now)
     question = None
     shown = room["status"] == "reveal"
@@ -168,7 +169,7 @@ def snapshot(code: str, room: dict, role: str, player_id: str | None, now: int) 
         answer = room["answers"].get(player_id)
         correct = answer == question["correctOption"] if shown and answer is not None else None
         me = {"id": player_id, "nickname": player["nickname"], "answer": answer, "correct": correct, "score": player["score"]}
-    return {"code": code, "role": role, "status": room["status"], "courseTitle": room["courseTitle"],
+    result = {"code": code, "role": role, "status": room["status"], "courseTitle": room["courseTitle"],
             "questionCount": room["questionCount"] if "questionCount" in room else len(room["questions"]),
             "secondsPerQuestion": room["secondsPerQuestion"],
             "questionIndex": room["questionIndex"], "serverNow": now, "deadline": room["deadline"],
@@ -177,3 +178,6 @@ def snapshot(code: str, room: dict, role: str, player_id: str | None, now: int) 
                        if room["status"] == "lobby" else [],
             "answeredCount": room.get("answeredCount", len(room["answers"])), "question": question, "me": me,
             "leaderboard": leaderboard, "version": room["version"]}
+    if role == "host" and room["status"] == "lobby" and not room["players"] and lobby_deadline is not None:
+        result["lobbyDeadline"] = lobby_deadline
+    return result

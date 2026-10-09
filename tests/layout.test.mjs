@@ -209,13 +209,24 @@ test("CertiQuiz host lobby keeps facts beside its actions and uses a compact con
   const script = readFileSync(new URL("../assets/certiquiz.js", import.meta.url), "utf8");
   const css = readFileSync(new URL("../assets/certiquiz.css", import.meta.url), "utf8");
   assert.doesNotMatch(script, /500–1000 puntos por acierto/);
-  assert.match(script, /const hostFooter = `<div class="lobby-footer">\$\{facts\}<div class="actions game-actions">/);
+  assert.match(script, /const hostFooter = `<div class="lobby-footer">\$\{facts\}<div class="actions game-actions">\$\{lobbyWaitTimer\}/);
+  assert.match(script, /data-lobby-wait-timer aria-label="Tiempo restante para iniciar la sala">\$\{formatCountdown\(lobbyWaitSeconds\(\)\)\}/);
+  assert.match(script, /dialog\.dataset\.lobbyExpired = ''/);
+  assert.match(script, /El tiempo de espera de 15 minutos de la sala expiró/);
+  assert.match(script, /const playerFooter = `<div class="lobby-footer">\$\{facts\}<div class="actions game-actions"><button class="button secondary" type="button" data-exit>Salir/);
+  assert.doesNotMatch(script, /class="text-button room-exit"/);
+  assert.match(script, /error\.tone = 'warning'/);
   assert.match(script, /room\.status !== 'lobby' && !document\.querySelector\('\[data-confirm\]\[open\]'\)/);
   assert.match(script, /const warningNoticeIcon = '<svg viewBox="-0\.5 0 25 25"/);
   assert.match(script, /const errorNoticeIcon = '<svg viewBox="0 0 64 64"/);
   assert.match(script, /function showWarning\(message\) \{ showNotice\(message, 'warning'\); \}/);
   assert.match(script, /showWarning\('La sala o tu acceso ya no están disponibles/);
   assert.match(css, /\.certiquiz-app \.lobby-footer\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*justify-content:\s*space-between;/);
+  assert.match(css, /\.certiquiz-app \.lobby-wait-timer\s*\{[^}]*border-radius:\s*8px;[^}]*font-variant-numeric:\s*tabular-nums;/);
+  assert.match(css, /\.certiquiz-app \.team-total\s*\{[^}]*align-self:\s*center;[^}]*justify-self:\s*center;[^}]*line-height:\s*1;/);
+  assert.match(css, /\.certiquiz-app \.avatar-name\s*\{[^}]*left:\s*50%;[^}]*clip-path:\s*inset\(0 max\(0px, calc\(50% - 28px\)\) round 28px\);/);
+  assert.doesNotMatch(css, /player-list li:is\(:nth-child\(5\), :nth-child\(8\)/);
+  assert.match(css, /\.certiquiz-app \.avatar-tone-0, \.certiquiz-app \.avatar-tone-1[^}]*--avatar-color:\s*var\(--red\);/);
   assert.match(css, /\.certiquiz-app \.notice > svg\s*\{[^}]*width:\s*20px;[^}]*height:\s*20px;/);
   assert.match(css, /\.certiquiz-app \.warning\s*\{[^}]*color:\s*var\(--warning\);[^}]*background:\s*var\(--warning-bg\);/);
   assert.match(css, /\.certiquiz-app \.confirmation\s*\{[^}]*width: min\(400px, calc\(100vw - 32px\)\);/);
@@ -227,7 +238,7 @@ test("CertiQuiz explains rate limits as warnings with the server retry delay", (
   assert.match(script, /function retryAfterMessage\(seconds\) \{[\s\S]*?seconds % 3600 === 0[\s\S]*?seconds % 60 === 0[\s\S]*?Vuelve a intentarlo en \$\{amount\}/);
   assert.match(script, /response\.headers\.get\('Retry-After'\)/);
   assert.match(script, /detail\.startsWith\('Demasiados intentos\.'\) \? retryAfterMessage\(retryAfter\)/);
-  assert.match(script, /catch \(error\) \{ \(error\.status === 429 \? showWarning : showError\)\(error\.message\); \}/);
+  assert.match(script, /catch \(error\) \{ \(error\.status === 429 \|\| error\.tone === 'warning' \? showWarning : showError\)\(error\.message\); \}/);
 });
 const tocByPage = new Map([
   ["overview", [{ id: "primeros-pasos", title: "Primeros pasos" }]],

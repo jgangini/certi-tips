@@ -72,6 +72,23 @@ def join(make, code, nickname):
     return player, response.json()["me"]["id"]
 
 
+def test_room_deadline_is_exposed_only_for_an_empty_host_lobby(clients):
+    make, _ = clients
+    host, code = host_room(make)
+    snapshot = host.get(f"/api/rooms/{code}").json()
+    assert 899_000 <= snapshot["lobbyDeadline"] - snapshot["serverNow"] <= 900_000
+    join(make, code, "Joel Enrique Gangini Garcia")
+    snapshot = host.get(f"/api/rooms/{code}").json()
+    assert "lobbyDeadline" not in snapshot
+
+
+def test_join_accepts_a_valid_27_character_nickname(clients):
+    make, _ = clients
+    _, code = host_room(make)
+    player, _ = join(make, code, "Joel Enrique Gangini Garcia")
+    assert player.get(f"/api/rooms/{code}").json()["me"]["nickname"] == "Joel Enrique Gangini Garcia"
+
+
 def test_complete_round_hides_answers_and_keeps_tied_ranks(clients, monkeypatch):
     make, _ = clients
     host, code = host_room(make, 1)

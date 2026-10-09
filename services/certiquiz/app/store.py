@@ -17,7 +17,7 @@ EMPTY_LOBBY_EXPIRED = "(cq_rooms.state->>'status'='lobby' AND cq_rooms.state->'p
 LIVE_ROOM = f"cq_rooms.expires_at>now() AND NOT {EMPTY_LOBBY_EXPIRED}"
 ROOM_VIEW = f"""
 WITH source AS MATERIALIZED (
-    SELECT owner_hash,expires_at,state||'{{}}'::jsonb AS progress,
+    SELECT owner_hash,created_at,expires_at,state||'{{}}'::jsonb AS progress,
            (extract(epoch FROM clock_timestamp())*1000)::bigint AS now_ms,%s::text AS viewer_id
     FROM cq_rooms WHERE code=%s AND {LIVE_ROOM}
 ), room AS MATERIALIZED (
@@ -28,7 +28,7 @@ WITH source AS MATERIALIZED (
                                            jsonb_build_object('viewer',viewer_id)) END AS viewer_players
     FROM source
 )
-SELECT owner_hash,expires_at,now_ms,unchanged,
+SELECT owner_hash,created_at,expires_at,now_ms,unchanged,
        CASE WHEN unchanged THEN jsonb_build_object('players',viewer_players)
        ELSE (progress-ARRAY['questions','players','answers','answerPoints']) || jsonb_build_object(
            'currentQuestion',CASE WHEN progress->>'status' IN ('question','reveal')
@@ -75,6 +75,10 @@ class Store:
         connection.execute(f"UPDATE cq_rooms SET expires_at=LEAST(expires_at,created_at+interval '15 minutes') "
                            f"WHERE expires_at>now() AND {EMPTY_LOBBY_EXPIRED}")
         connection.execute("DELETE FROM cq_sessions WHERE room_code IN (SELECT code FROM cq_rooms WHERE expires_at<=now())")
+
+    @staticmethod
+    def lobby_deadline(row) -> int:
+        return int((row["created_at"] + timedelta(minutes=15)).timestamp() * 1000)
 
     def cleanup(self) -> None:
         if time.monotonic() - self._last_cleanup < 60 or not self._cleanup_lock.acquire(blocking=False):
@@ -157,7 +161,7 @@ class Store:
             connection.execute("DELETE FROM cq_sessions WHERE token_hash=ANY(%s)", (token_hashes,))
 
     def create_room(self, owner_hash: str, owner_ip_hash: str, room: dict, presenter_hash: str,
-                    new_host: bool, previous_room_hash: str | None) -> tuple[str, int]:
+                    new_host: bool, previous_room_hash: str | None) -> tuple[str, int, int]:
         self.cleanup()
         with self.connection() as connection:
             connection.execute("SELECT pg_advisory_xact_lock(61473203)")
@@ -183,7 +187,7 @@ class Store:
                     break
             row = connection.execute(
                 "INSERT INTO cq_rooms (code,owner_hash,owner_ip_hash,state,expires_at) VALUES (%s,%s,%s,%s,now()+interval '8 hours') "
-                "RETURNING expires_at, (extract(epoch FROM clock_timestamp())*1000)::bigint AS now_ms",
+                "RETURNING created_at, expires_at, (extract(epoch FROM clock_timestamp())*1000)::bigint AS now_ms",
                 (code, owner_hash, owner_ip_hash, Jsonb(room))).fetchone()
             if new_host:
                 self.add_session(connection, owner_hash, "host", expires_at=row["expires_at"])
@@ -192,7 +196,7 @@ class Store:
             self.add_session(connection, presenter_hash, "presenter", code, expires_at=row["expires_at"])
             if previous_room_hash:
                 connection.execute("DELETE FROM cq_sessions WHERE token_hash=%s", (previous_room_hash,))
-            return code, row["now_ms"]
+            return code, row["now_ms"], self.lobby_deadline(row)
 
     @contextmanager
     def room(self, code: str, read_only: bool = False, player_id: str | None = None, version: int | None = None):
@@ -208,7 +212,7 @@ class Store:
                     return
                 # A deadline needs a transition: re-read state AND clock after acquiring the lock below.
             row = connection.execute(
-                f"SELECT owner_hash,state,expires_at FROM cq_rooms WHERE code=%s AND {LIVE_ROOM} FOR UPDATE",
+                f"SELECT owner_hash,state,created_at,expires_at FROM cq_rooms WHERE code=%s AND {LIVE_ROOM} FOR UPDATE",
                 (code,)).fetchone()
             if row is None:
                 raise GameError("No encontramos una sala activa con ese código.", 404)
