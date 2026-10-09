@@ -121,6 +121,7 @@ test("CertiQuiz host setup labels the room step and aligns its submit control", 
   assert.doesNotMatch(script, /data-resume/);
   assert.doesNotMatch(script, /\$\{roomIcon\} Generar Sala/);
   assert.match(css, /\.certiquiz-app \.host-entry \.setup-actions \.button\s*\{\s*width:\s*140px;\s*justify-self:\s*end;/);
+  assert.match(css, /\.certiquiz-app \.host-entry \.certification-number, \.certiquiz-app \.host-entry \.certification-item label, \.certiquiz-app \.setup-label\s*\{[^}]*color:\s*var\(--ink\);[^}]*font-family:\s*monospace;[^}]*font-size:\s*17px;[^}]*font-weight:\s*700;[^}]*text-transform:\s*uppercase;/);
   assert.match(css, /\.certiquiz-app \.host-entry \.certification-item input\[type="number"\]\s*\{\s*text-align:\s*center;/);
   assert.match(css, /\.certiquiz-app \.course-picker\[inert\]\s*\{\s*opacity:\s*\.7;/);
   assert.match(css, /@media \(max-width: 720px\) \{ \.certiquiz-app \.host-entry \.setup-actions \.button \{ width: 100%; \} \}/);

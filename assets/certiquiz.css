@@ -38,7 +38,8 @@ html[data-theme="dark"] .certiquiz-app { --success: #9bd8b8; --success-bg: #1b35
 .certiquiz-app .host-entry h2 { font-size: clamp(1.8rem, 3vw, 2.4rem); margin: 9px 0 10px; }
 .certiquiz-app .host-entry > p { margin-bottom: 28px; }
 .certiquiz-app .host-entry .certification-item { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-.certiquiz-app .host-entry .certification-item label, .certiquiz-app .setup-label { display: block; font-size: 17px; font-weight: 650; margin-bottom: 5px; }
+.certiquiz-app .host-entry .certification-number, .certiquiz-app .host-entry .certification-item label, .certiquiz-app .setup-label { color: var(--ink); font-family: monospace; font-size: 17px; font-weight: 700; line-height: 1.2; text-transform: uppercase; }
+.certiquiz-app .host-entry .certification-item label, .certiquiz-app .setup-label { display: block; margin-bottom: 5px; }
 .certiquiz-app .host-entry .certification-item p { margin: 0; }
 .certiquiz-app .host-entry .certification-item input { max-width: 140px; justify-self: end; }
 .certiquiz-app .host-entry .certification-item input[type="number"] { text-align: center; }
