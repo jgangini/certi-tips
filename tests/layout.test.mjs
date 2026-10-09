@@ -553,6 +553,7 @@ test("home shows each FY27 certification once and links all three available guid
   assert.match(html, /class="hero-flow is-unavailable"/);
   const siteCss = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
   assert.match(siteCss, /\.home-hero\s*\{[^}]*align-items:\s*stretch;/);
+  assert.match(siteCss, /\.home-hero\s*\{[^}]*padding:\s*35px 0 48px;/);
   assert.match(siteCss, /\.home-hero \.hero-copy\s*\{[^}]*align-self:\s*stretch;[^}]*justify-content:\s*center;/);
   const oracleBadge = siteCss.match(/\.home-hero \.oracle-badge\s*\{([^}]*)\}/)[1];
   assert.match(oracleBadge, /display:\s*inline-flex;[\s\S]*border:\s*1px solid var\(--line\);[\s\S]*background:\s*var\(--chrome-bg\);[\s\S]*color:\s*var\(--ink\);/);
