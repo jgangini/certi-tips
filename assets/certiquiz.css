@@ -90,6 +90,7 @@ html[data-theme="dark"] .certiquiz-app { --success: #9bd8b8; --success-bg: #1b35
 .certiquiz-app .player-entry input:focus-visible { outline: none; box-shadow: none; }
 .certiquiz-app .player-entry #join-form { padding-top: 6px; }
 .certiquiz-app .player-entry .join-actions { justify-content: flex-end; border-top: 1px solid var(--line); margin-top: 24px; padding-top: 20px; }
+.certiquiz-app .player-entry .join-actions [data-entry-exit] { margin-right: auto; }
 .certiquiz-app .player-entry .join-actions .button { width: 140px; }
 .certiquiz-app .notice { display: flex; align-items: flex-start; gap: 10px; border: 1px solid var(--line); padding: 14px 18px; border-radius: 9px; background: var(--surface); font-size: 14px; line-height: 1.45; margin-bottom: 18px; }
 .certiquiz-app .notice > svg { flex: 0 0 auto; width: 20px; height: 20px; margin-top: 1px; }

@@ -194,12 +194,14 @@ async (page) => {
     assert(await host.getByRole('heading', { name: 'Únete a la Sala', exact: true }).count() === 1 && await host.locator('.player-entry > .eyebrow').textContent() === 'INGRESO DE PARTICIPANTE', 'Participant form does not use the room heading and entry eyebrow');
     assert(await host.locator('#join-form .hint, #join-form .fact-row').count() === 0, 'Participant form exposes room details before joining');
     const participantAction = await host.locator('#join-form .join-actions').evaluate(node => {
-      const enter = node.querySelector('.button');
+      const exit = node.querySelector('[data-entry-exit]');
+      const enter = node.querySelector('[type="submit"]');
       const action = node.getBoundingClientRect();
+      const exitBox = exit.getBoundingClientRect();
       const enterBox = enter.getBoundingClientRect();
-      return { rightAligned: Math.abs(action.right - enterBox.right) < 1, border: getComputedStyle(node).borderTopWidth, buttonWidth: enterBox.width, wide: enter.classList.contains('wide') };
+      return { exitHref: exit.href, leftAligned: Math.abs(action.left - exitBox.left) < 1, rightAligned: Math.abs(action.right - enterBox.right) < 1, border: getComputedStyle(node).borderTopWidth, buttonWidth: enterBox.width, wide: enter.classList.contains('wide') };
     });
-    assert(participantAction.rightAligned && participantAction.border === '1px' && participantAction.buttonWidth === 140 && !participantAction.wide, 'Participant action does not align with the compact lobby footer');
+    assert(participantAction.exitHref === appUrl && participantAction.leftAligned && participantAction.rightAligned && participantAction.border === '1px' && participantAction.buttonWidth === 140 && !participantAction.wide, 'Participant entry actions do not return to CertiQuiz or align with the lobby footer');
     const participantCode = host.getByLabel('Código de la sala');
     const participantCodeStyle = await participantCode.evaluate(node => {
       const style = getComputedStyle(node);

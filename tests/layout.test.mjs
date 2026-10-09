@@ -83,7 +83,7 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.ok(script.includes("roomCode.value = roomCode.value.replace(/\\D/g, '').slice(0, 6);"));
   assert.ok(script.includes("nickname.value = nickname.value.replace(/[^\\p{L}\\p{N} ]/gu, '').slice(0, 30);"));
   assert.doesNotMatch(script, /joinFacts|Los 6 números que comparte el anfitrión\./);
-  assert.match(script, /<div class="actions join-actions"><button class="button" type="submit">Entrar<\/button><\/div>/);
+  assert.match(script, /<div class="actions join-actions"><a class="button secondary" href="\$\{siteBase\}certiquiz\/" data-entry-exit>Salir<\/a><button class="button" type="submit">Entrar<\/button><\/div>/);
   assert.match(script, /function roomFacts\(questionCount, secondsPerQuestion\) \{ return `<div class="fact-row"><span><strong>\$\{questionCount\}<\/strong> preguntas<\/span><span><strong>\$\{secondsPerQuestion\} s<\/strong> por pregunta<\/span><\/div>`; \}/);
   assert.doesNotMatch(script, /Entrar a la sala|Tu alias aparecerá en la sala y en los resultados\./);
   assert.doesNotMatch(script, /¿Ya tienes el código\? Solo falta tu nombre\./);
@@ -102,6 +102,7 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.match(css, /\.certiquiz-app input\.code-input\s*\{[^}]*min-height:\s*0 !important;[^}]*height:\s*98px !important;[^}]*padding:\s*12px 16px !important;[^}]*font-size:\s*clamp\(48px, 6vw, 72px\) !important;[^}]*font-weight:\s*800;[^}]*letter-spacing:\s*\.09em;[^}]*line-height:\s*1;[^}]*font-variant-numeric:\s*tabular-nums;/);
   assert.match(css, /\.certiquiz-app input\.code-input\s*\{[^}]*text-align:\s*center;[^}]*background-image:\s*repeating-linear-gradient\(to right, var\(--line\) 0 \.5em, transparent \.5em \.7em\);[^}]*background-size:\s*4\.2em 2px;[^}]*background-position:\s*center calc\(50% \+ \.47em\);[^}]*background-repeat:\s*no-repeat;/);
   assert.match(css, /\.certiquiz-app \.player-entry \.join-actions\s*\{[^}]*justify-content:\s*flex-end;[^}]*border-top:\s*1px solid var\(--line\);[^}]*margin-top:\s*24px;[^}]*padding-top:\s*20px;/);
+  assert.match(css, /\.certiquiz-app \.player-entry \.join-actions \[data-entry-exit\]\s*\{\s*margin-right:\s*auto;/);
   assert.match(css, /\.certiquiz-app \.player-entry \.join-actions \.button\s*\{\s*width:\s*140px;/);
   assert.match(siteCss, /\.search-toggle\s*\{[^}]*background:\s*var\(--paper\);/);
   assert.match(siteCss, /\.search-toggle kbd\s*\{[^}]*display:\s*inline-flex;[^}]*padding:\s*2px 5px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*4px;[^}]*background:\s*var\(--chrome-bg\);[^}]*font-size:\s*0\.62rem;/);
