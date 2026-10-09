@@ -1,4 +1,4 @@
-.certiquiz-page .certiquiz-main { --brand-accent: var(--accent); max-width: 1160px; padding-top: 26px; padding-bottom: 48px; }
+.certiquiz-page .certiquiz-main { --brand-accent: var(--accent); max-width: 1280px; padding-top: 26px; padding-bottom: 48px; }
 .certiquiz-app { --surface: var(--hover); --accent: var(--red); --accent-hover: var(--red-dark); --success: #22684c; --success-bg: #eaf6ef; --warning: #8a5a00; --warning-bg: #fff7db; --error: #a52f2c; --error-bg: #fff0ef; --shadow: 0 14px 44px #31333f09; }
 html[data-theme="dark"] .certiquiz-app { --success: #9bd8b8; --success-bg: #1b352b; --warning: #ffdc82; --warning-bg: #44330c; --error: #ffb0a8; --error-bg: #382322; --shadow: none; }
 .certiquiz-app * { box-sizing: border-box; }
@@ -9,7 +9,7 @@ html[data-theme="dark"] .certiquiz-app { --success: #9bd8b8; --success-bg: #1b35
 .certiquiz-app [hidden] { display: none !important; }
 .certiquiz-app .connection { color: var(--muted); font-size: 13px; margin: 16px 0 0; }
 .certiquiz-app .connection:empty { display: none; }
-.certiquiz-app .welcome { margin: 28px 0 35px; }
+.certiquiz-app .welcome { margin: 9px 0 35px; }
 .certiquiz-app .brand-accent { color: var(--brand-accent); }
 .certiquiz-app .eyebrow { color: var(--accent); font-size: 11px; letter-spacing: .16em; font-weight: 750; }
 .certiquiz-app h1, .certiquiz-app h2, .certiquiz-app h3, .certiquiz-app p { overflow-wrap: anywhere; }
@@ -90,7 +90,6 @@ html[data-theme="dark"] .certiquiz-app { --success: #9bd8b8; --success-bg: #1b35
 .certiquiz-app .player-entry input:focus-visible { outline: none; box-shadow: none; }
 .certiquiz-app .player-entry #join-form { padding-top: 6px; }
 .certiquiz-app .player-entry .join-actions { justify-content: flex-end; border-top: 1px solid var(--line); margin-top: 24px; padding-top: 20px; }
-.certiquiz-app .player-entry .join-actions [data-entry-exit] { margin-right: auto; }
 .certiquiz-app .player-entry .join-actions .button { width: 140px; }
 .certiquiz-app .notice { display: flex; align-items: flex-start; gap: 10px; border: 1px solid var(--line); padding: 14px 18px; border-radius: 9px; background: var(--surface); font-size: 14px; line-height: 1.45; margin-bottom: 18px; }
 .certiquiz-app .notice > svg { flex: 0 0 auto; width: 20px; height: 20px; margin-top: 1px; }
