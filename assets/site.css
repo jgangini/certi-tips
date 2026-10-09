@@ -235,6 +235,7 @@ strong {
   border-radius: 9px;
   box-shadow: 0 16px 32px var(--shadow);
 }
+.path-nav .path-group:first-child .path-group-panel { right: auto; left: 0; }
 .path-group-panel a {
   display: flex;
   align-items: center;

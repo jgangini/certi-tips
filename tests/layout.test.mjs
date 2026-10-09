@@ -476,6 +476,7 @@ test("path menu headings change on interaction without retaining an open-state f
   assert.match(css, /\.path-nav-mobile \.path-group summary\s*\{[\s\S]*?justify-content:\s*flex-start;[\s\S]*?text-align:\s*left;/);
   assert.match(css, /\.path-nav-mobile \.path-group-panel\s*\{[\s\S]*?padding:\s*6px 0 6px 12px;[\s\S]*?margin:\s*6px 12px 8px;/);
   assert.match(css, /\.path-group-panel a:is\(:hover, :focus-visible\)\s*\{\s*background:\s*var\(--selected-surface\);\s*color:\s*var\(--selected-ink\);/);
+  assert.match(css, /\.path-nav \.path-group:first-child \.path-group-panel\s*\{\s*right:\s*auto;\s*left:\s*0;\s*\}/);
   assert.match(css, /\.nav-link\[aria-current="page"\]\s*\{\s*background:\s*var\(--selected-surface\);\s*color:\s*var\(--selected-ink\);/);
   assert.match(css, /\.nav-section-link:hover\s*\{\s*color:\s*var\(--ink\);\s*background:\s*var\(--hover\);/);
 });
