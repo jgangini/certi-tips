@@ -196,7 +196,9 @@ html[data-theme="dark"] .certiquiz-app .leaderboard tbody tr { --row-shadow: #00
 .certiquiz-app .result-banner { position: relative; isolation: isolate; background: var(--paper); border: 0; padding: 32px; border-radius: 16px; margin-bottom: 24px; }
 .certiquiz-app .result-banner h2 { margin: 0 0 10px; font-size: clamp(25px, 4vw, 40px); outline: none; }
 .certiquiz-app .result-banner p { margin: 0; color: var(--muted); }
-.certiquiz-app .result-banner .result-course { margin-top: 2px; color: var(--accent); font-weight: 600; }
+.certiquiz-app .result-banner .result-course { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; margin: 18px auto 0; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--chrome-bg); color: var(--ink); font-size: .85rem; font-weight: 500; line-height: 1; }
+html:not([data-theme="dark"]) .certiquiz-app .result-banner .result-course { background: var(--white); }
+.certiquiz-app .result-banner .result-course svg { width: 27px; height: 27px; flex: 0 0 auto; color: var(--accent); }
 .certiquiz-app .result-banner:has(.podium) { text-align: center; }
 .certiquiz-app .podium { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; gap: 16px; max-width: 720px; padding: 0; margin: 36px auto 0; list-style: none; }
 .certiquiz-app .podium::after { content: ""; position: absolute; bottom: -1px; left: -5%; right: -5%; height: 2px; background: linear-gradient(90deg, transparent, var(--muted) 20%, var(--muted) 80%, transparent); pointer-events: none; }

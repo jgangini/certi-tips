@@ -271,9 +271,14 @@ test("CertiQuiz host lobby keeps facts beside its actions and uses a compact con
   assert.match(script, /send\.disabled = locked \|\| busy; send\.textContent = 'Enviar';/);
   assert.doesNotMatch(script, /Respuesta registrada ✓/);
   assert.doesNotMatch(script, /Respuesta registrada\. Espera a que termine el tiempo\./);
+  assert.doesNotMatch(script, /puntos en esta partida/);
+  assert.match(script, /const oracleBadgeIcon = '<svg viewBox="0 0 32 32"/);
+  assert.match(script, /<p class="result-course">\$\{oracleBadgeIcon\}<span>\$\{escape\(room\.courseTitle\)\}<\/span><\/p>/);
   assert.match(script, /<form id="answer-form" novalidate>/);
   assert.match(script, /if \(id === 'answer-form' && !form\.querySelector\('input\[name="optionId"\]:checked'\)\) \{\s*showWarning\('Selecciona una de estas opciones\.'\);/);
   assert.match(css, /\.certiquiz-app \.question\s*\{[^}]*outline:\s*none;/);
+  assert.match(css, /\.certiquiz-app \.result-banner \.result-course\s*\{[^}]*display:\s*inline-flex;[^}]*border:\s*1px solid var\(--line\);[^}]*background:\s*var\(--chrome-bg\);/);
+  assert.match(css, /\.certiquiz-app \.result-banner \.result-course svg\s*\{[^}]*width:\s*27px;[^}]*height:\s*27px;[^}]*color:\s*var\(--accent\);/);
 });
 test("CertiQuiz sizes varied arrival orbits inside the canvas around a growing center", () => {
   const script = readFileSync(new URL("../assets/certiquiz.js", import.meta.url), "utf8");

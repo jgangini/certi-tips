@@ -61,7 +61,7 @@ async function batches(items, operation) {
 
 const host = client();
 const guest = client();
-const participants = Array.from({ length: players }, (_, index) => ({ request: client(), nickname: `Prueba-${String(index + 1).padStart(3, '0')}`, polls: 0, busy: false, snapshot: null, questions: new Map() }));
+const participants = Array.from({ length: players }, (_, index) => ({ request: client(), nickname: `Prueba ${String(index + 1).padStart(3, '0')}`, polls: 0, busy: false, snapshot: null, questions: new Map() }));
 let code;
 let polling = [];
 let pollingStarted;
@@ -156,7 +156,7 @@ try {
     if (pollFailure) throw pollFailure;
     assert.equal(revealed.status, 'reveal');
     assert.equal(revealed.answeredCount, players - 1);
-    assert.equal(revealed.leaderboard[0].nickname, 'Prueba-001');
+    assert.equal(revealed.leaderboard[0].nickname, 'Prueba 001');
     const score = revealed.leaderboard[0].score;
     assert(Number.isInteger(score) && score - totalPoints >= 500 && score - totalPoints <= 1000);
     totalPoints = score;
