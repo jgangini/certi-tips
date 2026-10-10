@@ -402,7 +402,7 @@
           "slug": "metadata",
           "title": "Metadatos",
           "short": "Metadatos",
-          "description": "Distingue catálogos, glosario, linaje Preview e impacto de cambios.",
+          "description": "Distingue catálogos, glosario, linaje e impacto de cambios.",
           "minutes": 25,
           "type": "module"
         },
@@ -420,7 +420,7 @@
           "slug": "oracle-map",
           "title": "De DAMA a las Capacidades Oracle",
           "short": "Matriz DAMA → Oracle",
-          "description": "Arquitectura, responsables, estados y evidencia de cada capacidad."
+          "description": "Arquitectura, responsables, aplicaciones y evidencia de cada capacidad."
         },
         {
           "slug": "glossary",

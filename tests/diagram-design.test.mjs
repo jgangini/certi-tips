@@ -2,11 +2,84 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
+import { runInNewContext } from "node:vm";
 
 const diagrams = new URL("../assets/diagrams/", import.meta.url);
 const readDiagram = (name) => readFileSync(new URL(name, diagrams), "utf8");
 const attributes = (tag) => Object.fromEntries([...tag.matchAll(/([\w:-]+)\s*=\s*(["'])(.*?)\2/gs)].map(([, key, , value]) => [key, value]));
 const declaration = (style, property) => [...(style || "").matchAll(/([\w-]+)\s*:\s*([^;]+)/g)].filter(([, name]) => name === property).at(-1)?.[2].trim();
+
+test("Modeling's three result cards align and each note follows its card", () => {
+  const svg = readDiagram("gov-data-modeling-oracle.svg");
+  const rects = [...svg.matchAll(/<rect\b[^>]*>/g)].map(([tag]) => attributes(tag));
+  const firstHeader = rects.find(rect => rect.x === "96" && rect.y === "284" && rect.width === "576" && rect["data-cell-frame"] === "true");
+  assert.equal(firstHeader?.height, "96", "The first column's dark fill ends with its header");
+  assert.ok(rects.some(rect => rect.x === "96" && rect.y === "284" && rect.width === "1728" && rect.fill === "#FFFFFF"), "The stage body is white");
+  for (const x of [128, 704, 1280]) {
+    const card = rects.find(rect => Number(rect.x) === x && rect.y === "428" && rect.width === "512" && rect.fill === "none" && rect.stroke === "#59616E");
+    const note = rects.find(rect => Number(rect.x) === x && rect.fill === "#F1EFED" && rect.height === "116");
+    assert.ok(card && note, `Column ${x} has its card and explanatory block`);
+    assert.equal(Number(card.height), 172, `Column ${x} has the common card height`);
+    assert.equal(Number(note.y) - Number(card.y) - Number(card.height), 28, `Column ${x} places its note directly beneath the card`);
+  }
+  assert.doesNotMatch(svg, /<circle\b/, "The tabular result has no circle");
+  assert.match(svg, /<tspan x="1536" y="538">1 cliente activo<\/tspan>/, "The single result row identifies the count");
+  assert.match(svg, /<tspan x="1536" y="576">C7<\/tspan>/, "The same row identifies the client");
+  const connector = [...svg.matchAll(/<line\b[^>]*>/g)].map(([tag]) => attributes(tag)).find(line => line.x1 === "640" && line.x2 === "704");
+  assert.ok(connector && !connector["stroke-dasharray"], "The relationship connector is solid");
+});
+
+test("consent dates use the architecture timeline while retaining the evidence table", () => {
+  const svg = readDiagram("gov-data-modeling-exercise.svg");
+  assert.match(svg, /data-timeline="consent"/, "Consent uses a dedicated timeline panel");
+  assert.doesNotMatch(svg, /id="consent-period"/, "The former consent band is removed");
+  const circles = [...svg.matchAll(/<circle\b[^>]*>/g)].map(([tag]) => attributes(tag));
+  assert.deepEqual(circles.map(circle => [circle.cx, circle.cy]), [["330", "480"], ["960", "480"], ["1620", "480"]]);
+  for (const label of ["Autoriza", "Campaña", "Retira", "1 de marzo", "15 de abril", "20 de abril", "Cliente C7", "Uso comercial", "Aceptación y retiro"]) {
+    assert.ok(svg.includes(`>${label}</tspan>`), `${label} remains readable`);
+  }
+  assert.match(svg, /d="M206 480 H1760 M1760 480 L1744 464 M1760 480 L1744 496"/, "The timeline is one continuous arrow");
+});
+
+test("marked table cells reject excess whitespace, off-center rows and avoidable header wrapping", () => {
+  const script = readFileSync(new URL("../scripts/diagram-check.cjs", import.meta.url), "utf8");
+  // ponytail: isolate the pure policy from the browser callback; real SVG geometry is measured by the DOM check.
+  const start = script.indexOf("function tableCellIssues(cell)");
+  const end = script.indexOf("\n      const tableCells =", start);
+  assert.ok(start >= 0 && end > start, "Table cell policy must remain available to this regression check");
+  const inspect = runInNewContext(`(${script.slice(start, end).trim()})`);
+  const row = { kind: "row", height: 54, contentHeight: 34, dx: 90, dy: 0, labelDy: 0, paddingX: 16, paddingY: 10 };
+  assert.equal(inspect(row).length, 0, "Left-aligned text is allowed");
+  assert.ok(inspect({ ...row, height: 144, paddingY: 55 }).includes("cell-height"), "Centered text cannot justify a tall empty row");
+  assert.ok(inspect({ ...row, dy: 7, paddingY: 3 }).includes("vertical-alignment"), "Valid row height cannot hide text displaced toward a border");
+  const header = { ...row, kind: "header", height: 64, contentHeight: 40, paddingY: 12, whiteHeader: true, wrappedFits: true };
+  assert.ok(inspect(header).includes("avoidable-header-wrap"));
+  assert.equal(inspect({ ...header, wrappedFits: false }).length, 0);
+  assert.equal(inspect({ ...header, height: 96, paddingY: 28, exception: "Two-line business rule retains the full term" }).length, 0);
+  assert.ok(inspect({ ...row, exception: "Intentional layout", dy: 7 }).includes("vertical-alignment"), "An exception does not waive centering");
+
+  const textBox = { left: 40, top: 19, width: 80, height: 34 };
+  const label = { localName: "text", textContent: "Vigente", getBoundingClientRect: () => textBox };
+  const tag = { nextElementSibling: label, getBoundingClientRect: () => ({ left: 20, top: 12, width: 120, height: 48 }) };
+  const labelStart = script.indexOf("const labelDy =");
+  const labelEnd = script.indexOf("\n        const wrappedFits =", labelStart);
+  const tagStart = script.indexOf("const tagAlignment =");
+  const tagEnd = script.indexOf("\n      const proximity =", tagStart);
+  assert.ok(labelStart >= 0 && labelEnd > labelStart && tagStart >= 0 && tagEnd > tagStart);
+  const measureRow = () => runInNewContext(`(() => { ${script.slice(labelStart, labelEnd)} return labelDy; })()`, {
+    kind: "tag-row", frame: { top: 0, height: 72 }, scale: 1,
+    labels: [{ getBoundingClientRect: () => ({ top: 19, height: 34 }) }, label],
+  });
+  const measureTag = () => runInNewContext(`(() => { ${script.slice(tagStart, tagEnd)} return tagAlignment; })()`, {
+    root: { querySelectorAll: () => [tag] }, scale: 1,
+  });
+  const tagRow = { ...row, kind: "tag-row", height: 72, contentHeight: 48, paddingY: 12 };
+  assert.equal(inspect({ ...tagRow, labelDy: measureRow() }).length, 0);
+  assert.equal(measureTag().length, 0);
+  textBox.top += 6;
+  assert.ok(inspect({ ...tagRow, labelDy: measureRow() }).includes("vertical-alignment"), "A centered tag background must not hide displaced text in a row");
+  assert.equal(measureTag().length, 1, "A tag must check its label independently of the unchanged background");
+});
 
 test("Governance icons retain reviewed source geometry and contain no active or external content", () => {
   const root = new URL("../", import.meta.url);

@@ -20,13 +20,13 @@ Horizonte registra propietario de la definición, responsable técnico del activ
 
 ## Catálogos y Linaje en Oracle
 
-El **Master Catalog de Oracle AI Data Platform** organiza catálogos, esquemas y activos con permisos. El catálogo de Oracle Autonomous AI Database, accesible mediante **Data Studio de Oracle Autonomous AI Database y `DBMS_CATALOG`**, permite explorar y montar fuentes soportadas. **Oracle AI Data Catalog** proporciona un servicio de catálogo REST de Iceberg. Son capacidades relacionadas con interfaces y alcances distintos; no se debe dibujar sincronización total automática entre ellas.
+Usa el [**Master Catalog de Oracle AI Data Platform**](https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/manage-master-catalog.html) para organizar catálogos, esquemas y activos y administrar sus permisos. En **Data Studio de Oracle Autonomous AI Database**, explora las fuentes conectadas y monta catálogos mediante la interfaz o [`DBMS_CATALOG`](https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/manage-catalogs-dbms-catalogs.html). Para gestionar tablas Iceberg desde motores compatibles, configura [**Oracle AI Data Catalog**](https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/oracle-ai-data-catalog.html), su servicio REST, las credenciales y el acceso al almacenamiento. En cada conexión, identifica qué metadatos se actualizan, quién mantiene la descripción y con qué permisos se consulta el activo.
 
 ![Tres Catálogos, Tres Alcances Que Comprobar]({{base}}assets/diagrams/gov-metadata-oracle.svg "Las filas comparan tres ámbitos: Master Catalog de Oracle AI Data Platform para catálogos, esquemas y activos; el catálogo federado de Oracle Autonomous AI Database para fuentes soportadas; y Oracle AI Data Catalog con interfaz REST de Iceberg. Comprueba objetos, interfaces, compatibilidad y permisos de cada integración. No deduzcas sincronización o acceso compartido por el hecho de que los tres sean catálogos.")
 
-El **linaje de Oracle AI Data Platform en Preview** captura relaciones de ejecuciones soportadas, derivaciones de columnas y dependencias de Knowledge Bases. Muestra el último linaje capturado por proceso; no ofrece actualmente un historial completo. Data Studio de Oracle Autonomous AI Database también documenta linaje e impacto para flujos y cargas soportados.
+Para analizar un cambio en Oracle AI Data Platform, abre el activo en Master Catalog y selecciona [**Lineage**](https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html). Recorre fuentes y consumidores o expande las columnas para estudiar sus derivaciones. La vista muestra la última captura de cada proceso; conserva las versiones y ejecuciones del periodo que debas auditar. En Data Studio de Oracle Autonomous AI Database, usa [**Lineage** e **Impact** en los detalles del activo](https://docs.oracle.com/en/cloud/paas/autonomous-database/data-studio-guide/explore-data-catalog.html) para revisar las relaciones de los flujos y cargas capturados.
 
-Los catálogos y anotaciones actuales apoyan descripción y descubrimiento. Las iniciativas anunciadas de glosario u ontología empresarial no se presentan aquí como una capacidad nativa completa ya verificada. Horizonte puede gobernar su glosario como artefacto organizacional y relacionarlo con activos. En Oracle Data Transforms, las anotaciones se pueden importar, editar y propagar; las sugerencias IA necesitan revisión y control de cambios.
+Vincula el término aprobado «contrato vigente» con las tablas, columnas y reglas que lo implementan. En Oracle Data Transforms, [importa, edita y propaga anotaciones](https://docs.oracle.com/en/database/data-integration/data-transforms/using/view-and-manage-annotations.html) para conservar ese contexto en las tablas de destino. El steward revisa la descripción con el propietario, registra su aprobación y actualiza los activos afectados cuando cambia el significado. Aplica la misma revisión a las descripciones sugeridas por IA para mantener coherencia entre glosario e implementación.
 
 ## Ejemplo Explicado
 
@@ -46,7 +46,7 @@ La evidencia reúne definición anterior y nueva, consumidores revisados, aproba
 
 ## Ejercicio de Decisión
 
-Auditoría solicita reconstruir la transformación usada hace tres meses. El linaje Preview actual de Oracle AI Data Platform muestra la última ejecución y el notebook cambió varias veces. Decide si esa vista basta y qué evidencias adicionales necesita Horizonte.
+Auditoría solicita reconstruir la transformación usada hace tres meses. La vista de linaje de Oracle AI Data Platform muestra la última captura y el notebook cambió varias veces. Decide qué evidencias de aquella ejecución debe reunir Horizonte para explicar el resultado histórico.
 
 <details>
 <summary>Solución</summary>

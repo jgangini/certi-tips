@@ -76,7 +76,7 @@
   "conceptualAnnotations": {
     "medallion": "Landing, Bronze, Silver and Gold are conceptual data stages, not separately provisioned services.",
     "catalog": "Master Catalog registers metadata, without an implied automatic synchronization.",
-    "lineage": "Preview; supported instrumented executions, latest capture only, no lineage history.",
+    "lineage": "Supported instrumented executions and latest capture per process; preserve historical execution evidence separately.",
     "streaming": "Structured Streaming for supported volume/workspace paths, Delta tables and Kafka-compatible sources/sinks. No direct oci:// or Oracle database readStream/writeStream paths.",
     "agentMemory": "The connection proposes custom persistence in Oracle AI Database 26ai; it is not native session memory."
   },

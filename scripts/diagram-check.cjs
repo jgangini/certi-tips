@@ -61,6 +61,73 @@ async (page) => {
         const padding = Math.min(content.left - frame.left, frame.right - content.right, content.top - frame.top, frame.bottom - content.bottom) / scale;
         if (dx > 2 || dy > 2 || padding < 12) alignment.push({ text: card.textContent, dx, dy, padding });
       }
+      function tableCellIssues(cell) {
+        const ranges = { header: [64, 64], row: [52, 56], 'tag-row': [72, 72], 'icon-header': [80, 96], note: [cell.contentHeight + 24, cell.contentHeight + 32] };
+        const range = ranges[cell.kind];
+        if (!range) return ['unknown-cell-kind'];
+        const issues = [];
+        if (!cell.exception && (cell.height < range[0] - 1 || cell.height > range[1] + 1)) issues.push('cell-height');
+        if (Math.max(cell.dy, cell.labelDy) > 2) issues.push('vertical-alignment');
+        if (cell.align === 'center' && cell.dx > 2) issues.push('horizontal-alignment');
+        if (cell.paddingX < 12 - 0.5 || cell.paddingY < (cell.kind === 'row' ? 8 : 12) - 0.5) issues.push('cell-padding');
+        if (!cell.exception && cell.wrappedFits) issues.push('avoidable-header-wrap');
+        if ((cell.kind === 'header' || cell.kind === 'icon-header') && !cell.whiteHeader) issues.push('header-text-color');
+        return issues;
+      }
+      const tableCells = [];
+      const markedCells = [...root.querySelectorAll('[data-table-cell]')];
+      const measure = document.createElement('canvas').getContext('2d');
+      for (const cell of markedCells) {
+        const frames = cell.querySelectorAll('[data-cell-frame]');
+        const contents = cell.querySelectorAll('[data-cell-content]');
+        if (frames.length !== 1 || contents.length !== 1) {
+          tableCells.push({ text: cell.textContent, issues: ['cell-contract'] });
+          continue;
+        }
+        const frame = frames[0].getBoundingClientRect();
+        const content = contents[0].getBoundingClientRect();
+        const labels = contents[0].matches('text') ? [contents[0]] : [...contents[0].querySelectorAll('text')];
+        const kind = cell.getAttribute('data-table-cell');
+        const labelDy = ['row', 'tag-row'].includes(kind) ? Math.max(0, ...labels.map(label => {
+          const box = label.getBoundingClientRect();
+          return Math.abs(box.top + box.height / 2 - frame.top - frame.height / 2) / scale;
+        })) : 0;
+        const wrappedFits = kind === 'header' && labels.some(label => {
+          const spans = [...label.querySelectorAll('tspan')].filter(span => span.textContent.trim());
+          if (spans.length < 2 || spans.every(span => Math.abs(span.getBoundingClientRect().top - spans[0].getBoundingClientRect().top) <= scale)) return false;
+          const style = getComputedStyle(label);
+          measure.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+          const text = spans.map(span => span.textContent.trim()).join(' ');
+          const width = measure.measureText(text).width + (parseFloat(style.letterSpacing) || 0) * (text.length - 1);
+          const textScale = spans[0].getBoundingClientRect().width / spans[0].getComputedTextLength();
+          return width * textScale <= frame.width - 24 * scale;
+        });
+        const metrics = {
+          kind, align: cell.getAttribute('data-cell-align'), exception: cell.getAttribute('data-cell-exception')?.trim(),
+          height: frame.height / scale, contentHeight: content.height / scale,
+          dx: Math.abs(content.left + content.width / 2 - frame.left - frame.width / 2) / scale,
+          dy: Math.abs(content.top + content.height / 2 - frame.top - frame.height / 2) / scale,
+          paddingX: Math.min(content.left - frame.left, frame.right - content.right) / scale,
+          paddingY: Math.min(content.top - frame.top, frame.bottom - content.bottom) / scale,
+          labelDy, wrappedFits,
+          whiteHeader: labels.length > 0 && labels.every(label => [label, ...label.querySelectorAll('tspan')].every(part => /^(?:rgb\(255, 255, 255\)|#fff(?:fff)?|white)$/i.test(getComputedStyle(part).fill))),
+        };
+        const issues = tableCellIssues(metrics);
+        if (issues.length) tableCells.push({ text: cell.textContent, ...metrics, issues });
+      }
+      const tagAlignment = [];
+      for (const tag of root.querySelectorAll('rect[data-layout="reference-tag"]')) {
+        const label = tag.nextElementSibling;
+        if (label?.localName !== 'text') {
+          tagAlignment.push({ issue: 'tag-label-contract' });
+          continue;
+        }
+        const frame = tag.getBoundingClientRect();
+        const text = label.getBoundingClientRect();
+        const dx = Math.abs(text.left + text.width / 2 - frame.left - frame.width / 2) / scale;
+        const dy = Math.abs(text.top + text.height / 2 - frame.top - frame.height / 2) / scale;
+        if (dx > 2 || dy > 2) tagAlignment.push({ text: label.textContent, dx, dy });
+      }
       const proximity = [];
       for (const group of root.querySelectorAll('[data-card-content], [data-layout="caption"]')) {
         const labels = [...group.querySelectorAll('text')];
@@ -103,12 +170,12 @@ async (page) => {
         // ponytail: proximity flags detached artwork; semantic association still needs individual review.
         if (nearestLabelGap > 80) detachedIcons.push({ icon: icon.dataset.svgrepoIcon, nearestLabelGap });
       }
-      return { name, labels: boxes.length, minimumFont: Math.min(...boxes.map(item => item.size)), slideSize, outside, overlaps, composition, coveredLabels, alignment, proximity, iconSpacing, borderCrossings, sourcedIcons: sourcedIcons.length, iconCollisions, detachedIcons };
+      return { name, labels: boxes.length, minimumFont: Math.min(...boxes.map(item => item.size)), slideSize, outside, overlaps, composition, coveredLabels, alignment, tableCellCount: markedCells.length, tableCells, tagAlignment, proximity, iconSpacing, borderCrossings, sourcedIcons: sourcedIcons.length, iconCollisions, detachedIcons };
     }, name));
   }
   await page.goto(`${origin}/certi-tips/`);
   // The user-supplied pyramid keeps its native 10/12px type, displayed at a uniform 1.72 scale.
-  const issues = reports.filter(item => !item.slideSize || item.outside.length || item.overlaps.length || item.composition.length || item.coveredLabels.length || item.alignment.length || item.proximity.length || item.iconSpacing.length || item.borderCrossings.length || item.iconCollisions.length || item.detachedIcons.length || item.minimumFont < (item.name === 'gov-overview-map.svg' ? 10 : item.name.startsWith('gov-') ? 25.5 : 14));
+  const issues = reports.filter(item => !item.slideSize || item.outside.length || item.overlaps.length || item.composition.length || item.coveredLabels.length || item.alignment.length || item.tableCells.length || item.tagAlignment.length || item.proximity.length || item.iconSpacing.length || item.borderCrossings.length || item.iconCollisions.length || item.detachedIcons.length || item.minimumFont < (item.name === 'gov-overview-map.svg' ? 10 : item.name.startsWith('gov-') ? 25.5 : 14));
   if (issues.length) throw new Error(JSON.stringify(issues));
   return { diagrams: reports, screenshots: 0 };
 }

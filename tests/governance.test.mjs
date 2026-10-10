@@ -102,18 +102,30 @@ test('Governance evidence maps eleven areas, original diagrams and all assessmen
   }
 });
 
-test('Governance includes operational Preview and distinguishes new catalogs and extensions', () => {
+test('Governance teaches documented Oracle workflows and preserves catalog and lineage scope', () => {
   const metadata = read('content/data-governance/metadata.md');
   const map = read('content/data-governance/oracle-map.md');
-  assert.match(metadata, /linaje de Oracle AI Data Platform en Preview/i);
-  assert.match(metadata, /último linaje capturado/);
+  assert.match(metadata, /ai-data-platform\/aidug\/lineage\.html/);
+  assert.match(metadata, /última captura/);
   assert.match(map, /Master Catalog/);
   assert.match(map, /DBMS_CATALOG/);
   assert.match(map, /Oracle AI Data Catalog/);
-  assert.match(map, /AI Assistant.*Preview/);
-  assert.match(map, /Extensión implementada/);
-  assert.match(map, /Anunciada/);
+  assert.match(map, /AI Assistant/);
+  assert.match(map, /use-ai-assistant-create-data-flows\.html/);
+  assert.match(map, /workflow-build-semantic-model\.html/);
+  assert.match(map, /reglas aprobadas|aprobar tratamientos/);
   assert.match(map, /survivorship|Survivorship/);
+  const published = [JSON.stringify(course), JSON.stringify(bank)];
+  for (const page of [...course.modules, ...course.resources]) {
+    published.push(read(`content/data-governance/${page.slug}.md`));
+  }
+  for (const name of readdirSync(new URL('../assets/diagrams/', import.meta.url)).filter(name => /^gov-.*\.svg$/.test(name))) {
+    published.push(read(`assets/diagrams/${name}`).replace(/<[^>]+>/g, ' '));
+  }
+  // Documentation URLs can contain release labels; learner-facing copy teaches their use.
+  for (const text of published) {
+    assert.doesNotMatch(text.replace(/https:\/\/[^\s)"<>]+/g, ''), /\bPreview\b|\banunciad[oa]s?\b|disponibilidad (?:operativa )?no confirmada|fecha de revisión|estado al \d/i);
+  }
 });
 
 test('Governance uses full product names in lessons, questions, catalog and diagram labels', () => {

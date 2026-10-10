@@ -46,8 +46,6 @@ Los ejemplos y definiciones son síntesis originales para este taller.
 | Masking / redacción | Transformación de copias / ocultación de valores en consultas, según el mecanismo | Revisar persistencia y alcance; no intercambiar sus nombres sin explicar el efecto |
 | RAG | Recuperación de información para fundamentar una respuesta generativa | Recuperar un fragmento no confirma autorización ni exactitud de la respuesta |
 | Cuarentena | Separación de registros que incumplen criterios | Debe conservar motivo, responsable y camino de resolución |
-| Preview | Capacidad habilitada en el ámbito publicado, aún con esa etiqueta | Su alcance depende de la versión y los requisitos documentados |
-| Extensión implementada | Solución construida con servicios y lógica adicional | Su disponibilidad no convierte toda la solución en función nativa |
-| Anunciada | Dirección o función comunicada sin disponibilidad operativa verificada | No sirve como prueba de un control ya ejecutable |
+| Control personalizado | Regla implementada mediante SQL, código o un flujo de trabajo | Vincula la decisión del responsable con su ejecución, resultado y revisión |
 
-Las referencias de producto y su estado se mantienen en la [matriz de capacidades]({{base}}data-governance/oracle-map/). Usa esa matriz al discutir el [caso integrador]({{base}}data-governance/case-study/).
+Las aplicaciones de cada producto y su documentación oficial se reúnen en la [matriz de capacidades]({{base}}data-governance/oracle-map/). Usa esa matriz al discutir el [caso integrador]({{base}}data-governance/case-study/).

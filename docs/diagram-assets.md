@@ -1,5 +1,9 @@
 # Recursos gráficos y revisión didáctica
 
+## Regla de edición para Governance
+
+Antes de modificar un SVG `gov-*`, aplica [las reglas de diseño de Governance](governance-diagram-design.md). Esta guía prevalece sobre las medidas de iteraciones históricas registradas abajo y conserva como referencias los módulos 00–02. El verificador de celdas de `scripts/diagram-check.cjs` comprueba alturas, márgenes, centrado vertical y encabezados partidos innecesariamente.
+
 ## Presentación vigente de los módulos 03–11 · 2026-10-10
 
 Quedan 45 gráficos en esos nueve módulos y 66 SVG de Governance en total. Se retiraron las secciones «Fuentes y Repaso» y sus gráficos, además de las imágenes de «Errores Frecuentes»; sus listas explicativas permanecen. Las tablas, círculos, colores y tags siguen las referencias de Arquitectura y Gobierno. El cuerpo usa 25,5 px; los encabezados son grises con texto blanco y los tags de fondo neutro, borde gris y una sola línea. Se centran los conjuntos completos y se conservan textos, significado y pictogramas. Las seis especificaciones técnicas del alcance reflejan el mismo tamaño de texto. La revisión y sus comprobaciones DOM están en [visual-coverage.md](visual-coverage.md).

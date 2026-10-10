@@ -167,27 +167,27 @@
   {
     "id": "gov-governance-06",
     "domain": "governance",
-    "question": "Una capacidad aparece como Preview en documentación y otra solo como anuncio. ¿Cómo debe presentarlas Horizonte al evaluar controles?",
+    "question": "El propietario autoriza a Analítica a consultar identificador y estado de contratos para un indicador. ¿Cómo aplica Horizonte esa decisión en Oracle AI Data Platform?",
     "options": [
       {
         "id": "a",
-        "text": "Excluir ambas de toda conversación por no ser funciones históricas.",
-        "explanation": "Preview es una capacidad real con condiciones; excluirla ocultaría una opción relevante."
+        "text": "Conceder administración general al equipo para que elija los datos que necesita.",
+        "explanation": "Administrar todos los activos excede la consulta y los datos que aprobó el propietario."
       },
       {
         "id": "b",
-        "text": "Incluir Preview con sus condiciones y separar el anuncio cuya disponibilidad no se ha confirmado.",
-        "explanation": "La clasificación permite aprender el enfoque sin prometer un control disponible sin evidencia."
+        "text": "Publicar el conjunto aprobado, asignar permisos de lectura y revisar accesos y registros de auditoría con el alcance autorizado.",
+        "explanation": "El custodio configura los controles y el auditor contrasta la actividad registrada con la decisión del propietario; cada uno mantiene su responsabilidad."
       },
       {
         "id": "c",
-        "text": "Considerar el anuncio equivalente a disponibilidad general en todos los entornos.",
-        "explanation": "Un anuncio no demuestra acceso operativo universal ni condiciones de disponibilidad."
+        "text": "Encargar al administrador que amplíe la finalidad sin consultar al propietario.",
+        "explanation": "La capacidad técnica de conceder permisos no otorga autoridad para aprobar otros usos del dato."
       },
       {
         "id": "d",
-        "text": "Tratar Preview como garantía de que todas las funciones relacionadas están completas.",
-        "explanation": "El estado se verifica por función y alcance; no se hereda a todo el conjunto."
+        "text": "Usar los registros de auditoría como sustituto de la aprobación de negocio.",
+        "explanation": "La auditoría registra actividad; no decide qué finalidad ni qué datos están autorizados."
       }
     ],
     "correctOption": "b",
@@ -365,7 +365,7 @@
   {
     "id": "gov-data-architecture-06",
     "domain": "data-architecture",
-    "question": "El equipo dispone de un diseño conceptual y del linaje Preview de Oracle AI Data Platform. ¿Cómo se relacionan?",
+    "question": "El equipo dispone de un diseño conceptual y del linaje de Oracle AI Data Platform. ¿Cómo se relacionan?",
     "options": [
       {
         "id": "a",
@@ -379,8 +379,8 @@
       },
       {
         "id": "c",
-        "text": "Preview impide usar el linaje para explicar dependencias.",
-        "explanation": "Puede usarse dentro de su alcance documentado y con su estado claramente indicado."
+        "text": "El linaje solo permite visualizar tablas y no ayuda a estudiar dependencias.",
+        "explanation": "Las relaciones capturadas permiten seguir transformaciones y analizar consumidores afectados por un cambio."
       },
       {
         "id": "d",
@@ -563,27 +563,27 @@
   {
     "id": "gov-data-modeling-06",
     "domain": "data-modeling",
-    "question": "Oracle anuncia generación de ontologías en la evolución de Oracle AI Data Platform. ¿Cómo debe evaluar Horizonte esta capacidad?",
+    "question": "En el modelo semántico de Horizonte, C7 tiene dos contratos vigentes. La definición aprobada de «cliente activo» exige al menos un contrato vigente al corte. ¿Cómo se representa y calcula el indicador?",
     "options": [
       {
         "id": "a",
-        "text": "Afirmar que cualquier instancia ya incluye todas las ontologías sectoriales.",
-        "explanation": "El anuncio no demuestra disponibilidad operativa de todas las funciones o paquetes."
+        "text": "Contar dos clientes activos porque aparecen dos contratos vigentes.",
+        "explanation": "Ese cálculo cuenta contratos; duplica a C7 y cambia el grano del indicador aprobado."
       },
       {
         "id": "b",
-        "text": "Explicar el enfoque anunciado y verificar disponibilidad concreta, conservando validación humana.",
-        "explanation": "Distingue la dirección actual del producto de una garantía de disponibilidad operativa."
+        "text": "Mantener la relación Cliente 1 a N Contrato y contar a C7 una sola vez entre los clientes con contrato vigente al corte.",
+        "explanation": "La cardinalidad conserva los dos contratos, mientras la medida cuenta clientes distintos y aplica el significado aprobado por negocio."
       },
       {
         "id": "c",
-        "text": "Omitir completamente semántica y ontologías porque una función fue anunciada.",
-        "explanation": "Son conceptos relevantes para modelado e IA; deben evaluarse reconociendo su estado de disponibilidad."
+        "text": "Forzar una relación Cliente 1 a 1 Contrato para que el conteo de filas coincida con el de clientes.",
+        "explanation": "Modificar la relación para simplificar el cálculo pierde la regla de negocio que permite varios contratos por cliente."
       },
       {
         "id": "d",
-        "text": "Tratar una ontología como sustituto automático de todo modelo físico.",
-        "explanation": "El contexto semántico y las estructuras físicas responden preguntas distintas."
+        "text": "Dejar que una sugerencia de IA cambie la definición a «cliente con cualquier contrato» sin revisión de negocio.",
+        "explanation": "La ayuda de IA no sustituye la aprobación del significado; incluir contratos no vigentes altera la población del indicador."
       }
     ],
     "correctOption": "b",
@@ -860,26 +860,26 @@
   {
     "id": "gov-data-security-03",
     "domain": "data-security",
-    "question": "El equipo encuentra un blog de Oracle con clasificación asistida y aplicación de masking mediante un framework personalizado. ¿Cómo debe describirlo?",
+    "question": "Horizonte implementa en Oracle AI Data Platform un flujo personalizado de clasificación asistida y masking para preparar datos de prueba. ¿Cómo debe aplicar el control de seguridad?",
     "options": [
       {
         "id": "a",
-        "text": "Como prueba de que todas las políticas nativas están en GA en cualquier entorno.",
-        "explanation": "Un patrón personalizado no demuestra el estado de cada función del producto."
+        "text": "Suponer que detectar datos sensibles aplica automáticamente todas las reglas de protección.",
+        "explanation": "La clasificación identifica datos que requieren tratamiento; el equipo debe implementar y comprobar la protección acordada."
       },
       {
         "id": "b",
-        "text": "Como una práctica que debe descartarse por utilizar componentes programables.",
-        "explanation": "Puede demostrar una forma implementable de atender el requisito si se explica su naturaleza."
+        "text": "Descartar el flujo porque utiliza componentes programables.",
+        "explanation": "Un control personalizado puede atender el requisito si sus reglas, responsables y resultados están documentados y comprobados."
       },
       {
         "id": "c",
-        "text": "Como una extensión implementable con decisiones humanas y controles que el cliente diseña.",
-        "explanation": "Así se reconoce la capacidad de adaptación sin confundirla con una política nativa automática."
+        "text": "Validar la clasificación con el responsable, aplicar las reglas de masking aprobadas y comprobar el conjunto protegido y sus accesos.",
+        "explanation": "El flujo convierte la decisión de seguridad en un control implementado, con revisión humana y evidencia de que los datos de prueba conservan la utilidad permitida."
       },
       {
         "id": "d",
-        "text": "Como aprobación automática de cualquier uso de los datos clasificados.",
+        "text": "Aprobar automáticamente cualquier uso de los datos que hayan sido clasificados.",
         "explanation": "Clasificar sensibilidad no otorga por sí solo autorización para un uso."
       }
     ],
@@ -1265,7 +1265,7 @@
       },
       {
         "id": "b",
-        "text": "El linaje Preview sustituye cualquier historial de versiones.",
+        "text": "El linaje sustituye cualquier historial de versiones.",
         "explanation": "El último linaje capturado no es un historial documental completo."
       },
       {
@@ -1507,7 +1507,7 @@
       {
         "id": "d",
         "text": "Oracle Fusion Cloud Enterprise Data Management solo mantiene listas y no contempla fusión o supervivencia.",
-        "explanation": "La documentación actual incluye match, merge, deduplicación y survivorship."
+        "explanation": "Configura reglas de coincidencia, revisa los duplicados y aplica reglas de supervivencia para seleccionar los valores del registro resultante."
       }
     ],
     "correctOption": "b",
@@ -1963,8 +1963,8 @@
       },
       {
         "id": "c",
-        "text": "Suponer que Preview conserva automáticamente todas las ejecuciones.",
-        "explanation": "La cobertura histórica no está documentada como completa."
+        "text": "Suponer que el grafo actual conserva automáticamente todas las ejecuciones anteriores.",
+        "explanation": "La última captura describe las dependencias registradas; reconstruir un periodo anterior requiere las versiones y evidencias de ese periodo."
       },
       {
         "id": "d",

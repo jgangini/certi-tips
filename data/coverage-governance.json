@@ -20,7 +20,7 @@
     "resources": [
       {
         "page": "oracle-map",
-        "objective": "Arquitectura, responsables, estados y evidencia de cada capacidad.",
+        "objective": "Arquitectura, responsables, aplicaciones y evidencia de cada capacidad.",
         "sections": [
           "arquitectura-conceptual-y-tecnologica",
           "matriz-de-decisiones-y-evidencia",
@@ -38,7 +38,8 @@
           "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/overview-oracle-ai-data-platform.html",
           "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/about-autonomous-database-workloads.html",
           "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/data-analysis-tool.html",
-          "https://investor.oracle.com/investor-news/news-details/2026/Oracle-Announces-Q1-Results-Driven-by-Triple-Digit-Growth-in-Cloud-Infrastructure-Revenues/default.aspx",
+          "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/workflow-build-semantic-model.html",
+          "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/logical-joins.html",
           "https://docs.oracle.com/en-us/iaas/Content/Object/Tasks/usingretentionrules.htm",
           "https://docs.oracle.com/en-us/iaas/Content/Monitoring/Concepts/monitoringoverview.htm",
           "https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/costanalysisoverview.htm",
@@ -46,7 +47,7 @@
           "https://docs.oracle.com/en-us/iaas/Content/Identity/Concepts/overview.htm",
           "https://docs.oracle.com/en-us/iaas/Content/KeyManagement/Concepts/keyoverview.htm",
           "https://docs.oracle.com/en-us/iaas/data-safe/doc/oracle-data-safe-overview.html",
-          "https://docs.oracle.com/en-us/iaas/data-safe/doc/whats-new.html",
+          "https://docs.oracle.com/en-us/iaas/data-safe/doc/data-subsetting-overview.html",
           "https://blogs.oracle.com/cloud-infrastructure/aidp-sensitive-data-governance",
           "https://docs.oracle.com/en-us/iaas/releasenotes/goldengate/r9connections.htm",
           "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/workflows.html",
@@ -54,14 +55,14 @@
           "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/knowledge-bases.html",
           "https://docs.oracle.com/en/cloud/saas/enterprise-data-management-cloud/dmcaa/matching_create_survivorship_rules.html",
           "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acsds/connect-ai-data-platform.html",
-          "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acswn/index.html",
+          "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acubi/use-ai-assistant-create-data-flows.html",
+          "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acsdv/discover-data-run-query-workflow-preview.html",
           "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/manage-master-catalog.html",
           "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html",
           "https://docs.oracle.com/en/database/oracle/oracle-database/26/arpls/dbms_catalog.html",
           "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/oracle-ai-data-catalog.html",
           "https://docs.oracle.com/en/cloud/paas/autonomous-database/data-studio-guide/explore-data-catalog.html",
-          "https://docs.oracle.com/en/database/data-integration/data-transforms/using/view-and-manage-annotations.html",
-          "https://github.com/oracle-samples/oracle-aidp-samples"
+          "https://docs.oracle.com/en/database/data-integration/data-transforms/using/view-and-manage-annotations.html"
         ]
       },
       {
@@ -380,9 +381,11 @@
     "note": "Síntesis y escenarios originales; el identificador representa una unidad editorial, no una transcripción.",
     "objective": "Modelado: Conceptos clave. Representa entidades, relaciones, vigencia y significado sin confundir esquema con semántica.",
     "publicSources": [
-      "https://investor.oracle.com/investor-news/news-details/2026/Oracle-Announces-Q1-Results-Driven-by-Triple-Digit-Growth-in-Cloud-Infrastructure-Revenues/default.aspx",
+      "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/workflow-build-semantic-model.html",
       "https://blogs.oracle.com/ai-data-platform/why-enterprise-ai-needs-deep-business-semantics",
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/manage-master-catalog.html"
+      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/manage-master-catalog.html",
+      "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/logical-joins.html",
+      "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/levels-aggregation.html"
     ],
     "diagrams": [
       "assets/diagrams/gov-data-modeling-concepts.svg"
@@ -399,9 +402,11 @@
     "note": "Síntesis y escenarios originales; el identificador representa una unidad editorial, no una transcripción.",
     "objective": "Modelado: Del significado al modelo físico. Representa entidades, relaciones, vigencia y significado sin confundir esquema con semántica.",
     "publicSources": [
-      "https://investor.oracle.com/investor-news/news-details/2026/Oracle-Announces-Q1-Results-Driven-by-Triple-Digit-Growth-in-Cloud-Infrastructure-Revenues/default.aspx",
+      "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/workflow-build-semantic-model.html",
       "https://blogs.oracle.com/ai-data-platform/why-enterprise-ai-needs-deep-business-semantics",
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/manage-master-catalog.html"
+      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/manage-master-catalog.html",
+      "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/logical-joins.html",
+      "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/levels-aggregation.html"
     ],
     "diagrams": [
       "assets/diagrams/gov-data-modeling-principles.svg"
@@ -421,9 +426,11 @@
     "note": "Síntesis y escenarios originales; el identificador representa una unidad editorial, no una transcripción.",
     "objective": "Modelado: Modelado y semántica en Oracle. Representa entidades, relaciones, vigencia y significado sin confundir esquema con semántica.",
     "publicSources": [
-      "https://investor.oracle.com/investor-news/news-details/2026/Oracle-Announces-Q1-Results-Driven-by-Triple-Digit-Growth-in-Cloud-Infrastructure-Revenues/default.aspx",
+      "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/workflow-build-semantic-model.html",
       "https://blogs.oracle.com/ai-data-platform/why-enterprise-ai-needs-deep-business-semantics",
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/manage-master-catalog.html"
+      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/manage-master-catalog.html",
+      "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/logical-joins.html",
+      "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/levels-aggregation.html"
     ],
     "diagrams": [
       "assets/diagrams/gov-data-modeling-oracle.svg"
@@ -443,9 +450,11 @@
     "note": "Síntesis y escenarios originales; el identificador representa una unidad editorial, no una transcripción.",
     "objective": "Modelado: Ejemplo explicado. Representa entidades, relaciones, vigencia y significado sin confundir esquema con semántica.",
     "publicSources": [
-      "https://investor.oracle.com/investor-news/news-details/2026/Oracle-Announces-Q1-Results-Driven-by-Triple-Digit-Growth-in-Cloud-Infrastructure-Revenues/default.aspx",
+      "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/workflow-build-semantic-model.html",
       "https://blogs.oracle.com/ai-data-platform/why-enterprise-ai-needs-deep-business-semantics",
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/manage-master-catalog.html"
+      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/manage-master-catalog.html",
+      "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/logical-joins.html",
+      "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/levels-aggregation.html"
     ],
     "diagrams": [
       "assets/diagrams/gov-data-modeling-example.svg"
@@ -464,9 +473,11 @@
     "note": "Síntesis y escenarios originales; el identificador representa una unidad editorial, no una transcripción.",
     "objective": "Modelado: Errores frecuentes. Representa entidades, relaciones, vigencia y significado sin confundir esquema con semántica.",
     "publicSources": [
-      "https://investor.oracle.com/investor-news/news-details/2026/Oracle-Announces-Q1-Results-Driven-by-Triple-Digit-Growth-in-Cloud-Infrastructure-Revenues/default.aspx",
+      "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/workflow-build-semantic-model.html",
       "https://blogs.oracle.com/ai-data-platform/why-enterprise-ai-needs-deep-business-semantics",
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/manage-master-catalog.html"
+      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/manage-master-catalog.html",
+      "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/logical-joins.html",
+      "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/levels-aggregation.html"
     ],
     "diagrams": [],
     "questionIds": [],
@@ -481,9 +492,11 @@
     "note": "Síntesis y escenarios originales; el identificador representa una unidad editorial, no una transcripción.",
     "objective": "Modelado: Ejercicio de decisión. Representa entidades, relaciones, vigencia y significado sin confundir esquema con semántica.",
     "publicSources": [
-      "https://investor.oracle.com/investor-news/news-details/2026/Oracle-Announces-Q1-Results-Driven-by-Triple-Digit-Growth-in-Cloud-Infrastructure-Revenues/default.aspx",
+      "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/workflow-build-semantic-model.html",
       "https://blogs.oracle.com/ai-data-platform/why-enterprise-ai-needs-deep-business-semantics",
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/manage-master-catalog.html"
+      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/manage-master-catalog.html",
+      "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/logical-joins.html",
+      "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/levels-aggregation.html"
     ],
     "diagrams": [
       "assets/diagrams/gov-data-modeling-exercise.svg"
@@ -637,11 +650,10 @@
     "objective": "Seguridad: Conceptos clave. Conecta finalidades, PII, identidades y protección con evidencia de acceso efectivo.",
     "publicSources": [
       "https://blogs.oracle.com/ai-data-platform/security-and-auditability-in-ai-data-platform-workbench",
-      "https://community.oracle.com/products/oracleanalytics/kb/articles/32-product-roadmaps",
+      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/permissions-model.html",
       "https://blogs.oracle.com/cloud-infrastructure/aidp-sensitive-data-governance",
-      "https://docs.oracle.com/en-us/iaas/releasenotes/data-safe/data-subsetting.htm",
       "https://docs.oracle.com/en-us/iaas/data-safe/doc/data-subsetting-overview.html",
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/permissions-model.html"
+      "https://docs.oracle.com/en-us/iaas/data-safe/doc/data-subsetting-overview.html"
     ],
     "diagrams": [
       "assets/diagrams/gov-data-security-concepts.svg"
@@ -661,11 +673,10 @@
     "objective": "Seguridad: Acceso, protección y evidencia. Conecta finalidades, PII, identidades y protección con evidencia de acceso efectivo.",
     "publicSources": [
       "https://blogs.oracle.com/ai-data-platform/security-and-auditability-in-ai-data-platform-workbench",
-      "https://community.oracle.com/products/oracleanalytics/kb/articles/32-product-roadmaps",
+      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/permissions-model.html",
       "https://blogs.oracle.com/cloud-infrastructure/aidp-sensitive-data-governance",
-      "https://docs.oracle.com/en-us/iaas/releasenotes/data-safe/data-subsetting.htm",
       "https://docs.oracle.com/en-us/iaas/data-safe/doc/data-subsetting-overview.html",
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/permissions-model.html"
+      "https://docs.oracle.com/en-us/iaas/data-safe/doc/data-subsetting-overview.html"
     ],
     "diagrams": [
       "assets/diagrams/gov-data-security-principles.svg"
@@ -685,11 +696,10 @@
     "objective": "Seguridad: Seguridad en Oracle AI Data Platform y Oracle. Conecta finalidades, PII, identidades y protección con evidencia de acceso efectivo.",
     "publicSources": [
       "https://blogs.oracle.com/ai-data-platform/security-and-auditability-in-ai-data-platform-workbench",
-      "https://community.oracle.com/products/oracleanalytics/kb/articles/32-product-roadmaps",
+      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/permissions-model.html",
       "https://blogs.oracle.com/cloud-infrastructure/aidp-sensitive-data-governance",
-      "https://docs.oracle.com/en-us/iaas/releasenotes/data-safe/data-subsetting.htm",
       "https://docs.oracle.com/en-us/iaas/data-safe/doc/data-subsetting-overview.html",
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/permissions-model.html"
+      "https://docs.oracle.com/en-us/iaas/data-safe/doc/data-subsetting-overview.html"
     ],
     "diagrams": [
       "assets/diagrams/gov-data-security-oracle.svg"
@@ -711,11 +721,10 @@
     "objective": "Seguridad: Ejemplo explicado. Conecta finalidades, PII, identidades y protección con evidencia de acceso efectivo.",
     "publicSources": [
       "https://blogs.oracle.com/ai-data-platform/security-and-auditability-in-ai-data-platform-workbench",
-      "https://community.oracle.com/products/oracleanalytics/kb/articles/32-product-roadmaps",
+      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/permissions-model.html",
       "https://blogs.oracle.com/cloud-infrastructure/aidp-sensitive-data-governance",
-      "https://docs.oracle.com/en-us/iaas/releasenotes/data-safe/data-subsetting.htm",
       "https://docs.oracle.com/en-us/iaas/data-safe/doc/data-subsetting-overview.html",
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/permissions-model.html"
+      "https://docs.oracle.com/en-us/iaas/data-safe/doc/data-subsetting-overview.html"
     ],
     "diagrams": [
       "assets/diagrams/gov-data-security-example.svg"
@@ -733,11 +742,10 @@
     "objective": "Seguridad: Errores frecuentes. Conecta finalidades, PII, identidades y protección con evidencia de acceso efectivo.",
     "publicSources": [
       "https://blogs.oracle.com/ai-data-platform/security-and-auditability-in-ai-data-platform-workbench",
-      "https://community.oracle.com/products/oracleanalytics/kb/articles/32-product-roadmaps",
+      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/permissions-model.html",
       "https://blogs.oracle.com/cloud-infrastructure/aidp-sensitive-data-governance",
-      "https://docs.oracle.com/en-us/iaas/releasenotes/data-safe/data-subsetting.htm",
       "https://docs.oracle.com/en-us/iaas/data-safe/doc/data-subsetting-overview.html",
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/permissions-model.html"
+      "https://docs.oracle.com/en-us/iaas/data-safe/doc/data-subsetting-overview.html"
     ],
     "diagrams": [],
     "questionIds": [],
@@ -753,11 +761,10 @@
     "objective": "Seguridad: Ejercicio de decisión. Conecta finalidades, PII, identidades y protección con evidencia de acceso efectivo.",
     "publicSources": [
       "https://blogs.oracle.com/ai-data-platform/security-and-auditability-in-ai-data-platform-workbench",
-      "https://community.oracle.com/products/oracleanalytics/kb/articles/32-product-roadmaps",
+      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/permissions-model.html",
       "https://blogs.oracle.com/cloud-infrastructure/aidp-sensitive-data-governance",
-      "https://docs.oracle.com/en-us/iaas/releasenotes/data-safe/data-subsetting.htm",
       "https://docs.oracle.com/en-us/iaas/data-safe/doc/data-subsetting-overview.html",
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/permissions-model.html"
+      "https://docs.oracle.com/en-us/iaas/data-safe/doc/data-subsetting-overview.html"
     ],
     "diagrams": [
       "assets/diagrams/gov-data-security-exercise.svg"
@@ -1278,7 +1285,7 @@
     "anchor": "conceptos-clave",
     "source": "original-editorial",
     "note": "Síntesis y escenarios originales; el identificador representa una unidad editorial, no una transcripción.",
-    "objective": "Metadatos: Conceptos clave. Distingue catálogos, glosario, linaje Preview e impacto de cambios.",
+    "objective": "Metadatos: Conceptos clave. Distingue catálogos, glosario, linaje e impacto de cambios.",
     "publicSources": [
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/features-oracle-ai-data-platform.html",
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html",
@@ -1302,7 +1309,7 @@
     "anchor": "linaje-impacto-y-responsabilidad",
     "source": "original-editorial",
     "note": "Síntesis y escenarios originales; el identificador representa una unidad editorial, no una transcripción.",
-    "objective": "Metadatos: Linaje, impacto y responsabilidad. Distingue catálogos, glosario, linaje Preview e impacto de cambios.",
+    "objective": "Metadatos: Linaje, impacto y responsabilidad. Distingue catálogos, glosario, linaje e impacto de cambios.",
     "publicSources": [
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/features-oracle-ai-data-platform.html",
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html",
@@ -1326,7 +1333,7 @@
     "anchor": "catalogos-y-linaje-en-oracle",
     "source": "original-editorial",
     "note": "Síntesis y escenarios originales; el identificador representa una unidad editorial, no una transcripción.",
-    "objective": "Metadatos: Catálogos y linaje en Oracle. Distingue catálogos, glosario, linaje Preview e impacto de cambios.",
+    "objective": "Metadatos: Catálogos y linaje en Oracle. Distingue catálogos, glosario, linaje e impacto de cambios.",
     "publicSources": [
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/features-oracle-ai-data-platform.html",
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html",
@@ -1351,7 +1358,7 @@
     "anchor": "ejemplo-explicado",
     "source": "original-editorial",
     "note": "Síntesis y escenarios originales; el identificador representa una unidad editorial, no una transcripción.",
-    "objective": "Metadatos: Ejemplo explicado. Distingue catálogos, glosario, linaje Preview e impacto de cambios.",
+    "objective": "Metadatos: Ejemplo explicado. Distingue catálogos, glosario, linaje e impacto de cambios.",
     "publicSources": [
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/features-oracle-ai-data-platform.html",
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html",
@@ -1375,7 +1382,7 @@
     "anchor": "errores-frecuentes",
     "source": "original-editorial",
     "note": "Síntesis y escenarios originales; el identificador representa una unidad editorial, no una transcripción.",
-    "objective": "Metadatos: Errores frecuentes. Distingue catálogos, glosario, linaje Preview e impacto de cambios.",
+    "objective": "Metadatos: Errores frecuentes. Distingue catálogos, glosario, linaje e impacto de cambios.",
     "publicSources": [
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/features-oracle-ai-data-platform.html",
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html",
@@ -1395,7 +1402,7 @@
     "anchor": "ejercicio-de-decision",
     "source": "original-editorial",
     "note": "Síntesis y escenarios originales; el identificador representa una unidad editorial, no una transcripción.",
-    "objective": "Metadatos: Ejercicio de decisión. Distingue catálogos, glosario, linaje Preview e impacto de cambios.",
+    "objective": "Metadatos: Ejercicio de decisión. Distingue catálogos, glosario, linaje e impacto de cambios.",
     "publicSources": [
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/features-oracle-ai-data-platform.html",
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html",
