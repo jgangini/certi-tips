@@ -67,7 +67,7 @@
   },
   "presentation": {
     "viewBox": "0 0 1920 1080",
-    "minimumFontSize": 32,
+    "minimumFontSize": 25.5,
     "finalSvg": "assets/diagrams/gov-data-security-oracle.svg",
     "scope": "Logical teaching architecture; conceptual decisions and native features are annotations, not separately provisioned products."
   }

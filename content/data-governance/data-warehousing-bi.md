@@ -46,8 +46,6 @@ El gráfico mensual se publica después de conciliarlo con la fuente autorizada 
 - **“Todos los dashboards usan la misma verdad”.** Se deben verificar modelo, filtros, fecha y versión de cada consumidor.
 - **“Federar significa que no hay ninguna copia”.** El diseño puede incorporar cachés, extracciones y resultados persistidos.
 
-![El Mismo Título Puede Ocultar Dos Contratos]({{base}}assets/diagrams/gov-data-warehousing-bi-errors.svg "Los dos paneles se llaman «Clientes activos», pero usan poblaciones, fechas, versiones de definición y formas de lectura diferentes. El comercial incluye vigentes y pendientes hoy; el financiero usa solo vigentes del cierre de septiembre. Un SQL válido no demuestra equivalencia de indicadores. Compara sus contratos antes de conciliar cifras o explicar diferencias.")
-
 ## Ejercicio de Decisión
 
 Después de publicar el cierre de septiembre, llega una factura atrasada. Ventas quiere reemplazar inmediatamente el total; Finanzas exige explicar qué vio el directorio. Decide cómo publicar la corrección y qué conservar para evitar dos resultados sin contexto.
@@ -60,9 +58,3 @@ El propietario del indicador aplica la política de cierre y autoriza una versi�
 ![Una Corrección Conserva el Cierre Original]({{base}}assets/diagrams/gov-data-warehousing-bi-exercise.svg "La publicación v1 conserva el cierre de septiembre. Una factura tardía recibida en octubre origina una corrección v2 del mismo periodo, con motivo, aprobación y vínculo a v1. El ajuste Δ cambia el importe publicado sin sobrescribir la evidencia anterior. Registra versión y relación entre ambas para explicar y reproducir el cierre original y su corrección.")
 
 </details>
-
-## Fuentes y Repaso
-
-![La Métrica Necesita una Ficha Reproducible]({{base}}assets/diagrams/gov-data-warehousing-bi-recap.svg "La métrica de importe facturado suma líneas: en F-01, 60 + 40 = 100, conciliado contra el origen. Su ficha declara grano, periodo, población incluida, audiencia autorizada, versión de definición y publicación, y propietario. Estos datos permiten reproducir la cifra y comprobar que otro consumidor interpreta y calcula la misma medida.")
-
-Fuentes públicas revisadas al **9 de octubre de 2026**: [Oracle Autonomous AI Lakehouse](https://www.oracle.com/autonomous-database/autonomous-ai-lakehouse/), [Data Analysis y Analytic Views](https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/data-analysis-tool.html) y [consulta, caché e intercambio](https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/autonomous-lakehouse.html). El caso usa cifras didácticas; no representa resultados de clientes.

@@ -46,8 +46,6 @@ Después se vuelve a medir sobre una población identificada. Una mejora declara
 - **“Una limpieza resuelve la causa”.** El error puede seguir entrando por el mismo proceso.
 - **“El promedio de calidad permite publicar”.** Una falla crítica puede exigir bloqueo aunque otras reglas sean perfectas.
 
-![Un Promedio Puede Ocultar el Control Que Bloquea]({{base}}assets/diagrams/gov-data-quality-errors.svg "La completitud del 100 % y la unicidad del 99 % producen un promedio del 99,5 %, pero ese promedio no demuestra unicidad del 100 %. Además, limpiar una copia sin corregir el origen permite que el defecto reaparezca en la siguiente carga. Mantén independientes los controles críticos y verifica la eliminación de la causa antes de dar la incidencia por resuelta.")
-
 ## Ejercicio de Decisión
 
 Una carga de 200 facturas contiene dos registros excedentes según la clave y el criterio de conteo acordados: quedan 198 claves únicas. La política exige **100 % de unicidad para publicar facturas**. Otra regla de completitud alcanza 100 %. El equipo propone promediar ambas reglas y continuar. Decide qué hacer y quién debe resolverlo.
@@ -60,9 +58,3 @@ Con el indicador acordado de claves únicas sobre registros recibidos, 198 de 20
 ![La Unicidad Decide Si se Publica]({{base}}assets/diagrams/gov-data-quality-exercise.svg "La población tiene 200 filas y 198 claves distintas: unicidad del 99 % frente a una exigencia del 100 %, aunque la completitud sea del 100 %. La ruta bloquea la publicación, investiga las filas y repite la prueba después de corregir. Una excepción formal, si se autoriza, registra propietario, motivo, alcance y vigencia; no convierte el resultado en cumplimiento del umbral.")
 
 </details>
-
-## Fuentes y Repaso
-
-![Una Regla Lista para Operar]({{base}}assets/diagrams/gov-data-quality-recap.svg "La ficha R-UNI-01 define la unicidad de la clave de factura para evitar dobles conteos. Registra propósito, población y versión del cierre, medición 198/200 = 99 %, exigencia del 100 %, propietario y acción ante fallo. Conserva esos elementos junto con la decisión de bloquear, corregir y repetir para que el resultado sea reproducible y útil en operación.")
-
-Ejemplos numéricos originales. Fuentes públicas revisadas al **9 de octubre de 2026**: [Catalog Navigator y estadísticas](https://docs.oracle.com/en/cloud/paas/autonomous-database/data-studio-guide/explore-data-catalog.html), [Table AI Assist](https://docs.oracle.com/en-us/iaas/autonomous-database-serverless/doc/adp-augment-data.html), [Oracle Data Transforms](https://docs.oracle.com/en/database/data-integration/data-transforms/releasenotes/whats-new-oracle-data-transforms.html) y [Data Analysis](https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/data-analysis-tool.html). Explica siempre qué pasa cuando una regla falla.

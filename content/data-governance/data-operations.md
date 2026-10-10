@@ -44,8 +44,6 @@ Después de recibir la partición faltante, reprocesa con una regla que evita du
 - **Creer que un respaldo resuelve todo incidente.** Prueba recuperación y dependencias frente al escenario previsto.
 - **Tratar una alerta de presupuesto como apagado.** La reducción de consumo requiere una acción adecuada y autorizada.
 
-![Qué No Demuestra una Señal Operativa]({{base}}assets/diagrams/gov-data-operations-errors.svg "Cada señal deja una comprobación pendiente. «Terminada» no demuestra completitud si P2 falta; una copia guardada no demuestra recuperación si nunca se restauró; y una alerta no reduce el gasto mientras nadie actúe sobre el consumo. Revisa los datos recibidos, ensaya la restauración y asigna la decisión de consumo antes de dar por resuelto cada caso.")
-
 ## Ejercicio de Decisión
 
 Horizonte tolera perder como máximo una hora de datos y necesita recuperar el producto en dos horas. El equipo propone respaldos diarios, nunca ensayó la restauración y recibe una alerta de gasto. ¿Qué tres supuestos debe corregir?
@@ -58,9 +56,3 @@ Debe alinear la estrategia de recuperación con el RPO de una hora; comprobar qu
 ![Los Objetivos Necesitan Pruebas Diferentes]({{base}}assets/diagrams/gov-data-operations-exercise.svg "Contrasta tres supuestos con sus objetivos. Un respaldo diario deja hasta 24 horas entre copias y no acredita un RPO de una hora. Una restauración sin ensayo no demuestra un RTO de dos horas. Una alerta de consumo necesita análisis y una acción acordada. Cada objetivo requiere su propia prueba, en lugar de usar la misma señal como evidencia de los tres.")
 
 </details>
-
-## Fuentes y Repaso
-
-![Del Incidente a la Prevención]({{base}}assets/diagrams/gov-data-operations-recap.svg "La ausencia de P2 inicia cuatro pasos: detectar la carga incompleta, contener el impacto conservando la versión anterior, recuperar y conciliar la partición, y prevenir la repetición mediante el contrato del productor. Conserva el resultado de los controles, la fecha visible y la aceptación de datos. Una prueba posterior permite comprobar que la mejora funciona en la siguiente ejecución.")
-
-Consulta [Budgets de Oracle Cloud Infrastructure](https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/budgetsoverview.htm) y [Cost Analysis de Oracle Cloud Infrastructure](https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/costanalysisoverview.htm). Repasa qué medirías para diferenciar disponibilidad técnica, frescura y cumplimiento del producto.

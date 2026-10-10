@@ -468,9 +468,7 @@
       "https://blogs.oracle.com/ai-data-platform/why-enterprise-ai-needs-deep-business-semantics",
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/manage-master-catalog.html"
     ],
-    "diagrams": [
-      "assets/diagrams/gov-data-modeling-errors.svg"
-    ],
+    "diagrams": [],
     "questionIds": [],
     "assessment": "Discusión guiada y ejercicio de decisión",
     "verified": "2026-10-09"
@@ -494,25 +492,6 @@
       "gov-data-modeling-03"
     ],
     "assessment": "Práctica explicada",
-    "verified": "2026-10-09"
-  },
-  {
-    "lesson": "01-04-07-fuentes-y-repaso.md",
-    "module": "data-modeling",
-    "anchor": "fuentes-y-repaso",
-    "source": "original-editorial",
-    "note": "Síntesis y escenarios originales; el identificador representa una unidad editorial, no una transcripción.",
-    "objective": "Modelado: Fuentes y repaso. Representa entidades, relaciones, vigencia y significado sin confundir esquema con semántica.",
-    "publicSources": [
-      "https://investor.oracle.com/investor-news/news-details/2026/Oracle-Announces-Q1-Results-Driven-by-Triple-Digit-Growth-in-Cloud-Infrastructure-Revenues/default.aspx",
-      "https://blogs.oracle.com/ai-data-platform/why-enterprise-ai-needs-deep-business-semantics",
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/manage-master-catalog.html"
-    ],
-    "diagrams": [
-      "assets/diagrams/gov-data-modeling-recap.svg"
-    ],
-    "questionIds": [],
-    "assessment": "Discusión guiada y ejercicio de decisión",
     "verified": "2026-10-09"
   },
   {
@@ -623,9 +602,7 @@
       "https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/budgetsoverview.htm",
       "https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/costanalysisoverview.htm"
     ],
-    "diagrams": [
-      "assets/diagrams/gov-data-operations-errors.svg"
-    ],
+    "diagrams": [],
     "questionIds": [],
     "assessment": "Discusión guiada y ejercicio de decisión",
     "verified": "2026-10-09"
@@ -646,27 +623,6 @@
     ],
     "diagrams": [
       "assets/diagrams/gov-data-operations-exercise.svg"
-    ],
-    "questionIds": [],
-    "assessment": "Discusión guiada y ejercicio de decisión",
-    "verified": "2026-10-09"
-  },
-  {
-    "lesson": "01-05-07-fuentes-y-repaso.md",
-    "module": "data-operations",
-    "anchor": "fuentes-y-repaso",
-    "source": "original-editorial",
-    "note": "Síntesis y escenarios originales; el identificador representa una unidad editorial, no una transcripción.",
-    "objective": "Operaciones: Fuentes y repaso. Define retención, recuperación, observabilidad y atribución del consumo.",
-    "publicSources": [
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/workflows.html",
-      "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/backup-restore.html",
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/pricing.html",
-      "https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/budgetsoverview.htm",
-      "https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/costanalysisoverview.htm"
-    ],
-    "diagrams": [
-      "assets/diagrams/gov-data-operations-recap.svg"
     ],
     "questionIds": [],
     "assessment": "Discusión guiada y ejercicio de decisión",
@@ -783,9 +739,7 @@
       "https://docs.oracle.com/en-us/iaas/data-safe/doc/data-subsetting-overview.html",
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/permissions-model.html"
     ],
-    "diagrams": [
-      "assets/diagrams/gov-data-security-errors.svg"
-    ],
+    "diagrams": [],
     "questionIds": [],
     "assessment": "Discusión guiada y ejercicio de decisión",
     "verified": "2026-10-09"
@@ -812,28 +766,6 @@
       "gov-data-security-01"
     ],
     "assessment": "Práctica explicada",
-    "verified": "2026-10-09"
-  },
-  {
-    "lesson": "01-06-07-fuentes-y-repaso.md",
-    "module": "data-security",
-    "anchor": "fuentes-y-repaso",
-    "source": "original-editorial",
-    "note": "Síntesis y escenarios originales; el identificador representa una unidad editorial, no una transcripción.",
-    "objective": "Seguridad: Fuentes y repaso. Conecta finalidades, PII, identidades y protección con evidencia de acceso efectivo.",
-    "publicSources": [
-      "https://blogs.oracle.com/ai-data-platform/security-and-auditability-in-ai-data-platform-workbench",
-      "https://community.oracle.com/products/oracleanalytics/kb/articles/32-product-roadmaps",
-      "https://blogs.oracle.com/cloud-infrastructure/aidp-sensitive-data-governance",
-      "https://docs.oracle.com/en-us/iaas/releasenotes/data-safe/data-subsetting.htm",
-      "https://docs.oracle.com/en-us/iaas/data-safe/doc/data-subsetting-overview.html",
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/permissions-model.html"
-    ],
-    "diagrams": [
-      "assets/diagrams/gov-data-security-recap.svg"
-    ],
-    "questionIds": [],
-    "assessment": "Discusión guiada y ejercicio de decisión",
     "verified": "2026-10-09"
   },
   {
@@ -942,9 +874,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/workflows.html",
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html"
     ],
-    "diagrams": [
-      "assets/diagrams/gov-data-integration-errors.svg"
-    ],
+    "diagrams": [],
     "questionIds": [],
     "assessment": "Discusión guiada y ejercicio de decisión",
     "verified": "2026-10-09"
@@ -970,27 +900,6 @@
       "gov-data-integration-03"
     ],
     "assessment": "Práctica explicada",
-    "verified": "2026-10-09"
-  },
-  {
-    "lesson": "01-07-07-fuentes-y-repaso.md",
-    "module": "data-integration",
-    "anchor": "fuentes-y-repaso",
-    "source": "original-editorial",
-    "note": "Síntesis y escenarios originales; el identificador representa una unidad editorial, no una transcripción.",
-    "objective": "Integración: Fuentes y repaso. Elige ingestión, CDC y federación con contratos, frescura y tratamiento de fallos.",
-    "publicSources": [
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/external-catalogs.html",
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/share-data.html",
-      "https://docs.oracle.com/en/cloud/paas/goldengate-service/ocigg/quickstarts/discover-oci-goldengate-data-transforms.html",
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/workflows.html",
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html"
-    ],
-    "diagrams": [
-      "assets/diagrams/gov-data-integration-recap.svg"
-    ],
-    "questionIds": [],
-    "assessment": "Discusión guiada y ejercicio de decisión",
     "verified": "2026-10-09"
   },
   {
@@ -1089,9 +998,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/ai-feature-enablement.html",
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html"
     ],
-    "diagrams": [
-      "assets/diagrams/gov-content-management-errors.svg"
-    ],
+    "diagrams": [],
     "questionIds": [
       "gov-content-management-05"
     ],
@@ -1117,25 +1024,6 @@
       "gov-content-management-06"
     ],
     "assessment": "Práctica explicada",
-    "verified": "2026-10-09"
-  },
-  {
-    "lesson": "01-08-07-fuentes-y-repaso.md",
-    "module": "content-management",
-    "anchor": "fuentes-y-repaso",
-    "source": "original-editorial",
-    "note": "Síntesis y escenarios originales; el identificador representa una unidad editorial, no una transcripción.",
-    "objective": "Contenido: Fuentes y repaso. Gestiona aprobación, vigencia y recuperación de documentos para atención asistida por IA.",
-    "publicSources": [
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/knowledge-bases.html",
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/ai-feature-enablement.html",
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html"
-    ],
-    "diagrams": [
-      "assets/diagrams/gov-content-management-recap.svg"
-    ],
-    "questionIds": [],
-    "assessment": "Discusión guiada y ejercicio de decisión",
     "verified": "2026-10-09"
   },
   {
@@ -1235,9 +1123,7 @@
       "https://docs.oracle.com/en/cloud/saas/enterprise-data-management-cloud/dmcaa/GUID-7807DB45-355D-4D01-88CB-2BAD75C433D4.pdf",
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/features-oracle-ai-data-platform.html"
     ],
-    "diagrams": [
-      "assets/diagrams/gov-master-reference-data-errors.svg"
-    ],
+    "diagrams": [],
     "questionIds": [],
     "assessment": "Discusión guiada y ejercicio de decisión",
     "verified": "2026-10-09"
@@ -1261,25 +1147,6 @@
       "gov-master-reference-data-06"
     ],
     "assessment": "Práctica explicada",
-    "verified": "2026-10-09"
-  },
-  {
-    "lesson": "01-09-07-fuentes-y-repaso.md",
-    "module": "master-reference-data",
-    "anchor": "fuentes-y-repaso",
-    "source": "original-editorial",
-    "note": "Síntesis y escenarios originales; el identificador representa una unidad editorial, no una transcripción.",
-    "objective": "Maestros y referencias: Fuentes y repaso. Resuelve identidades, valores controlados, conflictos y reglas de supervivencia.",
-    "publicSources": [
-      "https://docs.oracle.com/en/cloud/saas/enterprise-data-management-cloud/dmcaa/index.html",
-      "https://docs.oracle.com/en/cloud/saas/enterprise-data-management-cloud/dmcaa/GUID-7807DB45-355D-4D01-88CB-2BAD75C433D4.pdf",
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/features-oracle-ai-data-platform.html"
-    ],
-    "diagrams": [
-      "assets/diagrams/gov-master-reference-data-recap.svg"
-    ],
-    "questionIds": [],
-    "assessment": "Discusión guiada y ejercicio de decisión",
     "verified": "2026-10-09"
   },
   {
@@ -1379,9 +1246,7 @@
       "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/data-analysis-tool.html",
       "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/autonomous-lakehouse.html"
     ],
-    "diagrams": [
-      "assets/diagrams/gov-data-warehousing-bi-errors.svg"
-    ],
+    "diagrams": [],
     "questionIds": [],
     "assessment": "Discusión guiada y ejercicio de decisión",
     "verified": "2026-10-09"
@@ -1405,25 +1270,6 @@
       "gov-data-warehousing-bi-06"
     ],
     "assessment": "Práctica explicada",
-    "verified": "2026-10-09"
-  },
-  {
-    "lesson": "01-10-07-fuentes-y-repaso.md",
-    "module": "data-warehousing-bi",
-    "anchor": "fuentes-y-repaso",
-    "source": "original-editorial",
-    "note": "Síntesis y escenarios originales; el identificador representa una unidad editorial, no una transcripción.",
-    "objective": "DW y BI: Fuentes y repaso. Publica indicadores con grano, semántica y consumo analítico gobernado.",
-    "publicSources": [
-      "https://www.oracle.com/autonomous-database/autonomous-ai-lakehouse/",
-      "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/data-analysis-tool.html",
-      "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/autonomous-lakehouse.html"
-    ],
-    "diagrams": [
-      "assets/diagrams/gov-data-warehousing-bi-recap.svg"
-    ],
-    "questionIds": [],
-    "assessment": "Discusión guiada y ejercicio de decisión",
     "verified": "2026-10-09"
   },
   {
@@ -1538,9 +1384,7 @@
       "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/oracle-ai-data-catalog.html",
       "https://docs.oracle.com/en/database/data-integration/data-transforms/using/view-and-manage-annotations.html"
     ],
-    "diagrams": [
-      "assets/diagrams/gov-metadata-errors.svg"
-    ],
+    "diagrams": [],
     "questionIds": [],
     "assessment": "Discusión guiada y ejercicio de decisión",
     "verified": "2026-10-09"
@@ -1567,28 +1411,6 @@
       "gov-metadata-06"
     ],
     "assessment": "Práctica explicada",
-    "verified": "2026-10-09"
-  },
-  {
-    "lesson": "01-11-07-fuentes-y-repaso.md",
-    "module": "metadata",
-    "anchor": "fuentes-y-repaso",
-    "source": "original-editorial",
-    "note": "Síntesis y escenarios originales; el identificador representa una unidad editorial, no una transcripción.",
-    "objective": "Metadatos: Fuentes y repaso. Distingue catálogos, glosario, linaje Preview e impacto de cambios.",
-    "publicSources": [
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/features-oracle-ai-data-platform.html",
-      "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html",
-      "https://docs.oracle.com/en/cloud/paas/autonomous-database/data-studio-guide/explore-data-catalog.html",
-      "https://docs.oracle.com/en/database/oracle/oracle-database/26/arpls/dbms_catalog.html",
-      "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/oracle-ai-data-catalog.html",
-      "https://docs.oracle.com/en/database/data-integration/data-transforms/using/view-and-manage-annotations.html"
-    ],
-    "diagrams": [
-      "assets/diagrams/gov-metadata-recap.svg"
-    ],
-    "questionIds": [],
-    "assessment": "Discusión guiada y ejercicio de decisión",
     "verified": "2026-10-09"
   },
   {
@@ -1693,9 +1515,7 @@
       "https://docs.oracle.com/en/database/data-integration/data-transforms/releasenotes/whats-new-oracle-data-transforms.html",
       "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/data-analysis-tool.html"
     ],
-    "diagrams": [
-      "assets/diagrams/gov-data-quality-errors.svg"
-    ],
+    "diagrams": [],
     "questionIds": [],
     "assessment": "Discusión guiada y ejercicio de decisión",
     "verified": "2026-10-09"
@@ -1720,26 +1540,6 @@
       "gov-data-quality-06"
     ],
     "assessment": "Práctica explicada",
-    "verified": "2026-10-09"
-  },
-  {
-    "lesson": "01-12-07-fuentes-y-repaso.md",
-    "module": "data-quality",
-    "anchor": "fuentes-y-repaso",
-    "source": "original-editorial",
-    "note": "Síntesis y escenarios originales; el identificador representa una unidad editorial, no una transcripción.",
-    "objective": "Calidad: Fuentes y repaso. Mide aptitud para el uso, prioriza reglas y resuelve incidencias con responsables.",
-    "publicSources": [
-      "https://docs.oracle.com/en/cloud/paas/autonomous-database/data-studio-guide/explore-data-catalog.html",
-      "https://docs.oracle.com/en-us/iaas/autonomous-database-serverless/doc/adp-augment-data.html",
-      "https://docs.oracle.com/en/database/data-integration/data-transforms/releasenotes/whats-new-oracle-data-transforms.html",
-      "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/data-analysis-tool.html"
-    ],
-    "diagrams": [
-      "assets/diagrams/gov-data-quality-recap.svg"
-    ],
-    "questionIds": [],
-    "assessment": "Discusión guiada y ejercicio de decisión",
     "verified": "2026-10-09"
   }
 ]

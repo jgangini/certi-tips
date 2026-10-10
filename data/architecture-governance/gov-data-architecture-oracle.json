@@ -84,7 +84,7 @@
     "viewBox": "0 0 1920 1080",
     "minimumFontSize": 32,
     "finalSvg": "assets/diagrams/gov-data-architecture-oracle.svg",
-    "scope": "User-supplied layout with Oracle Analytics Cloud and its connector removed. Remaining geometry is uniformly enlarged and centered; rounded gray catalog/lineage/agent tags, reference-green streaming and red input/AI connectors.",
+    "scope": "User-supplied layout with Oracle Analytics Cloud and its connector removed. Remaining geometry is uniformly enlarged and centered; rounded gray catalog/lineage/agent tags, reference-green streaming and red input/AI connectors. Label blocks are taller, with wider lineage/agent tags aligned to the left/right edges of Master Catalog, centered text and adjusted catalog connection endpoints; Memory and LLM labels use Oracle Red.",
     "sourceFontSize": 10,
     "sourceScale": 3.2,
     "sourceCrop": [
@@ -101,7 +101,7 @@
   "provenance": {
     "source": "data/diagram-sources/arq.svg",
     "sha256": "f6bfeeb7799838d034aad8e6d155844ade96c7534384b401f5bf7df74f3fd5d0",
-    "adaptation": "Original source preserved byte for byte. User-requested removal of Oracle Analytics Cloud, uniform enlargement/centering of the remaining layout, rounded gray tags, red connectors, and reference-green streaming with white text. Remaining icons, labels and connector geometry retained.",
-    "reviewDate": "2026-10-09"
+    "adaptation": "Original source preserved byte for byte. User-requested removal of Oracle Analytics Cloud, uniform enlargement/centering of the remaining layout, taller rounded gray tags and wider lineage/agent tags aligned to the left/right edges of Master Catalog, red Memory/LLM labels and connectors, and reference-green streaming with white text. Remaining icons, labels and connector routes retained with endpoints adjusted to the taller catalog block.",
+    "reviewDate": "2026-10-10"
   }
 }

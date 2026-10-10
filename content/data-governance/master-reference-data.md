@@ -46,8 +46,6 @@ Los consentimientos se revisan aparte por finalidad y vigencia. Una fusión de i
 - **“El último registro gana siempre”.** La novedad no demuestra autoridad; una modificación reciente puede ser incorrecta.
 - **“Gold ya significa maestro”.** Una capa de procesamiento no sustituye reglas de identidad, aprobación y distribución.
 
-![No Todas las Señales Prueban Identidad]({{base}}assets/diagrams/gov-master-reference-data-errors.svg "Cada señal limita lo que puedes concluir. Nombre y teléfono iguales proponen una candidatura, sin confirmar identidad. Un dato reciente exige comparar fuente y autoridad. Una tabla en la capa Gold necesita reglas y aprobación para considerarse un maestro publicado. Contrasta los indicios con identificación verificada y evidencia de la decisión; ni novedad ni ubicación sustituyen autoridad.")
-
 ## Ejercicio de Decisión
 
 Dos clientes comparten nombre, dirección y teléfono, pero sus identificaciones verificadas son distintas. Marketing solicita unirlos para reducir duplicados. Decide cómo tratar la candidatura, qué evidencia conservar y quién resuelve el desacuerdo. Considera qué pasaría con facturas y consentimientos.
@@ -60,9 +58,3 @@ Mantén las identidades separadas: las identificaciones distintas constituyen ev
 ![Un Hogar Compartido No Borra Dos Identidades]({{base}}assets/diagrams/gov-master-reference-data-exercise.svg "Dos clientes comparten hogar, pero tienen identificaciones verificadas distintas, facturas y consentimientos propios. La relación de hogar no justifica fusionar sus identidades. Conserva ambas y registra la candidatura rechazada con su evidencia. El propietario resuelve la política aplicable, sin trasladar el consentimiento de una persona a la otra.")
 
 </details>
-
-## Fuentes y Repaso
-
-![Publicar un Maestro Significa Entregar Evidencia]({{base}}assets/diagrams/gov-master-reference-data-recap.svg "El maestro publicado incluye identidad estable, valores por atributo y versión. El paquete también conserva correspondencias entre fuentes, reglas de autoridad y supervivencia, y decisiones con responsable y evidencia. Cuando se corrige, registra el cambio y avisa al consumidor. Publicar la tabla sin esos elementos dificulta explicar por qué se eligió cada valor.")
-
-Caso y ejercicios originales. Fuentes revisadas al **9 de octubre de 2026**: [guía de Oracle Fusion Cloud Enterprise Data Management](https://docs.oracle.com/en/cloud/saas/enterprise-data-management-cloud/dmcaa/index.html), [manual con match, merge y survivorship](https://docs.oracle.com/en/cloud/saas/enterprise-data-management-cloud/dmcaa/GUID-7807DB45-355D-4D01-88CB-2BAD75C433D4.pdf) y [capacidades de Oracle AI Data Platform](https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/features-oracle-ai-data-platform.html). Explica qué atributo necesita autoridad, qué coincidencia necesita revisión y qué cambio debe llegar a los consumidores.

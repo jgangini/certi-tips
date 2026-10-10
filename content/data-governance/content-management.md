@@ -44,8 +44,6 @@ El resultado esperado no es borrar toda versión antigua: auditoría puede neces
 - **“Eliminar el PDF elimina toda referencia”.** Hay que revisar fragmentos, índices, respuestas almacenadas y consumidores según su ciclo de vida.
 - **“Un permiso al repositorio resuelve cualquier uso”.** Se deben evaluar finalidad, audiencia, permisos efectivos y exposición de los fragmentos recuperados.
 
-![Retirar un Archivo No Retira Todas sus Huellas]({{base}}assets/diagrams/gov-content-management-errors.svg "Retirar el PDF de origen no demuestra que se hayan retirado sus fragmentos, el índice o las respuestas derivadas. Antes de incorporar contenido confirma versión y aprobación. Al cambiarlo o retirarlo, verifica los derivados y consumidores afectados. Antes de responder comprueba audiencia y finalidad. La retirada debe abarcar todo el recorrido de recuperación correspondiente al uso.")
-
 ## Ejercicio de Decisión
 
 Un contrato sustituido aparece en una respuesta actual. Auditoría necesita conservarlo y Atención al Cliente necesita responder con la versión vigente. Decide qué se conserva, qué se retira del conjunto de recuperación actual y qué evidencia documenta el cambio. Identifica al responsable de cada decisión.
@@ -58,9 +56,3 @@ Contratos confirma la versión aplicable y sus fechas. Se conserva el registro a
 ![Conservar la Historia; Responder con la Versión Vigente]({{base}}assets/diagrams/gov-content-management-exercise.svg "La versión v1 sustituida tiene dos tratamientos. Para auditoría puede conservarse con su relación a v2 y acceso según la política. Para recuperación actual se usa el conjunto autorizado con v2 y se retira v1 de ese uso. El propietario decide conservación, el steward documenta la relación y el custodio comprueba el índice. Prueba consultas históricas y actuales para verificar que cada una recibe la versión que corresponde.")
 
 </details>
-
-## Fuentes y Repaso
-
-![Pasaporte Documental: C-104, Versión 2]({{base}}assets/diagrams/gov-content-management-recap.svg "El pasaporte del contrato C-104 reúne versión 2, vigencia desde 01/09 y aprobación identificable. Añade propietario, finalidad, audiencia autorizada, política de conservación y relación con la cláusula sustituida de v1. Usa esta ficha para decidir si el documento sirve para una consulta concreta; disponer del archivo sin ese contexto no demuestra su aplicabilidad.")
-
-Desarrollo original del caso para aprendizaje. Fuentes Oracle revisadas al **9 de octubre de 2026**: [Knowledge Bases](https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/knowledge-bases.html), [requisitos de funciones de IA](https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/ai-feature-enablement.html) y [Lineage (Preview)](https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html). Repasa la diferencia entre encontrar contenido, autorizar su uso y conservar evidencia.

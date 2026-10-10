@@ -1,5 +1,11 @@
 # Recursos gráficos y revisión didáctica
 
+## Presentación vigente de los módulos 03–11 · 2026-10-10
+
+Quedan 45 gráficos en esos nueve módulos y 66 SVG de Governance en total. Se retiraron las secciones «Fuentes y Repaso» y sus gráficos, además de las imágenes de «Errores Frecuentes»; sus listas explicativas permanecen. Las tablas, círculos, colores y tags siguen las referencias de Arquitectura y Gobierno. El cuerpo usa 25,5 px; los encabezados son grises con texto blanco y los tags de fondo neutro, borde gris y una sola línea. Se centran los conjuntos completos y se conservan textos, significado y pictogramas. Las seis especificaciones técnicas del alcance reflejan el mismo tamaño de texto. La revisión y sus comprobaciones DOM están en [visual-coverage.md](visual-coverage.md).
+
+La procedencia documentada abajo se conserva; las cantidades y decisiones de presentación de 2026-10-09 son históricas y quedan sustituidas por este ajuste para los módulos 03–11.
+
 ## Data Management Fundamentals — rediseño de 2026-10-09
 
 El alcance es de **84 láminas SVG**: 73 en los once módulos y 11 en introducción, matriz, glosario y caso integrador. De ellas, **76 son composiciones conceptuales y ocho son arquitecturas técnicas**. Cada lámina conserva su archivo, su sección y el visor accesible del portal. La Pirámide Dorada incorpora el SVG proporcionado por el usuario; las demás composiciones conservan la procedencia documentada aquí.

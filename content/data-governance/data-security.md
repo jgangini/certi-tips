@@ -44,8 +44,6 @@ En una base compatible, Oracle Data Safe puede ayudar con subsetting y masking. 
 - **Una muestra pequeña es anónima.** Puede conservar identificadores y combinaciones sensibles.
 - **Una propuesta generada por IA es una política aprobada.** El responsable debe validar alcance, excepciones y aplicación.
 
-![Una Etiqueta No Demuestra la Protección]({{base}}assets/diagrams/gov-data-security-errors.svg "Los tres ejemplos conservan riesgos pese a una señal favorable. Un canal cifrado puede permitir leer todos los clientes. Una sola fila puede identificar a una persona por nombre y dirección. Una política propuesta por IA puede carecer de aprobación. Revisa alcance de permisos, valores y contexto, y decisión del responsable; la etiqueta del control no demuestra por sí sola una protección suficiente.")
-
 ## Ejercicio de Decisión
 
 Un asistente de Atención tiene acceso al workspace y necesita consultar contratos. El equipo propone darle permisos de administrador porque la conexión ya usa cifrado. ¿Qué decisión reduce el riesgo y conserva el objetivo?
@@ -58,9 +56,3 @@ Definir la consulta necesaria, otorgar el permiso mínimo sobre datos y herramie
 ![El Permiso Sigue la Tarea del Asistente]({{base}}assets/diagrams/gov-data-security-exercise.svg "El asistente de Atención necesita consultar contratos autorizados para resolver consultas. La matriz permite esa acción y excluye administrar la plataforma o modificar roles. Comprueba la identidad efectiva usada por la conexión del agente y el alcance real de los datos accesibles. Conserva evidencia del acceso observado para contrastarlo con la tarea y los permisos acordados.")
 
 </details>
-
-## Fuentes y Repaso
-
-![Cada Derivado Conserva sus Condiciones de Uso]({{base}}assets/diagrams/gov-data-security-recap.svg "Desde los datos operacionales surgen una copia de prueba y una consulta de Atención con usos diferentes. La copia necesita proteger valores y relaciones para reconciliar; la consulta necesita limitar los datos a contratos autorizados para atender al cliente. Cada derivado conserva finalidad, audiencia, protección y revisión propias. Reevalúa esas condiciones cuando cambie su uso.")
-
-Consulta [subsetting de Oracle Data Safe](https://docs.oracle.com/en-us/iaas/data-safe/doc/data-subsetting-overview.html) y [permisos de Oracle AI Data Platform](https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/permissions-model.html). Repasa qué prueba cada control y qué pregunta sigue pendiente después de aplicarlo.

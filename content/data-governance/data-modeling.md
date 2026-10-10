@@ -18,7 +18,7 @@ Una clave técnica identifica un registro; una clave de negocio puede identifica
 
 El tiempo también se modela. Horizonte registra propósito, estado y vigencia del consentimiento. Un indicador booleano actual no permite explicar qué autorización existía en una fecha pasada. El modelo define qué historial se conserva y cómo se interpreta; la retención aplicable se acuerda con los responsables pertinentes.
 
-![Del Significado a las Claves]({{base}}assets/diagrams/gov-data-modeling-principles.svg "La regla «un cliente puede tener varios contratos» pasa de una relación de negocio a dos estructuras. CLIENTE usa id_cliente como clave; CONTRATO usa id_contrato y conserva id_cliente como referencia. La clave identifica cada entidad y la referencia enlaza ambas. Diseña las estructuras a partir del significado acordado, antes de decidir cómo almacenarlas.")
+![Del Significado al Modelo Lógico]({{base}}assets/diagrams/gov-data-modeling-principles.svg "La regla «un cliente puede tener varios contratos» se representa como una relación 1 a N. En el modelo lógico, CLIENTE.id_cliente es la clave primaria. CONTRATO tiene su propia clave primaria, id_contrato, y usa id_cliente como clave foránea que apunta a CLIENTE.id_cliente. La conexión entre los campos muestra cómo cada contrato conserva su relación con el cliente. Diseña las claves a partir de la regla de negocio acordada, antes de elegir el almacenamiento.")
 
 ## Modelado y Semántica en Oracle
 
@@ -44,8 +44,6 @@ La solución es sumar los importes de línea, o agregar primero al nivel de fact
 - **Usar el nombre como identificador inequívoco.** Personas distintas pueden compartirlo y una persona puede cambiarlo.
 - **Creer que más contexto elimina toda ambigüedad.** Los términos, relaciones e inferencias propuestas necesitan responsables y revisión.
 
-![Tres Contraejemplos para Revisar el Modelo]({{base}}assets/diagrams/gov-data-modeling-errors.svg "Los tres contraejemplos muestran decisiones de modelado distintas. Dos personas con el mismo nombre necesitan claves que distingan su identidad. Una columna de consentimiento actual no demuestra desde cuándo estuvo autorizado un uso. Y «activo» puede referirse a contrato vigente o a facturación del periodo. Conserva identidad, tiempo y definición aprobada para interpretar correctamente cada registro.")
-
 ## Ejercicio de Decisión
 
 Horizonte necesita responder si el cliente autorizó comunicaciones comerciales en la fecha de una campaña. Solo conserva una columna `consentimiento_actual`. ¿Basta para responder? ¿Qué debe representar el modelo?
@@ -58,9 +56,3 @@ No basta. El modelo necesita relacionar el sujeto con el propósito y su estado 
 ![El Consentimiento se Interpreta en una Fecha]({{base}}assets/diagrams/gov-data-modeling-exercise.svg "El consentimiento comercial de C7 comienza el 1 de marzo y se retira el 20 de abril. La campaña del 15 de abril cae dentro del intervalo mostrado, pero la decisión también debe corresponder a la finalidad autorizada y a su evidencia. Modela sujeto, finalidad, inicio y retirada; un indicador de consentimiento actual no reconstruye por sí solo la autorización de una fecha pasada.")
 
 </details>
-
-## Fuentes y Repaso
-
-![Cinco Preguntas Sobre un Registro]({{base}}assets/diagrams/gov-data-modeling-recap.svg "Usa el contrato C2 para responder cinco preguntas: qué entidad representa, qué clave lo identifica, con qué cliente se relaciona, desde cuándo está vigente y qué representa cada fila. C2 pertenece a C7 y conserva una fecha de inicio. Esa ficha permite comprobar que identidad, relación, tiempo y granularidad mantienen el significado del contrato.")
-
-Consulta [semántica empresarial en Oracle AI Data Platform](https://blogs.oracle.com/ai-data-platform/why-enterprise-ai-needs-deep-business-semantics) y [Master Catalog de Oracle AI Data Platform](https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/manage-master-catalog.html). Repasa la diferencia entre identificador, descripción y medida, y explica por qué una definición aprobada importa también para IA.

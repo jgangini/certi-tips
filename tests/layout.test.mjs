@@ -554,7 +554,7 @@ test("technical sections have captioned local graphics and exercise solutions st
     for (const { title, images } of sections) {
       const label = `${module.slug} / ${title}`;
       // These errors sections retain their explanatory lists after their graphics were removed.
-      assert.ok(images.length || (module.contentDir === "data-governance" && ["governance", "data-architecture"].includes(module.slug) && title === "Errores Frecuentes"), `${label} needs an explanatory graphic`);
+      assert.ok(images.length || (module.contentDir === "data-governance" && title === "Errores Frecuentes"), `${label} needs an explanatory graphic`);
       for (const { image, hidden } of images) {
         assert.match(decodeURIComponent(image.attrGet("src")), /^\{\{base\}\}assets\/(?:diagrams|illustrations)\/.+\.(?:svg|png|jpe?g|webp)$/i, `${label} needs a local image`);
         const caption = (image.attrGet("title") || image.content).trim();

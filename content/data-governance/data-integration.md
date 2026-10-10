@@ -46,8 +46,6 @@ Además, una factura anulada debe dejar de contribuir al indicador acordado. Si 
 - **Un conector hereda toda identidad del usuario.** Verifica credencial efectiva, permisos y auditoría en cada extremo.
 - **Solo hay que manejar altas.** Las correcciones, bajas y cambios de esquema también modifican el producto.
 
-![Busca la Falla Dentro del Intercambio]({{base}}assets/diagrams/gov-data-integration-errors.svg "Localiza el fallo en cada intercambio. Entregar de inmediato un dato equivocado no corrige su significado. Una credencial compartida puede hacer que la fuente vea al servicio, no al usuario final. Un flujo que solo transmite altas deja activa una factura anulada. Comprueba semántica, identidad efectiva y propagación de bajas y correcciones, además de la latencia.")
-
 ## Ejercicio de Decisión
 
 Comercial cambia el código de estado de «A» a «ACTIVO» sin avisar. La carga termina bien, pero el indicador de contratos activos cae a cero. ¿El primer cambio debe ser aumentar cómputo, cambiar frecuencia o corregir el acuerdo y su validación?
@@ -60,9 +58,3 @@ Hay que confirmar el cambio con el productor, corregir el mapeo y acordar versio
 ![El Job Termina; el Indicador Cae a Cero]({{base}}assets/diagrams/gov-data-integration-exercise.svg "La carga termina sin errores, pero el indicador cae a cero porque el filtro espera A y ahora recibe ACTIVO. La definición de negocio no cambió; el mapeo sí quedó desactualizado. Valida los valores, aprueba una nueva versión del contrato y reprocesa el periodo afectado. Comprueba el indicador reconciliado antes de aceptar el resultado técnico como correcto.")
 
 </details>
-
-## Fuentes y Repaso
-
-![Primero Procesar; Después Publicar]({{base}}assets/diagrams/gov-data-integration-recap.svg "Sigue F42 desde el origen hasta el producto publicado. El origen conserva una clave estable; el contrato versionado define los cambios admitidos; el procesamiento registra ejecución, reintentos y controles; y el producto necesita cierre validado, uso y responsable. Devuelve las incidencias al productor indicando qué cambió, qué falló y quién debe corregirlo antes de publicar.")
-
-Consulta [Workflows](https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/workflows.html) y [linaje Preview](https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html). Para repasar, explica qué ocurriría ante un reintento, una anulación y un nuevo valor de estado.

@@ -10,7 +10,7 @@ const anchor = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toL
 
 test('Governance graphics use readable widescreen slides with accessible descriptions', () => {
   const names = readdirSync(new URL('../assets/diagrams/', import.meta.url)).filter(name => name.startsWith('gov-') && name.endsWith('.svg'));
-  assert.equal(names.length, 84);
+  assert.equal(names.length, 66);
   for (const name of names) {
     const svg = read(`assets/diagrams/${name}`);
     assert.match(svg, /viewBox="0 0 1920 1080"/, name);
@@ -55,7 +55,7 @@ test('Governance graphics use readable widescreen slides with accessible descrip
 test('Governance evidence maps eleven areas, original diagrams and all assessment references', () => {
   assert.equal(course.modules.filter(page => page.type === 'module').length, 11);
   assert.equal(bank.length, 66);
-  assert.equal(coverage.length, 77);
+  assert.equal(coverage.length, 68);
   assert.equal(course.exam, undefined);
   const used = new Set();
   for (const entry of coverage) {
@@ -66,7 +66,7 @@ test('Governance evidence maps eleven areas, original diagrams and all assessmen
     assert.equal(entry.dama, undefined, 'Book source mapping belongs in the private preparation record');
     assert.ok(entry.publicSources.every(url => url.startsWith('https://') && !url.includes('slack.com')));
     // These sections retain their text after the requested graphics were removed.
-    const textOnly = (entry.module === 'governance' && ['errores-frecuentes', 'fuentes-y-repaso'].includes(entry.anchor)) || (entry.module === 'data-architecture' && entry.anchor === 'errores-frecuentes');
+    const textOnly = entry.anchor === 'errores-frecuentes' || (entry.module === 'governance' && entry.anchor === 'fuentes-y-repaso');
     assert.ok(entry.diagrams.length > 0 || textOnly);
     if (textOnly) assert.equal(entry.diagrams.length, 0);
     for (const diagram of entry.diagrams) assert.ok(existsSync(new URL(`../${diagram}`, import.meta.url)), diagram);
@@ -82,13 +82,17 @@ test('Governance evidence maps eleven areas, original diagrams and all assessmen
   for (const page of [...course.modules, ...course.resources]) {
     const source = read(`content/data-governance/${page.slug}.md`);
     assert.doesNotMatch(source, /oracle\.enterprise\.slack\.com|[A-Z]:\\Desktop|DAMA-DMBOK|capítulo\s+\d|página impresa\s+\d/i);
+    if (course.modules.slice(3).some(module => module.slug === page.slug)) {
+      assert.doesNotMatch(source, /Fuentes y Repaso|gov-[\w-]+-(?:errors|recap)\.svg/, `${page.slug}: removed sections and graphics`);
+      assert.equal([...source.matchAll(/!\[/g)].length, 5, `${page.slug}: five teaching graphics remain`);
+    }
     for (const section of source.split(/^## /m).slice(1)) {
       // ponytail: official access links resources; teaching sections still require graphics.
       if (page.slug === 'overview' && section.startsWith('Acceso al Recorrido Oficial\n')) {
         assert.match(section, /\]\(https:\/\/dama\.org\/certification\/certification-pathway\/\)/);
         continue;
       }
-      if (['governance', 'data-architecture'].includes(page.slug) && /^Errores Frecuentes\r?\n/.test(section)) {
+      if (/^Errores Frecuentes\r?\n/.test(section)) {
         assert.equal([...section.matchAll(/^- \*\*/gm)].length, 3);
         assert.doesNotMatch(section, /!\[/);
         continue;

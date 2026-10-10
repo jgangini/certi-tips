@@ -44,8 +44,6 @@ La evidencia reúne definición anterior y nueva, consumidores revisados, aproba
 - **“Todo linaje es histórico y completo”.** Deben declararse cobertura, granularidad y periodo capturado.
 - **“La descripción IA ya está aprobada”.** La generación no reemplaza la validación del steward y propietario.
 
-![Descubrir, Describir y Aprobar Son Estados Distintos]({{base}}assets/diagrams/gov-metadata-errors.svg "Los estados del activo son distintos. Encontrar una columna demuestra detección técnica. Una descripción sugerida por IA es un borrador pendiente de revisión. La definición empresarial necesita validación del propietario. El linaje observado solo demuestra el periodo y los sistemas capturados. No uses una de esas señales como prueba de aprobación o de historia completa.")
-
 ## Ejercicio de Decisión
 
 Auditoría solicita reconstruir la transformación usada hace tres meses. El linaje Preview actual de Oracle AI Data Platform muestra la última ejecución y el notebook cambió varias veces. Decide si esa vista basta y qué evidencias adicionales necesita Horizonte.
@@ -58,9 +56,3 @@ La vista actual ayuda a comprender dependencias, pero no prueba la transformaci�
 ![El Último Grafo No Reconstruye el Pasado]({{base}}assets/diagrams/gov-metadata-exercise.svg "Para auditar una ejecución de hace tres meses reúne versiones de notebook y regla, identificador de ejecución, entradas, salidas y aprobación aplicable al periodo. El último linaje y el código actual explican relaciones presentes, pero no prueban aquella ejecución. Si falta evidencia histórica, registra la limitación y evita reconstruirla como si hubiera sido capturada.")
 
 </details>
-
-## Fuentes y Repaso
-
-![La Trazabilidad Enlaza Significado y Ejecución]({{base}}assets/diagrams/gov-metadata-recap.svg "Sigue el término «contrato vigente» hasta contratos.estado, la regla R-07 versión 2, la ejecución E-308 y el indicador consumidor. Cada enlace conserva una versión relevante y un responsable: propietario, steward, ingeniería o dueño de la métrica. La trazabilidad permite relacionar significado aprobado, implementación y resultado, en lugar de conservar artefactos aislados.")
-
-Fuentes revisadas al **9 de octubre de 2026**: [capacidades y catálogo de Oracle AI Data Platform](https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/features-oracle-ai-data-platform.html), [Lineage (Preview)](https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html), [Catalog Navigator](https://docs.oracle.com/en/cloud/paas/autonomous-database/data-studio-guide/explore-data-catalog.html), [`DBMS_CATALOG`](https://docs.oracle.com/en/database/oracle/oracle-database/26/arpls/dbms_catalog.html), [Oracle AI Data Catalog](https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/oracle-ai-data-catalog.html) y [anotaciones](https://docs.oracle.com/en/database/data-integration/data-transforms/using/view-and-manage-annotations.html).

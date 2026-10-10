@@ -29,7 +29,29 @@ async (page) => {
           if (Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1) overlaps.push([boxes[i].text, boxes[j].text]);
         }
       }
-      const scale = canvas.width / Number(root.getAttribute('viewBox').split(/\s+/)[2]);
+      const dimensions = root.getAttribute('viewBox').split(/\s+/).map(Number);
+      const scale = Math.min(canvas.width / dimensions[2], canvas.height / dimensions[3]);
+      const originX = canvas.left + (canvas.width - dimensions[2] * scale) / 2 - dimensions[0] * scale;
+      const originY = canvas.top + (canvas.height - dimensions[3] * scale) / 2 - dimensions[1] * scale;
+      const composition = [];
+      const coveredLabels = [];
+      for (const group of root.querySelectorAll('[data-layout="module-artwork"]')) {
+        const art = group.getBoundingClientRect();
+        const [x, y] = group.getAttribute('data-center').split(/\s+/).map(Number);
+        const dx = Math.abs((art.left + art.width / 2 - originX) / scale - x);
+        const dy = Math.abs((art.top + art.height / 2 - originY) / scale - y);
+        if (dx > 1 || dy > 1) composition.push({ dx, dy });
+        const children = [...group.children];
+        for (const [index, label] of children.entries()) {
+          if (label.localName !== 'text') continue;
+          const a = label.getBoundingClientRect();
+          for (const shape of children.slice(index + 1)) {
+            if (!(shape.localName === 'rect' || shape.hasAttribute('data-table-header')) || !shape.getAttribute('fill') || shape.getAttribute('fill') === 'none') continue;
+            const b = shape.getBoundingClientRect();
+            if (b.left <= a.left && b.right >= a.right && b.top <= a.top && b.bottom >= a.bottom) coveredLabels.push(label.textContent);
+          }
+        }
+      }
       const alignment = [];
       for (const card of root.querySelectorAll('[data-layout="centered-card"]')) {
         const frame = card.querySelector('rect').getBoundingClientRect();
@@ -81,12 +103,12 @@ async (page) => {
         // ponytail: proximity flags detached artwork; semantic association still needs individual review.
         if (nearestLabelGap > 80) detachedIcons.push({ icon: icon.dataset.svgrepoIcon, nearestLabelGap });
       }
-      return { name, labels: boxes.length, minimumFont: Math.min(...boxes.map(item => item.size)), slideSize, outside, overlaps, alignment, proximity, iconSpacing, borderCrossings, sourcedIcons: sourcedIcons.length, iconCollisions, detachedIcons };
+      return { name, labels: boxes.length, minimumFont: Math.min(...boxes.map(item => item.size)), slideSize, outside, overlaps, composition, coveredLabels, alignment, proximity, iconSpacing, borderCrossings, sourcedIcons: sourcedIcons.length, iconCollisions, detachedIcons };
     }, name));
   }
   await page.goto(`${origin}/certi-tips/`);
   // The user-supplied pyramid keeps its native 10/12px type, displayed at a uniform 1.72 scale.
-  const issues = reports.filter(item => !item.slideSize || item.outside.length || item.overlaps.length || item.alignment.length || item.proximity.length || item.iconSpacing.length || item.borderCrossings.length || item.iconCollisions.length || item.detachedIcons.length || item.minimumFont < (item.name === 'gov-overview-map.svg' ? 10 : item.name.startsWith('gov-') ? 25.5 : 14));
+  const issues = reports.filter(item => !item.slideSize || item.outside.length || item.overlaps.length || item.composition.length || item.coveredLabels.length || item.alignment.length || item.proximity.length || item.iconSpacing.length || item.borderCrossings.length || item.iconCollisions.length || item.detachedIcons.length || item.minimumFont < (item.name === 'gov-overview-map.svg' ? 10 : item.name.startsWith('gov-') ? 25.5 : 14));
   if (issues.length) throw new Error(JSON.stringify(issues));
   return { diagrams: reports, screenshots: 0 };
 }
