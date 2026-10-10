@@ -152,8 +152,8 @@ async (page) => {
   await page.goto(`${base}${course}/practice/`);
   await page.evaluate(key => { localStorage.removeItem(key); localStorage.removeItem(`${key}:last-practice`); }, quizKey);
   await page.reload();
-  assert(await page.locator('[data-practice-intro]:not([hidden])').count() === 2, 'Initial practice instructions missing');
-  await page.getByRole('button', { name: 'Empezar práctica →', exact: true }).click();
+  assert(await page.locator('[data-practice-intro]:not([hidden])').count() === 0, 'Practice landing must not have surrounding text');
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
   assert(await page.locator('[data-practice-intro]:not([hidden])').count() === 0, 'Instructions repeat during questions');
   const bank = await page.evaluate(async base => (await fetch(`${base}assets/questions.json`)).json(), base);
   const answerCurrent = async (wrong) => {
@@ -177,7 +177,7 @@ async (page) => {
   await page.evaluate(() => { window.confirm = () => true; });
   await page.locator('[data-reset]').click();
   assert(await page.locator('[data-start]').isVisible(), 'Reset did not return to start');
-  assert(await page.locator('[data-practice-intro]:not([hidden])').count() === 2, 'Reset did not restore instructions');
+  assert(await page.locator('[data-practice-intro]:not([hidden])').count() === 0, 'Reset must not restore surrounding text');
   assert(await page.evaluate(key => localStorage.getItem(key), quizKey) === null, 'Reset did not clear saved test');
   assert(await page.evaluate(key => localStorage.getItem(key), progressKey) === savedProgress, 'Reset erased course progress');
   await page.reload();
@@ -257,14 +257,14 @@ async (page) => {
   assert(await page.locator('[data-hero-replay]').count() === 0, 'Replay control should not be shown');
   assert(await page.locator('.path-section.is-active > .group-carousel-controls').count() === 1, 'Group controls must sit inside the active section');
   await page.setViewportSize({ width: 1280, height: 900 });
-  assert(await page.locator('.path-section').count() === 4, 'Expected Foundation Sprint and three specializations');
-  assert(await page.locator('.certification-item').count() === 11, 'Missing or duplicated FY27 certifications');
-  assert(await page.locator('.certification-item.has-guide').count() === 2, 'Expected two available guides');
+  assert(await page.locator('.path-section').count() === 5, 'Expected Foundation, three certification specializations and Governance');
+  assert(await page.locator('.certification-item').count() === 12, 'Missing or duplicated courses');
+  assert(await page.locator('.certification-item.has-guide').count() === 4, 'Expected four available guides');
   assert(await page.locator('.certification-actions a[href^="https://mylearn.oracle.com/"]').count() === 11, 'Every certification needs an Oracle source');
-  assert(await page.locator('.path-nav .path-group').count() === 4, 'Header does not expose all groups');
-  assert(await page.locator('.certitips-button:not([disabled])').count() === 2, 'Available CertiTips guide button is missing');
-  assert(await page.locator('.certitips-button[disabled]').count() === 9, 'Pending guides need disabled gray buttons');
-  assert(await page.locator('.certitips-button svg[fill="currentColor"]').count() === 11, 'CertiTips icon is missing');
+  assert(await page.locator('.path-nav .path-group').count() === 5, 'Header does not expose all groups');
+  assert(await page.locator('.certitips-button:not([disabled])').count() === 4, 'Available CertiTips guide button is missing');
+  assert(await page.locator('.certitips-button[disabled]').count() === 8, 'Pending guides need disabled gray buttons');
+  assert(await page.locator('.certitips-button svg[fill="currentColor"]').count() === 12, 'CertiTips icon is missing');
   assert(await page.locator('.path-section.is-active').count() === 1, 'Exactly one group should be visible');
   assert(await page.locator('#foundation-sprint .certification-item:visible').count() === 3, 'Foundation certifications are not a vertical list');
   await page.locator('[data-group-next]').click();
@@ -281,12 +281,11 @@ async (page) => {
   assert(await headerGroup.evaluate(element => element.open), 'Desktop group dropdown did not open on pointer entry');
   await nextHeaderGroup.hover();
   assert(await nextHeaderGroup.evaluate(element => element.open) && !await headerGroup.evaluate(element => element.open), 'Desktop category change did not show only the new dropdown');
-  await headerGroup.hover();
-  const pendingMenu = headerGroup.locator('.path-group-panel a').first();
+  const pendingMenu = nextHeaderGroup.locator('.path-group-panel a[target="_blank"]').first();
   assert((await pendingMenu.getAttribute('href')).startsWith('https://mylearn.oracle.com/'), 'Pending certification does not open its official route');
   assert(await pendingMenu.getAttribute('target') === '_blank', 'Official route should open in a new tab');
   await pendingMenu.hover();
-  assert(await headerGroup.evaluate(element => element.open), 'Desktop dropdown closed before its item could be selected');
+  assert(await nextHeaderGroup.evaluate(element => element.open), 'Desktop dropdown closed before its item could be selected');
   assert(await pendingMenu.locator('.coming-soon').isVisible(), 'Pending certification badge is missing on hover');
   const pendingStyle = await pendingMenu.evaluate(link => {
     const badge = getComputedStyle(link.querySelector('.coming-soon'));
@@ -295,6 +294,7 @@ async (page) => {
   });
   assert(pendingStyle.background === 'rgb(240, 242, 246)' && pendingStyle.color === 'rgb(96, 101, 116)', 'Pending certification hover must be gray, not red');
   assert(pendingStyle.badgeBackground === 'rgb(241, 177, 63)' && pendingStyle.badgeColor === 'rgb(91, 56, 0)' && pendingStyle.badgeWeight === '400', 'Coming soon badge needs regular dark-yellow text');
+  await headerGroup.hover();
   const activeMenu = headerGroup.locator('.path-group-panel a[href$="/1Z0-1157-26/overview/"]');
   assert(await activeMenu.count() === 1, 'Available certification does not link directly to its guide');
   await activeMenu.click();
@@ -320,7 +320,7 @@ async (page) => {
   await page.evaluate(() => localStorage.removeItem('certitips:theme'));
   await page.locator('[data-search-open]').click();
   assert(await page.locator('#site-search').evaluate(dialog => dialog.open), 'Search did not open');
-  assert(await page.locator('[data-search-kind="certification"]:visible').count() === 11, 'Search did not list all certifications by default');
+  assert(await page.locator('[data-search-kind="certification"]:visible').count() === 12, 'Search did not list all courses by default');
   assert(await page.locator('[data-search-kind="topic"]:visible').count() === 0, 'Topics should appear only when searching');
   assert(await page.locator('.search-results').evaluate(list => list.scrollHeight > list.clientHeight), 'Default certification list should scroll inside the dialog');
   await page.setViewportSize({ width: 320, height: 640 });
@@ -339,7 +339,7 @@ async (page) => {
   assert(await page.locator('.search-result-description:visible').count() > 0, 'Filtered results do not explain their match');
   await page.locator('[data-search-close]').click();
   assert(await page.locator('#search-query').inputValue() === '', 'Clear search did not clear the query');
-  assert(await page.locator('[data-search-kind="certification"]:visible').count() === 11, 'Clearing search did not restore certifications');
+  assert(await page.locator('[data-search-kind="certification"]:visible').count() === 12, 'Clearing search did not restore courses');
   await page.locator('[data-search-close]').click();
   assert(!await page.locator('#site-search').evaluate(dialog => dialog.open), 'Close button did not close an empty search');
   await page.keyboard.press('Control+k');
@@ -349,7 +349,7 @@ async (page) => {
   assert(!await page.locator('#site-search').evaluate(dialog => dialog.open), 'Escape did not close search');
   await page.keyboard.press('Control+k');
   assert(await page.locator('#site-search').evaluate(dialog => dialog.open), 'Ctrl+K did not open search');
-  assert(await page.locator('[data-search-kind="certification"]:visible').count() === 11, 'Reopening search did not restore default certifications');
+  assert(await page.locator('[data-search-kind="certification"]:visible').count() === 12, 'Reopening search did not restore default courses');
   await page.locator('#search-query').fill('Oracle AI Vector Search Professional');
   const pendingSearch = page.locator('.search-results li:visible a').first();
   assert((await pendingSearch.getAttribute('href')).startsWith('https://mylearn.oracle.com/'), 'Search sends pending certification to home instead of Oracle');
@@ -362,13 +362,13 @@ async (page) => {
   await page.waitForURL(`${base}${course}/overview/`);
   for (const removed of ['TU PRÓXIMA CERTIFICACIÓN EMPIEZA AQUÍ', 'EN ESPAÑOL', 'ACCESO LIBRE', 'SIN REGISTRO', '¿Vas a dar una charla?', '90 minutos']) assert(!homeText.includes(removed), `Removed text remains: ${removed}`);
   assert(await page.locator('.hero-visual, .approach-grid, .hero-proof, .course-metrics').count() === 0, 'Removed home panel remains');
-  checks.push('11 Oracle routes, two active and nine pending guides, four-group carousel, search, dropdowns, dark-mode persistence');
+  checks.push('11 Oracle routes, four active and eight pending guides, five-group carousel, search, dropdowns, dark-mode persistence');
 
   const context = await page.context().browser().newContext();
   await context.addInitScript(() => Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('Blocked for test', 'SecurityError'); } }));
   const blocked = await context.newPage();
   await blocked.goto(`${base}${course}/practice/`);
-  await blocked.getByRole('button', { name: 'Empezar práctica →', exact: true }).click();
+  await blocked.getByRole('button', { name: 'Entrar', exact: true }).click();
   await blocked.locator('input[name=answer]').first().check();
   await blocked.getByRole('button', { name: 'Comprobar respuesta', exact: true }).click();
   assert(await blocked.locator('.feedback li').count() === 4, 'Quiz failed with blocked storage');

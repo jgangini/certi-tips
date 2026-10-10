@@ -1,7 +1,5 @@
 La tienda ya funciona. Ahora el equipo necesita saber cuánto consume, quién es responsable de cada recurso y qué acciones pueden evitar gastos innecesarios.
 
-**Al terminar podrás:** interpretar modelos de consumo; distinguir presupuestos, cuotas y límites; usar etiquetas para asignar costos; y reconocer Cost Analysis, Cloud Advisor, BYOL y Support Rewards.
-
 ## Conceptos clave
 
 **Pay As You Go** vincula el pago al consumo medido sin una bolsa de consumo comprometida de ese modelo. Un acuerdo de **Universal Credits** incorpora compromiso y condiciones contractuales. El importe depende del servicio y su unidad de medida: capacidad y tiempo, solicitudes, almacenamiento, transferencia u otros medidores. Una VM ociosa puede seguir generando consumo.
@@ -60,7 +58,7 @@ En la demostración de consola identifica la diferencia entre gasto acumulado, p
 El equipo recibe una alerta al llegar al 80 % de su presupuesto. Quiere impedir que Desarrollo cree más de cuatro unidades de un recurso y saber qué servicio está aumentando el gasto. ¿Qué debe utilizar para cada objetivo? ¿La alerta ya detuvo el gasto?
 
 <details>
-<summary>Ver solución y explicación</summary>
+<summary>Solución</summary>
 
 Usa una cuota del recurso en Desarrollo para controlar su cantidad, dentro de los límites de servicio existentes. Usa Cost Analysis para investigar el incremento y los reportes si necesita detalle adicional. El presupuesto envió una alerta; no detuvo automáticamente recursos ni consumo. El equipo debe decidir una acción conociendo las dependencias.
 

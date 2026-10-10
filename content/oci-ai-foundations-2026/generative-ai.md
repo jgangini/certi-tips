@@ -67,7 +67,7 @@ Una temperatura menor suele reducir variación; no vuelve verdadero un dato fals
 Una aplicación debe responder con el inventario que cambia cada hora y utilizar un formato breve. ¿Qué probarías antes de entrenar un modelo nuevo?
 
 <details>
-<summary>Ver solución y explicación</summary>
+<summary>Solución</summary>
 
 Consulta el inventario autorizado mediante una herramienta y aporta ese resultado al contexto; usa instrucciones y ejemplos para el formato. Si la información está en documentos, evalúa RAG. Fine-tuning puede ayudar a un comportamiento persistente, pero no hace que el modelo conozca por sí solo las existencias de esta hora. Comprueba tanto exactitud del dato como formato.
 

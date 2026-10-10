@@ -1,7 +1,5 @@
 La tienda necesita impedir configuraciones peligrosas, descubrir problemas y proteger información. Ningún servicio aislado resuelve todas esas tareas.
 
-**Al terminar podrás:** asignar responsabilidades; diferenciar Cloud Guard, Security Zones, WAF y Vault; y explicar la relación entre cifrado, claves, secretos y autorización.
-
 ## Conceptos clave
 
 En el **modelo de responsabilidad compartida**, Oracle protege la infraestructura cloud y opera los componentes que corresponden al servicio. El cliente configura sus recursos, controla identidades y protege sus datos y aplicaciones. En una VM de IaaS también administra el sistema operativo invitado y su parcheo. Un servicio gestionado puede trasladar tareas a Oracle, pero no decide por ti quién debe leer tus pedidos. Véase [seguridad de OCI](https://docs.oracle.com/en-us/iaas/Content/Security/Concepts/security_overview.htm).
@@ -57,7 +55,7 @@ En la demostración de Vault identifica vault, clave y versión, y qué servicio
 La tienda pide tres medidas: denegar buckets públicos antes de crearlos, revisar continuamente configuraciones de riesgo y filtrar ataques HTTP a su web. Asigna un servicio a cada medida y explica qué controles del cliente siguen siendo necesarios.
 
 <details>
-<summary>Ver solución y explicación</summary>
+<summary>Solución</summary>
 
 Security Zones con una receta que prohíba exposición pública; Cloud Guard para detección y respuestas configuradas; WAF para inspección de solicitudes web. El cliente debe definir políticas IAM, configurar las reglas y el ámbito, revisar los hallazgos y mantener su aplicación segura. Los nombres de los servicios no reemplazan su configuración.
 

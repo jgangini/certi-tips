@@ -1,0 +1,74 @@
+{
+  "title": "Cada ámbito comprueba su permiso",
+  "layout": "left-to-right",
+  "groups": [
+    {
+      "id": "platform",
+      "label": "Ámbitos de servicios y capacidades",
+      "type": "platform"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "identity",
+      "label": "Oracle Cloud Infrastructure Identity and Access Management",
+      "service": "Oracle Cloud Infrastructure Identity and Access Management",
+      "group": "platform",
+      "iconCatalogId": "iam"
+    },
+    {
+      "id": "platform",
+      "label": "Oracle AI Data Platform",
+      "service": "Oracle AI Data Platform",
+      "group": "platform",
+      "iconCatalogId": "oci-ai-data-platform-workbench"
+    },
+    {
+      "id": "database",
+      "label": "Oracle Autonomous AI Database",
+      "service": "Oracle Autonomous AI Database",
+      "group": "platform",
+      "iconCatalogId": "oracle-autonomous-database"
+    },
+    {
+      "id": "safe",
+      "label": "Oracle Data Safe",
+      "service": "Oracle Data Safe",
+      "group": "platform",
+      "iconCatalogId": "data-safe"
+    }
+  ],
+  "edges": [
+    {
+      "from": "identity",
+      "to": "platform",
+      "label": "admin",
+      "meaning": "Identity policies authorize platform access; object permissions remain a separate check.",
+      "evidence": "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/permissions-model.html"
+    },
+    {
+      "from": "platform",
+      "to": "database",
+      "label": "data",
+      "meaning": "External catalog uses the source connection credentials and their object privileges.",
+      "evidence": "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/external-catalogs.html"
+    },
+    {
+      "from": "safe",
+      "to": "database",
+      "label": "security",
+      "meaning": "Oracle Data Safe operates on a supported registered Autonomous AI Database target.",
+      "evidence": "https://docs.oracle.com/en-us/iaas/data-safe/doc/register-autonomous-ai-database.html"
+    }
+  ],
+  "conceptualAnnotations": {
+    "protection": "Custom framework; native masking/row-column controls are not implied.",
+    "audit": "Supported platform operations only."
+  },
+  "presentation": {
+    "viewBox": "0 0 1920 1080",
+    "minimumFontSize": 32,
+    "finalSvg": "assets/diagrams/gov-data-security-oracle.svg",
+    "scope": "Logical teaching architecture; conceptual decisions and native features are annotations, not separately provisioned products."
+  }
+}

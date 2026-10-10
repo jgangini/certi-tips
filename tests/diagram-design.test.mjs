@@ -1,11 +1,39 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 
 const diagrams = new URL("../assets/diagrams/", import.meta.url);
 const readDiagram = (name) => readFileSync(new URL(name, diagrams), "utf8");
 const attributes = (tag) => Object.fromEntries([...tag.matchAll(/([\w:-]+)\s*=\s*(["'])(.*?)\2/gs)].map(([, key, , value]) => [key, value]));
 const declaration = (style, property) => [...(style || "").matchAll(/([\w-]+)\s*:\s*([^;]+)/g)].filter(([, name]) => name === property).at(-1)?.[2].trim();
+
+test("Governance icons retain reviewed source geometry and contain no active or external content", () => {
+  const root = new URL("../", import.meta.url);
+  const manifest = JSON.parse(readFileSync(new URL("assets/icons/governance/manifest.json", root), "utf8"));
+  const geometry = (svg) => [...svg.matchAll(/<(path|circle|ellipse|rect|line|polyline|polygon)\b([^>]*)>/g)].map(([, tag, raw]) => {
+    const attrs = attributes(raw);
+    return [tag, Object.fromEntries(Object.entries(attrs).filter(([name]) => /^(?:d|points|x|y|x1|x2|y1|y2|width|height|rx|ry|r|cx|cy)$/.test(name)).sort())];
+  });
+  const sources = new Map();
+  for (const icon of manifest.icons) {
+    assert.match(icon.localFile, /^assets\/icons\/governance\/[\w-]+\.svg$/);
+    assert.match(icon.discoveryUrl, /^https:\/\/www\.svgrepo\.com\//);
+    const source = readFileSync(new URL(icon.localFile, root), "utf8").replace(/\r\n/g, "\n");
+    assert.equal(createHash("sha256").update(source).digest("hex"), icon.sha256, icon.key);
+    assert.doesNotMatch(source, /<(?:script|foreignObject|image|use|style|a)\b|\bon\w+\s*=|\bhref\s*=/i, icon.key);
+    sources.set(icon.key, geometry(source));
+  }
+  let count = 0;
+  for (const name of readdirSync(diagrams).filter(name => /^gov-.*\.svg$/.test(name))) {
+    for (const [, key, body] of readDiagram(name).matchAll(/<g\b[^>]*data-svgrepo-icon="([^"]+)"[^>]*>([\s\S]*?)<\/g>/g)) {
+      assert.ok(sources.has(key), `${name}: undocumented icon ${key}`);
+      assert.deepEqual(geometry(body), sources.get(key), `${name}: altered ${key} geometry`);
+      count++;
+    }
+  }
+  assert.ok(count > 0, "No sourced Governance icons were checked");
+});
 
 test("OCI icon badges have a visible border against both their fill and surrounding gradients", () => {
   const luminance = (hex) => {

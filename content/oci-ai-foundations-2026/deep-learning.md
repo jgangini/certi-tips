@@ -62,7 +62,7 @@ En el ejemplo de círculos, cambia una sola variable, como cantidad de neuronas,
 Debes detectar defectos visuales en una pieza y analizar una serie temporal de vibraciones. ¿Qué familias usarías como punto de partida y qué evaluarías?
 
 <details>
-<summary>Ver solución y explicación</summary>
+<summary>Solución</summary>
 
 Una CNN es un punto de partida para patrones espaciales en imágenes. Para vibraciones ordenadas en el tiempo, compara un modelo de secuencia como RNN o LSTM con una alternativa sencilla. Evalúa con imágenes y periodos nuevos, evitando que muestras casi idénticas del mismo equipo aparezcan a ambos lados de la división. La arquitectura no sustituye datos representativos.
 

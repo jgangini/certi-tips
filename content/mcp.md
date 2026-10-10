@@ -78,7 +78,7 @@ Antes de ejecutar un paquete externo revisa procedencia y permisos. Para una sim
 Un host inicia un servidor por stdio. El servidor consulta OCI por HTTPS. ¿Debes configurar el cliente MCP como Streamable HTTP solo porque los datos proceden de la nube?
 
 <details>
-<summary>Ver solución y explicación</summary>
+<summary>Solución</summary>
 
 No. El transporte MCP describe la conexión entre cliente y servidor: en este caso es stdio. La conexión HTTPS del servidor hacia OCI es otra integración. Cambiar el transporte sin cambiar el despliegue rompería la comunicación; el lugar donde están los datos no determina automáticamente el transporte MCP.
 

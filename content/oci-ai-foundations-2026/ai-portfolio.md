@@ -64,7 +64,7 @@ Si el problema cambiara a transcribir audios, empieza evaluando Speech. No neces
 Un equipo debe transcribir 300 grabaciones, entrenar un clasificador propio y ejecutar su evaluación cada semana. Asigna una capacidad a cada necesidad.
 
 <details>
-<summary>Ver solución y explicación</summary>
+<summary>Solución</summary>
 
 Evalúa Speech para transcripción por lotes; usa Data Science para desarrollar el clasificador; utiliza jobs o una pipeline para repetir la evaluación. El catálogo conserva el modelo. Si después necesitas inferencia en línea, añade un despliegue. No es necesario administrar un Supercluster para justificar estas tareas.
 

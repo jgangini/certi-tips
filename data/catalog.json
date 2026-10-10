@@ -115,6 +115,20 @@
           "officialUrl": "https://mylearn.oracle.com/ou/learning-path/become-an-oci-architect-associate-2025/147631"
         }
       ]
+    },
+    {
+      "id": "governance",
+      "label": "Governance",
+      "title": "Governance",
+      "description": "Conecta el marco DAMA con decisiones, responsables y capacidades actuales de Oracle para gobernar datos y su uso en IA.",
+      "items": [
+        {
+          "id": "data-governance",
+          "title": "Data Management Fundamentals",
+          "description": "Fundamentos de gestión de datos con DAMA y Oracle Cloud: once áreas, casos y práctica explicada.",
+          "guide": "data-governance"
+        }
+      ]
     }
   ],
   "courses": [
@@ -125,7 +139,7 @@
       "description": "De entender un agente a elegir cómo construirlo, conectarlo y operarlo. Una ruta visual con ejemplos, ejercicios y práctica explicada.",
       "exam": { "code": "1Z0-1157-26", "questions": 40, "minutes": 60, "passingPercent": 65, "verified": "2026-09-28", "source": "https://blogs.oracle.com/oracleuniversity/oracle-agentic-ai-foundations-training-certification-now-available" },
       "modules": [
-        { "slug": "overview", "title": "Tu punto de partida", "short": "Empieza aquí", "description": "Conoce la ruta, revisa los prerrequisitos y decide cómo vas a estudiar.", "minutes": 8, "type": "orientation" },
+        { "slug": "overview", "title": "Tu punto de partida", "short": "Empieza aquí", "description": "Conoce la guía y accede al recorrido oficial de Oracle MyLearn.", "minutes": 8, "type": "orientation" },
         { "slug": "agents", "title": "Cómo funciona un agente", "short": "Agentes de IA", "description": "Modelo, herramientas y ciclo de ejecución: las piezas que convierten una respuesta en una acción.", "minutes": 18, "type": "module" },
         { "slug": "langchain", "title": "Construir con LangChain", "short": "LangChain", "description": "Entiende las cadenas y lo que ocurre entre una decisión del modelo y la ejecución de una herramienta.", "minutes": 18, "type": "module" },
         { "slug": "mcp", "title": "Conectar herramientas con MCP", "short": "Model Context Protocol", "description": "Un protocolo común para descubrir herramientas, acceder a recursos y conectar aplicaciones.", "minutes": 18, "type": "module" },
@@ -136,7 +150,7 @@
       "resources": [
         { "slug": "glossary", "title": "Habla el idioma de los agentes", "short": "Glosario", "description": "Términos técnicos en inglés, explicados en español y con sus diferencias importantes." },
         { "slug": "exam-checklist", "title": "El siguiente paso: tu certificación", "short": "Ruta al examen oficial", "description": "Comprueba tu preparación y sigue los enlaces oficiales para completar la ruta de Oracle." },
-        { "slug": "practice", "title": "Pon a prueba lo que entiendes", "short": "Práctica", "description": "12 preguntas, seis temas y una explicación en cada respuesta. Aprende también de tus errores." }
+        { "slug": "practice", "title": "Práctica", "short": "Práctica", "description": "Pon a prueba lo que entiendes" }
       ],
       "questionBank": "questions",
       "coverage": "coverage",
@@ -153,7 +167,7 @@
       "lessonCounts": [1, 6, 10, 6, 8, 12, 8, 6, 9, 6],
       "exam": { "code": "1Z0-1122-26", "minutes": 60, "verified": "2026-10-06", "source": "https://mylearn.oracle.com/ou/learning-path/become-an-oci-ai-foundations-associate-2026/163544" },
       "modules": [
-        { "slug": "overview", "title": "Tu punto de partida", "short": "Empieza aquí", "description": "Conoce la ruta, revisa los prerrequisitos y decide cómo vas a estudiar.", "minutes": 8, "type": "orientation" },
+        { "slug": "overview", "title": "Tu punto de partida", "short": "Empieza aquí", "description": "Conoce la guía y accede al recorrido oficial de Oracle MyLearn.", "minutes": 8, "type": "orientation" },
         { "slug": "ai-basics", "title": "Entender la inteligencia artificial", "short": "Fundamentos de IA", "description": "Relaciona tareas, datos y resultados; distingue IA, ML, deep learning e IA generativa.", "minutes": 18, "type": "module" },
         { "slug": "machine-learning", "title": "Aprender de los datos", "short": "Machine Learning", "description": "Elige regresión, clasificación, clustering o aprendizaje por refuerzo y evalúa sin fuga de datos.", "minutes": 25, "type": "module" },
         { "slug": "deep-learning", "title": "Redes que aprenden representaciones", "short": "Deep Learning", "description": "Sigue una neurona y compara MLP, CNN, RNN y LSTM según la estructura de los datos.", "minutes": 22, "type": "module" },
@@ -167,7 +181,7 @@
       "resources": [
         { "slug": "glossary", "title": "Habla el idioma de la IA", "short": "Glosario", "description": "Conceptos en inglés con definiciones en español y diferencias que debes dominar." },
         { "slug": "exam-checklist", "title": "El siguiente paso: tu certificación", "short": "Ruta al examen oficial", "description": "Repasa los objetivos, comprueba tu preparación y continúa en Oracle MyLearn." },
-        { "slug": "practice", "title": "Pon a prueba lo que entiendes", "short": "Práctica", "description": "18 preguntas por intento, nueve temas y una explicación para cada alternativa." }
+        { "slug": "practice", "title": "Práctica", "short": "Práctica", "description": "Pon a prueba lo que entiendes" }
       ]
     },
     {
@@ -198,7 +212,7 @@
           "slug": "overview",
           "title": "Tu punto de partida",
           "short": "Empieza aquí",
-          "description": "Conoce la ruta, revisa los prerrequisitos y decide cómo vas a estudiar.",
+          "description": "Conoce la guía y accede al recorrido oficial de Oracle MyLearn.",
           "minutes": 8,
           "type": "orientation"
         },
@@ -274,9 +288,157 @@
         },
         {
           "slug": "practice",
-          "title": "Pon a prueba lo que entiendes",
+          "title": "Práctica",
           "short": "Práctica",
-          "description": "14 preguntas por intento, siete temas y explicación para cada alternativa."
+          "description": "Pon a prueba lo que entiendes"
+        }
+      ]
+    },
+    {
+      "id": "data-governance",
+      "title": "Data Management Fundamentals",
+      "sidebarLabel": "DAMA",
+      "edition": "2026",
+      "description": "Fundamentos de gestión de datos con DAMA, aplicados a Oracle Cloud mediante Oracle AI Data Platform y Oracle Autonomous AI Lakehouse.",
+      "contentDir": "data-governance",
+      "questionBank": "questions-governance",
+      "coverage": "coverage-governance",
+      "lessonCounts": [
+        1,
+        7,
+        6,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7
+      ],
+      "modules": [
+        {
+          "slug": "overview",
+          "title": "Tu Punto de Partida",
+          "short": "Empieza Aquí",
+          "description": "Conoce el enfoque DAMA y el caso que une las once áreas.",
+          "minutes": 12,
+          "type": "orientation"
+        },
+        {
+          "slug": "governance",
+          "title": "Gobierno de Datos",
+          "short": "Gobierno",
+          "description": "Define autoridad, responsabilidades, políticas y evidencia para el uso de los datos.",
+          "minutes": 25,
+          "type": "module"
+        },
+        {
+          "slug": "data-architecture",
+          "title": "Arquitectura de Datos",
+          "short": "Arquitectura",
+          "description": "Relaciona capacidades y flujos con las decisiones de negocio y la arquitectura de datos.",
+          "minutes": 25,
+          "type": "module"
+        },
+        {
+          "slug": "data-modeling",
+          "title": "Modelado y Diseño de Datos",
+          "short": "Modelado",
+          "description": "Representa entidades, relaciones, vigencia y significado sin confundir esquema con semántica.",
+          "minutes": 25,
+          "type": "module"
+        },
+        {
+          "slug": "data-operations",
+          "title": "Almacenamiento y Operaciones",
+          "short": "Operaciones",
+          "description": "Define retención, recuperación, observabilidad y atribución del consumo.",
+          "minutes": 25,
+          "type": "module"
+        },
+        {
+          "slug": "data-security",
+          "title": "Seguridad de Datos",
+          "short": "Seguridad",
+          "description": "Conecta finalidades, PII, identidades y protección con evidencia de acceso efectivo.",
+          "minutes": 25,
+          "type": "module"
+        },
+        {
+          "slug": "data-integration",
+          "title": "Integración e Interoperabilidad",
+          "short": "Integración",
+          "description": "Elige ingestión, CDC y federación con contratos, frescura y tratamiento de fallos.",
+          "minutes": 25,
+          "type": "module"
+        },
+        {
+          "slug": "content-management",
+          "title": "Documentos y Contenido",
+          "short": "Contenido",
+          "description": "Gestiona aprobación, vigencia y recuperación de documentos para atención asistida por IA.",
+          "minutes": 25,
+          "type": "module"
+        },
+        {
+          "slug": "master-reference-data",
+          "title": "Datos Maestros y de Referencia",
+          "short": "Maestros y Referencias",
+          "description": "Resuelve identidades, valores controlados, conflictos y reglas de supervivencia.",
+          "minutes": 25,
+          "type": "module"
+        },
+        {
+          "slug": "data-warehousing-bi",
+          "title": "Data Warehousing y BI",
+          "short": "DW y BI",
+          "description": "Publica indicadores con grano, semántica y consumo analítico gobernado.",
+          "minutes": 25,
+          "type": "module"
+        },
+        {
+          "slug": "metadata",
+          "title": "Metadatos",
+          "short": "Metadatos",
+          "description": "Distingue catálogos, glosario, linaje Preview e impacto de cambios.",
+          "minutes": 25,
+          "type": "module"
+        },
+        {
+          "slug": "data-quality",
+          "title": "Calidad de Datos",
+          "short": "Calidad",
+          "description": "Mide aptitud para el uso, prioriza reglas y resuelve incidencias con responsables.",
+          "minutes": 25,
+          "type": "module"
+        }
+      ],
+      "resources": [
+        {
+          "slug": "oracle-map",
+          "title": "De DAMA a las Capacidades Oracle",
+          "short": "Matriz DAMA → Oracle",
+          "description": "Arquitectura, responsables, estados y evidencia de cada capacidad."
+        },
+        {
+          "slug": "glossary",
+          "title": "Habla el Idioma del Gobierno de Datos",
+          "short": "Glosario",
+          "description": "Conceptos de negocio y tecnología, con sus diferencias importantes."
+        },
+        {
+          "slug": "case-study",
+          "title": "El Caso de Operadora Horizonte",
+          "short": "Caso Integrador",
+          "description": "Defiende un producto de datos gobernado y evalúa tu propuesta con una rúbrica."
+        },
+        {
+          "slug": "practice",
+          "title": "Práctica",
+          "short": "Práctica",
+          "description": "Pon a prueba lo que entiendes"
         }
       ]
     }

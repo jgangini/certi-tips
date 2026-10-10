@@ -1,0 +1,37 @@
+{
+  "title": "Dos caminos para consumir datos",
+  "layout": "left-to-right",
+  "groups": [
+    { "id": "engineering", "label": "Preparación y controles", "type": "platform" },
+    { "id": "lakehouse", "label": "SQL y base para IA", "type": "platform" },
+    { "id": "consumption", "label": "Consumo analítico", "type": "platform" },
+    { "id": "access", "label": "Acceso de plataforma", "type": "platform" }
+  ],
+  "nodes": [
+    { "id": "data-platform", "label": "Oracle AI Data Platform", "service": "Oracle AI Data Platform", "group": "engineering", "iconCatalogId": "oci-ai-data-platform-workbench" },
+    { "id": "autonomous-lakehouse", "label": "Oracle Autonomous AI Lakehouse", "service": "Oracle Autonomous AI Lakehouse", "group": "lakehouse", "iconCatalogId": "oracle-autonomous-database" },
+    { "id": "analytics", "label": "Oracle Analytics Cloud", "service": "Oracle Analytics Cloud", "group": "consumption", "iconCatalogId": "analytics" },
+    { "id": "identity", "label": "Oracle Cloud Infrastructure Identity and Access Management", "service": "Oracle Cloud Infrastructure Identity and Access Management", "group": "access", "iconCatalogId": "iam" }
+  ],
+  "edges": [
+    { "from": "data-platform", "to": "analytics", "label": "data", "meaning": "Oracle Analytics Cloud connects to one Oracle AI Data Platform catalog per connection.", "evidence": "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acsds/connect-ai-data-platform.html" },
+    { "from": "autonomous-lakehouse", "to": "analytics", "label": "SQL", "meaning": "Oracle Analytics Cloud accesses Oracle Autonomous AI Lakehouse through a configured connection and effective database identity.", "evidence": "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acsds/connect-oracle-autonomous-ai-lakehouse.html" },
+    { "from": "data-platform", "to": "autonomous-lakehouse", "label": "service", "meaning": "The displayed dependency is for Knowledge Bases, which require Oracle Autonomous AI Lakehouse 26ai or later. The setup guide also lists Agent Flows and AI Compute. The diagram makes no claim about prerequisites of arbitrary machine-learning code and does not depict automatic replication of all platform data.", "evidence": "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/get-started-oracle-ai-data-platform.html" },
+    { "from": "identity", "to": "data-platform", "label": "admin", "meaning": "Platform access requires appropriate identity policies; object permissions and source credentials are separate controls.", "evidence": "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/permissions-model.html" }
+  ],
+  "conceptualAnnotations": {
+    "business": "Negocio: propietario, finalidad, reglas y cambios aprobados.",
+    "sources": "Fictional Operadora Horizonte clients, contracts, invoices and documents. These are conceptual inputs, not an Oracle service icon.",
+    "sourcePaths": [
+      { "to": "data-platform", "meaning": "Supported configured data sources and ingestion.", "evidence": "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/get-started-oracle-ai-data-platform.html" },
+      { "to": "autonomous-lakehouse", "meaning": "Tabular loading or linking through supported data workflows, not mandatory replication through Oracle AI Data Platform.", "evidence": "https://docs.oracle.com/en/cloud/paas/autonomous-database/data-studio-guide/overview-data-studio.html" }
+    ]
+  },
+  "presentation": {
+    "viewBox": "0 0 1920 1080",
+    "minimumFontSize": 32,
+    "finalSvg": "assets/diagrams/gov-map-architecture.svg",
+    "glyphPolicy": "Unmodified official plugin glyphs. Oracle Autonomous Database glyph identifies the Autonomous AI Lakehouse workload; no unrelated service substitution.",
+    "scope": "Logical teaching architecture, not a network deployment topology. Solid arrows show data access paths; dashed arrow shows the Knowledge Bases dependency. Platform access is a separate control band."
+  }
+}

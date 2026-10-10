@@ -1,0 +1,2180 @@
+[
+  {
+    "id": "gov-governance-01",
+    "domain": "governance",
+    "question": "Comercial y Finanzas usan «cliente activo» para contar poblaciones distintas. ¿Cuál es la primera decisión de gobierno útil?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Acordar el propósito de cada indicador, su definición y el responsable de aprobarla.",
+        "explanation": "Las dos poblaciones pueden responder preguntas distintas; el gobierno aclara significado, uso y responsabilidad."
+      },
+      {
+        "id": "b",
+        "text": "Elegir el conteo que se actualiza con mayor frecuencia como definición corporativa.",
+        "explanation": "La frecuencia describe frescura, pero no determina qué población necesita cada decisión."
+      },
+      {
+        "id": "c",
+        "text": "Encargar al administrador que elija la fórmula más rápida de consultar.",
+        "explanation": "El administrador puede implementar el cálculo; rendimiento no sustituye la autoridad sobre su significado."
+      },
+      {
+        "id": "d",
+        "text": "Promediar ambos conteos hasta que los equipos coincidan.",
+        "explanation": "El promedio no define una población y puede crear un indicador sin interpretación de negocio."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "governance",
+      "anchor": "conceptos-clave",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-governance-02",
+    "domain": "governance",
+    "question": "Horizonte aprobó una política de acceso a facturas agregadas. ¿Qué reparto de responsabilidades es más coherente?",
+    "options": [
+      {
+        "id": "a",
+        "text": "El custodio aprueba el propósito y el consumidor decide qué controles omitir.",
+        "explanation": "La capacidad de operación no otorga por sí sola autoridad sobre el propósito ni sobre excepciones."
+      },
+      {
+        "id": "b",
+        "text": "El owner responde por el uso, el steward coordina el acuerdo y el custodio aplica los controles.",
+        "explanation": "La separación relaciona autoridad, coordinación y ejecución sin confundir cargos con permisos técnicos."
+      },
+      {
+        "id": "c",
+        "text": "El auditor implementa todos los permisos y aprueba después su propia actuación.",
+        "explanation": "Concentrar implementación y revisión debilita la separación de funciones que busca el caso."
+      },
+      {
+        "id": "d",
+        "text": "El owner delega permanentemente toda decisión en la herramienta del catálogo.",
+        "explanation": "Una herramienta registra y aplica decisiones; no asume responsabilidad empresarial."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "governance",
+      "anchor": "decisiones-roles-y-evidencias",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-governance-03",
+    "domain": "governance",
+    "question": "Un equipo puede entrar al workspace de Oracle AI Data Platform, pero no consultar una tabla. ¿Qué interpretación es adecuada?",
+    "options": [
+      {
+        "id": "a",
+        "text": "El acceso al workspace debería dar lectura de todas sus fuentes externas.",
+        "explanation": "La colaboración y los permisos sobre los datos son ámbitos distintos; el acceso amplio no es implícito."
+      },
+      {
+        "id": "b",
+        "text": "La tabla necesariamente fue eliminada porque el usuario no la consulta.",
+        "explanation": "La falta de autorización puede explicar el resultado sin que el activo haya sido eliminado."
+      },
+      {
+        "id": "c",
+        "text": "Hay que revisar permisos sobre el activo y la fuente dentro del alcance aprobado.",
+        "explanation": "La membresía del workspace no sustituye los permisos sobre datos ni los controles de las fuentes."
+      },
+      {
+        "id": "d",
+        "text": "La solución correcta es convertir a todos los colaboradores en administradores.",
+        "explanation": "Eso puede ampliar el acceso mucho más allá de lo requerido sin resolver el diseño de autorización."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "governance",
+      "anchor": "gobierno-con-oracle-ai-data-platform-y-oracle-autonomous-ai-lakehouse",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-governance-04",
+    "domain": "governance",
+    "question": "Horizonte publica cien activos en el catálogo, pero siguen repitiéndose disputas de significado. ¿Qué medida complementaria ayuda a evaluar el gobierno?",
+    "options": [
+      {
+        "id": "a",
+        "text": "La cantidad de columnas técnicas descubiertas por cada ejecución.",
+        "explanation": "Mide cobertura técnica; no demuestra que se resolvieran decisiones semánticas recurrentes."
+      },
+      {
+        "id": "b",
+        "text": "El espacio total ocupado por los archivos del catálogo.",
+        "explanation": "El tamaño no indica si los consumidores comparten definiciones útiles."
+      },
+      {
+        "id": "c",
+        "text": "El número de cuentas con permiso de administración general.",
+        "explanation": "Ampliar administración no demuestra efectividad del gobierno y puede aumentar exposición."
+      },
+      {
+        "id": "d",
+        "text": "La recurrencia y tiempo de resolución de conflictos de definición con responsables asignados.",
+        "explanation": "Estos indicadores conectan el programa con el problema de negocio observado."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "governance",
+      "anchor": "errores-frecuentes",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-governance-05",
+    "domain": "governance",
+    "question": "Un nuevo asistente requiere datos de clientes, pero nadie ha definido su propósito ni los atributos necesarios. ¿Qué acción corresponde antes de autorizar?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Precisar propósito, alcance, consumidores y revisión con el responsable del dominio.",
+        "explanation": "La autorización debe responder a un uso conocido que pueda traducirse en permisos y evidencia."
+      },
+      {
+        "id": "b",
+        "text": "Conceder el acceso completo durante un periodo indefinido para descubrir el uso.",
+        "explanation": "La exploración sin alcance no sustituye la decisión y expone datos innecesarios."
+      },
+      {
+        "id": "c",
+        "text": "Aceptar únicamente el nombre del proyecto como justificación del acceso.",
+        "explanation": "Un nombre no explica qué datos se necesitan ni para qué actividad."
+      },
+      {
+        "id": "d",
+        "text": "Pedir al modelo que apruebe automáticamente el riesgo del nuevo asistente.",
+        "explanation": "La IA puede ayudar a analizar información, pero no asume la autoridad del responsable."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "governance",
+      "anchor": "ejercicio-de-decision",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-governance-06",
+    "domain": "governance",
+    "question": "Una capacidad aparece como Preview en documentación y otra solo como anuncio. ¿Cómo debe presentarlas Horizonte al evaluar controles?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Excluir ambas de toda conversación por no ser funciones históricas.",
+        "explanation": "Preview es una capacidad real con condiciones; excluirla ocultaría una opción relevante."
+      },
+      {
+        "id": "b",
+        "text": "Incluir Preview con sus condiciones y separar el anuncio cuya disponibilidad no se ha confirmado.",
+        "explanation": "La clasificación permite aprender el enfoque sin prometer un control disponible sin evidencia."
+      },
+      {
+        "id": "c",
+        "text": "Considerar el anuncio equivalente a disponibilidad general en todos los entornos.",
+        "explanation": "Un anuncio no demuestra acceso operativo universal ni condiciones de disponibilidad."
+      },
+      {
+        "id": "d",
+        "text": "Tratar Preview como garantía de que todas las funciones relacionadas están completas.",
+        "explanation": "El estado se verifica por función y alcance; no se hereda a todo el conjunto."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "governance",
+      "anchor": "gobierno-con-oracle-ai-data-platform-y-oracle-autonomous-ai-lakehouse",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-architecture-01",
+    "domain": "data-architecture",
+    "question": "El equipo presenta una lista de servicios Oracle Cloud Infrastructure como arquitectura de datos. ¿Qué información falta para evaluar el diseño?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Solo el color y la posición de los iconos de cada servicio.",
+        "explanation": "El estilo visual puede ayudar a leer, pero no explica las relaciones ni los controles."
+      },
+      {
+        "id": "b",
+        "text": "El número máximo de servicios que puede aparecer en una misma página.",
+        "explanation": "La cantidad de componentes no define la adecuación de una arquitectura al negocio."
+      },
+      {
+        "id": "c",
+        "text": "Fuentes autorizadas, transformaciones, responsables y consumidores de cada flujo.",
+        "explanation": "La arquitectura debe explicar cómo los datos satisfacen usos y qué dependencias introduce."
+      },
+      {
+        "id": "d",
+        "text": "Una decisión de migrar todas las fuentes antes de estudiar los usos.",
+        "explanation": "Migrar todo puede aumentar esfuerzo y riesgo sin relación con el problema inicial."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "data-architecture",
+      "anchor": "conceptos-clave",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-architecture-02",
+    "domain": "data-architecture",
+    "question": "Atención necesita el estado actual de un contrato y Finanzas reconstruir un cierre anterior. ¿Qué enfoque responde mejor?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Obligar a ambos a consultar únicamente el estado operativo actual.",
+        "explanation": "Ese estado puede haber cambiado y no reconstruir la cifra del cierre."
+      },
+      {
+        "id": "b",
+        "text": "Entregar a ambos cualquier copia antigua porque toda persistencia es reproducible.",
+        "explanation": "Una copia sin corte, reglas y condiciones no demuestra reproducibilidad ni frescura adecuada."
+      },
+      {
+        "id": "c",
+        "text": "Usar una única frecuencia de actualización sin analizar el propósito.",
+        "explanation": "Los consumidores tienen necesidades temporales distintas que deben hacerse explícitas."
+      },
+      {
+        "id": "d",
+        "text": "Evaluar consulta gobernada para Atención y un corte versionado con reglas para Finanzas.",
+        "explanation": "El diseño combina caminos cuando los requisitos de actualidad e historial difieren."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "data-architecture",
+      "anchor": "ejemplo-explicado",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-architecture-03",
+    "domain": "data-architecture",
+    "question": "Un arquitecto afirma que registrar una fuente externa en Oracle AI Data Platform copia automáticamente todos sus datos al catálogo. ¿Qué corrección corresponde?",
+    "options": [
+      {
+        "id": "a",
+        "text": "El catálogo organiza metadatos; el activo puede permanecer en su fuente conectada.",
+        "explanation": "Registrar y organizar metadatos no implica necesariamente copiar el contenido subyacente."
+      },
+      {
+        "id": "b",
+        "text": "El catálogo almacena siempre una copia íntegra y elimina la dependencia del origen.",
+        "explanation": "Ese comportamiento no se deriva de registrar un catálogo externo."
+      },
+      {
+        "id": "c",
+        "text": "Las fuentes externas se convierten automáticamente en tablas internas sin controles propios.",
+        "explanation": "Los permisos y comportamiento de la conexión y la fuente continúan siendo relevantes."
+      },
+      {
+        "id": "d",
+        "text": "El catálogo certifica calidad suficiente para cualquier uso al encontrar las columnas.",
+        "explanation": "Descubrimiento técnico no equivale a aceptación de calidad para un propósito."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "data-architecture",
+      "anchor": "arquitectura-con-oracle-ai-data-platform-y-oracle-autonomous-ai-lakehouse",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-architecture-04",
+    "domain": "data-architecture",
+    "question": "Horizonte elige federación para reducir copias. ¿Qué dependencia debe conservar en la evaluación?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Ninguna, porque evitar una carga previa elimina el cómputo de consulta.",
+        "explanation": "La fuente, la red y el motor siguen participando en la operación."
+      },
+      {
+        "id": "b",
+        "text": "Disponibilidad, capacidad y permisos de la fuente, además del costo de consultar.",
+        "explanation": "La federación cambia el patrón de acceso, pero mantiene dependencias operativas y de seguridad."
+      },
+      {
+        "id": "c",
+        "text": "Únicamente la cantidad de filas del último archivo exportado.",
+        "explanation": "Puede no existir ese archivo y no resume las condiciones de la consulta en origen."
+      },
+      {
+        "id": "d",
+        "text": "Solo el nombre del workspace desde el que parte la consulta.",
+        "explanation": "El nombre no demuestra identidad efectiva, acceso ni comportamiento de la fuente."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "data-architecture",
+      "anchor": "limites-flujos-y-decisiones",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-architecture-05",
+    "domain": "data-architecture",
+    "question": "El cierre debe reproducirse en seis meses. Se conserva la consulta SQL, pero los datos y las reglas pueden cambiar. ¿Qué falta?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Aumentar el número de usuarios capaces de ejecutar la misma consulta.",
+        "explanation": "Más usuarios no reconstruyen las entradas o reglas históricas."
+      },
+      {
+        "id": "b",
+        "text": "Cambiar el nombre de la consulta para incluir el mes del cierre.",
+        "explanation": "Un nombre no preserva datos ni condiciones del cálculo."
+      },
+      {
+        "id": "c",
+        "text": "Conservar versiones de datos y reglas, fecha de corte y condiciones de acceso y retención.",
+        "explanation": "La reproducibilidad requiere las condiciones que produjeron la cifra, no únicamente el texto de consulta."
+      },
+      {
+        "id": "d",
+        "text": "Asegurar que la consulta siempre usa los datos más recientes.",
+        "explanation": "La actualidad puede ser incompatible con reconstruir un estado anterior."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "data-architecture",
+      "anchor": "ejercicio-de-decision",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-architecture-06",
+    "domain": "data-architecture",
+    "question": "El equipo dispone de un diseño conceptual y del linaje Preview de Oracle AI Data Platform. ¿Cómo se relacionan?",
+    "options": [
+      {
+        "id": "a",
+        "text": "El diseño conceptual prueba que todas las conexiones están instrumentadas.",
+        "explanation": "Un diseño expresa intención; no demuestra captura efectiva en ejecución."
+      },
+      {
+        "id": "b",
+        "text": "El linaje reemplaza todas las decisiones sobre responsables y usos.",
+        "explanation": "Las dependencias técnicas no otorgan autoridad ni definen por sí solas el propósito empresarial."
+      },
+      {
+        "id": "c",
+        "text": "Preview impide usar el linaje para explicar dependencias.",
+        "explanation": "Puede usarse dentro de su alcance documentado y con su estado claramente indicado."
+      },
+      {
+        "id": "d",
+        "text": "El diseño expresa la intención y el linaje muestra relaciones capturadas en su alcance soportado.",
+        "explanation": "Ambas vistas permiten comparar el recorrido previsto con evidencia técnica disponible."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "data-architecture",
+      "anchor": "arquitectura-con-oracle-ai-data-platform-y-oracle-autonomous-ai-lakehouse",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-modeling-01",
+    "domain": "data-modeling",
+    "question": "La factura F42 tiene total 100 y dos líneas de 60 y 40. Tras unir cabecera y detalle, el informe suma dos valores de 100. ¿Cuál es la causa principal?",
+    "options": [
+      {
+        "id": "a",
+        "text": "La medida de cabecera se repitió al cambiar la granularidad de las filas.",
+        "explanation": "La unión produce una fila por línea; sumar la cabecera repetida duplica el total."
+      },
+      {
+        "id": "b",
+        "text": "El motor de consulta es incapaz de sumar números de dos dígitos.",
+        "explanation": "El resultado puede ser técnicamente correcto para la consulta y equivocado para el significado esperado."
+      },
+      {
+        "id": "c",
+        "text": "La tabla de facturas necesita siempre un identificador aleatorio nuevo por consulta.",
+        "explanation": "Cambiar identificadores no repara la granularidad de la medida."
+      },
+      {
+        "id": "d",
+        "text": "La solución general es dividir cualquier suma entre dos.",
+        "explanation": "Ese ajuste falla con facturas que tengan otra cantidad de líneas y oculta la causa."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "data-modeling",
+      "anchor": "ejemplo-explicado",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-modeling-02",
+    "domain": "data-modeling",
+    "question": "Dos sistemas usan el identificador de cliente 123 para personas distintas. ¿Qué decisión evita confundirlas?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Considerar que el mismo número siempre identifica a la misma persona.",
+        "explanation": "El valor solo tiene significado dentro del sistema o ámbito que lo define."
+      },
+      {
+        "id": "b",
+        "text": "Mantener el origen del identificador y acordar el mapeo de identidad entre sistemas.",
+        "explanation": "El contexto de la clave evita una igualdad falsa y permite una decisión explícita de correspondencia."
+      },
+      {
+        "id": "c",
+        "text": "Reemplazar la clave por el nombre completo en todos los procesos.",
+        "explanation": "El nombre no garantiza unicidad ni estabilidad."
+      },
+      {
+        "id": "d",
+        "text": "Eliminar uno de los registros antes de preguntar a los responsables.",
+        "explanation": "Podría borrar una entidad válida para resolver artificialmente una coincidencia de claves."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "data-modeling",
+      "anchor": "del-significado-al-modelo-fisico",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-modeling-03",
+    "domain": "data-modeling",
+    "question": "El área pide saber si existía consentimiento comercial en la fecha de una campaña. Solo se almacena el estado actual. ¿Qué cambio conceptual se necesita?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Añadir un índice al estado actual y conservar el mismo significado.",
+        "explanation": "Un índice puede acelerar una consulta, pero no reconstruye estados históricos ausentes."
+      },
+      {
+        "id": "b",
+        "text": "Asumir que el estado actual siempre fue válido para todas las campañas.",
+        "explanation": "Los cambios de consentimiento hacen incorrecta esa suposición."
+      },
+      {
+        "id": "c",
+        "text": "Representar sujeto, propósito, cambios y vigencia que permitan interpretar la fecha consultada.",
+        "explanation": "La pregunta exige modelar tiempo y propósito, con la evidencia y conservación acordadas."
+      },
+      {
+        "id": "d",
+        "text": "Duplicar la columna de estado actual con otro nombre.",
+        "explanation": "Dos copias del mismo valor no aportan historial ni contexto adicional."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "data-modeling",
+      "anchor": "ejercicio-de-decision",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-modeling-04",
+    "domain": "data-modeling",
+    "question": "Un equipo propone diseñar índices antes de acordar qué significa cliente y cómo se relaciona con contratos. ¿Qué secuencia ayuda?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Elegir índices y después aceptar cualquier definición que encaje.",
+        "explanation": "La estructura técnica debe responder al modelo de negocio, no imponerle una interpretación accidental."
+      },
+      {
+        "id": "b",
+        "text": "Evitar todo modelo conceptual y documentar solo tipos SQL.",
+        "explanation": "Los tipos no expresan por sí solos entidades, cardinalidades y reglas."
+      },
+      {
+        "id": "c",
+        "text": "Usar el mismo nivel de detalle en todas las vistas para no tomar decisiones.",
+        "explanation": "Conceptual, lógico y físico necesitan detalles distintos para sus públicos y objetivos."
+      },
+      {
+        "id": "d",
+        "text": "Acordar entidades y relaciones, precisar atributos y claves, y luego materializar las estructuras.",
+        "explanation": "La secuencia mantiene significado mientras añade el detalle necesario para implementar."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "data-modeling",
+      "anchor": "del-significado-al-modelo-fisico",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-modeling-05",
+    "domain": "data-modeling",
+    "question": "Un asistente interpreta «ingresos» con una fórmula distinta a la aprobada por Finanzas. ¿Qué necesita la capa semántica?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Definiciones y relaciones aprobadas, vinculadas a datos y revisadas por responsables.",
+        "explanation": "El contexto debe expresar el significado empresarial y mantenerse bajo revisión."
+      },
+      {
+        "id": "b",
+        "text": "Más nombres alternativos de columnas sin acordar el cálculo.",
+        "explanation": "Añadir etiquetas no resuelve la discrepancia de la medida."
+      },
+      {
+        "id": "c",
+        "text": "Permiso para inventar una definición diferente en cada respuesta.",
+        "explanation": "La variación sin criterio compromete consistencia y auditabilidad."
+      },
+      {
+        "id": "d",
+        "text": "Eliminar las reglas de negocio porque un modelo de lenguaje ya comprende todo contexto.",
+        "explanation": "La fluidez lingüística no garantiza conocimiento de las decisiones particulares de Horizonte."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "data-modeling",
+      "anchor": "modelado-y-semantica-en-oracle",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-modeling-06",
+    "domain": "data-modeling",
+    "question": "Oracle anuncia generación de ontologías en la evolución de Oracle AI Data Platform. ¿Cómo debe evaluar Horizonte esta capacidad?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Afirmar que cualquier instancia ya incluye todas las ontologías sectoriales.",
+        "explanation": "El anuncio no demuestra disponibilidad operativa de todas las funciones o paquetes."
+      },
+      {
+        "id": "b",
+        "text": "Explicar el enfoque anunciado y verificar disponibilidad concreta, conservando validación humana.",
+        "explanation": "Distingue la dirección actual del producto de una garantía de disponibilidad operativa."
+      },
+      {
+        "id": "c",
+        "text": "Omitir completamente semántica y ontologías porque una función fue anunciada.",
+        "explanation": "Son conceptos relevantes para modelado e IA; deben evaluarse reconociendo su estado de disponibilidad."
+      },
+      {
+        "id": "d",
+        "text": "Tratar una ontología como sustituto automático de todo modelo físico.",
+        "explanation": "El contexto semántico y las estructuras físicas responden preguntas distintas."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "data-modeling",
+      "anchor": "modelado-y-semantica-en-oracle",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-operations-01",
+    "domain": "data-operations",
+    "question": "El tablero está accesible, pero muestra datos de hace tres días sin advertencia. ¿Qué objetivo falta comprobar?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Únicamente que exista un usuario administrador.",
+        "explanation": "La existencia de esa cuenta no informa la edad del producto entregado."
+      },
+      {
+        "id": "b",
+        "text": "Solo el color que identifica el estado disponible.",
+        "explanation": "La presentación no cambia la antigüedad de los datos."
+      },
+      {
+        "id": "c",
+        "text": "La frescura y aceptación del producto, además de su disponibilidad técnica.",
+        "explanation": "Un servicio accesible puede entregar datos que no cumplen las condiciones acordadas."
+      },
+      {
+        "id": "d",
+        "text": "El número de consultas históricas ejecutadas por el equipo.",
+        "explanation": "Ese volumen no prueba que la actualización requerida haya ocurrido."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "data-operations",
+      "anchor": "conceptos-clave",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-operations-02",
+    "domain": "data-operations",
+    "question": "Horizonte tolera perder como máximo una hora de datos y tiene respaldos diarios. ¿Qué conclusión es válida?",
+    "options": [
+      {
+        "id": "a",
+        "text": "El respaldo diario demuestra automáticamente un RPO de una hora.",
+        "explanation": "La separación temporal entre respaldos puede dejar una pérdida mayor si no existen otros mecanismos."
+      },
+      {
+        "id": "b",
+        "text": "RPO mide únicamente cuánto tarda en abrir el tablero.",
+        "explanation": "RPO se refiere a pérdida tolerable medida en tiempo; el tiempo de recuperación corresponde al RTO."
+      },
+      {
+        "id": "c",
+        "text": "Basta conservar más tiempo el mismo respaldo diario para reducir la pérdida máxima.",
+        "explanation": "Aumentar conservación no reduce por sí mismo la separación entre estados recuperables."
+      },
+      {
+        "id": "d",
+        "text": "La estrategia debe demostrar recuperación con una pérdida máxima acorde al RPO de una hora.",
+        "explanation": "Debe evaluarse el conjunto real de mecanismos; la frecuencia diaria por sí sola no demuestra el objetivo."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "data-operations",
+      "anchor": "conceptos-clave",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-operations-03",
+    "domain": "data-operations",
+    "question": "El workflow finaliza sin error, pero falta una partición de facturas. ¿Qué acción es coherente?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Detener la publicación incorrecta, identificar la versión disponible y reconciliar tras recuperar lo faltante.",
+        "explanation": "Se distingue éxito de ejecución de aceptación del producto y se comunica la condición al consumidor."
+      },
+      {
+        "id": "b",
+        "text": "Publicar como cierre completo porque el proceso terminó técnicamente.",
+        "explanation": "La completitud acordada no se cumple aunque la ejecución no haya fallado."
+      },
+      {
+        "id": "c",
+        "text": "Sumar de nuevo todas las facturas cargadas sin controlar claves.",
+        "explanation": "El reproceso puede duplicar registros y crear otro problema de calidad."
+      },
+      {
+        "id": "d",
+        "text": "Ocultar la fecha del tablero para reducir consultas de los usuarios.",
+        "explanation": "Ocultar la antigüedad impide que el consumidor evalúe la información disponible."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "data-operations",
+      "anchor": "ejemplo-explicado",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-operations-04",
+    "domain": "data-operations",
+    "question": "Llega una alerta de Budgets de Oracle Cloud Infrastructure durante el reproceso del cierre. ¿Qué significa?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Todos los recursos del proyecto se detuvieron al cruzar el umbral.",
+        "explanation": "Budgets de Oracle Cloud Infrastructure no actúa como interruptor automático del consumo."
+      },
+      {
+        "id": "b",
+        "text": "Existe una señal de gasto que requiere análisis y una decisión apropiada del equipo.",
+        "explanation": "La alerta informa; hay que investigar componentes, dependencias y acciones posibles."
+      },
+      {
+        "id": "c",
+        "text": "La base de datos dejó de conservar los respaldos automáticamente.",
+        "explanation": "La alerta no implica ese cambio de comportamiento de otro servicio."
+      },
+      {
+        "id": "d",
+        "text": "Se concedieron más permisos para corregir el gasto.",
+        "explanation": "Un umbral financiero no modifica la autorización de los usuarios."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "data-operations",
+      "anchor": "operacion-de-oracle-ai-data-platform-y-oracle-autonomous-ai-lakehouse",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-operations-05",
+    "domain": "data-operations",
+    "question": "Hay respaldos disponibles, pero nadie ensayó recuperar las dependencias del producto en dos horas. ¿Qué se puede afirmar?",
+    "options": [
+      {
+        "id": "a",
+        "text": "La existencia del respaldo garantiza el RTO del producto completo.",
+        "explanation": "La restauración y sus dependencias pueden tardar más que el objetivo."
+      },
+      {
+        "id": "b",
+        "text": "RTO y RPO son equivalentes si los datos residen en un servicio administrado.",
+        "explanation": "Siguen siendo objetivos distintos aunque parte de la operación esté gestionada."
+      },
+      {
+        "id": "c",
+        "text": "La capacidad de recuperar existe, pero el cumplimiento del RTO requiere una comprobación del escenario.",
+        "explanation": "El ensayo debe incluir lo necesario para volver al servicio, no solo localizar el respaldo."
+      },
+      {
+        "id": "d",
+        "text": "Medir el tiempo de una consulta normal sustituye una prueba de recuperación.",
+        "explanation": "El rendimiento cotidiano no demuestra el comportamiento durante una restauración o fallo."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "data-operations",
+      "anchor": "servicio-recuperacion-y-costo",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-operations-06",
+    "domain": "data-operations",
+    "question": "Oracle AI Data Platform procesa datos y usa una base de datos y servicios de IA adicionales. ¿Cómo debe estimarse el costo del producto?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Considerando solo la duración del notebook más reciente.",
+        "explanation": "Deja fuera almacenamiento, base de datos y otros consumos necesarios."
+      },
+      {
+        "id": "b",
+        "text": "Suponiendo que registrar un servicio en el catálogo elimina su facturación.",
+        "explanation": "El catálogo no cambia por sí solo los medidores del servicio conectado."
+      },
+      {
+        "id": "c",
+        "text": "Asignando toda infraestructura compartida al último usuario que consultó.",
+        "explanation": "Esa regla puede atribuir costo sin relación con uso o responsabilidad acordada."
+      },
+      {
+        "id": "d",
+        "text": "Identificando medidores y servicios utilizados, y acordando atribución de los componentes compartidos.",
+        "explanation": "La estimación debe considerar el recorrido completo y las condiciones vigentes de cada servicio."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "data-operations",
+      "anchor": "operacion-de-oracle-ai-data-platform-y-oracle-autonomous-ai-lakehouse",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-security-01",
+    "domain": "data-security",
+    "question": "Un asistente consulta por una conexión cifrada. El equipo propone permisos de administrador por comodidad. ¿Qué principio aplica?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Conceder el mínimo permiso que permite la tarea y revisar la identidad efectiva.",
+        "explanation": "El cifrado protege la comunicación; no justifica ampliar la autorización."
+      },
+      {
+        "id": "b",
+        "text": "El cifrado permite omitir toda revisión de los permisos.",
+        "explanation": "Una conexión protegida puede ejecutar acciones excesivas si la cuenta las permite."
+      },
+      {
+        "id": "c",
+        "text": "El acceso al workspace ya demuestra autorización de toda la base de datos.",
+        "explanation": "Los ámbitos de colaboración y de datos deben revisarse por separado."
+      },
+      {
+        "id": "d",
+        "text": "La auditoría posterior sustituye el control preventivo de acceso.",
+        "explanation": "Registrar actividad ayuda a revisar; no evita por sí solo acciones no autorizadas."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "data-security",
+      "anchor": "ejercicio-de-decision",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-security-02",
+    "domain": "data-security",
+    "question": "Pruebas solicita menos filas de producción, pero manteniendo nombres y documentos reales. ¿Qué afirma correctamente el equipo?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Reducir filas convierte automáticamente el conjunto en anónimo.",
+        "explanation": "Las filas restantes pueden seguir identificando personas."
+      },
+      {
+        "id": "b",
+        "text": "Subsetting reduce volumen; puede necesitar masking y revisión del riesgo residual.",
+        "explanation": "La selección de registros y la protección de valores resuelven problemas diferentes."
+      },
+      {
+        "id": "c",
+        "text": "Enmascarar una columna obliga siempre a eliminar todas las relaciones.",
+        "explanation": "Se debe diseñar la protección para conservar las relaciones necesarias cuando corresponda."
+      },
+      {
+        "id": "d",
+        "text": "Un entorno llamado pruebas admite cualquier dato sin condiciones adicionales.",
+        "explanation": "La etiqueta del entorno no modifica sensibilidad ni propósito del contenido."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "data-security",
+      "anchor": "acceso-proteccion-y-evidencia",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-security-03",
+    "domain": "data-security",
+    "question": "El equipo encuentra un blog de Oracle con clasificación asistida y aplicación de masking mediante un framework personalizado. ¿Cómo debe describirlo?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Como prueba de que todas las políticas nativas están en GA en cualquier entorno.",
+        "explanation": "Un patrón personalizado no demuestra el estado de cada función del producto."
+      },
+      {
+        "id": "b",
+        "text": "Como una práctica que debe descartarse por utilizar componentes programables.",
+        "explanation": "Puede demostrar una forma implementable de atender el requisito si se explica su naturaleza."
+      },
+      {
+        "id": "c",
+        "text": "Como una extensión implementable con decisiones humanas y controles que el cliente diseña.",
+        "explanation": "Así se reconoce la capacidad de adaptación sin confundirla con una política nativa automática."
+      },
+      {
+        "id": "d",
+        "text": "Como aprobación automática de cualquier uso de los datos clasificados.",
+        "explanation": "Clasificar sensibilidad no otorga por sí solo autorización para un uso."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "data-security",
+      "anchor": "seguridad-en-oracle-ai-data-platform",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-security-04",
+    "domain": "data-security",
+    "question": "Horizonte usa Oracle Data Safe para preparar una copia reducida de una base compatible. ¿Qué alcance debe comprobar antes de generalizar la solución?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Asumir que la misma cobertura incluye todos los archivos del workspace.",
+        "explanation": "La cobertura de bases compatibles no se extiende automáticamente a todo activo."
+      },
+      {
+        "id": "b",
+        "text": "Tratar cualquier tabla externa del lago como un objeto soportado sin revisar condiciones.",
+        "explanation": "El soporte depende del tipo de destino, objeto y capacidad concreta."
+      },
+      {
+        "id": "c",
+        "text": "Omitir las relaciones entre tablas porque una copia pequeña nunca las necesita.",
+        "explanation": "Las pruebas pueden depender de la integridad referencial y de relaciones de aplicación."
+      },
+      {
+        "id": "d",
+        "text": "Revisar destinos y objetos soportados, relaciones necesarias y protección de los datos resultantes.",
+        "explanation": "La capacidad es útil dentro de su alcance; el diseño debe conservar utilidad y limitar exposición."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "data-security",
+      "anchor": "seguridad-en-oracle-ai-data-platform",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-security-05",
+    "domain": "data-security",
+    "question": "Atención solo necesita importes por segmento para planificar capacidad. ¿Qué decisión representa minimización?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Entregar los atributos y agregaciones necesarios sin identificadores personales innecesarios.",
+        "explanation": "La minimización relaciona contenido con propósito y reduce tratamiento sin utilidad para el caso."
+      },
+      {
+        "id": "b",
+        "text": "Entregar todos los documentos de identidad porque el usuario está autenticado.",
+        "explanation": "Autenticar identidad no demuestra necesidad ni autorización de todo atributo."
+      },
+      {
+        "id": "c",
+        "text": "Cambiar el nombre de la tabla manteniendo todos los datos y permisos.",
+        "explanation": "La denominación no reduce los datos tratados ni su exposición."
+      },
+      {
+        "id": "d",
+        "text": "Registrar más logs sin revisar el conjunto que se entrega.",
+        "explanation": "La auditoría aporta evidencia, pero no sustituye reducir datos innecesarios."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "data-security",
+      "anchor": "conceptos-clave",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-security-06",
+    "domain": "data-security",
+    "question": "Un auditor quiere saber quién cambió un permiso. ¿Qué evidencia es pertinente y cuál es su límite?",
+    "options": [
+      {
+        "id": "a",
+        "text": "El cifrado de la base demuestra por sí solo qué persona realizó el cambio.",
+        "explanation": "El cifrado no es un registro de autoría de operaciones administrativas."
+      },
+      {
+        "id": "b",
+        "text": "Los eventos de auditoría cubiertos, revisando identidad, operación y resultado sin suponer cobertura universal.",
+        "explanation": "La auditoría responde sobre actividad registrada; hay que conocer su alcance real."
+      },
+      {
+        "id": "c",
+        "text": "El nombre del workspace identifica siempre a la persona que cambió cualquier recurso externo.",
+        "explanation": "Un nombre de contenedor no prueba autoría ni visibilidad de eventos externos."
+      },
+      {
+        "id": "d",
+        "text": "El permiso actual demuestra todos los estados y decisiones históricos.",
+        "explanation": "El estado presente no reconstruye por sí solo la secuencia de cambios."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "data-security",
+      "anchor": "seguridad-en-oracle-ai-data-platform",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-integration-01",
+    "domain": "data-integration",
+    "question": "Dos sistemas transmiten una columna fecha con el mismo formato, pero uno significa emisión y otro vencimiento. ¿Qué falta?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Una red más rápida para que ambas fechas lleguen juntas.",
+        "explanation": "La latencia no corrige la diferencia de significado."
+      },
+      {
+        "id": "b",
+        "text": "Un permiso de administrador en ambos sistemas para ignorar la diferencia.",
+        "explanation": "La autorización técnica no resuelve el acuerdo semántico."
+      },
+      {
+        "id": "c",
+        "text": "Un acuerdo de significado y un mapeo que responda al uso del consumidor.",
+        "explanation": "Existe transporte compatible, pero falta interoperabilidad semántica para el indicador."
+      },
+      {
+        "id": "d",
+        "text": "Guardar ambas fechas con el mismo nombre para simplificar el esquema.",
+        "explanation": "Puede aumentar la ambigüedad y ocultar la distinción necesaria."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "data-integration",
+      "anchor": "conceptos-clave",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-integration-02",
+    "domain": "data-integration",
+    "question": "Una entrega de facturas se repite después de un fallo. ¿Qué diseño evita duplicar su efecto?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Añadir siempre todas las filas como facturas nuevas en cada reintento.",
+        "explanation": "Eso reproduce el problema de duplicación cuando llega la misma entidad."
+      },
+      {
+        "id": "b",
+        "text": "Cambiar el identificador de todas las facturas cada vez que se procesan.",
+        "explanation": "Se pierde la capacidad de reconocer el mismo registro de origen."
+      },
+      {
+        "id": "c",
+        "text": "Aumentar la frecuencia del job sin definir cómo se identifican registros.",
+        "explanation": "Más ejecuciones pueden multiplicar duplicados si no hay una regla adecuada."
+      },
+      {
+        "id": "d",
+        "text": "Usar claves estables y reglas de actualización que mantengan un resultado idempotente.",
+        "explanation": "El reintento reconoce el registro y no multiplica el efecto esperado."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "data-integration",
+      "anchor": "contratos-identidades-y-sincronizacion",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-integration-03",
+    "domain": "data-integration",
+    "question": "El productor cambia el estado A por ACTIVO y el indicador cae a cero aunque el job termina bien. ¿Qué acción atiende la causa?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Confirmar el cambio, actualizar contrato y mapeo, validar valores y reconciliar el periodo afectado.",
+        "explanation": "La interpretación del dato cambió; la corrección incluye prevenir y reparar el resultado incorrecto."
+      },
+      {
+        "id": "b",
+        "text": "Duplicar el cómputo para que la misma transformación termine antes.",
+        "explanation": "Ejecutar más rápido no cambia la interpretación equivocada del estado."
+      },
+      {
+        "id": "c",
+        "text": "Mantener el indicador en cero porque el job no registró errores técnicos.",
+        "explanation": "El éxito técnico no demuestra validez semántica del producto."
+      },
+      {
+        "id": "d",
+        "text": "Eliminar el campo estado del producto para que no vuelva a generar discrepancias.",
+        "explanation": "Se perdería información necesaria sin resolver la relación entre productor y consumidor."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "data-integration",
+      "anchor": "ejercicio-de-decision",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-integration-04",
+    "domain": "data-integration",
+    "question": "Varios usuarios consultan una fuente por una conexión con una credencial compartida. ¿Qué debe verificar el diseño de acceso?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Que la fuente identifica automáticamente a cada persona solo por conocer el catálogo.",
+        "explanation": "No debe suponerse propagación de identidad sin comprobar el mecanismo de conexión."
+      },
+      {
+        "id": "b",
+        "text": "La identidad que realmente usa la conexión, sus permisos y lo que registran ambos extremos.",
+        "explanation": "La autorización y atribución dependen del comportamiento efectivo de la conexión y la fuente."
+      },
+      {
+        "id": "c",
+        "text": "Solo que los usuarios tienen nombres distintos en la aplicación.",
+        "explanation": "Eso no demuestra qué identidad llega a la base conectada."
+      },
+      {
+        "id": "d",
+        "text": "Que compartir credencial elimina la necesidad de revisar el propósito del consumo.",
+        "explanation": "La credencial técnica no sustituye las condiciones del uso autorizado."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "data-integration",
+      "anchor": "contratos-identidades-y-sincronizacion",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-integration-05",
+    "domain": "data-integration",
+    "question": "Horizonte quiere compartir un conjunto curado con otro equipo mediante Oracle AI Data Platform. ¿Qué lectura de Delta Sharing es adecuada?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Publica necesariamente todos los archivos personales del workspace.",
+        "explanation": "La capacidad se aplica a conjuntos admitidos y compartidos explícitamente, no a todo archivo."
+      },
+      {
+        "id": "b",
+        "text": "Transfiere automáticamente toda la política corporativa al receptor sin ningún acuerdo.",
+        "explanation": "El mecanismo técnico no reemplaza propósito, significado y responsabilidades del intercambio."
+      },
+      {
+        "id": "c",
+        "text": "Permite compartir conjuntos soportados con destinatarios y permisos definidos, conservando un contrato de uso.",
+        "explanation": "La colaboración técnica y el acuerdo de gobierno se complementan."
+      },
+      {
+        "id": "d",
+        "text": "Elimina la responsabilidad del owner una vez creado el recurso compartido.",
+        "explanation": "La selección y condiciones de lo compartido siguen requiriendo un responsable."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "data-integration",
+      "anchor": "integracion-con-oracle-ai-data-platform-y-oracle-autonomous-ai-lakehouse",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-data-integration-06",
+    "domain": "data-integration",
+    "question": "El cierre diario cumple su objetivo con cargas nocturnas, pero un nuevo consumidor requiere cambios con menor demora. ¿Cómo se evalúa Oracle Cloud Infrastructure GoldenGate?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Como requisito obligatorio para cualquier arquitectura que use Oracle AI Data Platform.",
+        "explanation": "La herramienta se incorpora por una necesidad concreta, no por pertenecer al portafolio."
+      },
+      {
+        "id": "b",
+        "text": "Como sustituto de definiciones, claves y controles de calidad.",
+        "explanation": "La captura de cambios transporta eventos o modificaciones, pero no define todos sus significados."
+      },
+      {
+        "id": "c",
+        "text": "Como prueba de que cualquier indicador pasa a ser correcto solo por llegar antes.",
+        "explanation": "Menor demora también puede propagar errores con mayor rapidez si faltan controles."
+      },
+      {
+        "id": "d",
+        "text": "Como complemento opcional de captura de cambios, evaluando frescura, compatibilidad, costo y contrato.",
+        "explanation": "La decisión relaciona la capacidad con el requisito del nuevo consumidor."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "data-integration",
+      "anchor": "integracion-con-oracle-ai-data-platform-y-oracle-autonomous-ai-lakehouse",
+      "label": "Repasar el concepto y su ejemplo"
+    }
+  },
+  {
+    "id": "gov-content-management-01",
+    "domain": "content-management",
+    "question": "Horizonte conserva un PDF firmado, pero no registra versión ni fecha efectiva. ¿Qué falta para interpretarlo correctamente?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Contexto documental que identifique vigencia, finalidad y responsable.",
+        "explanation": "El archivo es una representación; la decisión requiere conocer su contexto."
+      },
+      {
+        "id": "b",
+        "text": "Una puntuación de similitud semántica más alta.",
+        "explanation": "La similitud ayuda a recuperar contenido, pero no prueba vigencia."
+      },
+      {
+        "id": "c",
+        "text": "Una segunda copia con un nombre más descriptivo.",
+        "explanation": "El nombre puede ayudar, pero no sustituye metadatos y aprobación."
+      },
+      {
+        "id": "d",
+        "text": "Un tamaño de fragmento uniforme para todos los documentos.",
+        "explanation": "La fragmentación no decide qué versión constituye evidencia."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "content-management",
+      "anchor": "conceptos-clave",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-content-management-02",
+    "domain": "content-management",
+    "question": "Se cumple el plazo previsto de disposición de un contrato, pero existe una instrucción de conservación por una investigación. ¿Qué decisión corresponde?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Eliminarlo porque el calendario técnico tiene prioridad.",
+        "explanation": "El calendario implementa la política; no anula una excepción vigente."
+      },
+      {
+        "id": "b",
+        "text": "Aplicar la excepción de conservación y registrar su autoridad y motivo.",
+        "explanation": "La política debe contemplar excepciones autorizadas antes de disponer."
+      },
+      {
+        "id": "c",
+        "text": "Publicarlo para que todas las áreas tengan una copia.",
+        "explanation": "Conservar no implica ampliar la audiencia autorizada."
+      },
+      {
+        "id": "d",
+        "text": "Cambiarlo a borrador y perder su condición de registro.",
+        "explanation": "La clasificación debe reflejar la evidencia; no ocultar su estado."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "content-management",
+      "anchor": "ciclo-de-vida-y-vigencia-documental",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-content-management-03",
+    "domain": "content-management",
+    "question": "Un equipo propone que crear una Knowledge Base en Oracle AI Data Platform complete todo el gobierno documental. ¿Qué evaluación es adecuada?",
+    "options": [
+      {
+        "id": "a",
+        "text": "La indexación sustituye las aprobaciones si los documentos son PDF.",
+        "explanation": "El formato no demuestra aprobación del contenido."
+      },
+      {
+        "id": "b",
+        "text": "El linaje Preview sustituye cualquier historial de versiones.",
+        "explanation": "El último linaje capturado no es un historial documental completo."
+      },
+      {
+        "id": "c",
+        "text": "La Knowledge Base aporta recuperación; aún se requieren aprobación, vigencia y conservación.",
+        "explanation": "La búsqueda semántica es una capacidad dentro de un ciclo documental más amplio."
+      },
+      {
+        "id": "d",
+        "text": "El propietario pasa a ser automáticamente el administrador del índice.",
+        "explanation": "El rol técnico no determina la responsabilidad empresarial."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "content-management",
+      "anchor": "documentos-e-ia-con-oracle-ai-data-platform-y-oracle-autonomous-ai-lakehouse",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-content-management-04",
+    "domain": "content-management",
+    "question": "El agente de Horizonte encuentra un contrato inicial con gran similitud, pero un anexo posterior cambió la cláusula. ¿Qué debe evaluarse primero?",
+    "options": [
+      {
+        "id": "a",
+        "text": "La cantidad de fragmentos recuperados, sin revisar sus fechas.",
+        "explanation": "Más fragmentos no resuelven la vigencia de la cláusula."
+      },
+      {
+        "id": "b",
+        "text": "La velocidad de respuesta comparada con la del mes anterior.",
+        "explanation": "La latencia no determina cuál contrato es aplicable."
+      },
+      {
+        "id": "c",
+        "text": "La similitud del contrato inicial frente a otros clientes.",
+        "explanation": "La similitud no establece autoridad temporal de la fuente."
+      },
+      {
+        "id": "d",
+        "text": "La versión aplicable a la fecha consultada y la relación con el anexo.",
+        "explanation": "Una respuesta puede ser relevante semánticamente y utilizar evidencia vencida."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "content-management",
+      "anchor": "ejemplo-explicado",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-content-management-05",
+    "domain": "content-management",
+    "question": "Contratos retira un documento del repositorio fuente. ¿Qué evidencia permite confirmar que dejó de intervenir en respuestas actuales?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Comprobar la actualización del índice y de los consumidores alcanzados por la política.",
+        "explanation": "La retirada debe propagarse a las representaciones y usos pertinentes."
+      },
+      {
+        "id": "b",
+        "text": "Confirmar solamente que el nombre del PDF ya no aparece en la carpeta.",
+        "explanation": "Eso comprueba la fuente, pero no los fragmentos o copias derivados."
+      },
+      {
+        "id": "c",
+        "text": "Conservar únicamente la puntuación de la última respuesta.",
+        "explanation": "La puntuación no demuestra que el contenido retirado dejó de recuperarse."
+      },
+      {
+        "id": "d",
+        "text": "Reclasificar todos los contratos antiguos como públicos.",
+        "explanation": "Cambiar acceso no elimina la dependencia del contenido retirado."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "content-management",
+      "anchor": "errores-frecuentes",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-content-management-06",
+    "domain": "content-management",
+    "question": "Auditoría necesita el contrato anterior y Atención necesita responder con el vigente. ¿Cómo se atienden ambas necesidades?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Eliminar el anterior porque mantener dos versiones siempre confunde.",
+        "explanation": "Se perdería evidencia necesaria para explicar decisiones anteriores."
+      },
+      {
+        "id": "b",
+        "text": "Conservar el registro anterior y actualizar la recuperación actual con fechas y acceso adecuados.",
+        "explanation": "Conservación histórica y uso actual tienen propósitos distintos y compatibles."
+      },
+      {
+        "id": "c",
+        "text": "Permitir que el agente seleccione cualquier versión por similitud.",
+        "explanation": "La aplicabilidad temporal no se puede delegar solo a similitud."
+      },
+      {
+        "id": "d",
+        "text": "Usar exclusivamente el anterior porque está firmado primero.",
+        "explanation": "La antigüedad no invalida un anexo o una versión posterior aprobada."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "content-management",
+      "anchor": "ejercicio-de-decision",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-master-reference-data-01",
+    "domain": "master-reference-data",
+    "question": "Horizonte clasifica cliente, estado de contrato y factura. ¿Cuál es la correspondencia adecuada?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Cliente es transacción; estado es maestro; factura es referencia.",
+        "explanation": "Confunde la entidad compartida con un evento del negocio."
+      },
+      {
+        "id": "b",
+        "text": "Los tres son maestros porque se guardan en una tabla Gold.",
+        "explanation": "La capa física no determina la naturaleza del dato."
+      },
+      {
+        "id": "c",
+        "text": "Cliente es maestro; estado es referencia; factura es transacción.",
+        "explanation": "Las entidades, dominios acordados y acontecimientos requieren controles diferentes."
+      },
+      {
+        "id": "d",
+        "text": "Los tres son referencia si tienen un identificador.",
+        "explanation": "Tener identificador no convierte un evento o entidad en una lista de valores."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "master-reference-data",
+      "anchor": "conceptos-clave",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-master-reference-data-02",
+    "domain": "master-reference-data",
+    "question": "Dos registros comparten teléfono familiar y nombres parecidos. ¿Cómo debe interpretarse el match?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Como autorización de fusión si el teléfono no es nulo.",
+        "explanation": "La presencia no elimina la posibilidad de que varias personas compartan teléfono."
+      },
+      {
+        "id": "b",
+        "text": "Como prueba de que debe sobrevivir el registro más reciente.",
+        "explanation": "Todavía falta demostrar que se trata de la misma entidad."
+      },
+      {
+        "id": "c",
+        "text": "Como motivo para eliminar los identificadores de origen.",
+        "explanation": "Los identificadores permiten conservar correspondencias y trazabilidad."
+      },
+      {
+        "id": "d",
+        "text": "Como una candidatura que necesita evidencia suficiente antes de fusionar.",
+        "explanation": "La semejanza de atributos compartidos no demuestra identidad."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "master-reference-data",
+      "anchor": "identidad-correspondencia-y-supervivencia",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-master-reference-data-03",
+    "domain": "master-reference-data",
+    "question": "Una dirección reciente contradice otra verificada por el proceso autorizado. ¿Qué debe decidir la política de supervivencia?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Qué fuente y evidencia tienen autoridad para ese atributo.",
+        "explanation": "La selección debe considerar autoridad, vigencia y confianza, no solo novedad."
+      },
+      {
+        "id": "b",
+        "text": "Que el registro con más campos completos gane todos los atributos.",
+        "explanation": "La completitud global no establece autoridad de cada campo."
+      },
+      {
+        "id": "c",
+        "text": "Que cualquier fecha más reciente anule una validación previa.",
+        "explanation": "Un cambio reciente puede ser incorrecto o carecer de validación."
+      },
+      {
+        "id": "d",
+        "text": "Que la herramienta de almacenamiento elija sin una regla empresarial.",
+        "explanation": "La responsabilidad por la decisión sigue perteneciendo al negocio."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "master-reference-data",
+      "anchor": "identidad-correspondencia-y-supervivencia",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-master-reference-data-04",
+    "domain": "master-reference-data",
+    "question": "Horizonte requiere match, merge y supervivencia gobernados. ¿Qué afirmación refleja el alcance de Oracle explicado en el curso?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Todo catálogo de Oracle AI Data Platform fusiona clientes automáticamente al crear una tabla.",
+        "explanation": "No se atribuye esa función automáticamente al catálogo."
+      },
+      {
+        "id": "b",
+        "text": "Oracle Fusion Cloud Enterprise Data Management documenta esas capacidades; Oracle AI Data Platform y Oracle Autonomous AI Lakehouse pueden preparar y consumir el maestro definido.",
+        "explanation": "Se distingue gobierno empresarial de identidad del procesamiento y consumo de datos."
+      },
+      {
+        "id": "c",
+        "text": "Una capa Gold reemplaza las decisiones sobre identidad.",
+        "explanation": "El nivel de procesamiento no sustituye reglas de maestro."
+      },
+      {
+        "id": "d",
+        "text": "Oracle Fusion Cloud Enterprise Data Management solo mantiene listas y no contempla fusión o supervivencia.",
+        "explanation": "La documentación actual incluye match, merge, deduplicación y survivorship."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "master-reference-data",
+      "anchor": "datos-compartidos-con-oracle",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-master-reference-data-05",
+    "domain": "master-reference-data",
+    "question": "Se confirma que V-18 y F-07 corresponden a una misma cliente. ¿Qué tratamiento de consentimientos es correcto?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Unir todos los consentimientos y elegir el de mayor alcance.",
+        "explanation": "La amplitud no justifica reutilizar autorización para otra finalidad."
+      },
+      {
+        "id": "b",
+        "text": "Aplicar automáticamente el consentimiento de facturación a marketing.",
+        "explanation": "Las finalidades deben evaluarse separadamente."
+      },
+      {
+        "id": "c",
+        "text": "Mantener su finalidad y vigencia; la fusión no extiende la autorización.",
+        "explanation": "Resolver identidad no crea permisos nuevos de uso."
+      },
+      {
+        "id": "d",
+        "text": "Eliminar ambos consentimientos para que el registro consolidado sea simple.",
+        "explanation": "Se perdería evidencia necesaria para las decisiones de uso."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "master-reference-data",
+      "anchor": "ejemplo-explicado",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-master-reference-data-06",
+    "domain": "master-reference-data",
+    "question": "Dos clientes comparten hogar y contacto, pero tienen identificaciones verificadas distintas. ¿Qué decisión es adecuada?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Fusionarlos para mejorar la tasa de eliminación de duplicados.",
+        "explanation": "Optimizar un indicador no justifica una fusión incorrecta."
+      },
+      {
+        "id": "b",
+        "text": "Conservar solo la identificación del registro más antiguo.",
+        "explanation": "La antigüedad no anula evidencia de dos personas."
+      },
+      {
+        "id": "c",
+        "text": "Compartir las facturas entre ambos para evitar revisar la candidatura.",
+        "explanation": "La asignación de transacciones debe seguir la identidad correcta."
+      },
+      {
+        "id": "d",
+        "text": "Mantener las identidades separadas y, si procede, modelar la relación de hogar.",
+        "explanation": "Una relación entre personas no demuestra que sean una sola entidad."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "master-reference-data",
+      "anchor": "ejercicio-de-decision",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-data-warehousing-bi-01",
+    "domain": "data-warehousing-bi",
+    "question": "Una tabla tiene una fila por línea de factura. ¿Qué expresa ese enunciado?",
+    "options": [
+      {
+        "id": "a",
+        "text": "El grano de la tabla y la unidad básica de sus registros.",
+        "explanation": "El grano establece qué representa cada fila antes de agregar medidas."
+      },
+      {
+        "id": "b",
+        "text": "La frecuencia con que se actualiza el dashboard.",
+        "explanation": "La frecuencia es una característica temporal de carga o consumo."
+      },
+      {
+        "id": "c",
+        "text": "El permiso que permite consultar las facturas.",
+        "explanation": "El acceso no define qué evento representa la fila."
+      },
+      {
+        "id": "d",
+        "text": "La política de conservación de los contratos.",
+        "explanation": "La conservación no determina el nivel de detalle del hecho."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "data-warehousing-bi",
+      "anchor": "conceptos-clave",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-data-warehousing-bi-02",
+    "domain": "data-warehousing-bi",
+    "question": "Un cliente tiene tres contratos vigentes. Atención cuenta uno y Ventas cuenta tres. ¿Qué debe comprobarse antes de declarar un error?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Si ambos gráficos utilizan la misma paleta.",
+        "explanation": "La presentación no define la entidad contada."
+      },
+      {
+        "id": "b",
+        "text": "Si los indicadores cuentan clientes o contratos y usan la misma definición temporal.",
+        "explanation": "Dos cantidades diferentes pueden responder correctamente a preguntas distintas."
+      },
+      {
+        "id": "c",
+        "text": "Si una consulta termina más rápido que la otra.",
+        "explanation": "La velocidad no permite resolver el significado del indicador."
+      },
+      {
+        "id": "d",
+        "text": "Si el catálogo obliga a que ambos números sean iguales.",
+        "explanation": "El catálogo no elimina diferencias legítimas entre medidas."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "data-warehousing-bi",
+      "anchor": "semantica-granularidad-y-publicacion",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-data-warehousing-bi-03",
+    "domain": "data-warehousing-bi",
+    "question": "Horizonte combina consulta remota con Lake Cache. ¿Qué debe registrar el diseño de gobierno?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Que no existe ninguna copia porque se utiliza federación.",
+        "explanation": "La caché conserva datos localmente aunque exista consulta federada."
+      },
+      {
+        "id": "b",
+        "text": "Que la caché elimina la necesidad de fechas de actualización.",
+        "explanation": "La vigencia continúa siendo relevante para interpretar los resultados."
+      },
+      {
+        "id": "c",
+        "text": "Qué se consulta en origen, qué se conserva localmente y cómo se actualiza y protege.",
+        "explanation": "Cada modalidad cambia las representaciones y controles que deben verificarse."
+      },
+      {
+        "id": "d",
+        "text": "Que todos los usuarios heredan automáticamente acceso a la fuente.",
+        "explanation": "Los permisos efectivos requieren evaluación en cada mecanismo."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "data-warehousing-bi",
+      "anchor": "analitica-gobernada-con-oracle-ai-data-platform-y-oracle-autonomous-ai-lakehouse",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-data-warehousing-bi-04",
+    "domain": "data-warehousing-bi",
+    "question": "Una factura totaliza 100 y tiene líneas de 60 y 40. Tras una unión, el total de cabecera se suma dos veces. ¿Qué corrección responde a la causa?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Dividir siempre por dos todos los resultados del reporte.",
+        "explanation": "Falla cuando las facturas tienen otra cantidad de líneas."
+      },
+      {
+        "id": "b",
+        "text": "Aumentar el tamaño de cómputo para recalcular.",
+        "explanation": "La capacidad no corrige la lógica de agregación."
+      },
+      {
+        "id": "c",
+        "text": "Redondear el resultado a centenas.",
+        "explanation": "El redondeo conserva o encubre el error de duplicación."
+      },
+      {
+        "id": "d",
+        "text": "Agregar en el grano adecuado: sumar las líneas o contar la cabecera una vez.",
+        "explanation": "El problema es repetir una medida de cabecera al cambiar el grano."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "data-warehousing-bi",
+      "anchor": "ejemplo-explicado",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-data-warehousing-bi-05",
+    "domain": "data-warehousing-bi",
+    "question": "Dos segmentos tienen tamaños diferentes y tasas distintas. ¿Qué es necesario antes de calcular una tasa total?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Conocer numeradores, denominadores y la definición de agregación.",
+        "explanation": "Promediar porcentajes sin sus cantidades base puede ponderar mal los segmentos."
+      },
+      {
+        "id": "b",
+        "text": "Asignar igual peso a cada porcentaje porque comparten unidad.",
+        "explanation": "Compartir unidad no demuestra que los tamaños sean iguales."
+      },
+      {
+        "id": "c",
+        "text": "Elegir el porcentaje más reciente como total.",
+        "explanation": "La recencia de una medición no representa toda la población."
+      },
+      {
+        "id": "d",
+        "text": "Contar el número de dashboards que muestran cada tasa.",
+        "explanation": "La cantidad de visualizaciones no constituye una ponderación del negocio."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "data-warehousing-bi",
+      "anchor": "semantica-granularidad-y-publicacion",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-data-warehousing-bi-06",
+    "domain": "data-warehousing-bi",
+    "question": "Llega una factura después del cierre publicado. ¿Cómo mantener confianza en la corrección?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Sobrescribir el cierre sin avisar para mostrar siempre el último número.",
+        "explanation": "Los consumidores perderían el contexto de decisiones anteriores."
+      },
+      {
+        "id": "b",
+        "text": "Aplicar la política de cierre, autorizar la versión corregida y conservar su vínculo con la original.",
+        "explanation": "Las fechas, razones y conciliación explican ambas publicaciones."
+      },
+      {
+        "id": "c",
+        "text": "Descartar la factura porque el reporte ya se publicó.",
+        "explanation": "La política debe resolver el dato tardío, no ignorarlo por conveniencia."
+      },
+      {
+        "id": "d",
+        "text": "Crear otro indicador con el mismo nombre y sin fecha.",
+        "explanation": "Se multiplicaría la ambigüedad entre resultados."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "data-warehousing-bi",
+      "anchor": "ejercicio-de-decision",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-metadata-01",
+    "domain": "metadata",
+    "question": "Horizonte documenta significado de cliente activo, tipo de la columna y hora de carga. ¿Qué clases de metadatos son?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Todos son técnicos porque se almacenan en un catálogo.",
+        "explanation": "La ubicación no cambia la naturaleza del significado empresarial."
+      },
+      {
+        "id": "b",
+        "text": "Todos son empresariales porque se usan en un reporte.",
+        "explanation": "El uso no convierte tipo físico y ejecución en definiciones del negocio."
+      },
+      {
+        "id": "c",
+        "text": "Empresariales, técnicos y operativos, respectivamente.",
+        "explanation": "Cada clase aporta una parte distinta del contexto del activo."
+      },
+      {
+        "id": "d",
+        "text": "Son tres reglas de calidad equivalentes.",
+        "explanation": "Describir el contexto no equivale necesariamente a medir conformidad."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "metadata",
+      "anchor": "conceptos-clave",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-metadata-02",
+    "domain": "metadata",
+    "question": "Se cambiará una columna que alimenta un reporte y una Knowledge Base. ¿Qué pregunta resuelve el análisis de impacto?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Qué nombre es más corto para la columna.",
+        "explanation": "La longitud del nombre no determina las dependencias."
+      },
+      {
+        "id": "b",
+        "text": "Qué significado debe aprobar el catálogo sin intervención humana.",
+        "explanation": "La definición requiere responsables del negocio."
+      },
+      {
+        "id": "c",
+        "text": "Cómo garantizar que todas las exportaciones externas están capturadas.",
+        "explanation": "El alcance de la herramienta debe verificarse; el grafo no demuestra cobertura universal."
+      },
+      {
+        "id": "d",
+        "text": "Qué consumidores conocidos necesitan revisar sus supuestos ante el cambio.",
+        "explanation": "El impacto sigue dependencias hacia los usos posteriores."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "metadata",
+      "anchor": "linaje-impacto-y-responsabilidad",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-metadata-03",
+    "domain": "metadata",
+    "question": "¿Cómo debe representarse Master Catalog de Oracle AI Data Platform frente a DBMS_CATALOG y Oracle AI Data Catalog?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Como planos con interfaces y alcances distintos cuyas integraciones se verifican.",
+        "explanation": "Organización de activos en Oracle AI Data Platform, catálogo federado y servicio REST Iceberg no son equivalentes completos."
+      },
+      {
+        "id": "b",
+        "text": "Como tres nombres intercambiables para una base única con todos los permisos.",
+        "explanation": "Eso atribuye sincronización y controles que no se han demostrado."
+      },
+      {
+        "id": "c",
+        "text": "Como herramientas que sustituyen automáticamente el glosario aprobado.",
+        "explanation": "El acuerdo empresarial sobre significado sigue siendo necesario."
+      },
+      {
+        "id": "d",
+        "text": "Como productos sin ninguna posibilidad de relación con datos compartidos.",
+        "explanation": "Pueden relacionarse mediante capacidades soportadas; hay que precisar cuáles."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "metadata",
+      "anchor": "catalogos-y-linaje-en-oracle",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-metadata-04",
+    "domain": "metadata",
+    "question": "Oracle Data Transforms propone una descripción de una columna mediante IA. ¿Qué debe hacer Horizonte antes de publicarla?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Publicarla si coincide con el tipo de dato de la columna.",
+        "explanation": "El tipo técnico no demuestra que la descripción refleje el significado empresarial."
+      },
+      {
+        "id": "b",
+        "text": "Validar el significado y el contexto con el responsable del dato y registrar el cambio.",
+        "explanation": "La sugerencia de IA necesita revisión humana y control de cambios antes de convertirse en una descripción aprobada."
+      },
+      {
+        "id": "c",
+        "text": "Usarla como definición oficial porque la generó la herramienta.",
+        "explanation": "La generación automática no confiere aprobación ni garantiza exactitud empresarial."
+      },
+      {
+        "id": "d",
+        "text": "Reemplazar la definición vigente sin conservar su aprobación ni versión anterior.",
+        "explanation": "Eliminar esa evidencia impide revisar qué significado estaba aprobado y por qué cambió."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "metadata",
+      "anchor": "catalogos-y-linaje-en-oracle",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-metadata-05",
+    "domain": "metadata",
+    "question": "El valor estado=1 incorpora pendientes aunque antes significaba únicamente vigente. Tipo y nombre no cambian. ¿Qué revisión corresponde?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Aprobarlo porque no cambia el tipo de columna.",
+        "explanation": "La compatibilidad técnica no demuestra compatibilidad de significado."
+      },
+      {
+        "id": "b",
+        "text": "Cambiar solo el color del estado en el reporte.",
+        "explanation": "La presentación no corrige la población contada."
+      },
+      {
+        "id": "c",
+        "text": "Revisar definición empresarial, reglas y consumidores afectados.",
+        "explanation": "Un cambio semántico puede alterar decisiones sin romper el esquema."
+      },
+      {
+        "id": "d",
+        "text": "Actualizar automáticamente todas las descripciones con IA sin aprobación.",
+        "explanation": "La generación no sustituye la decisión del propietario."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "metadata",
+      "anchor": "ejemplo-explicado",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-metadata-06",
+    "domain": "metadata",
+    "question": "Auditoría pide reconstruir una transformación de hace tres meses y solo hay linaje actual. ¿Cuál es la respuesta adecuada?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Exportar el grafo actual y fecharlo como si fuera del periodo auditado.",
+        "explanation": "Eso atribuiría al pasado evidencia que no se conservó."
+      },
+      {
+        "id": "b",
+        "text": "Usar el notebook actual porque siempre reemplaza las versiones anteriores.",
+        "explanation": "Puede contener reglas diferentes de las aplicadas entonces."
+      },
+      {
+        "id": "c",
+        "text": "Suponer que Preview conserva automáticamente todas las ejecuciones.",
+        "explanation": "La cobertura histórica no está documentada como completa."
+      },
+      {
+        "id": "d",
+        "text": "Reunir versión de transformación, ejecución y datos del periodo; declarar cualquier evidencia faltante.",
+        "explanation": "La vista actual no prueba por sí sola el proceso histórico."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "metadata",
+      "anchor": "ejercicio-de-decision",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-data-quality-01",
+    "domain": "data-quality",
+    "question": "Una fecha está presente y tiene formato válido, pero no coincide con el contrato firmado. ¿Qué dimensión falla directamente?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Exactitud respecto de la evidencia del contrato.",
+        "explanation": "Presencia y formato no prueban correspondencia con la realidad."
+      },
+      {
+        "id": "b",
+        "text": "Completitud, porque cualquier valor incorrecto es un nulo.",
+        "explanation": "El campo tiene valor; el incumplimiento descrito es otro."
+      },
+      {
+        "id": "c",
+        "text": "Oportunidad, porque toda fecha incorrecta llegó tarde.",
+        "explanation": "El caso no aporta una demora de entrega."
+      },
+      {
+        "id": "d",
+        "text": "Unicidad, porque toda contradicción implica duplicado.",
+        "explanation": "No se describe una repetición de registros según su identidad."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "data-quality",
+      "anchor": "conceptos-clave",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-data-quality-02",
+    "domain": "data-quality",
+    "question": "La política exige al menos 99 % de conformidad y el resultado es exactamente 99 %. ¿Qué conclusión corresponde a esa regla?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Falla porque al menos equivale a estrictamente mayor.",
+        "explanation": "Eso cambia el operador aprobado."
+      },
+      {
+        "id": "b",
+        "text": "Cumple el umbral inclusivo, manteniendo visibles las excepciones.",
+        "explanation": "Al menos incluye la igualdad; las excepciones aún requieren tratamiento."
+      },
+      {
+        "id": "c",
+        "text": "Demuestra que todas las dimensiones de calidad son perfectas.",
+        "explanation": "La regla mide una condición y no elimina el 1 % de excepciones."
+      },
+      {
+        "id": "d",
+        "text": "Permite borrar los registros no conformes sin decisión adicional.",
+        "explanation": "El umbral no autoriza por sí mismo disposición o eliminación."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "data-quality",
+      "anchor": "reglas-umbrales-y-remediacion",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-data-quality-03",
+    "domain": "data-quality",
+    "question": "Table AI Assist genera SQL de limpieza para Horizonte. ¿Qué paso mantiene la responsabilidad sobre el cambio?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Aplicar el SQL porque proviene de una herramienta integrada.",
+        "explanation": "La integración no garantiza significado correcto para el caso."
+      },
+      {
+        "id": "b",
+        "text": "Sustituir el propietario de la regla por el modelo de lenguaje.",
+        "explanation": "La responsabilidad organizacional no se delega al modelo."
+      },
+      {
+        "id": "c",
+        "text": "Revisar lógica y resultados frente a la regla aprobada antes de aplicarlo.",
+        "explanation": "La IA propone una transformación; el equipo comprueba su adecuación."
+      },
+      {
+        "id": "d",
+        "text": "Usar la reducción de filas como única medida de éxito.",
+        "explanation": "Eliminar registros puede ocultar errores o perder información válida."
+      }
+    ],
+    "correctOption": "c",
+    "reference": {
+      "module": "data-quality",
+      "anchor": "calidad-con-oracle-ai-data-platform-y-oracle-autonomous-ai-lakehouse",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-data-quality-04",
+    "domain": "data-quality",
+    "question": "En 1 000 contratos, diez carecen de fecha y veinte distintos están fuera del periodo. ¿Cuántos cumplen ambas condiciones?",
+    "options": [
+      {
+        "id": "a",
+        "text": "990; solo se cuentan los registros sin fecha.",
+        "explanation": "Ignora los veinte que fallan el periodo."
+      },
+      {
+        "id": "b",
+        "text": "980; la validez de periodo reemplaza la presencia.",
+        "explanation": "Las dos condiciones deben cumplirse, no solo una."
+      },
+      {
+        "id": "c",
+        "text": "985; se promedian 99 % y 98 %.",
+        "explanation": "Promediar tasas no calcula la intersección de conformes."
+      },
+      {
+        "id": "d",
+        "text": "970; la conformidad combinada es 97 %.",
+        "explanation": "Se descuentan treinta registros distintos de la población total."
+      }
+    ],
+    "correctOption": "d",
+    "reference": {
+      "module": "data-quality",
+      "anchor": "ejemplo-explicado",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-data-quality-05",
+    "domain": "data-quality",
+    "question": "Cada mes se corrigen los mismos errores de captura en una copia analítica. ¿Qué acción atiende la causa?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Corregir el proceso de origen, asignar responsable y verificar las cargas siguientes.",
+        "explanation": "La limpieza repetida no impide que se produzcan nuevamente los defectos."
+      },
+      {
+        "id": "b",
+        "text": "Repetir indefinidamente la limpieza sin registrar incidencias.",
+        "explanation": "Mantiene el costo y oculta la recurrencia."
+      },
+      {
+        "id": "c",
+        "text": "Excluir los casos de los indicadores para que la tasa mejore.",
+        "explanation": "Cambiar el denominador no demuestra mejora del dato."
+      },
+      {
+        "id": "d",
+        "text": "Aumentar el umbral permitido sin revisar el riesgo.",
+        "explanation": "Relajar una regla no corrige el proceso que causa el error."
+      }
+    ],
+    "correctOption": "a",
+    "reference": {
+      "module": "data-quality",
+      "anchor": "reglas-umbrales-y-remediacion",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  },
+  {
+    "id": "gov-data-quality-06",
+    "domain": "data-quality",
+    "question": "Dos registros incumplen unicidad en 200 facturas; completitud es 100 %. Publicación exige 100 % de unicidad. ¿Qué corresponde?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Promediar ambas tasas y publicar si el promedio parece alto.",
+        "explanation": "La política exige cumplir unicidad individualmente."
+      },
+      {
+        "id": "b",
+        "text": "Tratar la falla de unicidad y volver a comprobar antes de publicar según la política.",
+        "explanation": "198 de 200 es 99 %; completitud no compensa el control crítico."
+      },
+      {
+        "id": "c",
+        "text": "Publicar porque solo dos registros incumplen.",
+        "explanation": "La cantidad pequeña no anula el umbral aprobado."
+      },
+      {
+        "id": "d",
+        "text": "Declarar 100 % porque todos los campos están presentes.",
+        "explanation": "Presencia y unicidad son condiciones distintas."
+      }
+    ],
+    "correctOption": "b",
+    "reference": {
+      "module": "data-quality",
+      "anchor": "ejercicio-de-decision",
+      "label": "Repasar la decisión y su fundamento"
+    }
+  }
+]

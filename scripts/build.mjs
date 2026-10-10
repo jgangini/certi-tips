@@ -2,7 +2,7 @@ import { readFile, readdir, mkdir, writeFile, cp, realpath, rm } from "node:fs/p
 import { existsSync } from "node:fs";
 import path from "node:path";
 import MarkdownIt from "markdown-it";
-import { layout, homeBody, certiquizBody, escapeHtml } from "./layout.mjs";
+import { layout, homeBody, certiquizBody, escapeHtml, courseRoute } from "./layout.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const output = path.join(root, "dist");
@@ -83,7 +83,7 @@ for (const file of await readdir(diagramDirectory)) {
 }
 for (const course of site.courses) {
   await cp(path.join(root, "data", `${course.questionBank}.json`), path.join(output, "assets", `${course.questionBank}.json`));
-  const publicPath = course.exam.code;
+  const publicPath = courseRoute(course);
   const pages = [...course.modules, ...course.resources];
   const rendered = new Map(await Promise.all(pages.map(async (page) => [
     page.slug,

@@ -24,6 +24,16 @@ test('accepts a self-contained course under the GitHub Pages base path', () => {
   assert.deepEqual(validateSite(fixture()), []);
 });
 
+test('validates an applied course and its question references without an exam code', () => {
+  const input = fixture();
+  delete input.catalog.courses[0].exam;
+  assert.deepEqual(validateSite(input), []);
+  input.files.delete('course/agents/index.html');
+  const issues = validateSite(input);
+  includesIssue(issues, /missing published page course\/agents\/index\.html/);
+  includesIssue(issues, /data\/questions\.json\[0\].*missing target.*course\/agents/);
+});
+
 test('validates a second course with independent coverage and bank, including its failures', () => {
   const input = fixture();
   const second = { ...input.catalog.courses[0], id: 'second', exam: { code: 'EXAM-2' }, questionBank: 'second-questions', coverage: 'second-coverage', lessonCounts: [1, 2], modules: input.catalog.courses[0].modules.slice(0, 2) };

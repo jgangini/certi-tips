@@ -64,7 +64,7 @@ Una búsqueda semántica puede recuperar un manual equivocado de un modelo parec
 Tu organización ya tiene una función PL/SQL autorizada para consultar inventario y quiere ofrecerla a una aplicación MCP. ¿Debe conceder acceso libre a todas sus tablas?
 
 <details>
-<summary>Ver solución y explicación</summary>
+<summary>Solución</summary>
 
 No. Puede registrar una herramienta acotada para esa función y exponerla según la configuración del servidor. El cliente debe autenticarse y la ejecución respetar privilegios, alcance y validación de parámetros. El contrato de la herramienta permite ofrecer una operación concreta sin convertir al agente en administrador de la base.
 

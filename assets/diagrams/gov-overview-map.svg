@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" role="img" aria-labelledby="title description"><title id="title">Pirámide Dorada de Peter Aiken</title><desc id="description">Pirámide de Peter Aiken con los trazados, colores y rótulos en inglés del SVG proporcionado. Las once áreas de gestión de datos se apoyan entre sí: gobierno sostiene el conjunto; arquitectura, calidad y metadatos apoyan las capacidades operativas, la integración y los usos compartidos. La cima representa resultados de analítica, Big Data e inteligencia artificial, no una duodécima área ni una secuencia obligatoria de implantación.</desc><g font-family="Segoe UI, Arial, sans-serif"><rect x="0" y="0" width="1920" height="1080" rx="0" fill="#F1EFED" stroke="none" stroke-width="2"/><rect x="96" y="128" width="88" height="6" rx="0" fill="#C74634" stroke="none" stroke-width="2"/><text x="96" y="99" font-size="56" fill="#3C4545" font-weight="700" text-anchor="start"><tspan x="96" y="99">Pirámide Dorada de Peter Aiken</tspan></text><g id="dama-artwork" data-source-svg="dama.svg" data-source-viewbox="0 0 1154.55 841.89" class="st10" transform="translate(960 1000) scale(1.72) translate(-530.886 -566.32)"><style type="text/css">
+	
+		.st1 {fill:#c06d30;stroke:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.75}
+		.st2 {fill:#00b0f0;stroke:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.75}
+		.st3 {fill:#2e5c70;stroke:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.75}
+		.st4 {fill:none;stroke:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.75}
+		.st5 {fill:#fbfbe7;font-family:Oracle Sans, Segoe UI, Arial, sans-serif;font-size:1.00001em}
+		.st6 {font-size:1em}
+		.st7 {fill:#c06d30;stroke:none;stroke-width:0.75}
+		.st8 {fill:#fbfbe7;font-family:Oracle Sans, Segoe UI, Arial, sans-serif;font-size:0.833336em}
+		.st9 {fill:#749b6b;stroke:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.75}
+		.st10 {fill:none;fill-rule:evenodd;font-size:12px;overflow:visible;stroke-linecap:square;stroke-miterlimit:3}
+	
+	</style>
+
+	<g>
+		<title>Page-1</title>
+		
+		<g id="shape2-1" transform="translate(241.087,-275.57)">
+			<title>Sheet.2</title>
+			<path d="M1.28 821.75 A14.3079 14.3079 -180 0 0 12.71 841.89 L566.89 841.89 A13.3204 13.3204 -180 0 0 578.37 821.73 L529.02        742.68 L480.7 806.46 L98.67 806.46 L50.57 742.68 L6.43 813.54 L1.28 821.75 Z" class="st1" />
+		</g>
+		<g id="shape3-3" transform="translate(760.698,1294.82) rotate(180)">
+			<title>Sheet.3</title>
+			<path d="M0 841.89 L229.81 841.89 L43 785.2 L0 841.89 Z" class="st2" />
+		</g>
+		<g id="shape4-5" transform="translate(460.02,-644.074)">
+			<title>Sheet.4</title>
+			<path d="M0 841.89 A9560.35 9560.35 87.86 0 1 60.14 746.06 A14.5534 14.5534 107.08 0 1 82.1 746.07 A10287.6 10287.6 -72.92        0 0 141.73 841.89 L0 841.89 Z" class="st3" />
+		</g>
+		<g id="shape5-7" transform="translate(474.193,-644.074)">
+			<title>Sheet.5</title>
+			<desc>Data Analytics &amp; Big Data &amp; AI</desc>
+			
+			
+			<rect x="0" y="756.85" width="113.386" height="85.0394" class="st4" />
+			<text x="44.07" y="782.87" class="st5">Data<tspan x="32.13" dy="1.1em" class="st6">Analytics</tspan><tspan x="28.09" dy="1.1em" class="st6">&amp; Big Data</tspan><tspan x="45.36" dy="1.1em" class="st6">&amp; AI</tspan></text>		</g>
+		<g id="shape6-13" transform="translate(389.154,-530.688)">
+			<title>Sheet.6</title>
+			<path d="M0 841.89 L99.21 841.89 L99.21 742.68 L61.56 742.68 L0 841.89 Z" class="st7" />
+		</g>
+		<g id="shape7-15" transform="translate(672.619,-530.688) scale(-1,1)">
+			<title>Sheet.7</title>
+			<path d="M0 841.89 L96.52 841.89 L96.52 742.68 L62.42 742.68 L0 841.89 Z" class="st1" />
+		</g>
+		<g id="shape8-17" transform="translate(495.453,-530.688)">
+			<title>Sheet.8</title>
+			<rect x="0" y="742.677" width="73.8426" height="99.2126" class="st1" />
+		</g>
+		<g id="shape9-19" transform="translate(403.327,-530.688)">
+			<title>Sheet.9</title>
+			<desc>Business Intelligence &amp; Data Warehousing</desc>
+			
+			
+			<rect x="0" y="771.024" width="80.2205" height="70.8661" class="st4" />
+			<text x="36.25" y="788.96" class="st8">Business<tspan x="24.49" dy="1em" class="st6">Intelligence</tspan><tspan x="69.08" dy="1em" class="st6">&amp;</tspan><tspan x="55.19" dy="1em" class="st6">Data</tspan><tspan x="16.25" dy="1em" class="st6">Warehousing</tspan></text>		</g>
+		<g id="shape10-26" transform="translate(495.453,-530.688)">
+			<title>Sheet.10</title>
+			<desc>Reference &amp; Master Data</desc>
+			
+			
+			<rect x="0" y="742.677" width="73.8426" height="99.2126" class="st4" />
+			<text x="9.36" y="789.78" class="st8">Reference &amp;<tspan x="9.52" dy="1em" class="st6">Master Data</tspan></text>		</g>
+		<g id="shape11-30" transform="translate(578.225,-530.688)">
+			<title>Sheet.11</title>
+			<desc>Document &amp; Content Management</desc>
+			
+			
+			<rect x="0" y="771.024" width="80.2205" height="70.8661" class="st4" />
+			<text x="4" y="793.96" class="st8">Document<tspan x="4" dy="1em" class="st6">&amp;</tspan><tspan x="4" dy="1em" class="st6">Content </tspan><tspan x="4" dy="1em" class="st6">Management</tspan></text>		</g>
+		<g id="shape12-36" transform="translate(349.165,-410.216)">
+			<title>Sheet.12</title>
+			<path d="M181.72 841.89 L363.04 785.2 L0 785.2 L181.72 841.89 Z" class="st9" />
+		</g>
+		<g id="shape13-38" transform="translate(309.336,-403.129)">
+			<title>Sheet.13</title>
+			<path d="M0 841.89 L221.55 841.89 L35.29 785.2 L0 841.89 Z" class="st9" />
+		</g>
+		<g id="shape14-40" transform="translate(353.445,-473.995)">
+			<title>Sheet.14</title>
+			<path d="M0 841.89 L354.35 841.89 L327.78 799.37 L26.45 799.37 L0 841.89 Z" class="st9" />
+		</g>
+		<g id="shape15-42" transform="translate(360.808,-473.995)">
+			<title>Sheet.15</title>
+			<desc>Data Integration &amp; Interoperability</desc>
+			
+			
+			<rect x="0" y="799.37" width="340.157" height="42.5197" class="st4" />
+			<text x="120.42" y="817.63" class="st5">Data Integration &amp;<tspan x="128.87" dy="1em" class="st6">Interoperability</tspan></text>		</g>
+		<g id="shape16-46" transform="translate(752.212,-403.129) scale(-1,1)">
+			<title>Sheet.16</title>
+			<path d="M0 841.89 L221.55 841.89 L35.65 785.2 L0 841.89 Z" class="st9" />
+		</g>
+		<g id="shape17-48" transform="translate(349.334,1301.91) scale(1,-1)">
+			<title>Sheet.17</title>
+			<path d="M181.72 841.89 L363.04 785.2 L0 785.2 L181.72 841.89 Z" class="st2" />
+		</g>
+		<g id="shape18-50" transform="translate(301.243,1294.82) scale(1,-1)">
+			<title>Sheet.18</title>
+			<path d="M0 841.89 L229.81 841.89 L43.55 785.2 L0 841.89 Z" class="st2" />
+		</g>
+		<g id="shape19-52" transform="translate(309.336,-403.129)">
+			<title>Sheet.19</title>
+			<desc>Data Security</desc>
+			
+			
+			<rect x="0" y="799.37" width="136.511" height="42.5197" class="st4" />
+			<text x="32.28" y="823.63" class="st5">Data Security</text>		</g>
+		<g id="shape20-55" transform="translate(630.099,-403.129)">
+			<title>Sheet.20</title>
+			<desc>Data Modeling &amp; Design</desc>
+			
+			
+			<rect x="0" y="799.37" width="122.338" height="42.5197" class="st4" />
+			<text x="48.55" y="811.63" class="st5">Data<tspan x="29.83" dy="1em" class="st6">Modeling &amp;</tspan><tspan x="42.41" dy="1em" class="st6">Design</tspan></text>		</g>
+		<g id="shape21-60" transform="translate(346.634,-410.216)">
+			<title>Sheet.21</title>
+			<desc>Data Storage &amp; Operations</desc>
+			
+			
+			<rect x="0" y="785.197" width="368.504" height="56.6929" class="st4" />
+			<text x="143.38" y="810.54" class="st5">Data Storage &amp;<tspan x="154.23" dy="1em" class="st6">Operations</tspan></text>		</g>
+		<g id="shape22-64" transform="translate(309.392,-346.436)">
+			<title>Sheet.22</title>
+			<desc>Data Architecture</desc>
+			
+			
+			<rect x="0" y="799.37" width="136.511" height="42.5197" class="st4" />
+			<text x="55.64" y="817.63" class="st5">Data<tspan x="34.97" dy="1em" class="st6">Architecture</tspan></text>		</g>
+		<g id="shape23-68" transform="translate(615.757,-346.436)">
+			<title>Sheet.23</title>
+			<desc>Metadata</desc>
+			
+			
+			<rect x="0" y="799.37" width="136.511" height="42.5197" class="st4" />
+			<text x="42.52" y="823.63" class="st5">Metadata</text>		</g>
+		<g id="shape24-71" transform="translate(346.69,-325.176)">
+			<title>Sheet.24</title>
+			<desc>Data Quality</desc>
+			
+			
+			<rect x="0" y="785.197" width="368.504" height="56.6929" class="st4" />
+			<text x="171.63" y="810.54" class="st5">Data<tspan x="164.95" dy="1em" class="st6">Quality</tspan></text>		</g>
+		<g id="shape25-75" transform="translate(233.291,-275.57)">
+			<title>Sheet.25</title>
+			<desc>Data Governance</desc>
+			
+			
+			<rect x="0" y="806.457" width="595.276" height="35.4331" class="st4" />
+			<text x="285.02" y="821.17" class="st5">Data<tspan x="265.07" dy="1em" class="st6">Governance</tspan></text>		</g>
+	</g>
+</g></g></svg>

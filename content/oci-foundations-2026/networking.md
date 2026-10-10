@@ -1,7 +1,5 @@
 La tienda necesita recibir HTTPS desde internet, mantener privadas sus aplicaciones y permitir que esas aplicaciones lean objetos y descarguen actualizaciones. Cada camino exige una decisión distinta.
 
-**Al terminar podrás:** dibujar una VCN con subredes; elegir el gateway por destino; separar rutas y reglas de seguridad; y explicar la función de un balanceador y sus health checks.
-
 ## Conceptos clave
 
 Una **Virtual Cloud Network (VCN)** es una red virtual regional. Su bloque **CIDR** define un rango de direcciones. Por ejemplo, `10.0.0.0/16` puede contener una subred `10.0.1.0/24` y otra `10.0.2.0/24`. El prefijo mayor describe una porción más pequeña del espacio. Planifica rangos sin solapamientos si vas a conectar redes.
@@ -64,7 +62,7 @@ Para reproducir la demostración de balanceador privado, sustituye el cliente de
 Una VM privada lee fotos de Object Storage y descarga paquetes de un repositorio público. No debe aceptar conexiones nuevas desde internet. ¿Qué dos gateways elegirías? ¿Una tabla de rutas basta para que funcione?
 
 <details>
-<summary>Ver solución y explicación</summary>
+<summary>Solución</summary>
 
 Service Gateway para Object Storage de la misma región y NAT Gateway para el repositorio público. Configura las rutas correspondientes y permite la salida necesaria, la resolución DNS y las respuestas. Para leer objetos también hacen falta permisos IAM. La tabla de rutas no sustituye estos controles.
 

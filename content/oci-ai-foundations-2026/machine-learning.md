@@ -61,7 +61,7 @@ Un 100% en una partición pequeña no prueba perfección universal. Repite la ev
 De 200 equipos, 190 están sanos y 10 fallan. Un modelo predice «sano» para todos. Otro problema pide estimar horas de reparación. ¿Qué concluyes del primer modelo y qué tarea es la segunda?
 
 <details>
-<summary>Ver solución y explicación</summary>
+<summary>Solución</summary>
 
 El primero alcanza `190 / 200 = 95%` de accuracy, pero su recall para fallos es `0 / 10 = 0%`. No cumple la tarea de detectarlos. Estimar horas es regresión. Debes elegir métricas y evaluar cada objetivo por separado; una cifra global alta no sustituye el resultado de negocio.
 

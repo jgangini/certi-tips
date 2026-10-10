@@ -1,0 +1,39 @@
+{
+  "title": "Publicar la identidad que fue aprobada",
+  "layout": "left-to-right",
+  "groups": [
+    {
+      "id": "platform",
+      "label": "Ámbitos de servicios y capacidades",
+      "type": "platform"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "platform",
+      "label": "Oracle AI Data Platform",
+      "service": "Oracle AI Data Platform",
+      "group": "platform",
+      "iconCatalogId": "oci-ai-data-platform-workbench"
+    },
+    {
+      "id": "lakehouse",
+      "label": "Oracle Autonomous AI Lakehouse",
+      "service": "Oracle Autonomous AI Lakehouse",
+      "group": "platform",
+      "iconCatalogId": "oracle-autonomous-database"
+    }
+  ],
+  "edges": [],
+  "conceptualAnnotations": {
+    "saasBoundary": "Oracle Fusion Cloud Enterprise Data Management. Text-only because no exact official product glyph exists in the installed catalog; no Fusion placeholder.",
+    "integration": "Export/import is an explicit configured pattern. Universal dimension mappings can export to CSV; no direct native Oracle AI Data Platform connector is claimed.",
+    "scope": "Master/reference domain and survivorship fit must be evaluated; this does not claim universal operational high-volume customer MDM."
+  },
+  "presentation": {
+    "viewBox": "0 0 1920 1080",
+    "minimumFontSize": 32,
+    "finalSvg": "assets/diagrams/gov-master-reference-data-oracle.svg",
+    "scope": "Logical teaching architecture; conceptual decisions and native features are annotations, not separately provisioned products."
+  }
+}

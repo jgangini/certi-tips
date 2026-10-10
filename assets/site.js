@@ -120,7 +120,7 @@ function updateSearch() {
   searchDialog.classList.toggle("has-query", searching);
   searchEmpty.hidden = total !== 0;
   searchClose.setAttribute("aria-label", searchInput.value ? "Limpiar búsqueda" : "Cerrar búsqueda");
-  searchCount.textContent = !searching ? `${total} certificaciones disponibles.`
+  searchCount.textContent = !searching ? `${total} cursos disponibles.`
     : total ? `${total} resultado${total === 1 ? "" : "s"}.`
     : "No se encontraron resultados. Prueba con otro término.";
 }
@@ -293,6 +293,8 @@ document.querySelectorAll("[data-diagram]").forEach((button) =>
     enlarged.src = image.src;
     enlarged.alt = image.alt;
     document.querySelector("#diagram-caption").textContent = image.alt;
+    const description = dialog.querySelector("#diagram-description");
+    if (description) description.textContent = button.querySelector("span").firstChild.textContent.trim();
     dialog.showModal();
     dialog.querySelector("button").focus();
   }),

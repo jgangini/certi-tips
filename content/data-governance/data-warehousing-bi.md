@@ -1,0 +1,68 @@
+Finanzas y Atención al Cliente de Operadora Horizonte muestran cantidades distintas de “clientes activos”. Ambas consultas ejecutan correctamente. El problema está en las definiciones, el periodo y la granularidad usados para producir el indicador.
+
+## Conceptos Clave
+
+Un **data warehouse** organiza datos para análisis consistente e histórico. Un enfoque **lakehouse** combina capacidades analíticas con datos almacenados en formatos abiertos y fuentes diversas. Ninguno garantiza que todos los consumidores interpreten igual los datos: se necesitan definiciones acordadas, modelos y controles.
+
+El **grano** indica qué representa una fila. En Horizonte, una tabla puede tener una fila por factura o una por línea de factura. Las **dimensiones** describen contexto, como cliente, plan y fecha; los **hechos** registran eventos y medidas. Mezclar granos puede duplicar importes aunque el SQL no produzca errores.
+
+![El Grano Define Qué Representa Cada Fila]({{base}}assets/diagrams/gov-data-warehousing-bi-concepts.svg "El hecho representa una línea de factura: F-01 tiene una línea de 60 y otra de 40. Las dimensiones Cliente, Plan y Fecha aportan contexto mediante sus relaciones. Declara el grano factura + línea antes de agregar: cada fila representa una línea, no una factura completa ni un cliente distinto.")
+
+## Semántica, Granularidad y Publicación
+
+El propietario del indicador acuerda definición, población, periodo, exclusiones y uso. “Clientes activos al cierre” podría contar identidades con al menos un contrato vigente en la fecha de cierre; “contratos activos” cuenta contratos. Un cliente con tres contratos representa uno en la primera medida y tres en la segunda.
+
+La capa semántica expresa medidas y relaciones reutilizables. Debe conservar unidad, agregación y tratamiento de valores faltantes. Una tasa requiere numerador y denominador compatibles. Promediar porcentajes de segmentos de tamaños diferentes puede producir un resultado equivocado: se deben agregar sus cantidades base cuando la definición así lo exige.
+
+![Una Población Admite Varias Métricas]({{base}}assets/diagrams/gov-data-warehousing-bi-principles.svg "En el corte del 30 de septiembre, los contratos K-01, K-02 y K-03 pertenecen al mismo cliente C-17. Contar clientes distintos produce 1; contar contratos distintos produce 3. Ambas medidas pueden ser correctas, pero responden preguntas diferentes. Define población, unidad, periodo y exclusiones antes de comparar indicadores.")
+
+Publicar un indicador incluye aprobación y evidencia de conciliación. El consumidor conoce la fecha de actualización y el estado: preliminar, cerrado o corregido. Si cambia la definición, se evalúa el impacto histórico; no se reemplaza silenciosamente una serie que ya fundamentó decisiones.
+
+## Analítica Gobernada con Oracle AI Data Platform y Oracle Autonomous AI Lakehouse
+
+Oracle AI Data Platform aporta preparación y flujos de datos; Oracle Autonomous AI Lakehouse permite análisis SQL de tablas internas y datos externos soportados. Data Studio de Oracle Autonomous AI Database incorpora **Analytic Views** con jerarquías y medidas. Estas capacidades pueden representar un modelo acordado, sin reemplazar la decisión empresarial que define “activo” o “ingreso”.
+
+Oracle Analytics Cloud puede consumir ambos entornos mediante conexiones distintas: la [conexión a Oracle AI Data Platform](https://docs.oracle.com/en/cloud/paas/analytics-cloud/acsds/connect-ai-data-platform.html) selecciona un catálogo, mientras la [conexión a Oracle Autonomous AI Lakehouse](https://docs.oracle.com/en/cloud/paas/analytics-cloud/acsds/connect-oracle-autonomous-ai-lakehouse.html) permite consultar sus datos. Configurar el acceso no concilia automáticamente las definiciones empresariales de sus conjuntos.
+
+![Un Indicador Conserva su Definición]({{base}}assets/diagrams/gov-data-warehousing-bi-oracle.svg "Oracle Analytics Cloud puede consumir resultados mediante conexiones configuradas a Oracle AI Data Platform y Oracle Autonomous AI Lakehouse. El gráfico separa preparación, resultados SQL y consumo analítico. La definición revisada de clientes activos al cierre conserva identidad, contrato vigente y fecha. Verifica el grano de la medida: un cliente con tres contratos no representa tres clientes.")
+
+La consulta federada accede a datos en su ubicación; una carga los copia y una caché conserva una representación local para acelerar acceso. Deben evaluarse actualización, acceso y evidencia en cada modalidad. Data Sharing ofrece mecanismos de intercambio con alcances distintos: publicar una versión no equivale a prometer actualización continua.
+
+El uso de lenguaje natural para generar SQL exige comprobar medidas, filtros y permisos. Una respuesta fluida puede usar una definición equivocada. Para el taller, la evidencia es una ficha de métrica, un modelo con grano explícito y una conciliación; no se necesita ejecutar servicios.
+
+## Ejemplo Explicado
+
+Una factura de 100 unidades monetarias tiene dos líneas. Un analista une la cabecera con las líneas y suma el total de cabecera: obtiene 200 porque el importe aparece dos veces. El error proviene de la relación entre granos.
+
+Finanzas confirma que el indicador es importe facturado y decide sumar los importes de línea, 60 y 40, o agregar una sola vez cada factura en su grano. El ingeniero corrige el modelo compartido y el steward documenta la medida. Se verifican facturas con una línea, varias líneas y notas de ajuste.
+
+![Un Join Puede Duplicar el Importe de Cabecera]({{base}}assets/diagrams/gov-data-warehousing-bi-example.svg "Después del join, F-01 aparece una vez por cada línea. El importe de cabecera 100 se repite y su suma produce 200. Los importes de línea 60 y 40 mantienen su grano y suman el total real de 100. Elige la medida que corresponde a la granularidad del resultado y concilia contra la factura de origen.")
+
+El gráfico mensual se publica después de conciliarlo con la fuente autorizada y registrar el periodo. Si una factura llega tarde, se aplica la política acordada para ajustar el cierre, conservando la versión anterior cuando sea necesaria para explicar un reporte ya emitido.
+
+## Errores Frecuentes
+
+- **“Una consulta válida produce una métrica correcta”.** La validez técnica no comprueba grano ni definición.
+- **“Todos los dashboards usan la misma verdad”.** Se deben verificar modelo, filtros, fecha y versión de cada consumidor.
+- **“Federar significa que no hay ninguna copia”.** El diseño puede incorporar cachés, extracciones y resultados persistidos.
+
+![El Mismo Título Puede Ocultar Dos Contratos]({{base}}assets/diagrams/gov-data-warehousing-bi-errors.svg "Los dos paneles se llaman «Clientes activos», pero usan poblaciones, fechas, versiones de definición y formas de lectura diferentes. El comercial incluye vigentes y pendientes hoy; el financiero usa solo vigentes del cierre de septiembre. Un SQL válido no demuestra equivalencia de indicadores. Compara sus contratos antes de conciliar cifras o explicar diferencias.")
+
+## Ejercicio de Decisión
+
+Después de publicar el cierre de septiembre, llega una factura atrasada. Ventas quiere reemplazar inmediatamente el total; Finanzas exige explicar qué vio el directorio. Decide cómo publicar la corrección y qué conservar para evitar dos resultados sin contexto.
+
+<details>
+<summary>Solución</summary>
+
+El propietario del indicador aplica la política de cierre y autoriza una versión corregida, si corresponde. La ficha indica fecha, motivo y diferencia; se mantiene la relación con el reporte emitido. Los consumidores reciben la versión y su estado. Se conserva la conciliación de la factura tardía para reproducir tanto el cierre original como la corrección.
+
+![Una Corrección Conserva el Cierre Original]({{base}}assets/diagrams/gov-data-warehousing-bi-exercise.svg "La publicación v1 conserva el cierre de septiembre. Una factura tardía recibida en octubre origina una corrección v2 del mismo periodo, con motivo, aprobación y vínculo a v1. El ajuste Δ cambia el importe publicado sin sobrescribir la evidencia anterior. Registra versión y relación entre ambas para explicar y reproducir el cierre original y su corrección.")
+
+</details>
+
+## Fuentes y Repaso
+
+![La Métrica Necesita una Ficha Reproducible]({{base}}assets/diagrams/gov-data-warehousing-bi-recap.svg "La métrica de importe facturado suma líneas: en F-01, 60 + 40 = 100, conciliado contra el origen. Su ficha declara grano, periodo, población incluida, audiencia autorizada, versión de definición y publicación, y propietario. Estos datos permiten reproducir la cifra y comprobar que otro consumidor interpreta y calcula la misma medida.")
+
+Fuentes públicas revisadas al **9 de octubre de 2026**: [Oracle Autonomous AI Lakehouse](https://www.oracle.com/autonomous-database/autonomous-ai-lakehouse/), [Data Analysis y Analytic Views](https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/data-analysis-tool.html) y [consulta, caché e intercambio](https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/autonomous-lakehouse.html). El caso usa cifras didácticas; no representa resultados de clientes.

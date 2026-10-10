@@ -1,6 +1,6 @@
 # AI Foundations 2026: fuentes y decisiones editoriales
 
-Revisión: 6 de octubre de 2026. Curso: Oracle Cloud Infrastructure AI Foundations Associate, 1Z0-1122-26.
+Revisión: 9 de octubre de 2026. Curso: Oracle Cloud Infrastructure AI Foundations Associate, 1Z0-1122-26.
 
 ## Cobertura del material aportado
 
@@ -26,6 +26,7 @@ Las 54 preguntas de CertiTips son originales: seis por módulo técnico, con cua
 ## Contraste con fuentes primarias
 
 - [Ruta MyLearn 2026](https://mylearn.oracle.com/ou/learning-path/become-an-oci-ai-foundations-associate-2026/163544): nombre, código y duración de una hora del examen. No se trasladan los 40 ítems ni el 65% mencionados en material antiguo a la ficha actual sin confirmación de la variante concreta.
+- [Listado oficial de exámenes de Oracle Japón](https://www.oracle.com/jp/education/certification/certification-exam-list/): publica 40 preguntas, 60 minutos y 65% de aprobación para `1Z0-1122-26-JPN`. Por solicitud editorial, la tabla de orientación muestra 40 y 65% como texto simple, sin calificador ni enlace. La confirmación pública consultada corresponde a la variante japonesa; no se ha verificado independientemente la cifra para otros idiomas.
 - [OCI Generative AI](https://docs.oracle.com/en-us/iaas/Content/generative-ai/overview.htm), [inicio con agentes](https://docs.oracle.com/en-us/iaas/Content/generative-ai/get-started-agents.htm), [projects](https://docs.oracle.com/en-us/iaas/Content/generative-ai/projects.htm) y [guardrails](https://docs.oracle.com/en-us/iaas/Content/generative-ai/guardrails.htm): modelos, herramientas, endpoints, persistencia y alcance de controles.
 - [Data Science](https://docs.oracle.com/en-us/iaas/Content/data-science/using/overview.htm) e [infraestructura de IA](https://www.oracle.com/ai-infrastructure/): catálogo, despliegues, jobs y cómputo.
 - [Language](https://docs.oracle.com/en-us/iaas/Content/language/using/overview.htm), [Speech](https://docs.oracle.com/en-us/iaas/Content/speech/using/speech.htm), [Vision](https://docs.oracle.com/en-us/iaas/Content/vision/using/overview.htm) y [Document Understanding](https://docs.oracle.com/en-us/iaas/Content/document-understanding/using/home.htm): selección por entrada y salida.

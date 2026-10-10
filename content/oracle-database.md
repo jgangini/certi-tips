@@ -109,7 +109,7 @@ Distingue tres implementaciones de tools: una herramienta **SQL** usa un perfil 
 Quieres que dos aplicaciones externas consulten una función autorizada de inventario sin alojar otro servidor MCP. ¿Qué capacidad encaja, y qué no debes dar por hecho?
 
 <details>
-<summary>Ver solución y explicación</summary>
+<summary>Solución</summary>
 
 El MCP Server gestionado de Autonomous AI Database puede exponer herramientas del framework Select AI Agent, según versión y configuración compatibles. Aun así debes definir la herramienta, permisos, identidad y conectividad de los clientes. El protocolo no garantiza que cada usuario pueda consultar cualquier inventario ni convierte una función de lectura en una autorización de escritura.
 

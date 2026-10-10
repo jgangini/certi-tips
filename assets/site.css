@@ -377,6 +377,9 @@ html[data-theme="dark"] .theme-moon { display: none; }
 }
 .search-toggle kbd {
   margin-left: auto;
+}
+.course-page #diagram-viewer kbd,
+.search-toggle kbd {
   display: inline-flex;
   align-items: center;
   padding: 2px 5px;
@@ -916,28 +919,16 @@ progress::-webkit-progress-value {
 .course-main {
   margin-left: var(--sidebar);
   padding: 30px clamp(24px, 5vw, 76px) 64px;
-  max-width: 1300px;
+  max-width: calc(820px + 2 * clamp(24px, 5vw, 76px));
   min-height: calc(100vh - 150px);
 }
 .course-main.lesson-main {
   padding-bottom: 40px;
 }
-.breadcrumb {
-  display: flex;
-  gap: 12px;
-  color: var(--muted);
-  font-size: 0.72rem;
-  margin-bottom: 30px;
-  flex-wrap: wrap;
-}
-.breadcrumb a {
-  color: var(--muted);
-  text-decoration: none;
-}
 .page-heading {
   max-width: 940px;
   border-bottom: 1px solid var(--line);
-  padding-bottom: 26px;
+  padding-bottom: 28px;
   margin-bottom: 28px;
 }
 .page-heading .eyebrow {
@@ -954,6 +945,7 @@ progress::-webkit-progress-value {
   color: var(--muted);
   line-height: 1.7;
   max-width: 780px;
+  margin-bottom: 0;
 }
 .complete-button {
   position: sticky;
@@ -1047,6 +1039,9 @@ progress::-webkit-progress-value {
   background: var(--white);
   font-size: 0.85rem;
 }
+body[data-page="overview"][data-course-has-exam="true"] .prose th:first-child {
+  width: 28.8%;
+}
 .prose th,
 .prose td {
   padding: 12px 16px;
@@ -1061,7 +1056,7 @@ progress::-webkit-progress-value {
 }
 .prose details {
   border: 1px solid var(--line);
-  background: var(--blue-tint);
+  background: var(--chrome-bg);
   border-radius: 8px;
   padding: 16px 20px;
   margin: 22px 0;
@@ -1069,7 +1064,7 @@ progress::-webkit-progress-value {
 .prose details summary {
   cursor: pointer;
   font-weight: 650;
-  color: var(--blue);
+  color: var(--ink);
 }
 .prose details[open] summary {
   margin-bottom: 16px;
@@ -1102,6 +1097,13 @@ progress::-webkit-progress-value {
 }
 .diagram:hover {
   border-color: #bdafa0;
+}
+body[data-course="data-governance"] .diagram {
+  background: #fff;
+  border-color: #c2d4d4;
+}
+body[data-course="data-governance"] .diagram > span {
+  border-top-color: #c2d4d4;
 }
 .page-navigation {
   display: grid;
@@ -1314,6 +1316,23 @@ dialog::backdrop {
   width: 100%;
   min-width: 960px;
 }
+#diagram-viewer[open][aria-describedby] {
+  display: flex;
+  flex-direction: column;
+}
+#diagram-viewer[aria-describedby] .dialog-toolbar {
+  flex-shrink: 0;
+}
+#diagram-description {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 12px 20px;
+  border-top: 1px solid var(--line);
+  background: var(--white);
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
 body:has(dialog[open]) {
   overflow: hidden;
 }
@@ -1330,6 +1349,22 @@ body:has(dialog[open]) {
   border: 1px solid var(--line);
   border-radius: 12px;
   margin: 24px 0;
+}
+.quiz-intro {
+  border-top: 4px solid var(--red);
+  border-radius: 16px;
+}
+.quiz-intro > .eyebrow {
+  color: var(--red);
+}
+html[data-theme="dark"] .quiz-intro > .eyebrow {
+  color: var(--note);
+}
+.quiz-intro > [data-start] {
+  display: flex;
+  width: 140px;
+  max-width: 100%;
+  margin-left: auto;
 }
 .quiz-facts {
   display: grid;
@@ -1571,7 +1606,7 @@ body:has(dialog[open]) {
     padding-right: 12px;
   }
 }
-@media (max-width: 1100px) {
+@media (max-width: 1200px) {
   .path-nav {
     display: none;
   }
@@ -1702,9 +1737,6 @@ body:has(dialog[open]) {
   }
   .course-main {
     padding: 22px 18px;
-  }
-  .breadcrumb {
-    font-size: 0.65rem;
   }
   .page-heading h1 {
     font-size: 1.9rem;

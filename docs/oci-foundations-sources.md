@@ -1,6 +1,6 @@
 # OCI Foundations Associate · revisión editorial
 
-Fecha: 7 de octubre de 2026. Curso: `oci-foundations-2026`, examen `1Z0-1085-26`.
+Fecha: 9 de octubre de 2026. Curso: `oci-foundations-2026`, examen `1Z0-1085-26`.
 
 ## Alcance y trazabilidad
 
@@ -10,7 +10,8 @@ La secuencia de siete módulos técnicos comparte estructura con Agentic AI y AI
 
 ## Fuentes primarias
 
-- [Ruta oficial MyLearn](https://mylearn.oracle.com/ou/learning-path/-become-an-oci-foundations-associate-2026/163541): referencia de edición y acceso. La página pública no expuso detalles del examen al lector automatizado; no se afirman duración, nota mínima ni número oficial de preguntas.
+- [Ruta oficial MyLearn](https://mylearn.oracle.com/ou/learning-path/-become-an-oci-foundations-associate-2026/163541): referencia de edición y acceso. La página pública renderizada identifica `1Z0-1085-26` y una duración de una hora.
+- [Listado oficial de exámenes de Oracle Japón](https://www.oracle.com/jp/education/certification/certification-exam-list/): publica 40 preguntas, 60 minutos y 65% de aprobación para `1Z0-1085-26-JPN`. Por solicitud editorial, la tabla de orientación muestra 40 y 65% como texto simple, sin calificador ni enlace. La confirmación pública consultada corresponde a la variante japonesa; la ficha de acceso a los detalles de otras variantes en MyLearn exige iniciar sesión.
 - [Regiones, AD y FD](https://docs.oracle.com/en-us/iaas/Content/General/Concepts/regions.htm): jerarquía, tres FD por AD y variación del número de AD por región.
 - [IAM y referencia de permisos](https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/iampolicyreference.htm): autorización por principal, verbo, recurso y ámbito; los roles de dominio no se equiparan a permisos universales sobre recursos.
 - [Tablas de rutas](https://docs.oracle.com/en-us/iaas/Content/Network/Tasks/managingroutetables.htm): rutas hacia fuera y escenarios de enrutamiento dentro de la VCN.

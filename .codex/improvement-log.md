@@ -12,6 +12,10 @@ Keep entries short. Record real friction, recurring overhead, or meaningful impr
 
 ## Entry Template
 
+2026-10-09 — Three manual preflight runs needed an isolated Git index to match postflight's inclusion of new sources. Moved the same sequence into arch-preflight.ps1, including environment restoration and source-count output. Executed preflight and verified the real index hash stays unchanged; baseline and final gate now inspect the same source set without a manual wrapper.
+
+2026-10-09 — Governance again added sources omitted by Sentrux's tracked-only scan (the MCP scan remained at 119 files). Promoted the already repeated isolated-index sequence into arch-postflight.ps1: it scans new files with existing sources, preserves real staging and restores Git environment variables. Tracked-only MCP results are supplementary; the expanded CLI gate is authoritative.
+
 2026-10-09 — Chromium does not emit animationcancel for participant animations canceled during their initial delay. The isolated roster check caught arrivals stuck before absorption when reduced motion was enabled immediately after joining. Use one matchMedia change listener for the current roster instead of relying on cancellation events, and verify arrival timing with native browser animation events.
 
 2026-09-29 — Two rounds of diagram geometry/load checks missed the same semantic defect: an agent represented by a refresh/check symbol in agents-objectives and langchain-objectives. Added a focused robot-pictogram regression check and repo guidance to review every icon's meaning, with DOM validation explicitly distinguished from visual evidence.

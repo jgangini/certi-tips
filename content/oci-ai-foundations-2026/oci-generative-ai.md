@@ -60,7 +60,7 @@ No uses fine-tuning para memorizar el número de órdenes: cambiará. Tampoco su
 Un usuario pide «¿Cuántas órdenes de mi sede están pendientes?» y luego «¿Qué dice la política sobre demoras?». ¿Qué dos rutas de datos necesita el asistente?
 
 <details>
-<summary>Ver solución y explicación</summary>
+<summary>Solución</summary>
 
 La primera necesita una consulta estructurada con filtro de sede y estado, ejecutada con autorización. La segunda necesita recuperar la política vigente y usarla como evidencia. Puedes combinar las dos en una respuesta, pero no sustituir un conteo exacto por similitud vectorial ni asumir que recuperar un documento otorga acceso a todas las órdenes.
 

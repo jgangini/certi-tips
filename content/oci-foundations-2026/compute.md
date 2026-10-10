@@ -1,7 +1,5 @@
 Una campaña multiplicará las visitas de Tienda Andina. El equipo necesita decidir qué ejecutar, qué administrar y cómo ampliar la capacidad sin perder los pedidos.
 
-**Al terminar podrás:** relacionar imagen, shape e instancia; comparar VM, bare metal, contenedores y funciones; y distinguir escalamiento, configuración de instancia y migración.
-
 ## Conceptos clave
 
 Una **instancia** es el entorno de cómputo que ejecuta una carga. Su **imagen** aporta el sistema operativo y software inicial. Su **shape** define recursos como procesador, memoria y características de red. Las shapes flexibles permiten ajustar OCPU y memoria dentro de las combinaciones compatibles. Comprueba arquitectura, disponibilidad y límites: una imagen x86 no funciona indistintamente sobre un procesador Arm.
@@ -68,7 +66,7 @@ Para la generación de miniaturas, la tienda evalúa Functions disparada por eve
 La tienda quiere ejecutar un contenedor de procesamiento sin mantener Kubernetes. Otra tarea debe transformar cada foto al recibir un evento. ¿Qué opciones evaluarías? ¿Qué dato te haría reconsiderarlas?
 
 <details>
-<summary>Ver solución y explicación</summary>
+<summary>Solución</summary>
 
 Container Instances para el contenedor sin clúster propio y Functions para la tarea por evento. Si la primera aplicación exige las APIs y orquestación de Kubernetes, considera OKE. Si la segunda requiere ejecuciones o recursos incompatibles con los límites de Functions, evalúa otro runtime. La palabra “contenedor” no obliga a elegir Kubernetes.
 

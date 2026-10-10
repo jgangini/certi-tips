@@ -1,0 +1,67 @@
+{
+  "title": "Capturar cambios y actualizar la tabla",
+  "layout": "left-to-right",
+  "groups": [
+    {
+      "id": "platform",
+      "label": "Ámbitos de servicios y capacidades",
+      "type": "platform"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "goldengate",
+      "label": "Oracle Cloud Infrastructure GoldenGate",
+      "service": "Oracle Cloud Infrastructure GoldenGate",
+      "group": "platform",
+      "iconCatalogId": "goldengate"
+    },
+    {
+      "id": "storage",
+      "label": "Oracle Cloud Infrastructure Object Storage",
+      "service": "Oracle Cloud Infrastructure Object Storage",
+      "group": "platform",
+      "iconCatalogId": "object-storage"
+    },
+    {
+      "id": "platform",
+      "label": "Oracle AI Data Platform",
+      "service": "Oracle AI Data Platform",
+      "group": "platform",
+      "iconCatalogId": "oci-ai-data-platform-workbench"
+    }
+  ],
+  "edges": [
+    {
+      "from": "goldengate",
+      "to": "storage",
+      "label": "data",
+      "meaning": "Change files land in a configured temporary staging location.",
+      "evidence": "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/oracle-goldengate-integration.html"
+    },
+    {
+      "from": "storage",
+      "to": "platform",
+      "label": "data",
+      "meaning": "The stage-and-merge flow reads staged changes into target tables.",
+      "evidence": "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/oracle-goldengate-integration.html"
+    },
+    {
+      "from": "goldengate",
+      "to": "platform",
+      "label": "service",
+      "meaning": "The configured Spark JDBC connection issues table DDL and merge operations.",
+      "evidence": "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/oracle-goldengate-integration.html"
+    }
+  ],
+  "conceptualAnnotations": {
+    "source": "Logical compatible operational source, not an assumed Oracle service.",
+    "selection": "Optional pattern selected when continuous change capture is required."
+  },
+  "presentation": {
+    "viewBox": "0 0 1920 1080",
+    "minimumFontSize": 32,
+    "finalSvg": "assets/diagrams/gov-data-integration-oracle.svg",
+    "scope": "Logical teaching architecture; conceptual decisions and native features are annotations, not separately provisioned products."
+  }
+}

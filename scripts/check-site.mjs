@@ -1,6 +1,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { courseRoute } from './layout.mjs';
 
 const diagramNames = ['agent-loop', 'guardrails', 'langchain-flow', 'mcp-architecture', 'openai-stack', 'handoffs', 'oci-runtime', 'vector-search', 'database-capabilities'];
 const diagramFile = /^assets\/diagrams\/.+\.svg$/i;
@@ -122,7 +123,7 @@ function validateDiagrams(context) {
 function validatePublishedPages(context) {
   const { course, files, error } = context;
   for (const page of [...course.modules, ...(course.resources || [])]) {
-    const file = `${course.exam.code}/${page.slug}/index.html`;
+    const file = `${courseRoute(course)}/${page.slug}/index.html`;
     if (!files.has(file)) error('data/catalog.json', `missing published page ${file}`);
   }
 }
@@ -130,7 +131,7 @@ function validatePublishedPages(context) {
 function validateStudyReference(context, file, ref) {
   const { course, modules, catalog, error } = context;
   if (!ref || !modules.has(ref.module) || !present(ref.anchor)) { error(file, 'reference needs a known module and nonempty anchor'); return; }
-  validateReference(context, file, `${catalog.base}${course.exam.code}/${ref.module}/#${ref.anchor}`);
+  validateReference(context, file, `${catalog.base}${courseRoute(course)}/${ref.module}/#${ref.anchor}`);
 }
 
 function validateOptions(file, question, error) {

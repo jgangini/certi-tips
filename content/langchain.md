@@ -71,7 +71,7 @@ Prueba después “divide entre cero”. El resultado esperado es un error contr
 La multiplicación devuelve 90 correctamente, pero el agente vuelve a solicitarla varias veces. ¿Qué dos aspectos revisarías antes de aumentar el límite de pasos?
 
 <details>
-<summary>Ver solución y explicación</summary>
+<summary>Solución</summary>
 
 Primero, confirma que el resultado aparece en el contexto con el identificador de la llamada correcta. Segundo, revisa instrucciones, descripción de herramientas y condiciones de finalización para comprobar que el agente reconoce el resultado. Aumentar el límite podría hacer más cara una ejecución defectuosa sin corregir la causa. Añade también un límite para que el fallo siga siendo controlable.
 

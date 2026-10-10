@@ -1,7 +1,5 @@
 Fotos de productos, discos de servidores y carpetas compartidas contienen bytes, pero se utilizan de formas diferentes. La elección empieza por el patrón de acceso, no por cuál servicio parece más barato.
 
-**Al terminar podrás:** elegir Object, Block o File Storage; distinguir niveles de objetos; explicar un adjunto iSCSI y una ampliación de volumen; y separar durabilidad, disponibilidad y respaldo.
-
 ## Conceptos clave
 
 **Object Storage** guarda objetos identificados por nombre en buckets y se consume con APIs. Un objeto incluye datos y metadatos. El **namespace** proporciona un espacio de nombres de Object Storage para la tenancy; el bucket agrupa objetos. Una clave como `productos/foto.jpg` puede parecer una ruta, pero no convierte el bucket en un disco montado con semántica de sistema de archivos.
@@ -67,7 +65,7 @@ En la demostración de objetos prueba la diferencia entre una lectura autorizada
 Un archivo casi nunca se consulta, pero debe entregarse inmediatamente cuando se pide. Otro es un histórico que puede esperar una restauración. ¿En qué niveles los colocarías? ¿Qué costo adicional revisarías en el primero?
 
 <details>
-<summary>Ver solución y explicación</summary>
+<summary>Solución</summary>
 
 Infrequent Access puede encajar con el primero; hay que evaluar cargos de recuperación, retención mínima y patrón real. Archive puede encajar con el histórico que tolera espera. Elegir únicamente por el precio por GB ignoraría el tiempo de acceso y los cargos asociados.
 

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
 import { advance, confirmAnswer, domains, newAttempt, restoreAttempt, results, reviewAttempt, shuffle } from '../assets/quiz-core.js';
 import { getStorage, readStored, writeStored } from '../assets/storage.js';
 
@@ -9,13 +10,11 @@ const questionFor = id => bank.find(question => question.id === id);
 const wrongOption = question => question.options.find(option => option.id !== question.correctOption).id;
 const attempt = () => newAttempt(bank, () => 0.25);
 
-for (const [courseId, bankFile, count] of [
-  ['oci-ai-foundations-2026', 'questions-ai-foundations', 18],
-  ['oci-foundations-2026', 'questions-oci-foundations', 14],
-]) test(`${courseId} selects balanced questions and restores review without mixing course banks`, () => {
+const catalog = JSON.parse(readFileSync(new URL('../data/catalog.json', import.meta.url), 'utf8'));
+for (const { id: courseId, questionBank: bankFile, modules } of catalog.courses.filter(course => course.questionBank !== 'questions')) test(`${courseId} selects balanced questions and restores review without mixing course banks`, () => {
   const aiBank = JSON.parse(readFileSync(new URL(`../data/${bankFile}.json`, import.meta.url), 'utf8'));
-  const catalog = JSON.parse(readFileSync(new URL('../data/catalog.json', import.meta.url), 'utf8'));
-  const areas = catalog.courses.find(course => course.id === courseId).modules.filter(module => module.type === 'module').map(module => module.slug);
+  const areas = modules.filter(module => module.type === 'module').map(module => module.slug);
+  const count = areas.length * 2;
   let current = newAttempt(aiBank, () => 0.25, areas);
   assert.equal(current.ids.length, count);
   assert.equal(new Set(current.ids).size, count);
@@ -43,6 +42,37 @@ function finish(initial, isCorrect = () => true) {
   }
   return current;
 }
+
+test('practice preserves storage identity and offers the appropriate course follow-up after completion', async () => {
+  const script = readFileSync(new URL('../assets/quiz.js', import.meta.url), 'utf8').replace(/^import .*;\r?\n/gm, '').replace(/^load\(\);$/m, 'globalThis.loaded = load();');
+  for (const hasExam of [true, false]) {
+    for (const saved of [null, finish(attempt()), finish(attempt(), () => false)]) {
+      const courseRoute = hasExam ? 'EXAM-1' : 'data-governance';
+      const storageKeys = [];
+      const root = { innerHTML: '', addEventListener() {}, querySelector: () => ({ addEventListener() {}, focus() {} }) };
+      const context = vm.createContext({
+        document: { body: { dataset: { course: 'saved-course-id', courseRoute, courseHasExam: String(hasExam), base: '/certi-tips/', questionBank: 'questions', quizDomains: JSON.stringify(Object.fromEntries(domains.map(domain => [domain, domain]))) } }, querySelector: () => root, querySelectorAll: () => [] },
+        fetch: async () => ({ ok: true, json: async () => bank }),
+        newAttempt, confirmAnswer, advance, results, reviewAttempt, restoreAttempt,
+        readStored: key => { storageKeys.push(key); return saved; }, writeStored: () => true,
+      });
+      vm.runInContext(script, context);
+      await context.loaded;
+      assert.deepEqual(storageKeys, ['certitips:quiz:v1:saved-course-id']);
+      if (saved) {
+        assert.ok(root.innerHTML.includes(`href="/certi-tips/${courseRoute}/${hasExam ? 'exam-checklist' : 'case-study'}/"`));
+        assert.ok(root.innerHTML.includes(hasExam ? 'Ruta al examen oficial' : 'Caso integrador'));
+        if (results(saved, bank).wrong.length) assert.ok(root.innerHTML.includes(`href="/certi-tips/${courseRoute}/${domains[0]}/#conceptos-clave"`));
+      } else {
+        assert.match(root.innerHTML, /data-start>Entrar/);
+        assert.match(root.innerHTML, /class="quiz-facts"/);
+        assert.doesNotMatch(root.innerHTML, /Dos preguntas de cada área|No necesitas una cuenta|Las preguntas son originales|quiz-notice/);
+      }
+      if (!hasExam) assert.doesNotMatch(root.innerHTML, /examen|práctica oficial|exam-checklist/);
+      else if (saved) assert.match(root.innerHTML, /examen oficial/);
+    }
+  }
+});
 
 function replaceStorage(t, descriptor) {
   const previous = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');

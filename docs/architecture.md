@@ -1,5 +1,15 @@
 # Architecture decisions
 
+## Governance workshop and courses without exams · 2026-10-09
+
+The fourth course reuses Markdown rendering, navigation, search, progress, diagram dialogs and the existing quiz engine. The shared route resolver selects `exam.code` when present and otherwise the course ID. Browser storage still uses the stable course ID. Existing certification aliases and fragment preservation remain intact. Applied courses omit nonexistent official links and finish practice at the case study. CertiQuiz keeps its existing catalog/bank interface; no API, database, dependency or production deployment is added.
+
+Governance contains 16 pages, 11 DAMA modules, 88 original SVGs, 66 original questions and 78 traced editorial units. The instructor agenda, editorial Preview section and their diagrams were removed, along with presentation-duration estimates. All four practice pages use the title “Práctica”, the lead “Pon a prueba lo que entiendes” and the shared start card, without surrounding text or diagrams. The card follows the CertiQuiz participant entry's red top border and eyebrow, with “Entrar” aligned right. Course-specific follow-up links remain in completed results. Two questions per domain produce a 22-question attempt. Product research distinguishes functional Preview, implemented extensions and announcements; private source evidence is excluded from publication. The local editorial policy records the required Slack and public-source review. Published lessons describe concrete capabilities rather than internal course-selection decisions.
+
+The preflight baseline was 7413. The tracked-only MCP scan stayed at 119 files, so its passing comparison was supplementary. Postflight now creates an isolated Git index and object directory under ignored `output/`, includes working files and restores the process environment. It does not modify real staging. The expanded scan includes 414 Git-visible files, with 140 supported by Sentrux; all eight CLI rules pass, coupling decreases from 0.64 to 0.58, and cycles and god files remain zero. Quality is 7300 and the gate reports **no degradation detected**. The baseline was not replaced to obtain that result.
+
+Graphify's AST update completed. Its optional SQL parser is unavailable; this change does not modify SQL. Existing semantic labels were not regenerated. Build, 78 unit checks and deployed-site validation pass. DOM acceptance covers the new workshop at desktop/mobile widths, header breakpoints, themes, keyboard diagrams, progress, a completed 22-question attempt, reload and separate review. The existing exam course also passes its browser regression. Initial geometry checks covered 261 published SVGs, including the original 91 diagrams before the agenda removal, without text overflow or overlapping labels. No screenshots were used.
+
 ## Active Sentrux contract · 2026-10-08
 
 `.sentrux/rules.toml` now defines the project contract; historical statements below about missing rules describe earlier revisions. The current source has no import cycles or god files, so both are prohibited. The five subsystem boundaries keep browser assets, site tools and the CertiQuiz API independent: the browser uses HTTP for live rooms, the server consumes catalog data, and deployment/verification tools use commands or HTTP rather than importing API implementation code.
@@ -45,6 +55,8 @@ The catalog now selects each course's Markdown directory, question bank, coverag
 The preflight baseline was 7401; the postflight quality signal is 7387. Sentrux reports **no degradation detected**, unchanged coupling (0.50), zero cycles and zero god files. Its MCP session comparison also passes with no violations. There is no `.sentrux/rules.toml`, so rule checking reports that no project rules are configured. Graphify's AST update succeeds; existing semantic labels are not regenerated.
 
 Browser checks exposed stale harness assumptions about full-width heading boxes, lazy-loaded images, delayed completion controls, the historical course-ID `/talk/` alias and the already-hidden mobile hero. The smoke scripts now measure actual heading text, wait for image decoding and completion controls, initialize isolated test state, and follow current routes and mobile behavior. These corrections make repeat runs meaningful without changing the existing CSS or taking screenshots.
+
+Course pages share a maximum reading width of 820px: the heading, article and previous/next navigation align with the body paragraphs. The course container includes its responsive horizontal padding in this limit, so the same rule applies to every course and contracts naturally on mobile. CertiQuiz uses its separate full-width home container.
 
 ## CertiQuiz group practice · 2026-10-07
 

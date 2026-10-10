@@ -1,0 +1,59 @@
+{
+  "title": "Un indicador conserva su definición",
+  "layout": "left-to-right",
+  "groups": [
+    {
+      "id": "platform",
+      "label": "Ámbitos de servicios y capacidades",
+      "type": "platform"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "platform",
+      "label": "Oracle AI Data Platform",
+      "service": "Oracle AI Data Platform",
+      "group": "platform",
+      "iconCatalogId": "oci-ai-data-platform-workbench"
+    },
+    {
+      "id": "lakehouse",
+      "label": "Oracle Autonomous AI Lakehouse",
+      "service": "Oracle Autonomous AI Lakehouse",
+      "group": "platform",
+      "iconCatalogId": "oracle-autonomous-database"
+    },
+    {
+      "id": "analytics",
+      "label": "Oracle Analytics Cloud",
+      "service": "Oracle Analytics Cloud",
+      "group": "platform",
+      "iconCatalogId": "analytics"
+    }
+  ],
+  "edges": [
+    {
+      "from": "platform",
+      "to": "analytics",
+      "label": "data",
+      "meaning": "Oracle Analytics Cloud connection selects one platform catalog for datasets.",
+      "evidence": "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acsds/connect-ai-data-platform.html"
+    },
+    {
+      "from": "lakehouse",
+      "to": "analytics",
+      "label": "SQL",
+      "meaning": "Oracle Analytics Cloud can query configured Autonomous AI Lakehouse data and analytic-view subject areas.",
+      "evidence": "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acsds/connect-oracle-autonomous-ai-lakehouse.html"
+    }
+  ],
+  "conceptualAnnotations": {
+    "semanticScope": "Business metric approval is conceptual. No universal automatic semantic synchronization between products is claimed."
+  },
+  "presentation": {
+    "viewBox": "0 0 1920 1080",
+    "minimumFontSize": 32,
+    "finalSvg": "assets/diagrams/gov-data-warehousing-bi-oracle.svg",
+    "scope": "Logical teaching architecture; conceptual decisions and native features are annotations, not separately provisioned products."
+  }
+}

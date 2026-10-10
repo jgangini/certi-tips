@@ -1,7 +1,5 @@
 Tienda Andina quiere trasladar su aplicación a la nube. La primera decisión es dónde desplegarla y qué parte del servicio debe seguir funcionando ante un fallo.
 
-**Al terminar podrás:** distinguir región, Availability Domain y Fault Domain; relacionar elasticidad con consumo; y ubicar un recurso en la consola sin confundir región con compartimento.
-
 ## Conceptos clave
 
 La nube permite aprovisionar recursos por demanda mediante consola, API o herramientas. **Escalabilidad** es la capacidad de aumentar o reducir recursos; **elasticidad** es ajustarlos según la demanda. Una VM sobredimensionada y siempre encendida puede ser escalable sin aprovechar la elasticidad. Pagar por uso tampoco significa pagar únicamente cuando hay clientes visitando tu aplicación: el medidor puede registrar capacidad aprovisionada.
@@ -59,7 +57,7 @@ Para orientarte en una demostración, anota el OCID, región, AD cuando correspo
 Una aplicación debe seguir disponible si sufre mantenimiento un grupo de hardware. Su región dispone de un solo AD. Un compañero propone crear un segundo compartimento y dejar las dos VMs en el mismo FD. ¿Qué cambiarías y qué riesgo permanecería?
 
 <details>
-<summary>Ver solución y explicación</summary>
+<summary>Solución</summary>
 
 Distribuiría las instancias entre FD distintos y verificaría el balanceo y la disponibilidad de datos. El segundo compartimento puede servir para organización o permisos, pero no cambia su colocación física. El AD sigue siendo un ámbito de fallo compartido; un requisito de continuidad más amplio podría exigir otra región y una estrategia de replicación y recuperación.
 

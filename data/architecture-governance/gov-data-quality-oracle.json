@@ -1,0 +1,46 @@
+{
+  "title": "La regla decide qué llega al consumo",
+  "layout": "left-to-right",
+  "groups": [
+    {
+      "id": "platform",
+      "label": "Ámbitos de servicios y capacidades",
+      "type": "platform"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "platform",
+      "label": "Oracle AI Data Platform",
+      "service": "Oracle AI Data Platform",
+      "group": "platform",
+      "iconCatalogId": "oci-ai-data-platform-workbench"
+    },
+    {
+      "id": "lakehouse",
+      "label": "Oracle Autonomous AI Lakehouse",
+      "service": "Oracle Autonomous AI Lakehouse",
+      "group": "platform",
+      "iconCatalogId": "oracle-autonomous-database"
+    }
+  ],
+  "edges": [
+    {
+      "from": "platform",
+      "to": "lakehouse",
+      "label": "data",
+      "meaning": "Notebook/workflow checks and explicit JDBC publication implement the approved acceptance rule.",
+      "evidence": "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/internal-sources.html"
+    }
+  ],
+  "conceptualAnnotations": {
+    "availability": "Implemented extension using notebooks, SQL and workflows; not a native universal quality certification.",
+    "policyOwner": "Business data owner approves scope, threshold and action."
+  },
+  "presentation": {
+    "viewBox": "0 0 1920 1080",
+    "minimumFontSize": 32,
+    "finalSvg": "assets/diagrams/gov-data-quality-oracle.svg",
+    "scope": "Logical teaching architecture; conceptual decisions and native features are annotations, not separately provisioned products."
+  }
+}

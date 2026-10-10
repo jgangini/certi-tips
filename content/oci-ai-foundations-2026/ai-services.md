@@ -66,7 +66,7 @@ En consola, inspecciona el resultado estructurado además de las etiquetas sobre
 Necesitas subtítulos para una grabación, ubicar tres equipos en una foto y recuperar cantidad y precio de cada fila de una factura. ¿Qué usarías?
 
 <details>
-<summary>Ver solución y explicación</summary>
+<summary>Solución</summary>
 
 Speech con salida SRT para subtítulos; Vision con detección de objetos para ubicación; Document Understanding con extracción de tablas para filas y columnas. Si además necesitas proveedor y total como campos, añade extracción clave-valor. OCR solo devuelve texto y su localización; no es una garantía de estructura tabular correcta.
 

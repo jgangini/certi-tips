@@ -1,0 +1,107 @@
+{
+  "title": "Arquitectura de Datos e IA en Oracle Cloud",
+  "layout": "left-to-right",
+  "groups": [
+    {
+      "id": "platform",
+      "label": "Oracle AI Data Platform Workbench",
+      "type": "platform"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "platform",
+      "label": "Oracle AI Data Platform Workbench",
+      "service": "Oracle AI Data Platform",
+      "group": "platform",
+      "sourceShape": "group145-142"
+    },
+    {
+      "id": "storage",
+      "label": "Oracle Cloud Infrastructure Object Storage",
+      "service": "Oracle Cloud Infrastructure Object Storage",
+      "sourceShape": "group95-5"
+    },
+    {
+      "id": "memory",
+      "label": "Oracle AI Database 26ai",
+      "service": "Oracle AI Database",
+      "sourceShape": "group107-36",
+      "status": "proposed integration"
+    },
+    {
+      "id": "models",
+      "label": "Oracle Cloud Infrastructure Generative AI",
+      "service": "Oracle Cloud Infrastructure Generative AI",
+      "sourceShape": "group103-26"
+    },
+    {
+      "id": "lakehouse",
+      "label": "Oracle Autonomous AI Lakehouse 26ai o Superior",
+      "service": "Oracle Autonomous AI Lakehouse",
+      "status": "AI feature prerequisite"
+    }
+  ],
+  "edges": [
+    {
+      "from": "storage",
+      "to": "platform",
+      "label": "data",
+      "meaning": "Files accessed through configured volumes.",
+      "evidence": "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/volumes.html"
+    },
+    {
+      "from": "platform",
+      "to": "models",
+      "label": "model",
+      "meaning": "Agent Flows uses configured foundation models with the required permissions.",
+      "evidence": "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/generative-ai-foundation-models.html"
+    },
+    {
+      "from": "platform",
+      "to": "memory",
+      "label": "memory",
+      "meaning": "Proposed custom persistent-memory integration. Native agent memory lasts for the session.",
+      "evidence": "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/agent-memory.html",
+      "style": "original source connector; proposed integration explained in caption"
+    },
+    {
+      "from": "lakehouse",
+      "to": "platform",
+      "label": "requirement",
+      "meaning": "Oracle Autonomous AI Lakehouse 26ai or above is required for AI features.",
+      "evidence": "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/ai-feature-enablement.html"
+    }
+  ],
+  "conceptualAnnotations": {
+    "medallion": "Landing, Bronze, Silver and Gold are conceptual data stages, not separately provisioned services.",
+    "catalog": "Master Catalog registers metadata, without an implied automatic synchronization.",
+    "lineage": "Preview; supported instrumented executions, latest capture only, no lineage history.",
+    "streaming": "Structured Streaming for supported volume/workspace paths, Delta tables and Kafka-compatible sources/sinks. No direct oci:// or Oracle database readStream/writeStream paths.",
+    "agentMemory": "The connection proposes custom persistence in Oracle AI Database 26ai; it is not native session memory."
+  },
+  "presentation": {
+    "viewBox": "0 0 1920 1080",
+    "minimumFontSize": 32,
+    "finalSvg": "assets/diagrams/gov-data-architecture-oracle.svg",
+    "scope": "User-supplied layout with Oracle Analytics Cloud and its connector removed. Remaining geometry is uniformly enlarged and centered; rounded gray catalog/lineage/agent tags, reference-green streaming and red input/AI connectors.",
+    "sourceFontSize": 10,
+    "sourceScale": 3.2,
+    "sourceCrop": [
+      44,
+      328,
+      512,
+      256
+    ],
+    "sourceTranslate": [
+      150.318,
+      198.37
+    ]
+  },
+  "provenance": {
+    "source": "data/diagram-sources/arq.svg",
+    "sha256": "f6bfeeb7799838d034aad8e6d155844ade96c7534384b401f5bf7df74f3fd5d0",
+    "adaptation": "Original source preserved byte for byte. User-requested removal of Oracle Analytics Cloud, uniform enlargement/centering of the remaining layout, rounded gray tags, red connectors, and reference-green streaming with white text. Remaining icons, labels and connector geometry retained.",
+    "reviewDate": "2026-10-09"
+  }
+}

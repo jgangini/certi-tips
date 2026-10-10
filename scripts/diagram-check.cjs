@@ -20,7 +20,7 @@ async (page) => {
       if (!root || document.querySelector('parsererror')) throw new Error(`Invalid SVG: ${name}`);
       const canvas = root.getBoundingClientRect();
       const nodes = [...root.querySelectorAll('text')];
-      const boxes = nodes.map(node => ({ text: node.textContent, box: node.getBoundingClientRect(), size: parseFloat(getComputedStyle(node).fontSize) }));
+      const boxes = nodes.map(node => ({ text: node.textContent, box: node.getBoundingClientRect(), size: parseFloat(getComputedStyle(node).fontSize) * (Number(node.closest('[data-source-scale]')?.getAttribute('data-source-scale')) || 1) }));
       const outside = boxes.filter(({ box }) => box.left < canvas.left || box.right > canvas.right || box.top < canvas.top || box.bottom > canvas.bottom).map(item => item.text);
       const overlaps = [];
       for (let i = 0; i < boxes.length; i++) {
@@ -57,8 +57,8 @@ async (page) => {
         if (gap < 8 || gap > 24 || offset > 4) iconSpacing.push({ text: label.textContent, gap, offset });
       }
       const borderCrossings = [];
-      // The OCI compositions keep labels inside frames. Other courses also use labels across frame boundaries.
-      const frames = name.startsWith('ocif-') ? [...root.querySelectorAll('rect')].filter(node => !node.closest('defs') && Number(node.getAttribute('width')) >= 120 && Number(node.getAttribute('height')) >= 63).map(node => node.getBoundingClientRect()) : [];
+      // OCI and Governance keep labels inside frames; other courses also place labels across frame boundaries.
+      const frames = /^(?:ocif|gov)-/.test(name) ? [...root.querySelectorAll('rect')].filter(node => !node.closest('defs') && (getComputedStyle(node).fill !== 'none' || getComputedStyle(node).stroke !== 'none') && Number(node.getAttribute('width')) >= 120 && Number(node.getAttribute('height')) >= 63).map(node => node.getBoundingClientRect()) : [];
       for (const { text, box: a } of boxes) {
         for (const b of frames) {
           const intersects = Math.min(a.right, b.right) - Math.max(a.left, b.left) > scale && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > scale;
@@ -66,11 +66,27 @@ async (page) => {
           if (intersects && !contained) borderCrossings.push(text);
         }
       }
-      return { name, labels: boxes.length, minimumFont: Math.min(...boxes.map(item => item.size)), outside, overlaps, alignment, proximity, iconSpacing, borderCrossings };
+      const viewBox = root.getAttribute('viewBox').trim().split(/\s+/).map(Number);
+      const slideSize = !name.startsWith('gov-') || viewBox.join(' ') === '0 0 1920 1080';
+      const sourcedIcons = [...root.querySelectorAll('[data-svgrepo-icon]')];
+      const iconCollisions = [];
+      const detachedIcons = [];
+      for (const icon of sourcedIcons) {
+        const a = icon.getBoundingClientRect();
+        let nearestLabelGap = Infinity;
+        for (const { text, box: b } of boxes) {
+          if (Math.min(a.right, b.right) - Math.max(a.left, b.left) > scale && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > scale) iconCollisions.push({ icon: icon.dataset.svgrepoIcon, text });
+          nearestLabelGap = Math.min(nearestLabelGap, Math.hypot(Math.max(b.left - a.right, a.left - b.right, 0), Math.max(b.top - a.bottom, a.top - b.bottom, 0)) / scale);
+        }
+        // ponytail: proximity flags detached artwork; semantic association still needs individual review.
+        if (nearestLabelGap > 80) detachedIcons.push({ icon: icon.dataset.svgrepoIcon, nearestLabelGap });
+      }
+      return { name, labels: boxes.length, minimumFont: Math.min(...boxes.map(item => item.size)), slideSize, outside, overlaps, alignment, proximity, iconSpacing, borderCrossings, sourcedIcons: sourcedIcons.length, iconCollisions, detachedIcons };
     }, name));
   }
   await page.goto(`${origin}/certi-tips/`);
-  const issues = reports.filter(item => item.outside.length || item.overlaps.length || item.alignment.length || item.proximity.length || item.iconSpacing.length || item.borderCrossings.length || item.minimumFont < 14);
+  // The user-supplied pyramid keeps its native 10/12px type, displayed at a uniform 1.72 scale.
+  const issues = reports.filter(item => !item.slideSize || item.outside.length || item.overlaps.length || item.alignment.length || item.proximity.length || item.iconSpacing.length || item.borderCrossings.length || item.iconCollisions.length || item.detachedIcons.length || item.minimumFont < (item.name === 'gov-overview-map.svg' ? 10 : item.name.startsWith('gov-') ? 25.5 : 14));
   if (issues.length) throw new Error(JSON.stringify(issues));
   return { diagrams: reports, screenshots: 0 };
 }

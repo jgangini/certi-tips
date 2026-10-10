@@ -3,7 +3,36 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import MarkdownIt from "markdown-it";
-import { layout, sidebar, homeBody, certiquizBody } from "../scripts/layout.mjs";
+import { layout, sidebar, homeBody, certiquizBody, courseRoute } from "../scripts/layout.mjs";
+
+test("the image viewer refreshes its description when switching diagrams", () => {
+  const caption = { textContent: "" }, description = { textContent: "" }, enlarged = {};
+  const close = { focus() {}, addEventListener() {} };
+  const dialog = {
+    querySelector: selector => ({ img: enlarged, button: close, "[data-close-diagram]": close, "#diagram-description": description })[selector],
+    showModal() {}, addEventListener() {},
+  };
+  const buttons = [
+    { src: "pyramid.svg", alt: "Pirámide Dorada de Peter Aiken", description: "Las once áreas de gestión de datos." },
+    { src: "contract.svg", alt: "Contrato del Producto de Datos", description: "Negocio acuerda; ingeniería aplica controles." },
+  ].map(image => ({
+    image,
+    querySelector: selector => selector === "img" ? image : { firstChild: { textContent: `${image.description} ` }, textContent: `${image.description} ↗` },
+    addEventListener(type, callback) { this.click = callback; },
+  }));
+  const document = {
+    querySelector: selector => selector === "#diagram-viewer" ? dialog : caption,
+    querySelectorAll: () => buttons,
+  };
+  const script = readFileSync(new URL("../assets/site.js", import.meta.url), "utf8");
+  vm.runInNewContext(script.slice(script.indexOf('const dialog = document.querySelector("#diagram-viewer");')), { document });
+  for (const button of buttons) {
+    button.click();
+    assert.equal(enlarged.src, button.image.src);
+    assert.equal(caption.textContent, button.image.alt);
+    assert.equal(description.textContent, button.image.description);
+  }
+});
 
 const site = {
   base: "/certi-tips/", origin: "https://example.test", repository: "https://example.test/repo",
@@ -26,6 +55,45 @@ const course = {
   resources: [{ slug: "review", short: "Repaso final", title: "Repaso", description: "Prepara el examen" }],
 };
 site.courses = [course];
+
+test("course lessons omit completion promises and governance opens directly with its concepts", () => {
+  const catalog = JSON.parse(readFileSync(new URL('../data/catalog.json', import.meta.url), 'utf8'));
+  for (const course of catalog.courses) for (const page of [...course.modules, ...course.resources]) {
+    const source = readFileSync(new URL(`../content/${course.contentDir ? `${course.contentDir}/` : ''}${page.slug}.md`, import.meta.url), 'utf8');
+    assert.doesNotMatch(source, /^(?:\*\*)?Al terminar podrás/im, `${course.id}/${page.slug}`);
+  }
+  const source = readFileSync(new URL('../content/data-governance/governance.md', import.meta.url), 'utf8');
+  assert.match(source, /^<span id="conceptos-clave"><\/span>El \*\*gobierno de datos\*\*/);
+  assert.doesNotMatch(source, /^## Conceptos Clave|^Operadora Horizonte reúne/m);
+});
+
+test("an applied course has its own route, navigation and practice without an exam or official path", () => {
+  const workshop = { ...course, id: "data-governance", title: "Gobierno de datos", sidebarLabel: "DAMA", exam: undefined, resources: [{ slug: "case-study", short: "Caso integrador" }, { slug: "practice", short: "Práctica" }] };
+  const catalog = { ...site, courses: [...site.courses, workshop], paths: [...site.paths, { id: "governance", label: "Governance", title: "Governance", items: [{ id: workshop.id, guide: workshop.id, title: workshop.title, description: "Taller DAMA" }] }] };
+  assert.equal(courseRoute(course), "EXAM-1");
+  assert.equal(courseRoute(workshop), "data-governance");
+  const html = layout({ site: catalog, course: workshop, page: workshop.modules[1], previous: workshop.modules[0], body: "" });
+  assert.match(html, /rel="canonical" href="https:\/\/example.test\/certi-tips\/data-governance\/agents\/"/);
+  assert.match(html, /data-course="data-governance" data-course-route="data-governance" data-course-has-exam="false"/);
+  assert.doesNotMatch(html, /<nav class="breadcrumb"/);
+  assert.match(html, /<summary>Governance<\/summary>/);
+  assert.match(html, /<small>Curso · Governance<\/small>/);
+  assert.match(html, /href="\/certi-tips\/data-governance\/case-study\/"/);
+  assert.match(html, /href="\/certi-tips\/data-governance\/practice\/"/);
+  assert.match(html, /3 cursos disponibles\./);
+  const navigation = sidebar(catalog, workshop, "agents", new Map([["agents", [{ id: "conceptos-clave", title: "Conceptos clave" }]]]));
+  assert.match(navigation, /<span class="exam-code">DAMA<\/span>/);
+  assert.match(navigation, /<strong>Gobierno de datos<\/strong>/);
+  assert.match(sidebar(site, course, "overview"), /<strong>Curso de prueba 2026<\/strong>/);
+  assert.match(navigation, /href="\/certi-tips\/data-governance\/agents\/#conceptos-clave"/);
+  assert.doesNotMatch(navigation, /EXAM-1|exam-checklist|undefined/);
+  const card = homeBody(catalog).match(/<li class="certification-item has-guide" id="data-governance">[\s\S]*?<\/li>/)[0];
+  assert.match(card, /<span class="certification-level">Taller aplicado<\/span>/);
+  assert.match(card, /href="\/certi-tips\/data-governance\/overview\/"/);
+  assert.doesNotMatch(card, /Ruta de Oracle|undefined|Nivel /);
+  const examHtml = layout({ site, course, page: course.modules[0], body: "" });
+  assert.match(examHtml, /data-course="course" data-course-route="EXAM-1" data-course-has-exam="true"/);
+});
 
 test("sharing uses an English Oracle overview and a public PNG icon on every page type", () => {
   const home = layout({ site, course, page: course.modules[0], body: "", home: true });
@@ -339,7 +407,7 @@ const tocByPage = new Map([
 test("mobile path navigation uses a menu icon and a responsive panel below the header", () => {
   const html = layout({ site, course, page: course.modules[0], body: "", home: true });
   const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
-  assert.match(html, /<details class="path-nav-mobile"><summary aria-label="Abrir grupos de certificaciones"><svg[^>]*width="22" height="22"[^>]*><path d="M4 6h16M4 12h10M4 18h5"\/><\/svg><span class="visually-hidden">Grupos de certificaciones<\/span><\/summary><div class="path-nav-mobile-panel"><nav aria-label="Grupos de certificaciones">/);
+  assert.match(html, /<details class="path-nav-mobile"><summary aria-label="Abrir grupos de cursos"><svg[^>]*width="22" height="22"[^>]*><path d="M4 6h16M4 12h10M4 18h5"\/><\/svg><span class="visually-hidden">Grupos de cursos<\/span><\/summary><div class="path-nav-mobile-panel"><nav aria-label="Grupos de cursos">/);
   assert.doesNotMatch(html, /<summary>Paths<\/summary>/);
   assert.match(html, /<g class="theme-sun"><circle cx="12" cy="12" r="3\.5"\/><path d="M12 5V3M12 21v-2/);
   assert.doesNotMatch(html, /M12 2v2m0 16v2/);
@@ -415,12 +483,25 @@ test("retired resources stay unpublished and overview contains only its retained
   const overview = readFileSync(new URL("../content/overview.md", import.meta.url), "utf8");
   assert.doesNotMatch(overview, /certification-roadmap/);
   const headings = [...overview.matchAll(/^## (.+)$/gm)].map((match) => match[1]);
-  assert.deepEqual(headings, ["Objetivos y examen", "Antes de comenzar", "Acceso al recorrido oficial"]);
-  const retained = ["objetivos-y-examen", "antes-de-comenzar", "acceso-al-recorrido-oficial"];
+  assert.deepEqual(headings, ["Objetivos y examen", "Acceso al Recorrido Oficial"]);
+  const retained = ["objetivos-y-examen", "acceso-al-recorrido-oficial"];
   const toc = new Map([["overview", retained.map((id, index) => ({ id, title: headings[index] }))]]);
   const html = sidebar(catalog, actualCourse, "overview", toc);
   for (const slug of ["study-path", "review"]) assert.doesNotMatch(html, new RegExp(`data-nav-page="${slug}"`));
   for (const id of retained) assert.match(html, new RegExp(`overview/#${id}`));
+  assert.doesNotMatch(html, /overview\/#antes-de-comenzar/);
+  const accessSections = new Set();
+  for (const course of catalog.courses.filter(course => course.exam)) {
+    const source = readFileSync(new URL(`../content/${course.contentDir ? `${course.contentDir}/` : ''}overview.md`, import.meta.url), 'utf8');
+    assert.deepEqual([...source.matchAll(/^## (.+)$/gm)].map(match => match[1]), headings, course.id);
+    assert.doesNotMatch(source, /## Antes de comenzar|## Cómo vas a estudiar/);
+    assert.match(source, new RegExp(`\\*\\*${course.exam.code}\\*\\*`));
+    const official = catalog.paths.flatMap(path => path.items).find(item => item.guide === course.id).officialUrl;
+    assert.ok(source.includes(`](${official})`), course.id);
+    accessSections.add(source.split(/^## Acceso al Recorrido Oficial\r?\n\r?\n/m)[1].replace(/\]\([^)]*\)/g, '](LINK)').replace(/1Z0-\d+-\d+/g, 'EXAM').replace(/\r\n/g, '\n'));
+    assert.equal(course.modules[0].description, 'Conoce la guía y accede al recorrido oficial de Oracle MyLearn.');
+  }
+  assert.equal(accessSections.size, 1, 'All three certifications share the same access instructions');
 });
 
 test("hero animation follows the catalog's Foundation Sprint order and levels", () => {
@@ -445,10 +526,11 @@ test("hero animation follows the catalog's Foundation Sprint order and levels", 
   assert.match(animation, /14\.75\);/);
 });
 
-test("every technical section has a captioned local graphic and exercise solutions stay hidden", () => {
+test("technical sections have captioned local graphics and exercise solutions stay hidden", () => {
   const catalog = JSON.parse(readFileSync(new URL("../data/catalog.json", import.meta.url), "utf8"));
   const modules = catalog.courses.flatMap((entry) => entry.modules.filter((module) => module.type === "module").map((module) => ({ ...module, contentDir: entry.contentDir || "" })));
-  assert.equal(modules.length, 22);
+  assert.ok(modules.length > 0);
+  assert.equal(catalog.courses.find((entry) => entry.id === "data-governance").modules.filter((module) => module.type === "module").length, 11);
   const markdown = new MarkdownIt({ html: true });
   for (const module of modules) {
     const source = readFileSync(new URL(`../content/${module.contentDir}/${module.slug}.md`, import.meta.url), "utf8");
@@ -471,11 +553,14 @@ test("every technical section has a captioned local graphic and exercise solutio
     assert.ok(sections.length, `${module.slug} has no technical sections`);
     for (const { title, images } of sections) {
       const label = `${module.slug} / ${title}`;
-      assert.ok(images.length, `${label} needs an explanatory graphic`);
+      // These errors sections retain their explanatory lists after their graphics were removed.
+      assert.ok(images.length || (module.contentDir === "data-governance" && ["governance", "data-architecture"].includes(module.slug) && title === "Errores Frecuentes"), `${label} needs an explanatory graphic`);
       for (const { image, hidden } of images) {
         assert.match(decodeURIComponent(image.attrGet("src")), /^\{\{base\}\}assets\/(?:diagrams|illustrations)\/.+\.(?:svg|png|jpe?g|webp)$/i, `${label} needs a local image`);
         const caption = (image.attrGet("title") || image.content).trim();
-        assert.ok(caption && caption.length <= 140 && !/ampliar diagrama/i.test(caption), `${label} needs a brief descriptive caption`);
+        // Governance captions walk through a task or decision and explain how to use the diagram.
+        const captionLimit = module.contentDir === "data-governance" ? 800 : 140;
+        assert.ok(caption && caption.length <= captionLimit && !/ampliar diagrama/i.test(caption), `${label} needs a descriptive caption within its length limit`);
         if (/^Ejercicio\b/i.test(title)) assert.ok(hidden, `${label} must keep its solution graphic inside details`);
       }
     }
@@ -505,7 +590,7 @@ test("practice in Prepárate opens the simulator landing directly", () => {
 
 test("layout moves the contents into the sidebar while preserving reading and site controls", () => {
   const html = layout({ site, course, page: course.modules[1], tocByPage, body: '<h2 id="conceptos-clave">Conceptos</h2>' });
-  assert.match(html, /<nav class="breadcrumb" aria-label="Ruta de navegación"><a href="\/certi-tips\/EXAM-1\/overview\/">Curso de prueba 2026<\/a><span aria-hidden="true">\/<\/span><span aria-current="page">Agentes de IA<\/span><\/nav>/);
+  assert.doesNotMatch(html, /breadcrumb|Ruta de navegación/);
   assert.doesNotMatch(html, /Todas las certificaciones/);
   assert.doesNotMatch(html, /class="contents"|En este apartado/);
   assert.match(html, /<aside[^]*href="\/certi-tips\/EXAM-1\/agents\/#conceptos-clave"[^]*<\/aside>/);
@@ -581,12 +666,13 @@ test("path menu headings change on interaction without retaining an open-state f
   assert.match(css, /\.nav-section-link:hover\s*\{\s*color:\s*var\(--ink\);\s*background:\s*var\(--hover\);/);
 });
 
-test("the certification breadcrumb identifies LangChain by its module label", () => {
+test("the certification lesson identifies LangChain without a breadcrumb row", () => {
   const catalog = JSON.parse(readFileSync(new URL("../data/catalog.json", import.meta.url), "utf8"));
   const currentCourse = catalog.courses[0];
   assert.equal(`${currentCourse.title} ${currentCourse.edition}`, catalog.paths[0].items.find((item) => item.guide === currentCourse.id).title);
   const html = layout({ site: catalog, course: currentCourse, page: currentCourse.modules.find((item) => item.slug === "langchain"), body: "" });
-  assert.match(html, /<nav class="breadcrumb"[^>]*><a href="\/certi-tips\/1Z0-1157-26\/overview\/">Oracle Agentic AI Foundations Associate<\/a><span aria-hidden="true">\/<\/span><span aria-current="page">LangChain<\/span>/);
+  assert.match(html, /<h1>Construir con LangChain<\/h1>/);
+  assert.doesNotMatch(html, /breadcrumb|Ruta de navegación/);
   assert.match(html, /<body[^>]* data-course="agentic-ai-foundations-2026"/);
 });
 
@@ -613,33 +699,34 @@ test("search lists certifications before typing and keeps study topics available
   assert.doesNotMatch(search, /Escribe para buscar certificaciones/);
 });
 
-test("home shows each FY27 certification once and links all three available guides locally", () => {
+test("home shows each certification and applied course once and links every available guide locally", () => {
   const catalog = JSON.parse(readFileSync(new URL("../data/catalog.json", import.meta.url), "utf8"));
   const items = catalog.paths.flatMap((path) => path.items);
-  assert.deepEqual(catalog.paths.map((path) => path.id), ["foundation-sprint", "ai-first", "ai-data-layer", "oci-enablers"]);
+  assert.deepEqual(catalog.paths.map((path) => path.id), ["foundation-sprint", "ai-first", "ai-data-layer", "oci-enablers", "governance"]);
   assert.equal(catalog.paths[0].title, "Foundation");
-  assert.equal(items.length, 11);
+  assert.equal(items.filter((item) => item.level).length, 11);
+  assert.equal(items.filter((item) => !item.level).length, 1);
   assert.equal(new Set(items.map((item) => item.title)).size, items.length);
   assert.equal(new Set(items.map((item) => item.id)).size, items.length);
   assert.deepEqual(catalog.paths[0].items.map((item) => item.level), [1, 1, 1]);
-  assert.ok(catalog.paths.slice(1).every((path) => path.items.every((item, index) => item.level >= 2 && (index === 0 || item.level >= path.items[index - 1].level))));
+  assert.ok(catalog.paths.slice(1, 4).every((path) => path.items.every((item, index) => item.level >= 2 && (index === 0 || item.level >= path.items[index - 1].level))));
   assert.equal(items.filter((item) => item.level === 3).length, 3);
   assert.ok(items.every((item) => !/\b20\d{2}\b/.test(item.title)));
-  assert.ok(catalog.courses.every((item) => !/\b20\d{2}\b/.test(`${item.title} ${item.edition}`)));
+  assert.ok(catalog.courses.filter((item) => item.exam).every((item) => !/\b20\d{2}\b/.test(`${item.title} ${item.edition}`)));
   assert.ok(items.every((item) => !/Essentials/i.test(item.title)));
   const platform = catalog.paths.find((path) => path.id === "ai-data-layer").items.find((item) => item.id === "ai-data-platform-professional");
   assert.equal(platform.title, "Oracle AI Data Platform Professional");
   assert.equal(platform.level, 3);
   assert.match(platform.description, /1Z0-1154-26/);
   assert.equal(platform.officialUrl, "https://mylearn.oracle.com/ou/learning-path/become-an-oracle-ai-data-platform-professional/164914");
-  assert.deepEqual(items.filter((item) => item.guide).map((item) => item.guide).sort(), ["agentic-ai-foundations-2026", "oci-ai-foundations-2026", "oci-foundations-2026"]);
-  assert.ok(items.every((item) => item.officialUrl.startsWith("https://mylearn.oracle.com/")));
+  assert.deepEqual(items.filter((item) => item.guide).map((item) => item.guide).sort(), catalog.courses.map((item) => item.id).sort());
+  assert.ok(items.filter((item) => item.officialUrl).every((item) => item.officialUrl.startsWith("https://mylearn.oracle.com/")));
   const html = homeBody(catalog);
-  assert.equal((html.match(/class="certification-item/g) || []).length, 11);
-  assert.equal((html.match(/class="button button-small certitips-button" href=/g) || []).length, 3);
+  assert.equal((html.match(/class="certification-item/g) || []).length, items.length);
+  assert.equal((html.match(/class="button button-small certitips-button" href=/g) || []).length, catalog.courses.length);
   assert.equal((html.match(/class="button button-small certitips-button" type="button" disabled/g) || []).length, 8);
   assert.match(html, /class="button button-small certitips-button" type="button" disabled[^>]*><svg viewBox="0 0 16 16" width="17" height="17" fill="currentColor"[^>]*><path d="M16 6\.28a1\.23 1\.23/);
-  assert.equal((html.match(/<section class="path-section/g) || []).length, 4);
+  assert.equal((html.match(/<section class="path-section/g) || []).length, catalog.paths.length);
   assert.match(html, /data-group-carousel/);
   assert.match(html, /data-group-next/);
   assert.match(html, /data-group-carousel><section[^]*?<nav class="group-carousel-controls"/);
@@ -655,7 +742,7 @@ test("home shows each FY27 certification once and links all three available guid
   assert.match(html, /class="path-section path-foundation is-active"/);
   assert.match(html, /<h2 id="foundation-sprint-title">Foundation<\/h2>/);
   assert.match(html, /Foundation reúne tres certificaciones de nivel 1/);
-  assert.match(html, /Foundation · 1 de 4/);
+  assert.ok(html.includes(`Foundation · 1 de ${catalog.paths.length}`));
   assert.match(html, /<svg viewBox="0 0 16 16"[^>]*fill="currentColor"/);
   assert.match(html, /href="\/certi-tips\/1Z0-1157-26\/overview\/"/);
   assert.match(html, /id="oci-enablers"/);
@@ -694,12 +781,13 @@ test("home shows each FY27 certification once and links all three available guid
   assert.doesNotMatch(html, /View on GitHub|button-secondary github-link/);
   assert.doesNotMatch(html, /Ver el recorrido|30 de septiembre de 2026|catalog-disclaimer/);
   assert.equal(catalog.paths[3].label, "Architecture");
+  assert.equal(catalog.paths[4].label, "Governance");
   assert.equal(catalog.paths[0].label, "Foundation");
   assert.match(catalog.paths[0].items[1].officialUrl, /associate-2026\/163544$/);
   const navigation = layout({ site: catalog, course, page: course.modules[0], body: html, home: true }).match(/<nav class="path-nav"[^>]*>(.*?)<\/nav>/s)[1];
   assert.match(navigation, /<summary>Foundation<\/summary>/);
   for (const item of items) {
-    const destination = item.guide ? `${catalog.base}${catalog.courses.find((course) => course.id === item.guide).exam.code}/overview/` : item.officialUrl;
+    const destination = item.guide ? `${catalog.base}${courseRoute(catalog.courses.find((course) => course.id === item.guide))}/overview/` : item.officialUrl;
     assert.ok(navigation.includes(`href="${destination}"`), `${item.title} does not link directly to its certification`);
   }
   assert.equal((navigation.match(/class="coming-soon"/g) || []).length, 8);

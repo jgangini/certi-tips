@@ -1,7 +1,5 @@
 La tienda tiene una administradora de identidades, operadores de producción y desarrolladores. Todos pueden iniciar sesión, pero cada uno necesita realizar tareas diferentes.
 
-**Al terminar podrás:** separar autenticación y autorización; organizar compartimentos y dominios de identidad; leer una política IAM; y explicar cómo una aplicación accede a OCI con su propia identidad.
-
 ## Conceptos clave
 
 **Autenticación (AuthN)** comprueba quién hace una solicitud. **Autorización (AuthZ)** determina qué operaciones puede realizar esa identidad. Una contraseña correcta y MFA permiten verificar al usuario; no conceden automáticamente permisos para crear redes o borrar volúmenes.
@@ -67,7 +65,7 @@ En las demostraciones de usuarios, grupos y políticas comprueba tanto una opera
 Luis administra usuarios en un dominio nuevo, pero no puede crear una VCN en Desarrollo. ¿Debe desactivar MFA, cambiar de región o revisar los permisos sobre recursos? Explica además por qué añadirlo a cualquier grupo no garantiza acceso.
 
 <details>
-<summary>Ver solución y explicación</summary>
+<summary>Solución</summary>
 
 Debe revisar la política del grupo y su ámbito. Administrar identidades no implica administrar redes. Un administrador autorizado puede conceder los permisos requeridos para redes en Desarrollo al grupo adecuado. Desactivar MFA no añade autorización. Cambiar la región puede cambiar el listado, pero no sustituye una política. Un grupo sin políticas aplicables no tiene esos permisos.
 

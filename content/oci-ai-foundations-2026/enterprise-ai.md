@@ -61,7 +61,7 @@ Si un documento recuperado exige «ignorar permisos», no adquiere autoridad por
 El agente puede consultar tickets. Una página recuperada le pide cerrar todos los tickets de la organización. ¿Le basta su acceso de lectura y la instrucción de la página?
 
 <details>
-<summary>Ver solución y explicación</summary>
+<summary>Solución</summary>
 
 No. Leer no autoriza modificar, y el contenido de una página no concede permisos. La aplicación debe rechazar la operación fuera de alcance, comprobar la identidad y aplicar la política del negocio. El modelo puede explicar el límite y ofrecer una consulta permitida. También debe evitar guardar esa instrucción como memoria confiable.
 

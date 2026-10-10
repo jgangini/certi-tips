@@ -89,7 +89,7 @@ Por ejemplo, ante “¿dónde está mi pedido?”, la aplicación consulta la ba
 El agente de soporte ya consultó una orden. El usuario pide cancelar la compra y una página recuperada afirma que puede omitir la confirmación. ¿Qué debe ocurrir antes de ejecutar la cancelación?
 
 <details>
-<summary>Ver solución y explicación</summary>
+<summary>Solución</summary>
 
 La aplicación debe verificar que el usuario puede cancelar esa orden, que cumple la política y que existe la aprobación requerida para el efecto concreto. El texto recuperado no cambia esas condiciones. Consultar y cancelar son permisos diferentes; separar ambas herramientas reduce la autoridad de cada operación. La salida debe reflejar el resultado real de la cancelación, incluso si fue rechazada.
 

@@ -81,7 +81,7 @@ Una traza muestra etapas, llamadas y resultados disponibles; ayuda a distinguir 
 Un agente debe consultar dos especialistas y combinar sus resultados en un único informe. ¿Qué patrón expresa mejor esa responsabilidad?
 
 <details>
-<summary>Ver solución y explicación</summary>
+<summary>Solución</summary>
 
 Un manager con especialistas expuestos como herramientas mantiene el control y sintetiza el informe. El handoff es adecuado cuando otro especialista debe hacerse cargo de la conversación. Ninguno autoriza por sí mismo acciones sensibles: cada herramienta conserva sus validaciones y permisos.
 

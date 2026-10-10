@@ -66,7 +66,7 @@ El sistema genera una respuesta, pero eso no significa que haya aprobado una gar
 Un taller quiere comprobar un formato de serie, detectar una pieza en una foto y escribir un aviso comprensible. ¿Usarías el mismo modelo para todo?
 
 <details>
-<summary>Ver solución y explicación</summary>
+<summary>Solución</summary>
 
 Usa validación determinista para el formato de serie, visión para localizar la pieza y generación de texto para redactar el aviso a partir de datos verificados. Mantén las tres salidas separadas: formato válido no demuestra que la pieza exista, y texto convincente no confirma una reparación.
 

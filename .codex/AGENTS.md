@@ -8,11 +8,13 @@ Keep this file repo-specific. Do not duplicate universal rules that already live
 
 CertiTips publishes Spanish study guides and explained practice at `/certi-tips/` in `jgangini/certi-tips`. Use Node.js 24 and the existing Markdown build; no backend or browser framework is needed. Keep source transcripts outside this repository.
 
-Repository checks: `npm run build`, `npm test`, `npm run check`. The checker validates the 53 source lessons, 36 questions, 9 diagrams, paths and anchors. Rebuild/check even for headings-only edits. `dist/` is generated and replaced on build.
+Repository checks: `npm run build`, `npm test`, `npm run check`. The checker validates every course's catalog-defined coverage, questions, diagrams, paths and anchors. Rebuild/check even for headings-only edits. `dist/` is generated and replaced on build.
 
 Use `npm test` with its in-process Node runner: default test isolation hits `spawn EPERM` in this Windows sandbox. Tests must restore any changed global state. Browser QA uses the isolated CLI session and `scripts/browser-smoke.cjs`, without screenshots.
 
 Quiz reviews must retain their exact original completed practice. The initial architecture delta against the two-wrapper bootstrap is documented in `docs/architecture.md`; future work must baseline the working application.
+
+Sentrux discovers sources through Git. Postflight creates an isolated index/object directory under ignored `output/` so new files participate without changing real staging. Use that full-source gate for completion; a tracked-only MCP pass does not cover newly created sources.
 
 - Repo root: `D:\dev\codex-oci-mylearn`
 - Purpose:
@@ -55,3 +57,15 @@ Quiz reviews must retain their exact original completed practice. The initial ar
 ## Diagram composition checks
 
 Repeated OCI reviews missed faint badges, detached captions and an off-center instance pool despite passing text-overlap checks. For native course SVGs, measure the complete artwork plus caption against its container, and the visible icon geometry against its nearest label. Check badge borders against both their fill and surrounding gradients. Use `scripts/diagram-check.cjs` for center, padding and horizontal/vertical proximity and `tests/diagram-design.test.mjs` for badge contrast; successful loading and collision-free text alone are insufficient.
+
+## Oracle course research and availability
+
+All course practice pages use the title `Práctica` and lead `Pon a prueba lo que entiendes`. The shared start card has the CertiQuiz participant entry's 4px red top border, red eyebrow, brief action instruction, question/domain counts and a right-aligned `Entrar` button. Do not add surrounding text, introductions, bank-size/account disclaimers, question-origin notices or explanatory sections. Keep course-specific exam/case links in completed results, and preserve question, feedback, result, review and storage behavior.
+
+Before selecting or updating an Oracle technology or capability, investigate both Slack product discussions and current public Oracle documentation, release notes and lifecycle announcements. Old documentation alone does not establish suitability for a new design. Record the date, evidence, scope and status for each capability: available, Preview, implemented extension or announced. Preview is a functional capability within its documented scope and must not be excluded merely because it is Preview; an announcement does not establish availability.
+
+Keep Slack evidence and private source extracts under ignored `.private/`, outside published assets and content. Public pages cite public sources and use fictional cases. Consult DAMA by selected chapter/page; do not publish the book or convert it wholesale. The Governance workshop centers on AIDP and Autonomous AI Lakehouse; standalone OCI Data Catalog is excluded from new recommendations. Distinguish the current catalogs and never infer automatic synchronization, inherited product capabilities or propagated source identities without evidence.
+
+Course pages address the learner directly. Keep instructor agendas, presentation-duration estimates and internal editorial coordination (including why Preview counts for course selection) outside published lessons. Describe a feature's actual availability and limits beside that feature, without turning editorial instructions into learning objectives or assessment criteria.
+
+For Data Management Fundamentals, use the conceptual preparation material to explain data-management decisions through Oracle products, without publishing book titles, chapter citations or page references. Keep that traceability in `.private/`. Use full official product names in prose, headings, diagrams, navigation labels and questions; do not abbreviate them to AIDP, OAC, EDM or OCI. Preserve technical identifiers and source URLs exactly. Reflow diagrams for full names instead of shrinking labels below the established readable size.

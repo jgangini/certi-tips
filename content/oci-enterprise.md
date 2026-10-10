@@ -97,7 +97,7 @@ Antes de actualizar un agente publicado, versiona sus instrucciones, herramienta
 El equipo quiere conservar su aplicación en un backend existente y solo sustituir el proveedor de inferencia por OCI. ¿Necesita necesariamente desplegarla como aplicación alojada de Enterprise AI?
 
 <details>
-<summary>Ver solución y explicación</summary>
+<summary>Solución</summary>
 
 No. Puede conservar el backend y consumir OCI Responses API, ajustando autenticación, endpoint, proyecto, modelo y capacidades compatibles. El alojamiento gestionado es una segunda opción cuando también se quiere trasladar la operación de la aplicación. En ambos casos hay que probar herramientas, estado, permisos y manejo de fallos.
 

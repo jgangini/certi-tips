@@ -1,0 +1,50 @@
+{
+  "title": "Recuperar el documento que sí aplica",
+  "layout": "left-to-right",
+  "groups": [
+    {
+      "id": "platform",
+      "label": "Ámbitos de servicios y capacidades",
+      "type": "platform"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "platform",
+      "label": "Oracle AI Data Platform",
+      "service": "Oracle AI Data Platform",
+      "group": "platform",
+      "iconCatalogId": "oci-ai-data-platform-workbench"
+    },
+    {
+      "id": "lakehouse",
+      "label": "Oracle Autonomous AI Lakehouse",
+      "service": "Oracle Autonomous AI Lakehouse",
+      "group": "platform",
+      "iconCatalogId": "oracle-autonomous-database"
+    }
+  ],
+  "edges": [
+    {
+      "from": "platform",
+      "to": "lakehouse",
+      "label": "service",
+      "meaning": "AI features use the configured Autonomous AI Lakehouse 26ai+ as their foundational/default vector store.",
+      "evidence": "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/get-started-oracle-ai-data-platform.html"
+    }
+  ],
+  "conceptualAnnotations": {
+    "nativeFeatures": [
+      "Volume or folder ingestion",
+      "Knowledge Base",
+      "Agent RAG tool"
+    ],
+    "scope": "Knowledge Base is queried through a RAG tool attached to an agent; no autonomous document-approval lifecycle is claimed."
+  },
+  "presentation": {
+    "viewBox": "0 0 1920 1080",
+    "minimumFontSize": 32,
+    "finalSvg": "assets/diagrams/gov-content-management-oracle.svg",
+    "scope": "Logical teaching architecture; conceptual decisions and native features are annotations, not separately provisioned products."
+  }
+}
