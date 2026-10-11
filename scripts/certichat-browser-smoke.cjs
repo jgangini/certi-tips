@@ -29,9 +29,14 @@ async (page) => {
   await page.getByRole('textbox', { name: 'Pregunta a CertiChat' }).waitFor();
   await page.waitForFunction(() => document.querySelector('[data-chat-status]').textContent.includes('20 consultas'));
   assert(requests.some(url => url.endsWith('/assets/deep-chat.js')), 'Missing local Deep Chat');
+  const submit = page.getByRole('button', { name: 'Enviar consulta', exact: true });
+  assert(await submit.count() === 1, 'Submit button has no accessible name');
   await page.getByRole('textbox', { name: 'Pregunta a CertiChat' }).fill('¿Qué son los agentes?');
-  await page.getByRole('textbox', { name: 'Pregunta a CertiChat' }).press('Enter');
+  await page.getByRole('textbox', { name: 'Pregunta a CertiChat' }).press('Tab');
+  assert(await submit.evaluate(element => element.getRootNode().activeElement === element), 'Keyboard cannot focus the submit button');
+  await submit.press('Enter');
   await page.waitForFunction(() => document.querySelector('[data-chat-status]').textContent.includes('19 consultas'));
+  assert(await submit.count() === 1, 'Submit name lost after response');
   assert(await page.locator('[data-chat-sources] a').count() === 1, 'Unsafe source URL shown');
   assert(!(await page.locator('deep-chat img, deep-chat a, deep-chat script').count()), 'Messages rendered active content');
   assert(!requests.some(url => url.includes('evil.invalid')), 'Message caused external resource request');
@@ -114,5 +119,5 @@ async (page) => {
   });
   assert(controlsSeparate, 'Chat launcher overlaps lesson completion');
   assert(errors.length === 0, `Page errors: ${errors.join('; ')}`);
-  return { checks: ['lazy local bundle', 'safe plaintext', 'sources', 'API contract', 'quotas', 'clear preserves quota', 'rate retry', 'idempotent transport retry', 'definitive failure retry', 'mobile geometry', 'Escape focus', 'unavailable disables input and Turnstile', 'missing Turnstile fails closed', 'Turnstile server handshake', 'dark theme', 'completion control coexistence'], requests: calls.length, errors };
+  return { checks: ['lazy local bundle', 'named submit and keyboard activation', 'safe plaintext', 'sources', 'API contract', 'quotas', 'clear preserves quota', 'rate retry', 'idempotent transport retry', 'definitive failure retry', 'mobile geometry', 'Escape focus', 'unavailable disables input and Turnstile', 'missing Turnstile fails closed', 'Turnstile server handshake', 'dark theme', 'completion control coexistence'], requests: calls.length, errors };
 }

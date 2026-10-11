@@ -121,6 +121,7 @@ if (root) {
       chat.onComponentRender = () => {
         chat.shadowRoot.querySelector('[role="textbox"]')?.setAttribute("aria-label", "Pregunta a CertiChat");
         chat.disableSubmitButton(!verified || !available);
+        chat.shadowRoot.querySelector("#submit-icon")?.closest('[role="button"]')?.setAttribute("aria-label", "Enviar consulta");
       };
       chat.connect = { handler: async (body, signals) => {
         busy = true; clear.disabled = true; status.textContent = "Consultando las guías…";
