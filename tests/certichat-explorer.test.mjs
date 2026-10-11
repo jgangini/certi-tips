@@ -39,7 +39,8 @@ test("the explorer is a standalone site page and offers an honest missing-snapsh
   assert.match(body, /data-knowledge-graph=""/);
   assert.match(body, /instantánea del grafo todavía no está publicada/);
   assert.doesNotMatch(body, /id="consulta"|data-explorer-chat(?=[\s=>])|chat-explorer-flow|chat-graph-inspector|Cómo se prepara una respuesta|Explorar conceptos y relaciones/);
-  assert.match(body, /<canvas data-graph-canvas tabindex="0"[^>]+aria-describedby="chat-graph-help"/);
+  assert.match(body, /<canvas data-graph-canvas tabindex="0"[^>]+role="img"[^>]+aria-label="[^"]+"/);
+  assert.doesNotMatch(body, /chat-graph-help|chat-graph-legend/);
   assert.match(body, /data-graph-active aria-label="Conceptos recuperados para esta consulta"/);
   assert.match(certichatExplorerBody(site.base, true), /data-knowledge-graph="\/certi-tips\/assets\/certichat\/graph.json"/);
 });

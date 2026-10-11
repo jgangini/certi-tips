@@ -35,15 +35,16 @@ test("layout preserves islands and self edges without introducing connections", 
   assert.equal(layoutNetwork({ nodes: [], edges: [] }).nodes.length, 0);
 });
 
-test("Canvas highlights only current trace members and leaves search selection independent", () => {
+test("Canvas preserves trace membership, camera control and selection styling", () => {
   const keys = ["window", "document", "getComputedStyle", "requestAnimationFrame", "cancelAnimationFrame", "ResizeObserver", "MutationObserver"];
   const previous = new Map(keys.map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
-  const frames = [], fills = [], events = new Map();
-  let destroyed = 0;
+  const frames = new Map(), fills = [], strokes = [], tags = [], events = new Map(), motion = { matches: true };
+  let destroyed = 0, frameId = 0;
   const observer = class { observe() {} disconnect() { destroyed++; } };
-  Object.assign(globalThis, { window: { devicePixelRatio: 3 }, document: { documentElement: {} }, getComputedStyle: () => ({ getPropertyValue: () => "" }), requestAnimationFrame: fn => { frames.push(fn); return frames.length; }, cancelAnimationFrame() {}, ResizeObserver: observer, MutationObserver: observer });
-  const flush = () => { while (frames.length) frames.shift()(); };
-  const context = { setTransform() {}, clearRect() {}, translate() {}, scale(value) { this.zoom = value; }, beginPath() { this.radii = []; }, moveTo() {}, lineTo() {}, arc(x, y, radius) { this.radii.push(radius * this.zoom); }, stroke() {}, fill() { fills.push({ color: this.fillStyle, radii: this.radii }); }, fillRect() {}, fillText() {}, measureText: text => ({ width: text.length * 7 }) };
+  Object.assign(globalThis, { window: { devicePixelRatio: 3, matchMedia: () => motion }, document: { documentElement: {} }, getComputedStyle: () => ({ getPropertyValue: () => "" }), requestAnimationFrame: fn => { frames.set(++frameId, fn); return frameId; }, cancelAnimationFrame: id => frames.delete(id), ResizeObserver: observer, MutationObserver: observer });
+  const step = (time = 0) => { const pending = [...frames.values()]; frames.clear(); for (const callback of pending) callback(time); };
+  const flush = () => { for (let count = 0; frames.size; count++) { assert.ok(count < 100, "renderer must stop requesting frames when idle"); step(count * 16); } };
+  const context = { setTransform() {}, clearRect() {}, translate() {}, scale(value) { this.zoom = value; }, beginPath() { this.radii = []; }, moveTo() {}, lineTo() {}, arc(x, y, radius) { this.radii.push(radius * this.zoom); }, stroke() { strokes.push({ color: this.strokeStyle, radii: this.radii }); }, fill() { fills.push({ color: this.fillStyle, radii: this.radii }); }, roundRect(x, y, width, height, radius) { tags.push({ x, y, width, height, radius }); }, fillText() {}, measureText: text => ({ width: text.length * 7 }) };
   const canvas = { clientWidth: 390, clientHeight: 400, style: {}, dataset: {}, hasAttribute: () => false, getContext: () => context, addEventListener: (name, handler) => events.set(name, handler), focus() {}, setPointerCapture() {}, getBoundingClientRect: () => ({ left: 0, top: 0 }) };
   const graph = { nodes: [{ id: "a", label: "A" }, { id: "b", label: "B" }, { id: "c", label: "C" }], edges: [{ source: "a", target: "b", label: "uses" }, { source: "b", target: "c", label: "contains" }] };
   try {
@@ -57,6 +58,22 @@ test("Canvas highlights only current trace members and leaves search selection i
     assert.ok(grayRadii[1] > grayRadii[0] && grayRadii[0] === grayRadii[2], "gray node sizes must follow their relationship counts");
     renderer.select("a"); flush();
     assert.equal(canvas.dataset.activeNodeCount, "0", "search must not fabricate retrieval evidence");
+    const selected = layoutNetwork(graph).nodes[0], tag = tags.at(-1), scale = Number(canvas.dataset.scale);
+    assert.ok(Math.abs(tag.x + tag.width / 2 - (selected.x * scale + Number(canvas.dataset.panX))) < 1e-10, "concept tag must center over its node");
+    assert.ok(Math.abs(tag.y + tag.height + 8 + selected.radius - (selected.y * scale + Number(canvas.dataset.panY))) < 1e-10, "concept tag must float above the node with a gap");
+    assert.equal(tag.height, 24); assert.equal(tag.radius, 4);
+    assert.equal(strokes.findLast(stroke => stroke.radii.length === 1).color, "#c74634", "selection ring must be red without changing trace membership");
+    assert.equal(fills.at(-1).color, "#f1efed");
+    const pointerPan = { button: 0, pointerId: 1, clientX: 0, clientY: 0 };
+    const nearEdge = { ...pointerPan, clientX: 12 - (selected.x * scale + Number(canvas.dataset.panX)), clientY: 12 - (selected.y * scale + Number(canvas.dataset.panY)) };
+    events.get("pointerdown")(pointerPan); events.get("pointermove")(nearEdge); events.get("pointerup")(nearEdge); flush();
+    assert.deepEqual([tags.at(-1).x, tags.at(-1).y], [8, 8], "tag must remain within the viewport for a visible node near the edge");
+    const tagCount = tags.length;
+    events.get("pointerdown")(pointerPan);
+    events.get("pointermove")({ ...pointerPan, clientX: -1000, clientY: -1000 });
+    events.get("pointerup")({ ...pointerPan, clientX: -1000, clientY: -1000 }); flush();
+    assert.equal(tags.length, tagCount, "offscreen nodes must not leave detached labels pinned to a corner");
+    renderer.fit(); flush();
     renderer.setTrace({ nodes: ["a", "b", "missing"], edges: [graph.edges[0], { source: "b", target: "a", label: "uses" }] }); flush();
     assert.equal(canvas.dataset.activeNodeCount, "2");
     assert.equal(canvas.dataset.activeEdgeCount, "1", "edge direction must match the graph");
@@ -74,8 +91,46 @@ test("Canvas highlights only current trace members and leaves search selection i
     renderer.setTrace(null); flush();
     assert.equal(canvas.dataset.activeNodeCount, "0");
     assert.ok(events.has("pointermove") && events.has("wheel") && events.has("keydown"));
+    const pose = () => ["scale", "panX", "panY"].map(key => Number(canvas.dataset[key]));
+    renderer.setTrace({ nodes: ["c"], edges: [] }); renderer.fit(true); flush();
+    const target = pose();
+    assert.equal(canvas.dataset.cameraMoving, "false", "reduced motion must fit immediately");
+    renderer.fit(); renderer.zoom(0.5); flush();
+    const start = pose();
+    motion.matches = false;
+    renderer.fit(true); step(1000);
+    assert.deepEqual(pose(), start, "query fit must begin from the current camera without jumping");
+    assert.equal(canvas.dataset.cameraMoving, "true");
+    step(1210);
+    for (const [index, value] of pose().entries()) assert.ok(Math.abs(value - (start[index] + target[index]) / 2) < 1e-9, "camera must interpolate pan and zoom halfway");
+    step(1420);
+    assert.deepEqual(pose(), target);
+    assert.equal(frames.size, 0, "completed motion must not leave a permanent animation loop");
+    let time = 2000;
+    const startKeyboardFit = () => {
+      renderer.setTrace({ nodes: ["c"], edges: [] }); renderer.fit(); renderer.zoom(0.5); step(time);
+      events.get("keydown")({ key: "f", preventDefault() {} }); step(time += 16); step(time += 100);
+      assert.equal(canvas.dataset.cameraMoving, "true", "F must use the same animated query fit");
+    };
+    for (const [name, interrupt] of [
+      ["zoom", () => renderer.zoom(1.1)],
+      ["keyboard pan", () => events.get("keydown")({ key: "ArrowRight", preventDefault() {} })],
+      ["pointer pan", () => { events.get("pointerdown")(pointerPan); events.get("pointermove")({ ...pointerPan, clientX: 20 }); events.get("pointerup")({ ...pointerPan, clientX: 20 }); }],
+      ["new trace", () => renderer.setTrace({ nodes: ["a"], edges: [] })],
+      ["show all", () => renderer.fit()],
+    ]) {
+      startKeyboardFit(); interrupt(); step(time += 1000);
+      const stopped = pose(); step(time += 1000);
+      assert.deepEqual(pose(), stopped, `${name} must prevent the previous camera animation from resuming`);
+      assert.equal(canvas.dataset.cameraMoving, "false"); assert.equal(frames.size, 0);
+    }
+    startKeyboardFit(); motion.matches = true; step(time += 16);
+    assert.deepEqual(pose(), target, "enabling reduced motion during travel must finish immediately");
+    assert.equal(frames.size, 0);
+    motion.matches = false; startKeyboardFit();
     renderer.destroy();
     assert.equal(destroyed, 2);
+    assert.equal(frames.size, 0, "destroy must cancel a pending camera frame");
     let picked;
     const hub = createNetwork(canvas, { nodes: [{ id: "hub", label: "Centro" }], edges: Array.from({ length: 400 }, (_, i) => ({ source: "hub", target: "hub", label: String(i) })) }, id => { picked = id; });
     hub.setTrace({ nodes: ["hub"], edges: [] }); flush();

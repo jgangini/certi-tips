@@ -76,8 +76,19 @@ async page => {
     assert(await tab.locator('[data-graph-active-fit]').isDisabled(), 'Empty map offers a nonexistent active trace');
     const provenance = await tab.locator('[data-graph-meta]').textContent();
     assert(provenance.includes('Instantánea del') && provenance.includes('Fuente: Cognee') && provenance.includes(snapshot.version.slice(0, 12)), 'Missing graph source, snapshot date or version');
+    const heading = tab.locator('[data-knowledge-graph] .certichat-heading');
+    assert(await heading.locator('h1').textContent() === 'Cognee' && (await heading.textContent()).includes('GRAFO DE CONOCIMIENTO'), 'Map header does not identify Cognee and its knowledge graph');
     assert(await tab.locator('.sidebar').count() === 0, 'Standalone page inherits a course sidebar');
-    assert(await tab.locator('#consulta, .chat-explorer-intro, .chat-explorer-breadcrumb, .chat-explorer-flow, .chat-graph-inspector, [data-explorer-chat]').count() === 0, 'Removed introductory or exploration sections returned');
+    assert(await tab.locator('#consulta, .chat-explorer-intro, .chat-explorer-breadcrumb, .chat-explorer-flow, .chat-graph-inspector, [data-explorer-chat], #chat-graph-help, .chat-graph-legend').count() === 0, 'Removed introductory sections, map help or legend returned');
+    const controls = tab.locator('.chat-graph-network .chat-graph-toolbar button');
+    assert(await controls.count() === 4, 'Map controls are not all inside the network container');
+    for (const control of await controls.all()) {
+      const name = await control.getAttribute('aria-label');
+      assert(name?.trim() && (await control.getAttribute('title'))?.trim(), 'Icon control has no accessible name or tooltip');
+      assert(!(await control.innerText()).trim(), 'Map control still displays text');
+      assert(await control.locator('svg[aria-hidden="true"]').count() === 1, 'Map control has no decorative SVG');
+      assert(await tab.getByRole('button', { name, exact: true }).count() === 1, 'Map control accessible name is ambiguous');
+    }
     await openChat();
     assert(await tab.locator('[data-chat-close]').isDisabled(), 'Explorer permits closing its persistent chat');
     assert(await tab.locator('[data-chat-open]').isHidden(), 'Auto-opened chat leaves a redundant launcher');
@@ -108,9 +119,40 @@ async page => {
     await send('Consulta uno', trace1);
     await answered('Respuesta: Consulta uno.');
     await active(trace1.nodes, trace1.edges);
+    for (const theme of ['dark', 'light']) {
+      await tab.evaluate(value => document.documentElement.dataset.theme = value, theme);
+      const tags = await tab.locator('[data-graph-active] button').evaluateAll(items => items.map(element => {
+        const s = getComputedStyle(element);
+        return { background: s.backgroundColor, border: s.borderTopColor, borderWidth: s.borderTopWidth, radius: s.borderRadius, fontSize: parseFloat(s.fontSize), paddingY: parseFloat(s.paddingTop) + parseFloat(s.paddingBottom) };
+      }));
+      assert(tags.length === trace1.nodes.length && tags.every(tag => {
+        const neutral = color => { const rgb = color.match(/[\d.]+/g)?.slice(0, 3).map(Number); return rgb?.length === 3 && Math.max(...rgb) - Math.min(...rgb) <= 20; };
+        return tag.radius === '4px' && tag.borderWidth === '1px' && neutral(tag.background) && neutral(tag.border) && tag.fontSize <= 13 && tag.paddingY <= 8;
+      }), `${theme}: active concepts are not compact neutral rectangular tags: ${JSON.stringify(tags)}`);
+    }
+    checks.push('compact gray reference tags in both themes');
     assert(await tab.locator('[data-graph-active-fit]').isEnabled(), 'Received trace cannot be fitted');
+    await tab.locator('[data-graph-fit]').click();
+    await canvas.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    const wholeGraph = await state();
+    await tab.emulateMedia({ reducedMotion: 'no-preference' });
     await tab.locator('[data-graph-active-fit]').click();
-    await tab.getByRole('link', { name: 'Ver mapa de conocimiento', exact: true }).click();
+    await tab.waitForFunction(() => document.querySelector('canvas[data-graph-canvas]').dataset.cameraMoving === 'true');
+    const frames = await canvas.evaluate(element => new Promise(resolve => {
+      const samples = [], deadline = performance.now() + 2000;
+      const sample = () => {
+        const data = element.dataset;
+        samples.push({ scale: Number(data.scale), x: Number(data.panX), y: Number(data.panY), moving: data.cameraMoving });
+        if (data.cameraMoving === 'false' || performance.now() > deadline) resolve(samples);
+        else requestAnimationFrame(sample);
+      };
+      sample();
+    }));
+    const finalFrame = frames.at(-1);
+    assert(frames.length >= 3 && finalFrame.moving === 'false' && frames.slice(0, -1).some(frame => frame.moving === 'true' && (frame.scale !== wholeGraph.scale || frame.x !== wholeGraph.panX || frame.y !== wholeGraph.panY) && (frame.scale !== finalFrame.scale || frame.x !== finalFrame.x || frame.y !== finalFrame.y)), 'Active fit did not animate through intermediate camera positions');
+    await tab.emulateMedia({ reducedMotion: 'reduce' });
+    checks.push('active fit animates through intermediate camera positions and finishes');
+    await tab.locator('[data-chat-map]').click();
     assert(await canvas.evaluate(element => document.activeElement === element) && await tab.locator('#certichat-panel').isVisible(), 'Brain control does not focus the map while keeping chat open');
     await active(trace1.nodes, trace1.edges);
     assert(calls.at(-1).path === '/api/chat' && calls.at(-1).body.message === 'Consulta uno', 'Real chat UI did not send the question');
@@ -162,7 +204,12 @@ async page => {
         const box = element => { const b = element.getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width, height: b.height }; };
         const map = document.querySelector('[data-knowledge-graph]'), chat = document.querySelector('#certichat-panel');
         const style = element => { const s = getComputedStyle(element); return { border: s.borderTopWidth, color: s.borderTopColor, position: s.position }; };
-        return { width: innerWidth, page: document.documentElement.scrollWidth, map: box(map), chat: box(chat), canvas: box(map.querySelector('canvas')), mapHeading: box(map.querySelector('header')), chatHeading: box(chat.querySelector('header')), mapStyle: style(map), chatStyle: style(chat), bodyOverflow: getComputedStyle(document.body).overflow };
+        const network = map.querySelector('.chat-graph-network'), toolbar = map.querySelector('.chat-graph-toolbar');
+        const controls = [...toolbar.querySelectorAll('button')].map(button => {
+          const svg = button.querySelector('svg'), bounds = svg.getBBox(), s = getComputedStyle(button);
+          return { ...box(button), svg: box(svg), hasDrawing: bounds.width > 0 && bounds.height > 0, backgroundImage: s.backgroundImage, opacity: s.opacity, disabled: button.disabled };
+        });
+        return { width: innerWidth, page: document.documentElement.scrollWidth, map: box(map), chat: box(chat), canvas: box(map.querySelector('canvas')), mapHeading: box(map.querySelector('header')), chatHeading: box(chat.querySelector('header')), mapStyle: style(map), chatStyle: style(chat), bodyOverflow: getComputedStyle(document.body).overflow, network: box(network), toolbar: box(toolbar), controls };
       });
       assert(measured.page <= width + 1 && measured.canvas.left >= -1 && measured.canvas.right <= width + 1 && measured.canvas.height >= 200, `Map overflows or collapses at ${width}: ${JSON.stringify(measured)}`);
       assert(measured.mapStyle.border === '4px' && measured.chatStyle.border === '4px' && measured.mapStyle.color === measured.chatStyle.color, `Map and chat lost their matching red top borders at ${width}`);
@@ -174,9 +221,12 @@ async page => {
         assert(measured.chatStyle.position !== 'fixed' && measured.bodyOverflow !== 'hidden', `Mobile explorer still uses a fullscreen overlay at ${width}`);
       }
       assert(await tab.locator('[data-chat-close]').isDisabled() && await tab.locator('#certichat-panel').isVisible(), `Chat can be closed at ${width}`);
+      assert(Math.abs(measured.network.right - measured.toolbar.right - 12) <= 1 && Math.abs(measured.network.bottom - measured.toolbar.bottom - 12) <= 1, `Map controls lost their bottom/right inset at ${width}`);
+      assert(measured.controls.every((control, index, all) => Math.abs(control.width - 36) <= 1 && Math.abs(control.height - 36) <= 1 && Math.abs(control.left - all[0].left) <= 1 && (!index || Math.abs(control.top - all[index - 1].bottom - 6) <= 1) && control.hasDrawing && control.backgroundImage === 'none' && (control.disabled || control.opacity === '1') && Math.abs((control.svg.left + control.svg.right - control.left - control.right) / 2) <= 1 && Math.abs((control.svg.top + control.svg.bottom - control.top - control.bottom) / 2) <= 1), `Map controls are not centered flat icons in a 36 px vertical column at ${width}: ${JSON.stringify(measured.controls)}`);
       geometry.push(measured);
     }
     checks.push('aligned desktop map/chat and in-page mobile stack at 1440/1280/1024/800/360/320');
+    checks.push('four named SVG controls float in a 36 px vertical column with 6 px gaps and 12 px inset');
     for (const theme of ['dark', 'light']) {
       await tab.evaluate(value => document.documentElement.dataset.theme = value, theme);
       await tab.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));

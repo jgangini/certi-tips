@@ -69,7 +69,8 @@ export function createNetwork(canvas, graph, onSelect) {
   if (!context) throw new Error("Canvas is unavailable");
   const layout = layoutNetwork(graph), edgeKeys = new Set(layout.edges.map(edge => edge.key));
   const events = new AbortController(), pointers = new Map();
-  let width = 0, height = 0, frame = 0, destroyed = false, moved = false, selected, pressPosition;
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  let width = 0, height = 0, frame = 0, destroyed = false, moved = false, selected, pressPosition, camera;
   let activeNodes = new Set(), activeEdges = new Set();
   const view = { scale: 1, x: 0, y: 0 };
   canvas.style.touchAction = "none";
@@ -77,18 +78,21 @@ export function createNetwork(canvas, graph, onSelect) {
 
   function invalidate() { if (!frame && !destroyed) frame = requestAnimationFrame(draw); }
   function fit(activeOnly = false) {
+    camera = undefined;
     const points = activeOnly ? layout.nodes.filter(node => activeNodes.has(node.id)) : layout.nodes;
     if (!points.length || !width || !height) return;
     const xs = points.map(node => node.x), ys = points.map(node => node.y);
     const left = Math.min(...xs), right = Math.max(...xs), top = Math.min(...ys), bottom = Math.max(...ys);
     const padding = 12 + Math.max(...points.map(node => node.radius * 1.25 + 3));
-    view.scale = clamp(Math.min((width - padding * 2) / Math.max(80, right - left), (height - padding * 2) / Math.max(80, bottom - top)), 0.04, 4);
-    view.x = width / 2 - (left + right) / 2 * view.scale;
-    view.y = height / 2 - (top + bottom) / 2 * view.scale;
+    const scale = clamp(Math.min((width - padding * 2) / Math.max(80, right - left), (height - padding * 2) / Math.max(80, bottom - top)), 0.04, 4);
+    const target = { scale, x: width / 2 - (left + right) / 2 * scale, y: height / 2 - (top + bottom) / 2 * scale };
+    if (activeOnly && !reducedMotion.matches && Object.keys(target).some(key => target[key] !== view[key])) camera = { from: { ...view }, target };
+    else Object.assign(view, target);
     invalidate();
   }
   function zoomAt(factor, x = width / 2, y = height / 2) {
     if (!Number.isFinite(factor) || factor <= 0) return;
+    camera = undefined;
     const scale = clamp(view.scale * factor, 0.04, 12), ratio = scale / view.scale;
     view.x = x - (x - view.x) * ratio; view.y = y - (y - view.y) * ratio; view.scale = scale;
     invalidate();
@@ -103,9 +107,16 @@ export function createNetwork(canvas, graph, onSelect) {
     }
     if (closest !== undefined) { select(closest); onSelect(closest); }
   }
-  function draw() {
+  function draw(time) {
     frame = 0;
     if (!width || !height || destroyed) return;
+    if (camera) {
+      camera.started ??= time;
+      const progress = reducedMotion.matches ? 1 : clamp((time - camera.started) / 420, 0, 1);
+      const eased = progress * progress * (3 - 2 * progress);
+      for (const key of ["scale", "x", "y"]) view[key] = camera.from[key] + (camera.target[key] - camera.from[key]) * eased;
+      if (progress === 1) { Object.assign(view, camera.target); camera = undefined; }
+    }
     const style = getComputedStyle(canvas), color = (name, fallback) => style.getPropertyValue(name).trim() || fallback;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     context.setTransform(dpr, 0, 0, dpr, 0, 0); context.clearRect(0, 0, width, height);
@@ -140,19 +151,26 @@ export function createNetwork(canvas, graph, onSelect) {
     const node = layout.nodes[layout.indexes.get(selected)];
     if (node) {
       const radius = node.radius * (activeNodes.has(node.id) ? 1.25 : 1);
-      context.beginPath(); context.arc(node.x, node.y, (radius + 3) / view.scale, 0, Math.PI * 2);
-      context.strokeStyle = color("--blue", "#2469ad"); context.lineWidth = 2 / view.scale; context.stroke();
-      context.setTransform(dpr, 0, 0, dpr, 0, 0); context.font = "14px system-ui";
-      const label = node.label.length > 55 ? `${node.label.slice(0, 54)}…` : node.label;
-      const size = Math.min(width - 16, context.measureText(label).width + 16);
-      const x = clamp(node.x * view.scale + view.x + radius + 8, 8, Math.max(8, width - size - 8));
-      const y = clamp(node.y * view.scale + view.y - radius - 26, 8, Math.max(8, height - 32));
-      context.fillStyle = color("--paper", "#fff"); context.fillRect(x, y, size, 26);
-      context.fillStyle = color("--ink", "#303440"); context.fillText(label, x + 8, y + 18, size - 16);
+      const screenX = node.x * view.scale + view.x, screenY = node.y * view.scale + view.y;
+      if (screenX + radius >= 0 && screenX - radius <= width && screenY + radius >= 0 && screenY - radius <= height) {
+        context.beginPath(); context.arc(node.x, node.y, (radius + 3) / view.scale, 0, Math.PI * 2);
+        context.strokeStyle = color("--red", "#c74634"); context.lineWidth = 2 / view.scale; context.stroke();
+        context.setTransform(dpr, 0, 0, dpr, 0, 0); context.font = "13px system-ui";
+        const label = node.label.length > 55 ? `${node.label.slice(0, 54)}…` : node.label;
+        const size = Math.min(width - 16, context.measureText(label).width + 12);
+        const x = clamp(screenX - size / 2, 8, Math.max(8, width - size - 8));
+        const y = clamp(screenY - radius - 8 - 24, 8, Math.max(8, height - 32));
+        context.beginPath(); context.roundRect(x, y, size, 24, 4);
+        context.fillStyle = color("--chrome-bg", "#f1efed"); context.fill();
+        context.strokeStyle = color("--muted", "#606574"); context.lineWidth = 1; context.stroke();
+        context.fillStyle = color("--ink", "#303440"); context.fillText(label, x + 6, y + 16, size - 12);
+      }
     }
-    Object.assign(canvas.dataset, { nodeCount: String(layout.nodes.length), edgeCount: String(layout.edges.length), activeNodeCount: String(activeNodes.size), activeEdgeCount: String(activeEdges.size), drawCount: String(Number(canvas.dataset.drawCount || 0) + 1), scale: String(view.scale), panX: String(view.x), panY: String(view.y) });
+    Object.assign(canvas.dataset, { nodeCount: String(layout.nodes.length), edgeCount: String(layout.edges.length), activeNodeCount: String(activeNodes.size), activeEdgeCount: String(activeEdges.size), drawCount: String(Number(canvas.dataset.drawCount || 0) + 1), scale: String(view.scale), panX: String(view.x), panY: String(view.y), cameraMoving: String(Boolean(camera)) });
+    if (camera) invalidate();
   }
   function resize() {
+    camera = undefined;
     const first = !width || !height, oldWidth = width, oldHeight = height;
     width = canvas.clientWidth; height = canvas.clientHeight;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -165,6 +183,7 @@ export function createNetwork(canvas, graph, onSelect) {
   listen("wheel", event => { event.preventDefault(); const p = point(event); zoomAt(Math.exp(clamp(-event.deltaY * 0.002, -0.4, 0.4)), p.x, p.y); }, { passive: false });
   listen("pointerdown", event => {
     if (event.button !== 0) return;
+    camera = undefined;
     canvas.focus({ preventScroll: true }); canvas.setPointerCapture(event.pointerId);
     if (!pointers.size) pressPosition = point(event);
     pointers.set(event.pointerId, point(event)); moved = pointers.size > 1;
@@ -192,6 +211,7 @@ export function createNetwork(canvas, graph, onSelect) {
     else if (event.key.toLowerCase() === "f") fit(true);
     else if (event.key === "Enter") hit(width / 2, height / 2);
     else if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
+      camera = undefined;
       view.x += event.key === "ArrowLeft" ? 40 : event.key === "ArrowRight" ? -40 : 0;
       view.y += event.key === "ArrowUp" ? 40 : event.key === "ArrowDown" ? -40 : 0; invalidate();
     } else return;
@@ -202,11 +222,12 @@ export function createNetwork(canvas, graph, onSelect) {
   resize();
   return {
     setTrace(trace) {
+      camera = undefined;
       activeNodes = new Set((trace?.nodes || []).filter(id => layout.indexes.has(id)));
       activeEdges = new Set((trace?.edges || []).map(edgeKey).filter(key => edgeKeys.has(key)));
       invalidate();
     },
     select, fit, zoom: zoomAt,
-    destroy() { destroyed = true; cancelAnimationFrame(frame); events.abort(); observer.disconnect(); theme.disconnect(); pointers.clear(); },
+    destroy() { destroyed = true; camera = undefined; cancelAnimationFrame(frame); events.abort(); observer.disconnect(); theme.disconnect(); pointers.clear(); },
   };
 }
