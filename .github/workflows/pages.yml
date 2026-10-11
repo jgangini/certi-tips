@@ -20,6 +20,8 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run build
+        env:
+          CERTICHAT_TURNSTILE_SITE_KEY: ${{ vars.CERTICHAT_TURNSTILE_SITE_KEY }}
       - run: npm test
       - run: npm run check
       - uses: actions/configure-pages@v5

@@ -88,6 +88,20 @@ test('checks CSS resources, JavaScript imports and unresolved build tokens', () 
   includesIssue(issues, /unresolved \{\{base\}\}/);
 });
 
+test('module references ignore quoted vendor examples and still check static and lazy imports', () => {
+  const input = fixture();
+  input.files.set('assets/vendor.js', `console.warn("import Remarkable from 'remarkable';\\nimport linkify from 'remarkable/linkify'");
+    const options = { key: 'from', method: '_import' };
+    // import './comment.js';
+    /* export { value } from './example.js'; */
+    import { value } from './static.js';
+    export { other } from './reexport.js';
+    await import('./lazy.js');`);
+  const issues = validateSite(input).filter(issue => issue.startsWith('assets/vendor.js:'));
+  assert.equal(issues.length, 3);
+  for (const file of ['static', 'reexport', 'lazy']) includesIssue(issues, new RegExp(`missing target \\./${file}\\.js`));
+});
+
 test('rejects copied transcripts, local source paths and box-drawing schematics', () => {
   const input = fixture();
   input.files.set('sources/01-01-01-original.md', 'Original notes');

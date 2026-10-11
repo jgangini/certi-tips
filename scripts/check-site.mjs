@@ -93,7 +93,11 @@ function validateFiles(context) {
     if (/file:\/\//i.test(source)) error(file, 'local file URL is exposed');
     if (/\.html$/i.test(file)) validateHtml(context, file, source);
     if (/\.css$/i.test(file)) for (const match of source.matchAll(/url\(\s*["']?([^\s"')]+)["']?\s*\)/gi)) validateReference(context, file, match[1], true);
-    if (/\.m?js$/i.test(file)) for (const match of source.matchAll(/(?:\bfrom\s*|\bimport\s*(?:\(\s*)?)["']([^"']+)["']/g)) validateReference(context, file, match[1], true);
+    // ponytail: literal module specifiers only; use an AST parser if imports become computed.
+    // Consume strings/comments first so vendor diagnostics and object keys are not imports.
+    if (/\.m?js$/i.test(file)) for (const match of source.matchAll(/\/\/[^\r\n]*|\/\*[\s\S]*?\*\/|\b(?:import|export)\s+(?:[^;'"`]*?\s+from\s+)?(["'])([^"'\\\r\n]+)\1|\bimport\s*\(\s*(["'])([^"'\\\r\n]+)\3\s*\)|(["'`])(?:\\[\s\S]|(?!\5)[^\\])*\5/g)) {
+      if (match[2] || match[4]) validateReference(context, file, match[2] || match[4], true);
+    }
   }
 }
 

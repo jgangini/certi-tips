@@ -68,7 +68,11 @@ foreach ($edge in @(
     @('assets/ui.js', 'services/certiquiz/app/bridge.js', '../services/certiquiz/app/bridge.js'),
     @('services/certiquiz/app/bridge.js', 'assets/ui.js', '../../../assets/ui.js'),
     @('services/certiquiz/app/bridge.js', 'scripts/tool.mjs', '../../../scripts/tool.mjs'),
-    @('scripts/tool.mjs', 'services/certiquiz/app/bridge.js', '../services/certiquiz/app/bridge.js')
+    @('scripts/tool.mjs', 'services/certiquiz/app/bridge.js', '../services/certiquiz/app/bridge.js'),
+    @('assets/ui.js', 'services/certichat/app/bridge.js', '../services/certichat/app/bridge.js'),
+    @('services/certichat/app/bridge.js', 'assets/ui.js', '../../../assets/ui.js'),
+    @('services/certichat/app/bridge.js', 'scripts/tool.mjs', '../../../scripts/tool.mjs'),
+    @('scripts/tool.mjs', 'services/certichat/app/bridge.js', '../services/certichat/app/bridge.js')
 )) {
     Test-ArchitectureCase "Boundary: $($edge[0]) -> $($edge[1])" @{
         $edge[0] = "import { value } from '$($edge[2])'; export const result = value;"

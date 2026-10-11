@@ -18,6 +18,8 @@ Las tres guías incluyen gráficos por apartado, ejemplos, ejercicios con soluci
 
 Requiere Node.js 24 y npm. Las guías y la práctica individual funcionan como sitio estático. El módulo opcional **CertiQuiz** añade salas de práctica en grupo mediante una API independiente; su [desarrollo y despliegue](services/certiquiz/README.md) requieren Docker. La interfaz permanece dentro de CertiTips y no incluye credenciales del servidor.
 
+**CertiChat** añade consultas con fuentes sobre el contenido publicado. Su [configuración, límites y despliegue](services/certichat/README.md) usan una API independiente, Turnstile, Cognee y OpenRouter. La única variable del build es la clave pública `CERTICHAT_TURNSTILE_SITE_KEY`; los secretos permanecen en la VPS.
+
 ```sh
 npm ci --ignore-scripts
 npm run build

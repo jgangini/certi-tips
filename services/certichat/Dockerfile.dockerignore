@@ -1,0 +1,12 @@
+**
+!services/
+!services/certichat/
+!services/certichat/Dockerfile
+!services/certichat/requirements*.txt
+!services/certichat/schema.sql
+!services/certichat/migrate.py
+!services/certichat/*.sh
+!services/certichat/app/
+!services/certichat/app/*.py
+!services/certichat/tests/
+!services/certichat/tests/*.py

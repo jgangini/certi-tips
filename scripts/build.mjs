@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import MarkdownIt from "markdown-it";
 import { layout, homeBody, certiquizBody, escapeHtml, courseRoute } from "./layout.mjs";
+import { annotateHeadings, pageDocuments, corpusArtifacts } from "./certichat-corpus.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const output = path.join(root, "dist");
@@ -12,14 +13,12 @@ const site = JSON.parse(
 const certiquizApi = new URL(process.env.CERTIQUIZ_API_ORIGIN || "https://certiquiz.cloudtechnext.net");
 if ((certiquizApi.protocol !== "https:" && !(certiquizApi.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(certiquizApi.hostname))) || certiquizApi.username || certiquizApi.password || certiquizApi.pathname !== "/" || certiquizApi.search || certiquizApi.hash)
   throw new Error("CERTIQUIZ_API_ORIGIN must be an HTTPS origin (HTTP only on loopback), without credentials, path, query, or fragment.");
+const certichatApi = new URL(process.env.CERTICHAT_API_ORIGIN || "https://certichat.cloudtechnext.net");
+if ((certichatApi.protocol !== "https:" && !(certichatApi.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(certichatApi.hostname))) || certichatApi.username || certichatApi.password || certichatApi.pathname !== "/" || certichatApi.search || certichatApi.hash)
+  throw new Error("CERTICHAT_API_ORIGIN must be an HTTPS origin (HTTP only on loopback), without credentials, path, query, or fragment.");
+site.certichat = { apiOrigin: certichatApi.origin, siteKey: process.env.CERTICHAT_TURNSTILE_SITE_KEY || "" };
+const knowledge = [];
 const md = new MarkdownIt({ html: true, linkify: true });
-const slug = (text) =>
-  text
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
 
 md.renderer.rules.table_open = () => '<div class="table-scroll" role="region" aria-label="Tabla de referencia" tabindex="0"><table>\n';
 md.renderer.rules.table_close = () => "</table></div>\n";
@@ -34,19 +33,8 @@ md.renderer.rules.image = (tokens, index) => {
 
 function renderMarkdown(source) {
   const tokens = md.parse(source.replaceAll("{{base}}", site.base), {});
-  const toc = [];
-  const used = new Map();
-  for (const [index, token] of tokens.entries()) {
-    if (token.type !== "heading_open") continue;
-    const title = tokens[index + 1].content;
-    const raw = slug(title);
-    const count = used.get(raw) || 0;
-    used.set(raw, count + 1);
-    const id = count ? `${raw}-${count + 1}` : raw;
-    token.attrSet("id", id);
-    if (token.tag === "h2") toc.push({ id, title });
-  }
-  return { html: md.renderer.render(tokens, md.options, {}), toc };
+  const toc = annotateHeadings(tokens);
+  return { html: md.renderer.render(tokens, md.options, {}), toc, tokens };
 }
 
 async function save(relative, html) {
@@ -68,6 +56,8 @@ await cp(path.join(root, "assets"), path.join(output, "assets"), {
   recursive: true,
 });
 await cp(path.join(root, "node_modules", "qrcode-generator", "qrcode.js"), path.join(output, "assets", "qrcode-generator.js"));
+await cp(path.join(root, "node_modules", "deep-chat", "dist", "deepChat.js"), path.join(output, "assets", "deep-chat.js"));
+await cp(path.join(root, "node_modules", "deep-chat", "LICENSE"), path.join(output, "assets", "deep-chat.LICENSE.txt"));
 // SVGs loaded through <img> cannot fetch sibling images; embed local PNG illustrations at build time.
 const diagramDirectory = path.join(output, "assets/diagrams");
 for (const file of await readdir(diagramDirectory)) {
@@ -91,7 +81,8 @@ for (const course of site.courses) {
   ])));
   const tocByPage = new Map([...rendered].map(([slug, { toc }]) => [slug, toc]));
   for (const page of pages) {
-    const { html } = rendered.get(page.slug);
+    const { html, tokens } = rendered.get(page.slug);
+    knowledge.push(...pageDocuments(tokens, { id: `${course.id}/${page.slug}`, title: page.title, description: page.description, courseId: course.id, url: `${site.origin}${site.base}${publicPath}/${page.slug}/` }));
     const index = course.modules.indexOf(page);
     await save(
       `${publicPath}/${page.slug}/index.html`,
@@ -111,6 +102,12 @@ for (const course of site.courses) {
       await save(`${course.id}/${page.slug}/index.html`, `<!doctype html><html lang="es"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${destination}"><link rel="canonical" href="${site.origin}${destination}"><script>location.replace(${JSON.stringify(destination)}+location.hash)</script><a href="${destination}">Continuar en la guía</a></html>`);
     }
   }
+  const questions = JSON.parse(await readFile(path.join(root, "data", `${course.questionBank}.json`), "utf8"));
+  for (const question of questions) knowledge.push({
+    id: `${course.id}/questions/${question.id}`, title: `${course.title} · Práctica: ${question.id}`,
+    url: `${site.origin}${site.base}${publicPath}/practice/`, courseId: course.id,
+    text: `${course.title}\n${question.question}\n${question.options.map(option => `${option.id === question.correctOption ? "Respuesta correcta" : "Opción incorrecta"}: ${option.text}\nExplicación: ${option.explanation}`).join("\n")}`,
+  });
   const redirect = `${site.base}${publicPath}/overview/`;
   // ponytail: keep the former workshop URL working without a second learning mode.
   await save(`${course.id}/talk/index.html`, `<!doctype html><html lang="es"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${redirect}"><title>CertiTips</title><link rel="canonical" href="${site.origin}${redirect}"><a href="${redirect}">Continuar en la guía</a></html>`);
@@ -120,6 +117,10 @@ for (const course of site.courses) {
   );
   if (publicPath !== course.id) await save(`${course.id}/index.html`, `<!doctype html><html lang="es"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${redirect}"><link rel="canonical" href="${site.origin}${redirect}"><a href="${redirect}">Abrir la guía</a></html>`);
 }
+knowledge.push({ id: "home", title: "CertiTips · Rutas de aprendizaje", url: `${site.origin}${site.base}`, courseId: "site", text: site.paths.map(group => `${group.title}\n${group.description}\n${group.items.map(item => `${item.title}: ${item.description}${item.guide ? "" : " (guía próximamente)"}`).join("\n")}`).join("\n\n") });
+const { corpus, manifest } = corpusArtifacts(knowledge, `${site.origin}${site.base}assets/certichat/corpus.json`);
+await save("assets/certichat/corpus.json", corpus);
+await save("assets/certichat/manifest.json", manifest);
 await save(
   "index.html",
   layout({

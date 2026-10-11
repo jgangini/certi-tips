@@ -16,6 +16,7 @@
     "markdown-it": "14.3.2"
   },
   "dependencies": {
+    "deep-chat": "2.5.1",
     "qrcode-generator": "^1.4.4"
   }
 }

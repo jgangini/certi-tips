@@ -1,4 +1,4 @@
-# CertiTips / CertiQuiz architecture contract. See docs/architecture.md.
+# CertiTips / CertiQuiz / CertiChat architecture contract. See docs/architecture.md.
 # Sentrux 0.5.7 rejects imports from larger to smaller order values.
 # Order here follows consumers -> dependencies, verified by check-architecture-rules.ps1.
 [constraints]
@@ -8,22 +8,22 @@ no_god_files = true
 # Specific paths precede directory fallbacks: Sentrux uses the first matching layer.
 [[layers]]
 name = "domain-and-security"
-paths = ["assets/quiz-core.js", "services/certiquiz/app/game.py", "services/certiquiz/app/security.py"]
+paths = ["assets/quiz-core.js", "services/certiquiz/app/game.py", "services/certiquiz/app/security.py", "services/certichat/app/security.py", "services/certichat/app/settings.py"]
 order = 30
 
 [[layers]]
 name = "adapters-and-rendering"
-paths = ["assets/storage.js", "scripts/layout.mjs", "services/certiquiz/app/store.py", "services/certiquiz/app/catalog.py"]
+paths = ["assets/storage.js", "scripts/layout.mjs", "services/certiquiz/app/store.py", "services/certiquiz/app/catalog.py", "services/certichat/app/store.py", "services/certichat/app/provider.py", "services/certichat/app/corpus.py"]
 order = 20
 
 [[layers]]
 name = "application-and-tools"
-paths = ["assets/**", "scripts/**", "services/certiquiz/app/**"]
+paths = ["assets/**", "scripts/**", "services/certiquiz/app/**", "services/certichat/app/**"]
 order = 10
 
 [[layers]]
 name = "tests"
-paths = ["tests/**", "services/certiquiz/tests/**"]
+paths = ["tests/**", "services/certiquiz/tests/**", "services/certichat/tests/**"]
 order = 0
 
 # Browser assets are deployable without Node tooling or server implementation imports.
@@ -35,7 +35,7 @@ reason = "Browser code must not import build, deployment or verification tools."
 [[boundaries]]
 from = "assets/**"
 to = "services/**"
-reason = "The browser communicates with CertiQuiz through HTTP, not server implementation imports."
+reason = "The browser communicates with services through HTTP, not server implementation imports."
 
 # The API owns authoritative state and consumes catalog data, not browser modules.
 [[boundaries]]
@@ -51,4 +51,20 @@ reason = "Serving a room must not depend on the static-site renderer or developm
 [[boundaries]]
 from = "scripts/**"
 to = "services/certiquiz/app/**"
+reason = "Site tooling and API verification use data, commands or HTTP, not API implementation imports."
+
+# Explicit prefixes: the installed matcher supports trailing /**, not a middle wildcard.
+[[boundaries]]
+from = "services/certichat/app/**"
+to = "assets/**"
+reason = "The chat API must not depend on browser UI or client-side state."
+
+[[boundaries]]
+from = "services/certichat/app/**"
+to = "scripts/**"
+reason = "Serving a chat must not depend on the static-site renderer or development tools."
+
+[[boundaries]]
+from = "scripts/**"
+to = "services/certichat/app/**"
 reason = "Site tooling and API verification use data, commands or HTTP, not API implementation imports."
