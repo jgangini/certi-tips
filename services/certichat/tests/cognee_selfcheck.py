@@ -97,23 +97,31 @@ async def check(root):
     import cognee
     doc = {"id": "guide", "title": "CertiTips", "courseId": "course", "url": SITE + "guide/",
            "text": "CertiTips publica guías de estudio para preparar certificaciones."}
-    source_map = segments([doc])
-    path = root / "sources" / next(iter(source_map))
-    path.parent.mkdir(parents=True)
-    path.write_text(doc["text"], encoding="utf-8")
+    docs = [{**doc, "id": f"guide-{i}", "text": doc["text"] + f" Lección {i}."} for i in range(4)]
+    source_map = segments(docs)
+    (root / "sources").mkdir(parents=True)
     try:
-        await cognee.add(str(path), dataset_name=DATASET, data_per_batch=1, skip_connection_test=True)
-        await cognee.cognify(datasets=[DATASET], data_per_batch=1, chunk_size=1000,
+        for filename, source in source_map.items():
+            path = root / "sources" / filename
+            path.write_text(source["text"], encoding="utf-8")
+            await cognee.add(str(path), dataset_name=DATASET, data_per_batch=1, skip_connection_test=True)
+        await cognee.cognify(datasets=[DATASET], data_per_batch=4, chunk_size=1000,
                              chunks_per_batch=1, extractor="llm", raise_on_error=True)
         evidence = await retrieve_evidence("¿Qué publica CertiTips?")
-        latest = {"documents": [{**doc, "hash": digest(doc["text"])}]}
+        latest = {"documents": [{**item, "hash": digest(item["text"])} for item in docs]}
         fragments = supported_fragments(evidence, source_map, latest)
-        assert fragments and fragments[0]["text"] == doc["text"], evidence
-        latest["documents"][0]["hash"] = "0" * 64
+        assert fragments and all(item["text"] in {doc["text"] for doc in docs} for item in fragments), evidence
+        from cognee.infrastructure.databases.relational import get_relational_engine
+        from sqlalchemy import text
+        async with get_relational_engine().get_async_session() as session:
+            statuses = (await session.execute(text("SELECT pipeline_status FROM data"))).scalars().all()
+        assert len(statuses) == 4 and all("DATA_ITEM_PROCESSING_COMPLETED" in status for status in statuses), statuses
+        for item in latest["documents"]:
+            item["hash"] = "0" * 64
         assert not supported_fragments(evidence, source_map, latest)
         assert any(path.endswith("/embeddings") for path in REQUESTS)
         assert any(path.endswith("/chat/completions") for path in REQUESTS)
-        print(f"Cognee 1.6.1 ingest, graph provenance, stale filtering passed; {len(REQUESTS)} local stub calls.")
+        print(f"Cognee 1.6.1 four concurrent documents, graph provenance, stale filtering passed; {len(REQUESTS)} local stub calls.")
     finally:
         await close_cognee()
 

@@ -5,6 +5,7 @@
 !services/certichat/requirements*.txt
 !services/certichat/schema.sql
 !services/certichat/migrate.py
+!services/certichat/compose.yml
 !services/certichat/*.sh
 !services/certichat/app/
 !services/certichat/app/*.py

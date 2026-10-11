@@ -314,3 +314,26 @@ def test_idle_retention_sweeps_without_http_traffic(database_url, monkeypatch):
             time.sleep(.01)
         else:
             pytest.fail("Expired history survived the background retention sweep")
+
+
+def test_published_version_change_excludes_old_history_but_preserves_idempotency(clients, monkeypatch):
+    make, app, _, _, knowledge = clients
+    histories = []
+
+    async def answer(_message, _fragments, history):
+        histories.append(history)
+        return "Respuesta respaldada.", [{key: FRAGMENT[key] for key in ("id", "title", "url")}]
+
+    monkeypatch.setattr(app.state.provider, "answer", answer)
+    client = session(make)
+    original = question()
+    first = client.post("/api/chat", json=original)
+    assert first.status_code == 200 and first.json()["contentVersion"] == VERSION
+    assert app.state.store.history(token_digest(client.cookies[COOKIE]), VERSION)
+    knowledge["version"] = "b"*64
+    second = client.post("/api/chat", json=question())
+    assert second.status_code == 200 and second.json()["contentVersion"] == "b"*64
+    assert histories == [[], []]
+    replay = client.post("/api/chat", json=original)
+    assert replay.status_code == 200 and replay.json()["contentVersion"] == VERSION
+    assert replay.json()["answer"] == first.json()["answer"] and len(histories) == 2

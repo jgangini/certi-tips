@@ -10,6 +10,10 @@ El modelo es `qwen/qwen3-235b-a22b-2507`, mediante OpenRouter; los embeddings us
 
 El indexador descarga únicamente los dos archivos públicos en la URL fija de CertiTips. Construye un candidato en un directorio permanente por hash; lo valida antes de activar y conserva la versión anterior para recuperación. El worker abre un solo índice mediante SQLite, LanceDB y Ladybug. No se copia ni renombra una base abierta. Las consultas excluyen documentos modificados o eliminados desde la siguiente comprobación del manifiesto, cada cinco minutos, aunque la nueva indexación siga en curso. Si no se puede verificar el manifiesto durante 30 minutos, dejan de responder hasta recuperar esa comprobación.
 
+La extracción procesa hasta cuatro documentos en paralelo mediante el semáforo nativo de Cognee, dentro del contenedor limitado a 1,5 CPU y 4 GiB. La primera carga puede tardar; mientras termina, la API de salud responde pero todavía no hay un índice activo para consultas.
+
+`contentVersion` identifica el corpus publicado contra el que se validaron las fuentes. Al cambiar ese hash, las nuevas consultas dejan de usar el historial anterior aunque siga activo el índice previo. La salud privada del worker informa por separado la versión del índice abierto. Repetir el mismo `requestId` conserva la respuesta original por idempotencia.
+
 ## Acceso y presupuesto
 
 Turnstile valida el hostname `jgangini.github.io` y la acción `certichat_session`. La sesión anónima dura 30 días y requiere nueva verificación cada ocho horas. Las cookies son `Secure`, `HttpOnly`, `SameSite=None` y `Partitioned`. Las mutaciones comprueban origen exacto, JSON y cabecera `X-CertiChat`; Caddy expone únicamente `/api/*`. GitHub Pages comparte origen entre los repositorios de un usuario: CORS no separa sus rutas.

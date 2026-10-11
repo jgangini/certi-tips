@@ -132,5 +132,5 @@ async def retrieve(body: Retrieval, authorization: str = Header(default="")):
             raise HTTPException(503, "Knowledge retrieval unavailable") from None
     # Re-read after search so removals published during retrieval are excluded too.
     latest = validate_manifest(read_json(latest_path))
-    return {"version": app.state.version,
+    return {"version": latest["contentHash"],
             "fragments": supported_fragments(evidence, app.state.sources, latest)}
