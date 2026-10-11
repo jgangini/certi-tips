@@ -32,6 +32,9 @@ test("trace remains tab-local, expires after 24 hours and clears on new query, f
   Object.defineProperty(globalThis, "window", { configurable: true, value: { dispatchEvent: event => events.push(event) } });
   publishTrace(siteRoot, "ready", trace);
   assert.deepEqual(readTrace(siteRoot), trace);
+  const sourced = { ...trace, sources: [{ nodeId: a, title: "Guía · Sección", url: `${siteRoot}concepto/#detalle` }] };
+  publishTrace(siteRoot, "ready", sourced);
+  assert.deepEqual(readTrace(siteRoot), sourced, "source associations survive tab-local navigation");
   assert.equal(readTrace("https://another.example/"), null);
   assert.equal(readTrace(siteRoot, Date.now() + 86400000), null);
   for (const status of ["loading", "error", "idle"]) {
@@ -46,4 +49,13 @@ test("trace remains tab-local, expires after 24 hours and clears on new query, f
   t.mock.method(sessionStorage, "setItem", () => { throw new Error("Storage denied"); });
   publishTrace(siteRoot, "ready", trace);
   assert.deepEqual(events.at(-1).detail.trace, trace);
+});
+
+test("concept references remain tied to current trace nodes and trusted published guide URLs", () => {
+  const site = "https://example.com/guides/", source = { nodeId: a, title: "Origen del concepto · Sección", url: `${site}concepto/#detalle` };
+  const sources = [source, source, { ...source, nodeId: "00000000-0000-4000-8000-000000000003" }, { ...source, url: "javascript:alert(1)" }, { ...source, url: "https://evil.example/guides/" }, { ...source, url: "https://example.com/private/" }, { ...source, url: `${site}concepto/?secret=x#detalle` }, { ...source, title: "" }, { ...source, title: "x".repeat(201) }, null];
+  assert.deepEqual(normalizeTrace({ ...trace, sources }, site).sources, [source]);
+  assert.deepEqual(normalizeTrace({ ...trace, sources }, "https://another.example/").sources, []);
+  assert.equal(normalizeTrace({ ...trace, sources: Array(513).fill(source) }, site).sources, undefined);
+  assert.deepEqual(normalizeTrace({ ...trace, sources: [{ ...source, title: '<img src=x onerror="alert(1)">' }] }, site).sources[0].title, '<img src=x onerror="alert(1)">', "labels remain plain text for DOM rendering");
 });

@@ -63,7 +63,7 @@ def clients(database_url, request):
             return httpx.Response(200, json={"usage": {"cost": .000001}, "data": [{"embedding": [0.0]}]})
         assert payload["max_tokens"] <= 4096
         return httpx.Response(200, json={"usage": {"cost": .0001}, "choices": [{"message": {"content": json.dumps(
-            {"supported": True, "answer": "Oracle almacena datos.", "citations": ["guide"]})}}]})
+            {"answer": "Oracle almacena datos.", "citations": ["S1"]})}}]})
 
     application = create_app(settings, transport=httpx.MockTransport(handler))
     with ExitStack() as stack:
@@ -368,6 +368,9 @@ def test_history_retains_four_turns_and_isolates_content_versions(clients):
                                (token, request_id))
         store.finish_request(token, request_id, {"contentVersion": VERSION, "answer": f"Answer {number}"}, f"Question {number}")
     assert len(store.history(token, VERSION)) == 4
+    assert len(store.history(token)) == 4
+    assert all(turn["version"] == VERSION for turn in store.history(token))
+    assert store.history(token_digest(new_token())) == []
     assert store.history(token, "b"*64) == []
     late = str(uuid4())
     with store.pool.connection() as connection:
@@ -376,6 +379,27 @@ def test_history_retains_four_turns_and_isolates_content_versions(clients):
     store.clear_history(token)
     store.finish_request(token, late, {"contentVersion": VERSION, "answer": "late"}, "late question")
     assert store.history(token, VERSION) == []
+    assert store.history(token) == []
+
+
+def test_followup_sends_only_own_server_questions_to_retrieval(clients):
+    make, app, calls, _, _ = clients
+    client = session(make)
+    first = {**question(), "message": "que sabes de dama y oci"}
+    assert client.post("/api/chat", json=first).status_code == 200
+    second = {**question(), "message": "en donde puedo investigar mas sobre este tema o relacion"}
+    result = client.post("/api/chat", json=second)
+    assert result.status_code == 200 and result.json()["sources"] == [
+        {key: FRAGMENT[key] for key in ("id", "title", "url")}]
+    queries = [json.loads(call.content) for call in calls if call.url.path == "/retrieve"]
+    assert queries[0]["history"] == []
+    assert queries[1]["message"] == second["message"]
+    assert queries[1]["history"] == [{"question": first["message"], "version": VERSION}]
+    stranger = session(make)
+    assert stranger.post("/api/chat", json=question()).status_code == 200
+    assert json.loads(next(call.content for call in reversed(calls) if call.url.path == "/retrieve"))["history"] == []
+    assert client.request("DELETE", "/api/conversation", json={}).status_code == 200
+    assert app.state.store.history(token_digest(client.cookies[COOKIE])) == []
 
 
 def test_idle_retention_sweeps_without_http_traffic(database_url, monkeypatch):

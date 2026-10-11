@@ -1,5 +1,6 @@
 import { readStored, writeStored } from "./storage.js";
-import { publishTrace } from "./certichat-trace.js";
+import { publishTrace, safeSourceURL } from "./certichat-trace.js";
+export { safeSourceURL } from "./certichat-trace.js";
 
 const escapeChat = text => String(text).replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -10,13 +11,6 @@ export function plainChatHTML(text, siteRoot) {
     const url = link && safeSourceURL(link[2], siteRoot);
     return url ? `<a href="${escapeChat(url)}">${escapeChat(link[1])}</a>` : escapeChat(part);
   }).join("").replace(/\n/g, "<br>")}</p>`;
-}
-
-export function safeSourceURL(value, root) {
-  try {
-    const url = new URL(value), site = new URL(root);
-    return url.protocol === "https:" && url.origin === site.origin && url.pathname.startsWith(site.pathname) && !url.username && !url.password && !url.search ? url.href : null;
-  } catch { return null; }
 }
 
 export function quotaText(quota, now = Date.now()) {
@@ -30,7 +24,7 @@ export function answerWithReferences(answer, question, sources, siteRoot) {
   const request = question.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\bfuentes? de datos\b/g, "datos");
   if (/\b(sin|no\s+(?:incluyas|muestres|agregues|quiero|necesito|deseo|compartas))\b.{0,40}\b(referencias?|fuentes?|enlaces?|links?|profundizar|ampliar)\b/.test(request)) return answer;
   // ponytail: explicit Spanish requests only; expand these phrases when real requests need it.
-  const explicit = /\b(?:donde|como puedo)\b.{0,70}\b(?:leer|profundizar|ampliar|aprender|consultar|encontrar)\b|\b(?:dime|dame|darme|muestra(?:me)?|mostrarme|comparte|compartirme|recomienda(?:me)?|indica(?:me)?|pasame|pasarme|necesito|quiero|busco|incluye|cuales? son|cual es)\s+(?:(?:ver|consultar)\s+)?(?:(?:el|la|los|las|un|una|unos|unas|algun|algunos|alguna|algunas|tus|sus)\s+)?(?:referencias?|fuentes?|enlaces?|links?|profundizar|ampliar)\b|^\s*(?:referencias?|fuentes?|enlaces?|links?)[\s?.!]*$/.test(request);
+  const explicit = /\b(?:donde|como puedo)\b.{0,70}\b(?:leer|profundizar|ampliar|aprender|consultar|encontrar|investigar)\b|\b(?:dime|dame|darme|muestra(?:me)?|mostrarme|comparte|compartirme|recomienda(?:me)?|indica(?:me)?|pasame|pasarme|necesito|quiero|busco|incluye|cuales? son|cual es)\s+(?:(?:ver|consultar)\s+)?(?:(?:el|la|los|las|un|una|unos|unas|algun|algunos|alguna|algunas|tus|sus)\s+)?(?:referencias?|fuentes?|enlaces?|links?|profundizar|ampliar)\b|^\s*(?:referencias?|fuentes?|enlaces?|links?)[\s?.!]*$/.test(request);
   if (!explicit) return answer;
   const links = (Array.isArray(sources) ? sources : []).filter(source => typeof source?.title === "string" && safeSourceURL(source.url, siteRoot)).slice(0, 6).map(source => `[${source.title.replace(/[\[\]\r\n]/g, " ").slice(0, 200)}](${safeSourceURL(source.url, siteRoot)})`);
   return links.length ? `${answer}\n\nPara profundizar:\n${links.join("\n")}` : answer;

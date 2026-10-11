@@ -143,12 +143,11 @@ def test_current_page_precedes_graph_results_with_existing_source_limit(tmp_path
     monkeypatch.setattr(knowledge, "retrieve_evidence", evidence)
     result = asyncio.run(knowledge.retrieve(
         knowledge.Retrieval(message="Información de esta página", pageUrl=SITE + "current/"), "Bearer test-token"))
-    assert [fragment["title"] for fragment in result["fragments"]] == ["current", *[f"graph{i}" for i in range(5)]]
+    assert [fragment["title"] for fragment in result["fragments"]] == ["current", *[f"graph{i}" for i in range(7)]]
 
 
-@pytest.mark.parametrize("question,first", [("que sabes de dama y oci", "governance"),
-                                           ("Qué cursos reúne Foundation", "home")])
-def test_specific_visible_evidence_precedes_home_before_context_limits(tmp_path, monkeypatch, question, first):
+@pytest.mark.parametrize("question", ["que sabes de dama y oci", "Qué cursos reúne Foundation"])
+def test_compound_evidence_preserves_retrieved_order_and_late_source(tmp_path, monkeypatch, question):
     documents = [{"id": "home", "title": "Rutas", "courseId": "site", "url": SITE,
                   "text": "Foundation reúne tres cursos. " + "OCI: " * 340 + "DAMA está en Governance."},
                  *[{"id": f"oci{i}", "title": "OCI Enterprise AI", "courseId": "agents",
@@ -171,8 +170,43 @@ def test_specific_visible_evidence_precedes_home_before_context_limits(tmp_path,
     monkeypatch.setattr(knowledge, "retrieve_evidence", evidence)
     result = asyncio.run(knowledge.retrieve(
         knowledge.Retrieval(message=question, pageUrl=SITE), "Bearer test-token"))
-    assert result["fragments"][0]["url"] == (SITE if first == "home" else SITE + "data-governance/overview/")
-    assert len(result["fragments"]) == 6
+    assert result["fragments"][0]["url"] == SITE
+    assert result["fragments"][-1]["url"] == SITE + "data-governance/overview/"
+    assert len(result["fragments"]) == 8
+    assert "DAMA está en Governance" in result["fragments"][0]["text"]
+
+
+@pytest.mark.parametrize("current", [True, False])
+def test_followup_retrieval_uses_only_current_version_questions(tmp_path, monkeypatch, current):
+    manifest = {"schemaVersion": 1, "contentHash": "a" * 64, "corpusUrl": CORPUS_URL,
+                "documents": [{"id": "guide", "title": "Guía", "courseId": "course",
+                               "url": SITE + "guide/", "hash": digest("Contenido")}]}
+    atomic_json(tmp_path / "latest.json", manifest)
+    monkeypatch.setattr(knowledge.app, "state", SimpleNamespace(
+        root=tmp_path, token="test-token", snapshot=tmp_path, version="a"*64, sources={}, lock=asyncio.Lock()))
+    queries = []
+
+    async def evidence(message):
+        queries.append(message)
+        return []
+
+    monkeypatch.setattr(knowledge, "retrieve_evidence", evidence)
+    question = "en donde puedo investigar mas sobre este tema o relacion"
+    body = knowledge.Retrieval(message=question, history=[
+        {"question": "que sabes de dama y oci", "version": ("a" if current else "b") * 64}])
+    asyncio.run(knowledge.retrieve(body, "Bearer test-token"))
+    assert question in queries[0]
+    assert ("que sabes de dama y oci" in queries[0]) is current
+
+
+def test_retrieval_context_preserves_current_question_and_bounds_recent_history():
+    body = knowledge.Retrieval(message="Ahora explícame las regiones de OCI", history=[
+        {"question": "antiguo" * 200, "version": "a" * 64},
+        {"question": "á" * 1480 + " más reciente", "version": "a" * 64}])
+    query = knowledge.retrieval_query(body, "a" * 64)
+    assert query.startswith("Pregunta actual: " + body.message)
+    assert query.endswith(" más reciente") and "antiguo" not in query
+    assert len(query.split("solo contexto):\n")[1].encode()) <= 2000
 
 
 @pytest.mark.parametrize("current", [True, False])
@@ -187,7 +221,7 @@ def test_trace_uses_same_search_evidence_and_active_version_only_with_valid_sour
     projection = {"version": "a"*64, "nodes": [{"id": node}], "edges": []}
     monkeypatch.setattr(knowledge.app, "state", SimpleNamespace(
         root=tmp_path, token="test-token", snapshot=tmp_path, version="a"*64, sources=sources,
-        lock=asyncio.Lock(), public_graph=projection))
+        lock=asyncio.Lock(), public_graph=projection, node_documents={node: {next(iter(sources))}}))
     calls = []
 
     async def evidence(message):
@@ -198,4 +232,5 @@ def test_trace_uses_same_search_evidence_and_active_version_only_with_valid_sour
     monkeypatch.setattr(knowledge, "retrieve_evidence", evidence)
     result = asyncio.run(knowledge.retrieve(knowledge.Retrieval(message="Consulta"), "Bearer test-token"))
     assert calls == ["Consulta"] and result["version"] == "b"*64
-    assert result["graphTrace"] == {"version": "a"*64, "nodes": [node] if current else [], "edges": [], "truncated": False}
+    assert result["graphTrace"] == {"version": "a"*64, "nodes": [node] if current else [], "edges": [], "truncated": False,
+                                    **({"sources": [{"nodeId": node, "title": doc["title"], "url": doc["url"]}]} if current else {})}

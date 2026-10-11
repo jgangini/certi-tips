@@ -121,7 +121,7 @@ def segments(documents: list[dict]) -> dict[str, dict]:
     return result
 
 
-def supported_fragments(evidence: list[dict], sources: dict, latest: dict, message: str = "") -> list[dict]:
+def supported_fragments(evidence: list[dict], sources: dict, latest: dict) -> list[dict]:
     current = {doc["id"]: doc for doc in latest["documents"]}
     candidates, seen = [], set()
     for item in evidence:
@@ -137,19 +137,13 @@ def supported_fragments(evidence: list[dict], sources: dict, latest: dict, messa
         seen.add(name)
         candidates.append({"id": name.removesuffix(".txt"), "title": source["title"],
                            "url": source["url"], "text": source["text"]})
-    if message:
-        terms = set(re.findall(r"\w{3,}", message.casefold()))
-        # ponytail: lexical reranking of Cognee candidates; score only the 1500 characters the answer sees.
-        # This small candidate set needs no extra model; a multilingual reranker can replace it if recall grows.
-        matches = [terms.intersection(re.findall(r"\w{3,}", item["text"][:1500].casefold())) for item in candidates]
-        weights = {term: 1 / sum(term in match for match in matches) for term in set().union(*matches)}
-        candidates = [item for item, _ in sorted(zip(candidates, matches),
-                      key=lambda pair: sum(weights[term] for term in pair[1]), reverse=True)]
     selected, size = [], 0
     for candidate in candidates:
         length = len(candidate["text"].encode("utf-8"))
-        if len(selected) >= 6 or size + length > 16000:
+        if len(selected) >= 8:
             break
+        if size + length > 16000:
+            continue
         size += length
         selected.append(candidate)
     return selected

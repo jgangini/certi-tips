@@ -2,7 +2,7 @@
 .chat-explorer-page { --explorer-height: max(460px, calc(100dvh - var(--header) - var(--footer-height) - 40px)); display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 24px; padding-block: 20px; }
 .chat-explorer-section, .certichat-page .certichat-panel { height: var(--explorer-height); min-width: 0; background: var(--paper); border: 1px solid var(--line); border-top: 4px solid var(--red); border-radius: var(--radius); box-shadow: 0 8px 36px var(--shadow); overflow: hidden; }
 .chat-explorer-section { display: flex; flex-direction: column; }
-.chat-explorer-section > .certichat-heading { flex-shrink: 0; }
+.chat-explorer-section > .certichat-heading { flex-shrink: 0; margin-bottom: 0; }
 .chat-graph-heading h1 { margin: 0; font-size: inherit; font-weight: 650; letter-spacing: inherit; line-height: 1.05; }
 .certichat-page .certichat { position: static; font-size: 14px; }
 .certichat-page .certichat-panel { position: static; width: 100%; padding-bottom: 0; }
@@ -15,6 +15,11 @@
 .chat-graph-network { position: relative; flex: 1; min-height: 100px; overflow: hidden; }
 .chat-graph-network canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 .chat-graph-network canvas:focus-visible { outline: 3px solid var(--blue); outline-offset: -4px; }
+.chat-graph-card { position: absolute; z-index: 1; width: max-content; max-width: min(280px, calc(100% - 16px)); max-height: calc(100% - 16px); overflow: auto; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--ink); box-shadow: 0 3px 16px var(--shadow); font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
+.chat-graph-card strong { display: block; margin-bottom: 5px; }
+.chat-graph-card p { margin: 4px 0 0; color: var(--muted); }
+.chat-graph-card a { display: block; margin-top: 5px; color: var(--red); }
+.chat-graph-card[hidden] { display: none; }
 .chat-graph-footer { flex-shrink: 0; max-height: 140px; padding: 8px 16px; border-top: 1px solid var(--line); overflow: auto; overscroll-behavior: contain; }
 .chat-graph-meta { color: var(--muted); font-size: 12px; line-height: 1.5; margin: 0; }
 .chat-graph-trace { font-size: 13px; margin: 6px 0; }

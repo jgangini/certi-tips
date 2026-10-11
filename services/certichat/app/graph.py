@@ -4,8 +4,11 @@ import re
 from datetime import datetime, timezone
 from uuid import UUID
 
+from .corpus import public_url
+
 TRACE_NODES = 512
 TRACE_EDGES = 1024
+TRACE_SOURCES = 512
 
 
 def label(value):
@@ -39,10 +42,52 @@ def public_graph(nodes, edges, version):
                       for source, target, name in sorted(relationships)]}
 
 
-def graph_trace(evidence, graph):
+def source_title(value):
+    return (isinstance(value, str) and 1 <= len(value) <= 200 and value == value.strip()
+            and not any(ord(character) < 32 for character in value))
+
+
+def node_documents(nodes, edges):
+    # Private provenance only: Cognee's native contains edge points from a chunk to its entity.
+    chunks = {str(node): props["document_name"] for node, props in nodes
+              if isinstance(props, dict) and props.get("type") == "DocumentChunk"
+              and isinstance(props.get("document_name"), str)}
+    documents = {}
+    for source, target, relation, _props in edges:
+        if relation == "contains" and str(source) in chunks:
+            documents.setdefault(str(target), set()).add(chunks[str(source)])
+    return documents
+
+
+def trace_sources(evidence, assertions, selected_edges, fragments, documents):
+    # Cognee's segment assertion_id names the exact recovered edge; labels are not provenance.
+    current = {fragment["id"]: fragment for fragment in fragments}
+    retained_edges = set(selected_edges)
+    links = {(node, name) for node, names in documents.items() for name in names}
+    for reference in evidence:
+        name, assertion = reference.get("document_name"), reference.get("assertion_id")
+        if (reference.get("kind") != "segment" or reference.get("role") != "supports_assertion"
+                or not isinstance(name, str) or not isinstance(assertion, str)):
+            continue
+        edge = assertions.get(assertion)
+        if edge in retained_edges:
+            links.update((node, name) for node in edge[:2])
+    sources = {}
+    for node, name in links:
+        fragment = current.get(name.removesuffix(".txt"))
+        if (not fragment or not isinstance(fragment.get("title"), str)
+                or not public_url(fragment.get("url")) or len(fragment["url"]) > 1024):
+            continue
+        title = fragment["title"][:200].strip()
+        if source_title(title):
+            sources[(node, fragment["url"])] = title
+    return [{"nodeId": node, "title": sources[(node, url)], "url": url} for node, url in sorted(sources)]
+
+
+def graph_trace(evidence, graph, fragments=(), documents=None):
     public_nodes = {node["id"] for node in graph["nodes"]}
     public_edges = {(edge["source"], edge["target"], edge["label"]) for edge in graph["edges"]}
-    nodes, edges = set(), set()
+    nodes, edges, assertions = set(), set(), {}
     for reference in evidence:
         if reference.get("kind") == "graph_node" and reference.get("artifact_id") in public_nodes:
             nodes.add(reference["artifact_id"])
@@ -51,16 +96,39 @@ def graph_trace(evidence, graph):
             if edge in public_edges:
                 edges.add(edge)
                 nodes.update(edge[:2])
+                if isinstance(reference.get("artifact_id"), str):
+                    assertions[reference["artifact_id"]] = edge
     selected_nodes = sorted(nodes)[:TRACE_NODES]
     selected = set(selected_nodes)
     selected_edges = sorted(edge for edge in edges if edge[0] in selected and edge[1] in selected)[:TRACE_EDGES]
+    selected_documents = {node: documents.get(node, ()) for node in selected_nodes} if documents else {}
+    sources = trace_sources(evidence, assertions, selected_edges, fragments, selected_documents)
+    selected_sources = sources[:TRACE_SOURCES]
     return {"version": graph["version"], "nodes": selected_nodes,
             "edges": [{"source": source, "target": target, "label": name} for source, target, name in selected_edges],
-            "truncated": len(nodes) > len(selected_nodes) or len(edges) > len(selected_edges)}
+            "truncated": (len(nodes) > len(selected_nodes) or len(edges) > len(selected_edges)
+                          or len(sources) > len(selected_sources)),
+            **({"sources": selected_sources} if selected_sources else {})}
+
+
+def validate_sources(sources, nodes):
+    if not isinstance(sources, list) or len(sources) > TRACE_SOURCES:
+        raise ValueError("Invalid graph trace sources")
+    seen = set()
+    for source in sources:
+        if (not isinstance(source, dict) or set(source) != {"nodeId", "title", "url"}
+                or not isinstance(source["nodeId"], str) or source["nodeId"] not in nodes
+                or not source_title(source["title"]) or not public_url(source["url"])
+                or len(source["url"]) > 1024):
+            raise ValueError("Invalid graph trace source")
+        key = (source["nodeId"], source["url"])
+        if key in seen:
+            raise ValueError("Duplicate graph trace source")
+        seen.add(key)
 
 
 def validate_trace(trace):
-    if (not isinstance(trace, dict) or set(trace) != {"version", "nodes", "edges", "truncated"}
+    if (not isinstance(trace, dict) or set(trace) - {"sources"} != {"version", "nodes", "edges", "truncated"}
             or not isinstance(trace["version"], str) or not re.fullmatch(r"[a-f0-9]{64}", trace["version"])
             or not isinstance(trace["truncated"], bool)
             or not isinstance(trace["nodes"], list) or len(trace["nodes"]) > TRACE_NODES
@@ -83,6 +151,7 @@ def validate_trace(trace):
         if key in edges:
             raise ValueError("Duplicate graph trace edge")
         edges.add(key)
+    validate_sources(trace.get("sources", []), nodes)
     return trace
 
 

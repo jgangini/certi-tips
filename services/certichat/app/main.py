@@ -100,13 +100,14 @@ def public_url(value, settings):
         part in (".", "..") for part in parsed.path.split("/"))
 
 
-async def retrieve(application, body):
+async def retrieve(application, body, history=()):
     settings = application.state.settings
     if body.pageUrl and not public_url(body.pageUrl, settings):
         raise ChatError("La página de contexto no pertenece a CertiTips.", 422)
     try:
         response = await application.state.client.post(f"{settings.knowledge_url}/retrieve",
-                    json={"message": body.message, "pageUrl": body.pageUrl},
+                    json={"message": body.message, "pageUrl": body.pageUrl,
+                          "history": [{"question": turn["question"], "version": turn["version"]} for turn in history]},
                     headers={"Authorization": f"Bearer {settings.chat_internal_token}"}, timeout=25)
         response.raise_for_status()
         result = response.json()
@@ -237,11 +238,14 @@ def create_app(settings=None, *, transport=None):
             async with asyncio.timeout(45):
                 if not await db(store.available):
                     raise ChatError("CertiChat alcanzó su presupuesto de uso. Inténtalo más adelante.", 503, 3600)
-                version, fragments, graph_trace = await retrieve(request.app, body)
-                history = await db(store.history, token_hash, version)
+                history = await db(store.history, token_hash)
+                version, fragments, graph_trace = await retrieve(request.app, body, history)
+                history = [{"question": turn["question"], "answer": turn["answer"]}
+                           for turn in history if turn["version"] == version]
                 answer, sources = await request.app.state.provider.answer(body.message, fragments, history) if fragments else (REFUSAL, [])
                 if not sources:
-                    graph_trace = {**graph_trace, "nodes": [], "edges": [], "truncated": False}
+                    graph_trace = {key: value for key, value in graph_trace.items() if key != "sources"}
+                    graph_trace.update(nodes=[], edges=[], truncated=False)
                 result = {"requestId": body.requestId, "answer": answer, "sources": sources,
                           "quota": await db(store.quota, token_hash), "contentVersion": version, "graphTrace": graph_trace}
                 await db(store.finish_request, token_hash, body.requestId, result, body.message)

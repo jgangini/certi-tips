@@ -5,6 +5,7 @@ import os
 from urllib.parse import urlsplit
 
 MODEL = "qwen/qwen3-235b-a22b-2507"
+CHAT_MODEL = "google/gemini-2.5-flash-lite"
 EMBEDDING_MODEL = "openai/text-embedding-3-small"
 
 

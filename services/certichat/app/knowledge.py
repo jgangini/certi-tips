@@ -11,7 +11,7 @@ from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
 from .corpus import DATASET, public_url, read_json, snapshot_path, supported_fragments, validate_manifest
-from .graph import graph_trace, public_graph, read_graph
+from .graph import graph_trace, node_documents, public_graph, read_graph
 
 
 def configure_cognee(snapshot: Path, token: str) -> None:
@@ -64,10 +64,26 @@ async def retrieve_evidence(message: str) -> list[dict]:
     return [item for result in results for item in result.get("evidence", [])]
 
 
+class PreviousQuestion(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    question: str = Field(min_length=1, max_length=1500)
+    version: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
 class Retrieval(BaseModel):
     model_config = ConfigDict(extra="forbid")
     message: str = Field(min_length=1, max_length=1500)
     pageUrl: str | None = Field(default=None, max_length=1500)
+    history: list[PreviousQuestion] = Field(default_factory=list, max_length=4)
+
+
+def retrieval_query(body: Retrieval, version: str) -> str:
+    previous = [turn.question for turn in body.history if turn.version == version]
+    if not previous:
+        return body.message
+    # ponytail: recent questions resolve references without another model call; bounded to 2,000 UTF-8 bytes.
+    context = "\n".join(previous).encode("utf-8")[-2000:].decode("utf-8", errors="ignore")
+    return f"Pregunta actual: {body.message}\n\nPreguntas anteriores (solo contexto):\n{context}"
 
 
 @asynccontextmanager
@@ -123,6 +139,7 @@ async def cached_graph():
     if cached is None or cached["version"] != app.state.version:
         nodes, edges = await asyncio.wait_for(read_graph(), timeout=30)
         cached = public_graph(nodes, edges, app.state.version)
+        app.state.node_documents = node_documents(nodes, edges)
         app.state.public_graph = cached
     return cached
 
@@ -161,7 +178,7 @@ async def retrieve(body: Retrieval, authorization: str = Header(default="")):
     # Graph adapters use per-context state; serialize to keep one deterministic owner.
     async with app.state.lock:
         try:
-            evidence = await asyncio.wait_for(retrieve_evidence(body.message), timeout=20)
+            evidence = await asyncio.wait_for(retrieve_evidence(retrieval_query(body, latest["contentHash"])), timeout=20)
             projection = await cached_graph()
         except Exception:
             raise HTTPException(503, "Knowledge retrieval unavailable") from None
@@ -170,6 +187,7 @@ async def retrieve(body: Retrieval, authorization: str = Header(default="")):
     # The explicit page context uses the same freshness and source checks as graph evidence.
     page_context = [{"kind": "segment", "document_name": name}
                     for name, source in app.state.sources.items() if source["url"] == body.pageUrl]
-    fragments = supported_fragments(page_context + evidence, app.state.sources, latest, body.message)
+    fragments = supported_fragments(page_context + evidence, app.state.sources, latest)
     return {"version": latest["contentHash"], "fragments": fragments,
-            "graphTrace": graph_trace(evidence if fragments else [], projection)}
+            "graphTrace": graph_trace(evidence if fragments else [], projection, fragments,
+                                      getattr(app.state, "node_documents", {}))}

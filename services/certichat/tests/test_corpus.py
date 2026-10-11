@@ -61,3 +61,14 @@ def test_snapshot_paths_cannot_traverse():
     with pytest.raises(ValueError):
         snapshot_path(tmp_path, "../live")
     assert snapshot_path(tmp_path, "a" * 64).parent == tmp_path / "snapshots"
+
+
+def test_context_byte_limit_skips_large_fragment_but_keeps_later_small_source():
+    documents = [{"id": str(i), "title": str(i), "courseId": "course", "url": SITE + str(i),
+                  "text": text} for i, text in enumerate(["á" * 3000, "á" * 3000, "á" * 3000, "segunda parte"])]
+    sources = segments(documents)
+    latest = {"documents": [{key: value for key, value in doc.items() if key != "text"} |
+                            {"hash": digest(doc["text"])} for doc in documents]}
+    fragments = supported_fragments([{"kind": "segment", "document_name": name} for name in sources], sources, latest)
+    assert [item["title"] for item in fragments] == ["0", "1", "3"]
+    assert sum(len(item["text"].encode()) for item in fragments) <= 16000

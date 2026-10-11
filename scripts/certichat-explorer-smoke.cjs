@@ -116,9 +116,34 @@ async page => {
     assert(second, 'Real graph lacks disjoint trace candidates');
     const makeTrace = edge => ({ version: snapshot.version, nodes: [edge.source, edge.target], edges: [edge], truncated: false });
     const trace1 = makeTrace(first), trace2 = makeTrace(second), empty = { version: snapshot.version, nodes: [], edges: [], truncated: false };
+    const siteRoot = await tab.locator('[data-certichat]').getAttribute('data-site-root');
+    trace1.sources = [{ nodeId: first.source, title: 'Guía de la primera consulta · Concepto', url: `${siteRoot}data-governance/overview/` }];
     await send('Consulta uno', trace1);
     await answered('Respuesta: Consulta uno.');
     await active(trace1.nodes, trace1.edges);
+    const card = tab.locator('[data-graph-card]');
+    await tab.emulateMedia({ reducedMotion: 'no-preference' });
+    await tab.locator(`[data-graph-active] button[data-concept="${first.source}"]`).click();
+    await tab.waitForFunction(() => document.querySelector('canvas[data-graph-canvas]').dataset.cameraMoving === 'true');
+    await tab.waitForFunction(() => document.querySelector('canvas[data-graph-canvas]').dataset.cameraMoving === 'false');
+    await card.waitFor({ state: 'visible' });
+    const cardGeometry = await card.evaluate(element => {
+      const a = element.getBoundingClientRect(), b = element.parentElement.getBoundingClientRect();
+      return { centerX: (a.left + a.right) / 2, nodeX: (b.left + b.right) / 2, bottom: a.bottom, nodeY: (b.top + b.bottom) / 2, left: a.left, right: a.right, minX: b.left, maxX: b.right };
+    });
+    assert(Math.abs(cardGeometry.centerX - cardGeometry.nodeX) <= 1 && cardGeometry.bottom < cardGeometry.nodeY - 8 && cardGeometry.left >= cardGeometry.minX && cardGeometry.right <= cardGeometry.maxX, `Concept card did not float centered above the selected node: ${JSON.stringify(cardGeometry)}`);
+    assert(await card.locator('strong').textContent() === snapshot.nodes.find(node => node.id === first.source).label, 'Card title does not match the selected concept');
+    const reference = card.getByRole('link', { name: `Profundizar: ${trace1.sources[0].title}` });
+    assert(await reference.getAttribute('href') === trace1.sources[0].url && await card.locator('a').count() === 1, 'Card reference was not restricted to current-query source evidence');
+    await reference.evaluate(link => link.addEventListener('click', event => event.preventDefault(), { once: true }));
+    await reference.click();
+    assert(await tab.evaluate(root => sessionStorage.getItem(`certichat:${root}:reference`), siteRoot) === trace1.sources[0].url, 'Card source navigation loses the open-chat reference marker');
+    await tab.evaluate(root => sessionStorage.removeItem(`certichat:${root}:reference`), siteRoot);
+    await tab.emulateMedia({ reducedMotion: 'reduce' });
+    await tab.locator(`[data-graph-active] button[data-concept="${first.target}"]`).click();
+    await card.getByText('Sin referencia asociada a esta consulta.', { exact: true }).waitFor();
+    assert(await card.locator('a').count() === 0, 'Concept without current evidence inherited an unrelated guide link');
+    checks.push('concept tags center smoothly, floating cards show only matching query evidence, guide links retain chat');
     for (const theme of ['dark', 'light']) {
       await tab.evaluate(value => document.documentElement.dataset.theme = value, theme);
       const tags = await tab.locator('[data-graph-active] button').evaluateAll(items => items.map(element => {
@@ -162,6 +187,7 @@ async page => {
     await send('Consulta dos', trace2);
     await tab.waitForFunction(() => !document.querySelector('deep-chat').validateInput('Mientras espera'));
     await active([]);
+    assert(await card.isHidden(), 'New query left the previous concept card visible');
     releaseReply(); pendingReply = undefined;
     await answered('Respuesta: Consulta dos.');
     await active(trace2.nodes, trace2.edges);
@@ -214,6 +240,7 @@ async page => {
       assert(measured.page <= width + 1 && measured.canvas.left >= -1 && measured.canvas.right <= width + 1 && measured.canvas.height >= 200, `Map overflows or collapses at ${width}: ${JSON.stringify(measured)}`);
       assert(measured.mapStyle.border === '4px' && measured.chatStyle.border === '4px' && measured.mapStyle.color === measured.chatStyle.color, `Map and chat lost their matching red top borders at ${width}`);
       assert(Math.abs(measured.mapHeading.height - measured.chatHeading.height) <= 1, `Map/chat header heights diverge at ${width}`);
+      assert(Math.abs(measured.canvas.top - measured.mapHeading.bottom) <= 1, `Unwanted gap remains between Cognee header and graph at ${width}`);
       if (width >= 1024) {
         assert(measured.map.right <= measured.chat.left && Math.abs(measured.map.top - measured.chat.top) <= 1 && Math.abs(measured.map.height - measured.chat.height) <= 1, `Desktop panels are not aligned side by side at ${width}`);
       } else {
@@ -236,12 +263,14 @@ async page => {
 
     graphOverride = { version: snapshot.version, generatedAt: new Date().toISOString(), nodes: [{ id: first.source, label: '<img src="https://evil.invalid/x" onerror="alert(1)">', type: 'Entity' }], edges: [] };
     await tab.reload(); await ready();
-    await send('Consulta de etiqueta', { version: snapshot.version, nodes: [first.source], edges: [], truncated: false });
+    await send('Consulta de etiqueta', { version: snapshot.version, nodes: [first.source], edges: [], sources: [{ nodeId: first.source, title: '<img src="https://evil.invalid/x" onerror="alert(1)">', url: `${siteRoot}data-governance/overview/` }, { nodeId: first.source, title: 'Unsafe URL', url: 'javascript:alert(1)' }], truncated: false });
     await answered('Respuesta: Consulta de etiqueta.');
     await tab.waitForFunction(() => Number(document.querySelector('canvas[data-graph-canvas]').dataset.activeNodeCount) === 1);
     const labelButton = tab.locator('[data-graph-active] button[data-concept]');
     assert(await labelButton.textContent() === graphOverride.nodes[0].label && await labelButton.locator('img').count() === 0, 'Graph label activated HTML');
     await labelButton.focus(); await labelButton.press('Enter');
+    await card.waitFor({ state: 'visible' });
+    assert(await card.locator('img').count() === 0 && await card.locator('a').count() === 1 && await card.locator('a').textContent() === graphOverride.nodes[0].label, 'Card activated HTML or an unsafe URL');
     const selection = tab.locator('[data-graph-selection]');
     assert(await selection.textContent() === `${graphOverride.nodes[0].label}. 0 conceptos relacionados.` && await selection.locator('img').count() === 0, 'Selected concept announcement loses its safe label or relation count');
     assert(!requests.some(url => url.includes('evil.invalid')), 'Graph label made an external request');

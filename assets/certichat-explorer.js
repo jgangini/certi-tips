@@ -27,6 +27,7 @@ if (root?.dataset.knowledgeGraph) {
   const notice = root.querySelector("[data-graph-trace]"), active = root.querySelector("[data-graph-active]");
   const selection = root.querySelector("[data-graph-selection]"), activeRelations = root.querySelector("[data-graph-active-relations]");
   const activeFit = root.querySelector("[data-graph-active-fit]");
+  const card = root.querySelector("[data-graph-card]"), cardTitle = root.querySelector("[data-graph-card-title]"), cardSources = root.querySelector("[data-graph-card-sources]");
   const siteRoot = document.querySelector("[data-certichat]")?.dataset.siteRoot;
   const element = (tag, text, className) => {
     const node = document.createElement(tag);
@@ -34,25 +35,46 @@ if (root?.dataset.knowledgeGraph) {
     if (className) node.className = className;
     return node;
   };
-  let graph, network, version;
+  let graph, network, version, currentTrace;
   let latest = { status: "idle", trace: readTrace(siteRoot) };
   if (latest.trace) latest.status = "ready";
 
   function conceptButton(id) {
     const button = element("button", graph.byId.get(id).label);
     button.type = "button"; button.dataset.concept = id;
-    button.addEventListener("click", () => select(id));
+    button.addEventListener("click", () => select(id, true));
     return button;
   }
 
-  function select(id) {
-    network.select(id);
+  function select(id, center = false) {
+    network.select(id, center);
     selection.textContent = `${graph.byId.get(id).label}. ${graph.neighbors.get(id).size} conceptos relacionados.`;
+    cardTitle.textContent = graph.byId.get(id).label;
+    cardSources.replaceChildren();
+    const sources = currentTrace?.sources?.filter(source => source.nodeId === id) || [];
+    if (!sources.length) cardSources.append(element("p", "Sin referencia asociada a esta consulta."));
+    for (const source of sources) {
+      const link = element("a", source.title); link.href = source.url;
+      link.setAttribute("aria-label", `Profundizar: ${source.title}`);
+      link.addEventListener("click", event => {
+        if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
+          try { sessionStorage.setItem(`certichat:${siteRoot}:reference`, link.href); } catch { /* Guide navigation also works without storage. */ }
+        }
+      });
+      cardSources.append(link);
+    }
+  }
+
+  function anchorCard(anchor) {
+    card.hidden = !anchor;
+    if (!anchor) return;
+    card.style.left = `${Math.max(8, Math.min(anchor.x - card.offsetWidth / 2, anchor.width - card.offsetWidth - 8))}px`;
+    card.style.top = `${Math.max(8, Math.min(anchor.y - card.offsetHeight, anchor.height - card.offsetHeight - 8))}px`;
   }
 
   function updateTrace() {
     if (!graph) return;
-    let trace = normalizeTrace(latest.trace);
+    let trace = normalizeTrace(latest.trace, siteRoot);
     const mismatch = trace && trace.version !== version;
     if (mismatch) trace = null;
     if (trace) {
@@ -60,6 +82,8 @@ if (root?.dataset.knowledgeGraph) {
       const edges = trace.edges.filter(edge => ids.has(edge.source) && ids.has(edge.target) && graph.neighbors.get(edge.source)?.get(edge.target)?.some(link => link.source === edge.source && link.target === edge.target && link.label === edge.label));
       trace = { ...trace, nodes, edges };
     }
+    currentTrace = trace;
+    card.hidden = true;
     network.setTrace(trace);
     active.replaceChildren();
     for (const id of trace?.nodes || []) {
@@ -89,7 +113,7 @@ if (root?.dataset.knowledgeGraph) {
       const date = new Date(data.generatedAt), when = Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat("es", { dateStyle: "long", timeStyle: "short" }).format(date) : "fecha no disponible";
       root.querySelector("[data-graph-meta]").textContent = `Fuente: Cognee · Instantánea del ${when} · ${graph.nodes.length.toLocaleString("es")} conceptos y ${graph.edges.length.toLocaleString("es")} relaciones · Versión ${String(version).slice(0, 12)}`;
       status.hidden = true; workspace.hidden = false;
-      network = createNetwork(root.querySelector("[data-graph-canvas]"), graph, select);
+      network = createNetwork(root.querySelector("[data-graph-canvas]"), graph, select, anchorCard);
       updateTrace();
       root.querySelector("[data-graph-zoom-in]").addEventListener("click", () => network.zoom(1.4));
       root.querySelector("[data-graph-zoom-out]").addEventListener("click", () => network.zoom(1 / 1.4));

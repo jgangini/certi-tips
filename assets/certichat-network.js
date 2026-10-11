@@ -64,7 +64,7 @@ export function layoutNetwork(graph) {
   return { nodes, edges, indexes };
 }
 
-export function createNetwork(canvas, graph, onSelect) {
+export function createNetwork(canvas, graph, onSelect, onAnchor) {
   const context = canvas.getContext("2d");
   if (!context) throw new Error("Canvas is unavailable");
   const layout = layoutNetwork(graph), edgeKeys = new Set(layout.edges.map(edge => edge.key));
@@ -77,6 +77,11 @@ export function createNetwork(canvas, graph, onSelect) {
   if (!canvas.hasAttribute("tabindex")) canvas.tabIndex = 0;
 
   function invalidate() { if (!frame && !destroyed) frame = requestAnimationFrame(draw); }
+  function moveTo(target, animate) {
+    camera = animate && !reducedMotion.matches && Object.keys(target).some(key => target[key] !== view[key]) ? { from: { ...view }, target } : undefined;
+    if (!camera) Object.assign(view, target);
+    invalidate();
+  }
   function fit(activeOnly = false) {
     camera = undefined;
     const points = activeOnly ? layout.nodes.filter(node => activeNodes.has(node.id)) : layout.nodes;
@@ -86,9 +91,7 @@ export function createNetwork(canvas, graph, onSelect) {
     const padding = 12 + Math.max(...points.map(node => node.radius * 1.25 + 3));
     const scale = clamp(Math.min((width - padding * 2) / Math.max(80, right - left), (height - padding * 2) / Math.max(80, bottom - top)), 0.04, 4);
     const target = { scale, x: width / 2 - (left + right) / 2 * scale, y: height / 2 - (top + bottom) / 2 * scale };
-    if (activeOnly && !reducedMotion.matches && Object.keys(target).some(key => target[key] !== view[key])) camera = { from: { ...view }, target };
-    else Object.assign(view, target);
-    invalidate();
+    moveTo(target, activeOnly);
   }
   function zoomAt(factor, x = width / 2, y = height / 2) {
     if (!Number.isFinite(factor) || factor <= 0) return;
@@ -97,7 +100,12 @@ export function createNetwork(canvas, graph, onSelect) {
     view.x = x - (x - view.x) * ratio; view.y = y - (y - view.y) * ratio; view.scale = scale;
     invalidate();
   }
-  function select(id) { selected = layout.indexes.has(id) ? id : undefined; invalidate(); }
+  function select(id, center = false) {
+    selected = layout.indexes.has(id) ? id : undefined;
+    const node = layout.nodes[layout.indexes.get(selected)];
+    if (center && node) moveTo({ scale: view.scale, x: width / 2 - node.x * view.scale, y: height / 2 - node.y * view.scale }, true);
+    else invalidate();
+  }
   function hit(x, y) {
     let closest, distance = Infinity;
     for (const node of layout.nodes) {
@@ -134,7 +142,7 @@ export function createNetwork(canvas, graph, onSelect) {
         else context.lineTo(b.x, b.y);
       }
       context.strokeStyle = active ? color("--red", "#c74634") : color("--muted", "#747680");
-      context.globalAlpha = active ? 0.95 : 0.18; context.lineWidth = (active ? 1.6 : 0.55) / view.scale; context.stroke();
+      context.globalAlpha = active ? 0.95 : 0.12; context.lineWidth = (active ? 1.6 : 0.55) / view.scale; context.stroke();
     };
     lines(false); lines(true);
     for (const active of [false, true]) {
@@ -144,28 +152,22 @@ export function createNetwork(canvas, graph, onSelect) {
         const radius = node.radius * (active ? 1.25 : 1) / view.scale;
         context.moveTo(node.x + radius, node.y); context.arc(node.x, node.y, radius, 0, Math.PI * 2);
       }
-      context.globalAlpha = active ? 1 : 0.7;
+      context.globalAlpha = active ? 1 : 0.5;
       context.fillStyle = active ? color("--red", "#c74634") : color("--muted", "#747680"); context.fill();
     }
     context.globalAlpha = 1;
     const node = layout.nodes[layout.indexes.get(selected)];
+    let anchor = null;
     if (node) {
       const radius = node.radius * (activeNodes.has(node.id) ? 1.25 : 1);
       const screenX = node.x * view.scale + view.x, screenY = node.y * view.scale + view.y;
       if (screenX + radius >= 0 && screenX - radius <= width && screenY + radius >= 0 && screenY - radius <= height) {
         context.beginPath(); context.arc(node.x, node.y, (radius + 3) / view.scale, 0, Math.PI * 2);
         context.strokeStyle = color("--red", "#c74634"); context.lineWidth = 2 / view.scale; context.stroke();
-        context.setTransform(dpr, 0, 0, dpr, 0, 0); context.font = "13px system-ui";
-        const label = node.label.length > 55 ? `${node.label.slice(0, 54)}…` : node.label;
-        const size = Math.min(width - 16, context.measureText(label).width + 12);
-        const x = clamp(screenX - size / 2, 8, Math.max(8, width - size - 8));
-        const y = clamp(screenY - radius - 8 - 24, 8, Math.max(8, height - 32));
-        context.beginPath(); context.roundRect(x, y, size, 24, 4);
-        context.fillStyle = color("--chrome-bg", "#f1efed"); context.fill();
-        context.strokeStyle = color("--muted", "#606574"); context.lineWidth = 1; context.stroke();
-        context.fillStyle = color("--ink", "#303440"); context.fillText(label, x + 6, y + 16, size - 12);
+        anchor = { id: selected, x: screenX, y: screenY - radius - 8, width, height };
       }
     }
+    onAnchor?.(anchor);
     Object.assign(canvas.dataset, { nodeCount: String(layout.nodes.length), edgeCount: String(layout.edges.length), activeNodeCount: String(activeNodes.size), activeEdgeCount: String(activeEdges.size), drawCount: String(Number(canvas.dataset.drawCount || 0) + 1), scale: String(view.scale), panX: String(view.x), panY: String(view.y), cameraMoving: String(Boolean(camera)) });
     if (camera) invalidate();
   }
@@ -223,11 +225,12 @@ export function createNetwork(canvas, graph, onSelect) {
   return {
     setTrace(trace) {
       camera = undefined;
+      selected = undefined;
       activeNodes = new Set((trace?.nodes || []).filter(id => layout.indexes.has(id)));
       activeEdges = new Set((trace?.edges || []).map(edgeKey).filter(key => edgeKeys.has(key)));
       invalidate();
     },
     select, fit, zoom: zoomAt,
-    destroy() { destroyed = true; camera = undefined; cancelAnimationFrame(frame); events.abort(); observer.disconnect(); theme.disconnect(); pointers.clear(); },
+    destroy() { destroyed = true; camera = undefined; onAnchor?.(null); cancelAnimationFrame(frame); events.abort(); observer.disconnect(); theme.disconnect(); pointers.clear(); },
   };
 }

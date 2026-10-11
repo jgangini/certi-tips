@@ -38,7 +38,7 @@ test("CertiChat countdown appears only for an exhausted quota until its server r
 test("CertiChat adds safe section links only when references are explicitly requested", () => {
   const site = "https://jgangini.github.io/certi-tips/", url = `${site}1Z0-1157-26/agents/#conceptos-clave`;
   const sources = [{ title: 'Agentes <img src=x> & herramientas', url }, { title: "Externa", url: "https://attacker.test/" }];
-  for (const question of ["Dime dónde puedo profundizar sobre agentes", "¿Dónde puedo leer más?", "Dame las referencias", "Fuentes", "Quiero ampliar este tema", "¿Cuáles son las fuentes?", "¿Puedes pasarme el enlace?"]) {
+  for (const question of ["Dime dónde puedo profundizar sobre agentes", "¿Dónde puedo leer más?", "en donde puedo investigar mas sobre este tema o relacion", "¿Cómo puedo investigar este concepto?", "Dame las referencias", "Fuentes", "Quiero ampliar este tema", "¿Cuáles son las fuentes?", "¿Puedes pasarme el enlace?"]) {
     const answer = answerWithReferences("Respuesta", question, sources, site);
     assert.ok(answer.includes(url), question);
     const html = plainChatHTML(answer, site);
@@ -48,7 +48,7 @@ test("CertiChat adds safe section links only when references are explicitly requ
     const saved = restoreChat({ updatedAt: 100, messages: [{ role: "ai", text: answer }] }, site, 100);
     assert.equal(plainChatHTML(saved.messages[0].text, site), html);
   }
-  for (const question of ["¿Qué son los agentes?", "¿Qué son las fuentes de datos?", "Dime qué son las fuentes de datos en un RAG", "Quiero entender las fuentes de datos", "Explica agentes sin referencias", "No incluyas enlaces", "No necesito fuentes"]) assert.equal(answerWithReferences("Respuesta", question, sources, site), "Respuesta", question);
+  for (const question of ["¿Qué son los agentes?", "¿Qué son las fuentes de datos?", "Dime qué son las fuentes de datos en un RAG", "Quiero entender las fuentes de datos", "¿Qué significa investigar?", "Dónde puedo investigar, sin enlaces", "Explica agentes sin referencias", "No incluyas enlaces", "No necesito fuentes"]) assert.equal(answerWithReferences("Respuesta", question, sources, site), "Respuesta", question);
   assert.equal(answerWithReferences("Respuesta", "Dame referencias", [{ title: "Unsafe", url: "javascript:alert(1)" }], site), "Respuesta");
   assert.doesNotMatch(plainChatHTML('[x](https://attacker.test/) [x](javascript:alert(1)) <a href="https://attacker.test">x</a>', site), /<a /);
 });
