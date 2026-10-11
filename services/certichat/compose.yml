@@ -73,7 +73,7 @@ services:
     volumes: [knowledge_data:/data]
     networks: [app, knowledge]
     cpus: 1.5
-    mem_limit: 4g
+    mem_limit: 6g
 
   volume-init:
     image: certichat-api:${CERTICHAT_IMAGE_TAG:-local}
