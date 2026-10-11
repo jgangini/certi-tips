@@ -98,11 +98,15 @@ if (root?.dataset.knowledgeGraph) {
       error: "La consulta no se completó. No hay información que resaltar.",
       ready: "Esta respuesta no incluye conceptos recuperados que se puedan mostrar en el mapa.",
     };
-    notice.textContent = mismatch ? "El mapa y la consulta corresponden a versiones distintas. Actualiza la página para cargar el mapa publicado más reciente." : trace?.nodes.length ? `${trace.nodes.length} conceptos y ${trace.edges.length} relaciones recuperados para tu última consulta.${trace.truncated ? " Se muestra una selección acotada." : ""}` : messages[latest.status] || messages.idle;
+    notice.textContent = mismatch ? "El mapa y la consulta corresponden a versiones distintas. Actualiza la página para cargar el mapa publicado más reciente." : trace?.nodes.length ? `${trace.nodes.length} conceptos y ${trace.edges.length} relaciones recuperados para esta respuesta.${trace.truncated ? " Se muestra una selección acotada." : ""}` : messages[latest.status] || messages.idle;
     root.dataset.traceStatus = mismatch ? "version-mismatch" : latest.status;
   }
 
   window.addEventListener("certichat:trace", event => { latest = event.detail; updateTrace(); });
+  window.addEventListener("certichat:focus", event => {
+    latest = { status: "ready", trace: event.detail }; updateTrace();
+    if (currentTrace?.nodes.length) network.fit(true);
+  });
   async function load() {
     try {
       const response = await fetch(root.dataset.knowledgeGraph, { signal: AbortSignal.timeout(15000) });

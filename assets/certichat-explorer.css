@@ -16,7 +16,7 @@
 .chat-graph-network canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 .chat-graph-network canvas:focus-visible { outline: 3px solid var(--blue); outline-offset: -4px; }
 .chat-graph-card { position: absolute; z-index: 1; width: max-content; max-width: min(280px, calc(100% - 16px)); max-height: calc(100% - 16px); overflow: auto; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--ink); box-shadow: 0 3px 16px var(--shadow); font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
-.chat-graph-card strong { display: block; margin-bottom: 5px; }
+.chat-graph-card strong { display: block; margin-bottom: 5px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
 .chat-graph-card p { margin: 4px 0 0; color: var(--muted); }
 .chat-graph-card a { display: block; margin-top: 5px; color: var(--red); }
 .chat-graph-card[hidden] { display: none; }

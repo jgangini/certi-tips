@@ -1,5 +1,5 @@
 import { readStored, writeStored } from "./storage.js";
-import { publishTrace, safeSourceURL } from "./certichat-trace.js";
+import { normalizeTrace, publishTrace, safeSourceURL } from "./certichat-trace.js";
 export { safeSourceURL } from "./certichat-trace.js";
 
 const escapeChat = text => String(text).replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
@@ -38,7 +38,13 @@ export function isChatPreview(pageURL, apiURL) {
 export function restoreChat(value, siteRoot, now = Date.now()) {
   const empty = { messages: [], pendingRequest: undefined };
   if (!value || !Number.isFinite(value.updatedAt) || value.updatedAt > now || now - value.updatedAt >= 86400000) return empty;
-  const messages = (Array.isArray(value.messages) ? value.messages : []).filter(item => item && ["user", "ai"].includes(item.role) && typeof item.text === "string" && item.text.trim() && item.text.length <= (item.role === "user" ? 1500 : 12000)).slice(-100).map(({ role, text }) => ({ role, text }));
+  let traceBytes = 0;
+  const messages = (Array.isArray(value.messages) ? value.messages : []).filter(item => item && ["user", "ai"].includes(item.role) && typeof item.text === "string" && item.text.trim() && item.text.length <= (item.role === "user" ? 1500 : 12000)).slice(-100).reverse().map(({ role, text, graphTrace }) => {
+    const trace = role === "ai" && normalizeTrace(graphTrace, siteRoot);
+    // ponytail: retain newest graph evidence up to 500 KiB; older answer text remains available.
+    if (trace && (traceBytes += JSON.stringify(trace).length * 2) <= 512000) return { role, text, graphTrace: trace };
+    return { role, text };
+  }).reverse();
   const pending = value.pendingRequest;
   const pendingRequest = pending && typeof pending.requestId === "string" && /^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/i.test(pending.requestId) && typeof pending.message === "string" && pending.message.trim() && pending.message.length <= 1500 && safeSourceURL(pending.pageUrl, siteRoot) ? { requestId: pending.requestId, message: pending.message, pageUrl: pending.pageUrl } : undefined;
   return { messages, pendingRequest };
@@ -70,7 +76,9 @@ if (root) {
   const saved = restoreChat(readStored(storageKey, null), root.dataset.siteRoot);
   const preview = isChatPreview(location.href, root.dataset.api);
   let chat, opening, verifying = false, verified = false, available = false, busy = false, turnstileId, turnstileLoad;
-  let pendingRequest = saved.pendingRequest, accessError = "", completedRequest, quota;
+  let pendingRequest = saved.pendingRequest, accessError = "", completedRequest, completedTrace, quota;
+  const responseTraces = saved.messages.filter(message => message.role === "ai").map(message => message.graphTrace);
+  const responseSelector = ".outer-message-container:not(.deep-chat-intro) .ai-message:not(.deep-chat-loading-message-bubble)";
   const quotaNotice = document.createElement("div");
   quotaNotice.id = "certichat-quota";
   quotaNotice.hidden = true;
@@ -90,8 +98,19 @@ if (root) {
   setInterval(() => updateQuota(), 30000);
 
   function persist() {
-    // ponytail: one bounded text snapshot; the server remains authoritative for context and quotas.
-    writeStored(storageKey, { updatedAt: Date.now(), ...restoreChat({ updatedAt: Date.now(), messages: chat.getMessages(), pendingRequest }, root.dataset.siteRoot) });
+    // Deep Chat's simulated stream drops custom metadata; keep evidence aligned by response position.
+    let index = 0;
+    const messages = chat.getMessages().map(message => message.role === "ai" ? { ...message, graphTrace: responseTraces[index++] } : message);
+    writeStored(storageKey, { updatedAt: Date.now(), ...restoreChat({ updatedAt: Date.now(), messages, pendingRequest }, root.dataset.siteRoot) });
+  }
+
+  function focusResponse(event) {
+    if (!dock || busy || (event.type === "pointerover" && event.pointerType !== "mouse")) return;
+    const bubble = event.target.closest?.(responseSelector);
+    if (!bubble || bubble.classList.contains("streamed-message") || bubble.contains(event.relatedTarget)) return;
+    const index = [...chat.shadowRoot.querySelectorAll(responseSelector)].indexOf(bubble);
+    const trace = responseTraces[index];
+    window.dispatchEvent(new CustomEvent("certichat:focus", { detail: trace || null }));
   }
 
   function setStatus(message, error = false) {
@@ -183,10 +202,12 @@ if (root) {
       chat.remarkable = { html: false, applyHTML: false };
       chat.auxiliaryStyle = "* { overflow-wrap: anywhere; } #chat-view { grid-template-rows: minmax(0, 1fr) auto auto; } #certichat-quota { color: var(--muted); text-align: center; font-size: 12px; line-height: 1.4; padding: 8px 12px; } #certichat-quota[hidden] { display: none; } a { color: var(--blue); text-decoration: underline; } a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; } @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }";
       chat.introMessage = { text: "Hola. Resuelve tus dudas sobre las guías y prácticas del sitio." };
-      chat.history = saved.messages;
+      chat.history = saved.messages.map(({ role, text }) => ({ role, text }));
       chat.onMessage = ({ isHistory, message }) => {
         if (isHistory) return;
         if (message.role === "ai") {
+          responseTraces.push(completedTrace); completedTrace = undefined;
+          if (dock) chat.shadowRoot.querySelectorAll(responseSelector).forEach(bubble => { bubble.tabIndex = 0; });
           if (pendingRequest?.requestId === completedRequest) pendingRequest = undefined;
           completedRequest = undefined;
           busy = false; clear.disabled = !verified;
@@ -203,6 +224,11 @@ if (root) {
         input?.setAttribute("aria-label", "Escribe tu consulta");
         input?.setAttribute("enterkeyhint", "send");
         chat.shadowRoot.querySelector('.input-button.inside-end')?.setAttribute("aria-label", "Enviar consulta");
+        if (dock) {
+          chat.shadowRoot.addEventListener("pointerover", focusResponse);
+          chat.shadowRoot.addEventListener("focusin", focusResponse);
+          chat.shadowRoot.querySelectorAll(responseSelector).forEach(bubble => { bubble.tabIndex = 0; });
+        }
         updateQuota();
       };
       chat.addEventListener("keydown", event => {
@@ -220,6 +246,7 @@ if (root) {
       // ponytail: reveal the validated answer progressively; raw model tokens cannot bypass source validation.
       chat.connect = { stream: matchMedia("(prefers-reduced-motion: reduce)").matches ? undefined : { simulation: 6 }, handler: async (body, signals) => {
         busy = true; clear.disabled = true;
+        completedTrace = undefined;
         publishTrace(root.dataset.siteRoot, "loading");
         let answer;
         try {
@@ -235,6 +262,7 @@ if (root) {
             persist();
             const result = await api("chat", pendingRequest);
             completedRequest = pendingRequest.requestId;
+            completedTrace = normalizeTrace(result.graphTrace, root.dataset.siteRoot);
             answer = answerWithReferences(String(result.answer || "No encontré una respuesta en las guías disponibles."), message, result.sources, root.dataset.siteRoot);
             updateQuota(result.quota); setStatus("");
             publishTrace(root.dataset.siteRoot, "ready", result.graphTrace);
@@ -331,7 +359,7 @@ if (root) {
     confirmation.setAttribute("aria-busy", "true");
     try {
       const result = await api("conversation", {}, "DELETE");
-      chat.clearMessages(); pendingRequest = undefined; persist();
+      chat.clearMessages(); responseTraces.length = 0; completedTrace = undefined; pendingRequest = undefined; persist();
       publishTrace(root.dataset.siteRoot, "idle");
       updateQuota(result.quota); setStatus(""); confirmation.close();
     } catch {

@@ -53,7 +53,7 @@ test("CertiChat adds safe section links only when references are explicitly requ
   assert.doesNotMatch(plainChatHTML('[x](https://attacker.test/) [x](javascript:alert(1)) <a href="https://attacker.test">x</a>', site), /<a /);
 });
 
-test("CertiChat restores a bounded text-only transcript and discards the old sources panel data", () => {
+test("CertiChat restores bounded message text and discards the old sources panel data", () => {
   const site = "https://jgangini.github.io/certi-tips/", now = 1_800_000_000_000;
   const messages = Array.from({ length: 102 }, (_, index) => ({ role: index % 2 ? "ai" : "user", text: `Mensaje ${index}` }));
   messages.push({ role: "ai", text: "<img src=x onerror=alert(1)>", html: "<script>bad()</script>", files: [{ src: "https://attacker.test/" }] });
@@ -69,6 +69,34 @@ test("CertiChat restores a bounded text-only transcript and discards the old sou
   const limits = restoreChat({ updatedAt: now, messages: [{ role: "user", text: "x".repeat(1500) }, { role: "ai", text: "x".repeat(12000) }], sources: [{ title: "x".repeat(200), url: site }] }, site, now);
   assert.equal(limits.messages.length, 2);
   assert.equal(limits.sources, undefined);
+});
+
+test("CertiChat restores evidence by response position, validates sources and bounds its storage", () => {
+  const site = "https://jgangini.github.io/certi-tips/", now = 100;
+  const id = "550e8400-e29b-41d4-a716-446655440000";
+  const trace = { version: "a".repeat(64), nodes: [id], edges: [], truncated: false };
+  const second = { ...trace, version: "b".repeat(64) };
+  const messages = [
+    { role: "user", text: "Consulta", graphTrace: trace },
+    { role: "ai", text: "Respuesta repetida", graphTrace: trace },
+    { role: "ai", text: "Respuesta repetida", graphTrace: second },
+    { role: "ai", text: "Sin evidencia", graphTrace: { ...trace, version: "invalid" } },
+  ];
+  const restored = restoreChat({ updatedAt: now, messages }, site, now).messages;
+  assert.equal(restored[0].graphTrace, undefined);
+  assert.deepEqual(restored[1].graphTrace, trace);
+  assert.deepEqual(restored[2].graphTrace, second);
+  assert.equal(restored[3].graphTrace, undefined);
+  const sources = Array.from({ length: 200 }, (_, index) => ({ nodeId: id, title: "x".repeat(200), url: `${site}lesson/#${index}` }));
+  sources.push({ nodeId: id, title: "Unsafe", url: "https://attacker.test/" });
+  const large = Array.from({ length: 100 }, () => ({ role: "ai", text: "Respuesta", graphTrace: { ...trace, sources } }));
+  const bounded = restoreChat({ updatedAt: now, messages: large }, site, now).messages;
+  const kept = bounded.filter(message => message.graphTrace);
+  assert.equal(bounded.length, 100);
+  assert.ok(kept.length > 0 && kept.length < 100);
+  assert.equal(bounded[0].graphTrace, undefined);
+  assert.equal(bounded.at(-1).graphTrace.sources.length, 200);
+  assert.ok(kept.reduce((bytes, message) => bytes + JSON.stringify(message.graphTrace).length * 2, 0) <= 512000);
 });
 
 test("CertiChat rejects missing, malformed, future and expired stored conversations", () => {

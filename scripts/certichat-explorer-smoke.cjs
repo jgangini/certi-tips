@@ -133,6 +133,7 @@ async page => {
     });
     assert(Math.abs(cardGeometry.centerX - cardGeometry.nodeX) <= 1 && cardGeometry.bottom < cardGeometry.nodeY - 8 && cardGeometry.left >= cardGeometry.minX && cardGeometry.right <= cardGeometry.maxX, `Concept card did not float centered above the selected node: ${JSON.stringify(cardGeometry)}`);
     assert(await card.locator('strong').textContent() === snapshot.nodes.find(node => node.id === first.source).label, 'Card title does not match the selected concept');
+    assert(await card.locator('strong').evaluate(element => getComputedStyle(element).borderBottomWidth) === '1px', 'Concept card has no separator between title and sources');
     const reference = card.getByRole('link', { name: `Profundizar: ${trace1.sources[0].title}` });
     assert(await reference.getAttribute('href') === trace1.sources[0].url && await card.locator('a').count() === 1, 'Card reference was not restricted to current-query source evidence');
     await reference.evaluate(link => link.addEventListener('click', event => event.preventDefault(), { once: true }));
@@ -188,14 +189,47 @@ async page => {
     await tab.waitForFunction(() => !document.querySelector('deep-chat').validateInput('Mientras espera'));
     await active([]);
     assert(await card.isHidden(), 'New query left the previous concept card visible');
+    const responses = tab.locator('deep-chat .outer-message-container:not(.deep-chat-intro) .ai-message:not(.deep-chat-loading-message-bubble)');
+    await responses.first().hover(); await active([]);
     releaseReply(); pendingReply = undefined;
     await answered('Respuesta: Consulta dos.');
     await active(trace2.nodes, trace2.edges);
     checks.push('new query clears prior highlights while pending', 'second trace replaces first IDs, never accumulates');
 
     const countBeforeReload = calls.filter(call => call.path === '/api/chat').length;
+    await tab.locator('[data-graph-fit]').click();
+    await tab.emulateMedia({ reducedMotion: 'no-preference' });
+    await tab.mouse.move(0, 0);
+    await responses.first().hover();
+    await active(trace1.nodes, trace1.edges);
+    const hoverFrames = await canvas.evaluate(element => new Promise(resolve => {
+      const frames = [];
+      const sample = () => {
+        frames.push({ ...element.dataset });
+        if (element.dataset.cameraMoving === 'false' || frames.length > 120) resolve(frames);
+        else requestAnimationFrame(sample);
+      };
+      sample();
+    }));
+    assert(hoverFrames.length >= 3 && hoverFrames.at(-1).cameraMoving === 'false' && new Set(hoverFrames.map(frame => `${frame.scale}:${frame.panX}:${frame.panY}`)).size >= 3, 'Hover did not use smooth intermediate camera positions');
+    await tab.locator(`[data-graph-active] button[data-concept="${first.source}"]`).click();
+    await card.waitFor({ state: 'visible' });
+    assert(await card.locator('a').getAttribute('href') === trace1.sources[0].url, 'Hover restored concepts with the wrong response source');
+    await tab.emulateMedia({ reducedMotion: 'reduce' });
+    await tab.waitForFunction(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
+    await responses.nth(1).focus(); await active(trace2.nodes, trace2.edges);
+    await canvas.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    assert(await canvas.getAttribute('data-camera-moving') === 'false', 'Keyboard focus ignored reduced motion');
+    await responses.first().hover(); await active(trace1.nodes, trace1.edges);
+    assert(calls.filter(call => call.path === '/api/chat').length === countBeforeReload, 'Hover made an API request');
+    checks.push('response hover focuses its own concepts and sources smoothly; keyboard/reduced motion supported; pending response ignores hover');
+
     await tab.reload(); await ready(); await active(trace2.nodes, trace2.edges);
+    await openChat();
+    await responses.first().hover(); await active(trace1.nodes, trace1.edges);
+    await responses.nth(1).hover(); await active(trace2.nodes, trace2.edges);
     assert(calls.filter(call => call.path === '/api/chat').length === countBeforeReload, 'Restoring trace submits a paid query');
+    checks.push('restored answers retain distinct traces; hovering history does not overwrite the latest saved trace');
     await tab.evaluate(() => {
       const key = `certichat:${document.querySelector('[data-certichat]').dataset.siteRoot}:graph`, saved = JSON.parse(sessionStorage.getItem(key));
       saved.updatedAt = Date.now() - 86400001; sessionStorage.setItem(key, JSON.stringify(saved));
@@ -210,6 +244,10 @@ async page => {
     await send('Consulta con otra versión', { ...trace2, version: 'f'.repeat(64) }); await answered('Respuesta: Consulta con otra versión.'); await active([]);
     assert(/versi[oó]n/i.test(await tab.locator('[data-graph-trace]').textContent()), 'Version mismatch has no accessible explanation');
     await send('Respuesta antigua sin traza'); await answered('Respuesta: Respuesta antigua sin traza.'); await active([]);
+    await responses.first().hover(); await active(trace1.nodes, trace1.edges);
+    await responses.last().hover(); await active([]);
+    await responses.first().hover(); await active(trace1.nodes, trace1.edges);
+    await responses.filter({ hasText: 'El servicio no está disponible' }).hover(); await active([]);
     checks.push('API errors and empty evidence clear trace', 'version mismatch stays gray', 'legacy response without trace stays gray');
 
     await send('Consulta antes de borrar', trace1); await answered('Respuesta: Consulta antes de borrar.'); await active(trace1.nodes, trace1.edges);
@@ -218,8 +256,23 @@ async page => {
     await tab.locator('[data-chat-confirm]').waitFor({ state: 'hidden' });
     await active([]);
     assert(calls.some(call => call.path === '/api/conversation' && call.method === 'DELETE'), 'Clear confirmation did not use the conversation API');
+    await tab.emulateMedia({ reducedMotion: 'no-preference' });
     await tab.reload(); await ready(); await active([]);
     checks.push('confirmed clear removes active and persisted trace');
+    await send('Consulta después de borrar', trace2); await answered('Respuesta: Consulta después de borrar.');
+    checks.push('first streamed response completed');
+    await tab.locator('[data-graph-fit]').click();
+    await responses.first().hover(); await active(trace2.nodes, trace2.edges);
+    await send('Consulta después de borrar', trace1); await answered('Respuesta: Consulta después de borrar.');
+    await tab.waitForFunction(() => {
+      const chat = document.querySelector('deep-chat');
+      return chat.getMessages().length === 4 && chat.validateInput('Siguiente');
+    });
+    checks.push('duplicate streamed response completed');
+    await responses.first().hover(); await active(trace2.nodes, trace2.edges);
+    await responses.nth(1).hover(); await active(trace1.nodes, trace1.edges);
+    await tab.emulateMedia({ reducedMotion: 'reduce' });
+    checks.push('simulated streaming and clearing keep response evidence aligned');
 
     for (const width of [1440, 1280, 1024, 800, 360, 320]) {
       await tab.setViewportSize({ width, height: 900 });
@@ -284,7 +337,7 @@ async page => {
     assert(!errors.length, `Page errors: ${errors.join('; ')}`);
     return { checks, loadMs, graph: { nodes: snapshot.nodes.length, edges: snapshot.edges.length }, geometry, apiCalls: calls.length, errors };
   } catch (error) {
-    const chat = await tab.evaluate(() => { const element = document.querySelector('deep-chat'), input = element?.shadowRoot?.querySelector('[role="textbox"]'); return { messages: element?.getMessages(), valid: element?.validateInput('Prueba'), text: input?.innerText, editable: input?.contentEditable, clearDisabled: document.querySelector('[data-chat-clear]')?.disabled, status: document.querySelector('[data-chat-status]')?.textContent }; }).catch(() => null);
+    const chat = await tab.evaluate(() => { const element = document.querySelector('deep-chat'), input = element?.shadowRoot?.querySelector('[role="textbox"]'); return { messages: element?.getMessages(), bubbles: [...element.shadowRoot.querySelectorAll('.ai-message')].map(node => ({ className: node.className, text: node.textContent })), saved: JSON.parse(localStorage.getItem(`certichat:${document.querySelector('[data-certichat]').dataset.siteRoot}`)), activeIds: [...document.querySelectorAll('[data-concept]')].map(node => node.dataset.concept), valid: element?.validateInput('Prueba'), text: input?.innerText, editable: input?.contentEditable, clearDisabled: document.querySelector('[data-chat-clear]')?.disabled, status: document.querySelector('[data-chat-status]')?.textContent }; }).catch(() => null);
     throw new Error(`${error.message}; passed=${JSON.stringify(checks)}; state=${JSON.stringify(await state().catch(() => null))}; calls=${JSON.stringify(calls.map(call => ({ path: call.path, question: call.body?.message })))}; chat=${JSON.stringify(chat)}; pageErrors=${JSON.stringify(errors)}`);
   } finally { releaseReply?.(); await context.close(); }
 }

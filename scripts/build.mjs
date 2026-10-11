@@ -26,6 +26,7 @@ if ((certichatMode === "LOCAL") !== ["localhost", "127.0.0.1", "[::1]"].includes
 site.certichat = { apiOrigin: certichatApi.origin, siteKey: process.env.CERTICHAT_TURNSTILE_SITE_KEY || "" };
 site.certichat.version = contentHash((await Promise.all(["js", "css"].map(extension => readFile(path.join(root, `assets/certichat.${extension}`), "utf8")))).join("\n")).slice(0, 12);
 const knowledge = [];
+const imageSizes = new Map();
 const md = new MarkdownIt({ html: true, linkify: true });
 
 md.renderer.rules.table_open = () => '<div class="table-scroll" role="region" aria-label="Tabla de referencia" tabindex="0"><table>\n';
@@ -36,7 +37,9 @@ md.renderer.rules.image = (tokens, index) => {
   const src = escapeHtml(token.attrGet("src"));
   const alt = escapeHtml(token.content);
   const caption = escapeHtml(token.attrGet("title") || token.content);
-  return `<button class="diagram" type="button" data-diagram="${src}" aria-label="Ampliar: ${alt}"><img src="${src}" alt="${alt}" loading="lazy"><span>${caption} <span aria-hidden="true">↗</span></span></button>`;
+  const size = imageSizes.get(token.attrGet("src"));
+  if (!size?.every(value => Number.isFinite(value) && value > 0)) throw new Error(`Missing image dimensions: ${src}`);
+  return `<button class="diagram" type="button" data-diagram="${src}" aria-label="Ampliar: ${alt}"><img src="${src}" alt="${alt}" width="${size[0]}" height="${size[1]}" loading="lazy"><span>${caption} <span aria-hidden="true">↗</span></span></button>`;
 };
 
 function renderMarkdown(source) {
@@ -72,12 +75,21 @@ for (const file of await readdir(diagramDirectory)) {
   if (!file.endsWith(".svg")) continue;
   const destination = path.join(diagramDirectory, file);
   const source = await readFile(destination, "utf8");
+  // Reserve the SVG's native ratio before lazy loading, so document anchors do not shift.
+  const viewBox = source.match(/\bviewBox="([^"]+)"/)?.[1].trim().split(/[\s,]+/).map(Number);
+  if (viewBox?.length === 4) imageSizes.set(`${site.base}assets/diagrams/${file}`, viewBox.slice(2));
   let embedded = source;
   for (const [reference, name] of source.matchAll(/href="\.\.\/illustrations\/([a-z0-9-]+\.png)"/g)) {
     const png = await readFile(path.join(root, "assets/illustrations", name));
     embedded = embedded.replace(reference, `href="data:image/png;base64,${png.toString("base64")}"`);
   }
   if (embedded !== source) await writeFile(destination, embedded);
+}
+for (const file of await readdir(path.join(root, "assets/illustrations"))) {
+  if (!file.endsWith(".png")) continue;
+  const png = await readFile(path.join(root, "assets/illustrations", file));
+  if (png.length < 24 || png.toString("hex", 0, 8) !== "89504e470d0a1a0a" || png.toString("ascii", 12, 16) !== "IHDR") throw new Error(`Invalid PNG: ${file}`);
+  imageSizes.set(`${site.base}assets/illustrations/${file}`, [png.readUInt32BE(16), png.readUInt32BE(20)]);
 }
 for (const course of site.courses) {
   await cp(path.join(root, "data", `${course.questionBank}.json`), path.join(output, "assets", `${course.questionBank}.json`));
