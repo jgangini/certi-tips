@@ -37,7 +37,7 @@ test("the explorer is a standalone site page and offers an honest missing-snapsh
   assert.match(html, /rel="canonical" href="https:\/\/jgangini.github.io\/certi-tips\/certichat\/"/);
   assert.match(html, /class="home-main certichat-main"/);
   assert.match(html, /href="\/certi-tips\/assets\/certichat-explorer.css"/);
-  assert.match(html, /href="\/certi-tips\/certichat\/" aria-label="Cómo funciona CertiChat"/);
+  assert.match(html, /href="\/certi-tips\/certichat\/" aria-label="Ver el grafo y el flujo de CertiChat"/);
   assert.doesNotMatch(html, /<aside class="sidebar"|data-mark-complete=/);
   assert.match(body, /data-knowledge-graph=""/);
   assert.match(body, /instantánea del grafo todavía no está publicada/);
