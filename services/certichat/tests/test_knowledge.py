@@ -1,12 +1,94 @@
 """Published freshness must invalidate conversational context before snapshot promotion."""
 
 import asyncio
+from contextlib import asynccontextmanager
+import sys
 from types import SimpleNamespace
 
 import pytest
 
 from app import knowledge
-from app.corpus import CORPUS_URL, SITE, atomic_json, digest, segments
+from app.corpus import CORPUS_URL, SITE, atomic_json, digest, segments, snapshot_path
+
+
+@pytest.mark.parametrize("vector_ready", [True, False])
+def test_lifespan_keeps_both_stores_warm_until_shutdown(tmp_path, monkeypatch, vector_ready):
+    version = "a" * 64
+    snapshot = snapshot_path(tmp_path, version)
+    snapshot.mkdir(parents=True)
+    atomic_json(tmp_path / "active.json", {"version": version})
+    atomic_json(snapshot / "ready.json", {"version": version})
+    atomic_json(snapshot / "sources.json", {})
+    monkeypatch.setenv("CERTICHAT_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("CERTICHAT_CHAT_INTERNAL_TOKEN", "t" * 32)
+    monkeypatch.setattr(knowledge.app, "state", SimpleNamespace())
+    events, active = [], set()
+
+    @asynccontextmanager
+    async def context(dataset, user):
+        assert (dataset, user) == ("dataset", "user")
+        active.add(dataset)
+        events.append("pin")
+        try:
+            yield
+        finally:
+            active.remove(dataset)
+            events.append("release")
+
+    async def user():
+        return SimpleNamespace(id="user")
+
+    async def datasets(*_args, **_kwargs):
+        return [SimpleNamespace(id="dataset")]
+
+    async def is_empty():
+        events.append("graph")
+        return False
+
+    async def has_collection(name):
+        assert name == "Entity_name" and active == {"dataset"}
+        events.append("vector")
+        return vector_ready
+
+    async def graph():
+        return SimpleNamespace(is_empty=is_empty)
+
+    async def vector():
+        return SimpleNamespace(has_collection=has_collection)
+
+    async def projection():
+        assert active == {"dataset"} and events[-1] == "vector"
+        events.append("projection")
+
+    async def close():
+        assert not active
+        events.append("close")
+
+    for name, value in {
+        "cognee.context_global_variables": SimpleNamespace(set_database_global_context_variables=context),
+        "cognee.modules.users.methods": SimpleNamespace(get_default_user=user),
+        "cognee.modules.data.methods": SimpleNamespace(get_authorized_existing_datasets=datasets),
+        "cognee.infrastructure.databases.graph": SimpleNamespace(get_graph_engine=graph),
+        "cognee.infrastructure.databases.vector": SimpleNamespace(get_vector_engine_async=vector),
+    }.items():
+        monkeypatch.setitem(sys.modules, name, value)
+    monkeypatch.setattr(knowledge, "configure_cognee", lambda *_: events.append("configure"))
+    monkeypatch.setattr(knowledge, "cached_graph", projection)
+    monkeypatch.setattr(knowledge, "close_cognee", close)
+
+    async def run():
+        async with knowledge.lifespan(knowledge.app):
+            # A ready worker must retain the dataset pin even when no query is active.
+            assert active == {"dataset"}
+            assert events == ["configure", "pin", "graph", "vector", "projection"]
+            assert (await knowledge.health())["status"] == "ready"
+
+    if vector_ready:
+        asyncio.run(run())
+    else:
+        with pytest.raises(RuntimeError, match="Snapshot vector collection is missing"):
+            asyncio.run(run())
+    assert events[-2:] == ["release", "close"]
 
 
 @pytest.fixture(autouse=True)

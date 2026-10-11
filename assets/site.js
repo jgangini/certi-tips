@@ -9,7 +9,7 @@ if (footer) new ResizeObserver(() => {
     footerCredit.hidden = footerCredit.parentElement.scrollWidth > footerCredit.parentElement.clientWidth;
   }
   document.documentElement.style.setProperty("--footer-height", `${footer.getBoundingClientRect().height}px`);
-}).observe(footer);
+}).observe(footer, { box: "border-box" });
 
 const course = document.body.dataset.course;
 const heroFlow = document.querySelector("[data-hero-flow]");

@@ -1707,6 +1707,7 @@ html[data-theme="dark"] .quiz-intro > .eyebrow {
   .site-footer {
     padding: 10px 20px calc(10px + env(safe-area-inset-bottom));
   }
+  .footer-credit { display: none; }
   .page-heading h1 {
     font-size: 2.1rem;
   }

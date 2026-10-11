@@ -78,6 +78,8 @@ Desde la raíz: `npm run build`, `npm test`, `npm run check`, `./scripts/arch-po
 
 `services/certichat/tests/cognee_selfcheck.py` comprueba el flujo de la versión instalada de Cognee con un gateway local simulado. `scripts/certichat-browser-smoke.cjs` comprueba contrato HTTP, reintentos, cuotas, fuentes, teclado y geometría móvil mediante DOM, sin capturas. La aceptación pública debe comprobar por separado Turnstile, cookies entre sitios, HTTPS, consulta con fuentes y rechazo de temas ajenos.
 
+El worker conserva abierto el contexto nativo de su único dataset y abre el grafo y la colección vectorial mediante comprobaciones de metadatos antes de anunciar disponibilidad. Cognee cierra por defecto los subprocesos tras diez minutos inactivos; ese arranque en la siguiente consulta superaba el límite de recuperación de 20 segundos. El contexto retenido los protege del cierre por inactividad hasta apagar el worker, cuando se liberan ambos motores. No se ejecutan consultas de calentamiento ni llamadas al proveedor. La autocomprobación simula el barrido de inactividad sin esperar diez minutos.
+
 En modo `VPS`, la vista previa en localhost conserva el panel para revisar su diseño y ofrece un enlace al chat publicado (`#certichat`) para consultas reales. La API pública mantiene CORS, Turnstile y la cookie de acceso restringidos a `jgangini.github.io`. El modo `LOCAL` conecta exclusivamente con la API local; no desactiva ninguna protección del servidor público.
 
 Deep Chat incluye una dependencia transitiva de CLI con aviso moderado de `sprintf-js`; no está en el bundle publicado ni se ejecuta esa CLI. No se aplican overrides incompatibles para ocultar el aviso; revisar cuando el proveedor publique una corrección.

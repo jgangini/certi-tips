@@ -121,6 +121,26 @@ async def check(root):
             await cognee.add(str(path), dataset_name=DATASET, data_per_batch=1, skip_connection_test=True)
         await cognee.cognify(datasets=[DATASET], data_per_batch=16, chunk_size=1000,
                              chunks_per_batch=1, extractor="llm", raise_on_error=True)
+        from cognee.context_global_variables import set_database_global_context_variables
+        from cognee.modules.users.methods import get_default_user
+        from cognee.modules.data.methods import get_authorized_existing_datasets
+        from cognee.infrastructure.databases.graph import get_graph_engine
+        from cognee.infrastructure.databases.vector import get_vector_engine_async
+        from cognee.infrastructure.databases.utils.closing_lru_cache import evict_and_close_idle_all
+        user = await get_default_user()
+        datasets = await get_authorized_existing_datasets([DATASET], "read", user, strict=True)
+        before_warmup = len(REQUESTS)
+        async with set_database_global_context_variables(datasets[0].id, user.id):
+            graph = await get_graph_engine()
+            vector = await get_vector_engine_async()
+            assert not await graph.is_empty()
+            assert await vector.has_collection("Entity_name")
+            # Force every idle engine eligible now; a live dataset pin must protect both.
+            assert evict_and_close_idle_all(0) == 0
+            assert not await graph.is_empty() and await vector.has_collection("Entity_name")
+            assert len(REQUESTS) == before_warmup, "Metadata warmup called the provider"
+        assert evict_and_close_idle_all(0) >= 2, "Released subprocesses remained pinned"
+        await close_cognee()
         evidence = await retrieve_evidence("¿Qué publica CertiTips?")
         latest = {"documents": [{**item, "hash": digest(item["text"])} for item in docs]}
         fragments = supported_fragments(evidence, source_map, latest)
@@ -147,7 +167,7 @@ async def check(root):
         assert len(batch) == 8 and all(len(vector) == 1536 for vector in batch)
         assert all(abs(value - 0.45) < 0.000001 for vector in batch for value in vector)
         assert (1, 6002) in REJECTIONS and (8, 4500) in REJECTIONS, REJECTIONS
-        print(f"Cognee 1.6.1 sixteen concurrent documents, provenance, stale filtering and native oversized-embedding split/pool passed; {len(REQUESTS)} local stub calls.")
+        print(f"Cognee 1.6.1 idle pin/release, sixteen concurrent documents, provenance, stale filtering and native oversized-embedding split/pool passed; {len(REQUESTS)} local stub calls.")
     finally:
         await close_cognee()
 

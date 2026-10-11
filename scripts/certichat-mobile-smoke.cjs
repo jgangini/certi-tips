@@ -86,6 +86,26 @@ async (page) => {
         return { width: r.width, height: r.height, labelShown: style.display !== 'none' && style.visibility !== 'hidden' && text.width > 2 && text.height > 2 && !['inset(50%)', 'inset(100%)'].includes(style.clipPath) };
       });
       assert(width <= 800 ? Math.abs(launch.width - launch.height) <= 1 && launch.width >= 44 && !launch.labelShown : launch.labelShown, `${width}: incorrect launcher shape or text visibility`);
+      if (width <= 800) {
+        assert(await tab.locator('.footer-credit').isHidden(), `${width}: developer credit remains visible on mobile`);
+        const footerPosition = () => tab.evaluate(() => {
+          const footer = document.querySelector('.site-footer').getBoundingClientRect(), button = document.querySelector('[data-chat-open]').getBoundingClientRect();
+          return { top: button.top, gap: footer.top - button.bottom, actual: footer.height, measured: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--footer-height')) };
+        });
+        const start = await footerPosition();
+        await tab.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+        await settle();
+        const end = await footerPosition();
+        assert(start.gap >= 9 && end.gap >= 9 && Math.abs(start.top - end.top) <= 1, `${width}: scrolling moves the launcher or makes it overlap the footer`);
+        // iOS safe-area changes resize footer padding without changing its content box.
+        await tab.locator('.site-footer').evaluate(element => { element.style.paddingBottom = `${parseFloat(getComputedStyle(element).paddingBottom) + 34}px`; });
+        await tab.waitForFunction(() => Math.abs(document.querySelector('.site-footer').getBoundingClientRect().height - parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--footer-height'))) <= 1);
+        const inset = await footerPosition();
+        assert(inset.actual >= end.actual + 33 && inset.gap >= 9, `${width}: safe-area padding leaves the launcher over the footer`);
+        await tab.locator('.site-footer').evaluate(element => element.style.removeProperty('padding-bottom'));
+        await tab.waitForFunction(() => Math.abs(document.querySelector('.site-footer').getBoundingClientRect().height - parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--footer-height'))) <= 1);
+        await tab.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
+      }
       await launcher.click();
       await ready();
       const before = await fits(width, 844);

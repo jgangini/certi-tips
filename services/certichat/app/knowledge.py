@@ -76,28 +76,36 @@ async def lifespan(app: FastAPI):
     token = os.environ["CERTICHAT_CHAT_INTERNAL_TOKEN"]
     app.state.root, app.state.token, app.state.snapshot = root, token, None
     app.state.lock = asyncio.Lock()
-    if (root / "active.json").exists():
-        version = read_json(root / "active.json")["version"]
-        snapshot = snapshot_path(root, version)
-        if read_json(snapshot / "ready.json")["version"] != version:
-            raise RuntimeError("Snapshot is not ready")
-        app.state.sources = read_json(snapshot / "sources.json")
-        app.state.version, app.state.snapshot = version, snapshot
-        configure_cognee(snapshot, token)
+    if not (root / "active.json").exists():
+        yield
+        return
+    version = read_json(root / "active.json")["version"]
+    snapshot = snapshot_path(root, version)
+    if read_json(snapshot / "ready.json")["version"] != version:
+        raise RuntimeError("Snapshot is not ready")
+    app.state.sources = read_json(snapshot / "sources.json")
+    app.state.version, app.state.snapshot = version, snapshot
+    configure_cognee(snapshot, token)
+    try:
         # Open stores through a metadata-only startup check; no paid search on restart.
         from cognee.context_global_variables import set_database_global_context_variables
         from cognee.modules.users.methods import get_default_user
         from cognee.modules.data.methods import get_authorized_existing_datasets
         from cognee.infrastructure.databases.graph import get_graph_engine
+        from cognee.infrastructure.databases.vector import get_vector_engine_async
         user = await get_default_user()
         datasets = await get_authorized_existing_datasets([DATASET], "read", user, strict=True)
+        # ponytail: this worker owns one snapshot; keep its stores pinned until shutdown.
+        # Cognee otherwise closes idle subprocesses after 10 minutes, making the next query cold.
         async with set_database_global_context_variables(datasets[0].id, user.id):
             if await (await get_graph_engine()).is_empty():
                 raise RuntimeError("Snapshot graph is empty")
-        async with app.state.lock:
-            await cached_graph()
-    yield
-    if app.state.snapshot:
+            if not await (await get_vector_engine_async()).has_collection("Entity_name"):
+                raise RuntimeError("Snapshot vector collection is missing")
+            async with app.state.lock:
+                await cached_graph()
+            yield
+    finally:
         await close_cognee()
 
 
