@@ -3,11 +3,14 @@
 import asyncio
 from types import SimpleNamespace
 
+import pytest
+
 from app import knowledge
 from app.corpus import CORPUS_URL, SITE, atomic_json, digest, segments
 
 
-def test_retrieval_uses_latest_manifest_after_search_while_health_keeps_snapshot(tmp_path, monkeypatch):
+@pytest.mark.parametrize("page_url", [None, SITE + "changed/", SITE + "removed/"])
+def test_retrieval_uses_latest_manifest_after_search_while_health_keeps_snapshot(tmp_path, monkeypatch, page_url):
     documents = [{"id": name, "title": name, "courseId": "course", "url": SITE + name + "/",
                   "text": f"Información original de {name}."} for name in ("stable", "changed", "removed")]
     sources = segments(documents)
@@ -26,7 +29,28 @@ def test_retrieval_uses_latest_manifest_after_search_while_health_keeps_snapshot
         return [{"kind": "segment", "document_name": name.removesuffix(".txt")} for name in sources]
 
     monkeypatch.setattr(knowledge, "retrieve_evidence", evidence)
-    result = asyncio.run(knowledge.retrieve(knowledge.Retrieval(message="Información del curso"), "Bearer test-token"))
+    result = asyncio.run(knowledge.retrieve(knowledge.Retrieval(message="Información del curso", pageUrl=page_url), "Bearer test-token"))
     assert result["version"] == current["contentHash"]
     assert [fragment["url"] for fragment in result["fragments"]] == [SITE + "stable/"]
     assert asyncio.run(knowledge.health()) == {"status": "ready", "version": "a"*64}
+
+
+def test_current_page_precedes_graph_results_with_existing_source_limit(tmp_path, monkeypatch):
+    documents = [{"id": name, "title": name, "courseId": "course", "url": SITE + name + "/",
+                  "text": f"Información publicada de {name}."} for name in ["current", *[f"graph{i}" for i in range(7)]]]
+    sources = segments(documents)
+    manifest = {"schemaVersion": 1, "contentHash": "a"*64, "corpusUrl": CORPUS_URL,
+                "documents": [{key: value for key, value in doc.items() if key != "text"} |
+                              {"hash": digest(doc["text"])} for doc in documents]}
+    atomic_json(tmp_path / "latest.json", manifest)
+    monkeypatch.setattr(knowledge.app, "state", SimpleNamespace(
+        root=tmp_path, token="test-token", snapshot=tmp_path, version="a"*64, sources=sources, lock=asyncio.Lock()))
+
+    async def evidence(_message):
+        names = list(sources)
+        return [{"kind": "segment", "document_name": name} for name in [*names[1:], names[0]]]
+
+    monkeypatch.setattr(knowledge, "retrieve_evidence", evidence)
+    result = asyncio.run(knowledge.retrieve(
+        knowledge.Retrieval(message="Información de esta página", pageUrl=SITE + "current/"), "Bearer test-token"))
+    assert [fragment["title"] for fragment in result["fragments"]] == ["current", *[f"graph{i}" for i in range(5)]]

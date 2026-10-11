@@ -11,7 +11,15 @@ if [[ "$changed" != yes ]]; then exit 0; fi
 # SIGTERM drains the one worker before another process opens its embedded databases.
 "${compose[@]}" stop -t 55 knowledge
 container=$("${compose[@]}" ps -aq knowledge)
-if [[ -n "$container" ]] && [[ "$(docker inspect --format '{{.State.ExitCode}} {{.State.OOMKilled}}' "$container")" != '0 false' ]]; then
+clean=false
+if [[ -n "$container" ]] && read -r code oom started < <(docker inspect --format '{{.State.ExitCode}} {{.State.OOMKilled}} {{.State.StartedAt}}' "$container"); then
+  # Uvicorn re-raises SIGTERM after lifespan shutdown; 143 is valid only with this run's completion marker.
+  if [[ "$code" =~ ^(0|143)$ && "$oom" == false ]] &&
+     docker logs --since "$started" "$container" 2>&1 | grep -F 'Application shutdown complete.' >/dev/null; then
+    clean=true
+  fi
+fi
+if [[ "$clean" != true ]]; then
   "${compose[@]}" up -d --no-deps --wait --wait-timeout 120 knowledge
   echo 'Knowledge did not stop cleanly; activation was refused.' >&2
   exit 1

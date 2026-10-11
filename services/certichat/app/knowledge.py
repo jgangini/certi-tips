@@ -132,5 +132,8 @@ async def retrieve(body: Retrieval, authorization: str = Header(default="")):
             raise HTTPException(503, "Knowledge retrieval unavailable") from None
     # Re-read after search so removals published during retrieval are excluded too.
     latest = validate_manifest(read_json(latest_path))
+    # The explicit page context uses the same freshness and source checks as graph evidence.
+    page_context = [{"kind": "segment", "document_name": name}
+                    for name, source in app.state.sources.items() if source["url"] == body.pageUrl]
     return {"version": latest["contentHash"],
-            "fragments": supported_fragments(evidence, app.state.sources, latest)}
+            "fragments": supported_fragments(page_context + evidence, app.state.sources, latest)}

@@ -4,7 +4,7 @@ Asistente de las guías publicadas en [CertiTips](https://jgangini.github.io/cer
 
 ## Contenido y respuestas
 
-`npm run build` produce `dist/assets/certichat/manifest.json` y `dist/assets/certichat/corpus.json`, publicados bajo `/certi-tips/assets/certichat/`: portada, guías, apartados y preguntas explicadas del catálogo. No publica el código, `.private`, documentación de operaciones ni transcripciones. Las fuentes de cada respuesta son enlaces canónicos del sitio. El corpus se valida por hash antes de indexarlo.
+`npm run build` produce `dist/assets/certichat/manifest.json` y `dist/assets/certichat/corpus.json`, publicados bajo `/certi-tips/assets/certichat/`: portada, guías, apartados y preguntas explicadas del catálogo. No publica el código, `.private`, documentación de operaciones ni transcripciones. Las fuentes de cada respuesta son enlaces canónicos del sitio. El corpus se valida por hash antes de indexarlo. El contexto prioriza la página que el participante está viendo y se completa con resultados de Cognee; ambos pasan por los mismos filtros de vigencia y procedencia.
 
 El modelo es `qwen/qwen3-235b-a22b-2507`, mediante OpenRouter; los embeddings usan `openai/text-embedding-3-small`. La API exige una respuesta estructurada con IDs de fuentes recuperadas. Rechaza respuestas sin evidencia, enlaces inventados o HTML. El navegador presenta texto escapado y construye los enlaces de fuentes por separado. El modelo puede equivocarse: estas barreras acotan el uso, pero no constituyen una prueba semántica de todas sus afirmaciones.
 
@@ -53,3 +53,9 @@ Desde la raíz: `npm run build`, `npm test`, `npm run check`, `./scripts/arch-po
 `services/certichat/tests/cognee_selfcheck.py` comprueba el flujo de la versión instalada de Cognee con un gateway local simulado. `scripts/certichat-browser-smoke.cjs` comprueba contrato HTTP, reintentos, cuotas, fuentes, teclado y geometría móvil mediante DOM, sin capturas. La aceptación pública debe comprobar por separado Turnstile, cookies entre sitios, HTTPS, consulta con fuentes y rechazo de temas ajenos.
 
 Deep Chat incluye una dependencia transitiva de CLI con aviso moderado de `sprintf-js`; no está en el bundle publicado ni se ejecuta esa CLI. No se aplican overrides incompatibles para ocultar el aviso; revisar cuando el proveedor publique una corrección.
+
+## Aceptación pública · 2026-10-11
+
+El primer índice activo contiene 528 documentos. La extracción completa tardó aproximadamente 37 minutos y costó US$0,729224; el total de indexación, incluidos pilotos y reintentos, fue US$0,953352. Es una medición de este corpus, no una promesa de tiempo o coste para futuras versiones. Una sincronización con el mismo hash conservó el worker y no produjo cargos.
+
+Desde GitHub Pages se verificaron acceso con Turnstile y cookie persistente, respuesta con las tres certificaciones Foundation y fuente en la portada, explicación de región frente a dominio de disponibilidad con enlace y sección válidos, y rechazo de una petición ajena al sitio que intentaba cambiar el rol. Borrar la conversación y recargar conservaron la cuota. Los temporizadores quedaron habilitados y CertiQuiz siguió saludable. Estas comprobaciones no constituyen una prueba de carga de participantes simultáneos.

@@ -16,7 +16,7 @@ def test_indexer_compose_command_keeps_python_entrypoint():
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Run Linux shell checks through scripts/certichat-local.ps1 -Test")
-@pytest.mark.parametrize("fault", ["none", "activate", "killed", "candidate"])
+@pytest.mark.parametrize("fault", ["none", "sigterm", "sigterm_failed", "zero_failed", "oom", "killed", "unexpected", "activate", "candidate"])
 def test_activation_recovery(tmp_path, fault):
     source = Path(__file__).resolve().parents[1] / "sync-knowledge.sh"
     text = source.read_text().replace("cd /opt/jarvis/apps/certichat", f"cd '{tmp_path}'")
@@ -30,13 +30,18 @@ from pathlib import Path
 args = sys.argv[1:]
 log = Path(os.environ['DOCKER_LOG'])
 previous = log.read_text() if log.exists() else ''
-operation = next((arg for arg in args if arg in ('build','changed','activate','rollback','stop','up','ps','inspect')), 'unknown')
+operation = next((arg for arg in args if arg in ('build','changed','activate','rollback','stop','up','ps','inspect','logs')), 'unknown')
 with log.open('a') as stream:
     stream.write(operation + '\\n')
 fault = os.environ['FAULT']
 if operation == 'changed': print('yes')
 if operation == 'ps': print('worker')
-if operation == 'inspect': print('137 false' if fault == 'killed' else '0 false')
+if operation == 'inspect':
+    code = 137 if fault == 'killed' else 143 if fault.startswith('sigterm') else 1 if fault == 'unexpected' else 0
+    print(f"{code} {'true' if fault == 'oom' else 'false'} 2026-10-11T00:00:00Z")
+if operation == 'logs':
+    assert args == ['logs', '--since', '2026-10-11T00:00:00Z', 'worker']
+    print('Application shutdown failed.' if fault.endswith('failed') else 'Application shutdown complete.')
 if operation == 'activate' and fault == 'activate': sys.exit(1)
 if operation == 'up' and fault == 'candidate' and 'up\\n' not in previous: sys.exit(1)
 ''')
@@ -48,9 +53,9 @@ if operation == 'up' and fault == 'candidate' and 'up\\n' not in previous: sys.e
     result = subprocess.run(["bash", str(script)], env=env, capture_output=True, text=True, timeout=15)
     assert log.exists(), result.stderr
     calls = log.read_text().splitlines()
-    assert result.returncode == (0 if fault == "none" else 1), result.stderr
+    assert result.returncode == (0 if fault in ("none", "sigterm") else 1), result.stderr
     assert "up" in calls
-    if fault == "killed":
+    if fault in ("killed", "sigterm_failed", "zero_failed", "oom", "unexpected"):
         assert "activate" not in calls
     elif fault == "candidate":
         assert "rollback" in calls and calls.count("up") == 2
