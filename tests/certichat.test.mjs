@@ -12,7 +12,7 @@ test("CertiChat renders untrusted messages as inert text and sources stay inside
   const site = "https://jgangini.github.io/certi-tips/";
   assert.equal(safeSourceURL(`${site}1Z0-1157-26/agents/#conceptos-clave`, site), `${site}1Z0-1157-26/agents/#conceptos-clave`);
   for (const url of ["javascript:alert(1)", "https://attacker.test/certi-tips/", "https://jgangini.github.io/another/", `${site}?secret=1`, "https://user:pass@jgangini.github.io/certi-tips/", `${site}../another/`]) assert.equal(safeSourceURL(url, site), null, url);
-  assert.match(quotaText({ dayRemaining: 19, hourRemaining: 9, retryAfter: 10.3 }), /19.*9.*11 segundos/);
+  assert.equal(quotaText({ dayRemaining: 19, hourRemaining: 9, retryAfter: 10.3 }), "19 consultas disponibles / 24 h · 9 / hora. Espera 11 segundos antes de volver a consultar.");
 });
 
 test("CertiChat uses the rendered heading resolver and deterministic knowledge-only hashes", () => {

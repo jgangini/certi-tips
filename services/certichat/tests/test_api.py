@@ -43,13 +43,15 @@ def clients(database_url):
     settings = Settings(database_url, "a"*32, "b"*32, "c"*32, "d"*32, "e"*32, public_origin=ORIGIN)
     calls = []
     turnstile = {"success": True, "hostname": "jgangini.github.io", "action": "certichat_session"}
-    knowledge = {"version": VERSION, "fragments": [FRAGMENT]}
+    knowledge = {"version": VERSION, "fragments": [FRAGMENT], "status": "ready"}
 
     def handler(request):
         calls.append(request)
         if request.url.host == "challenges.cloudflare.com":
             return httpx.Response(200, json=turnstile)
         if request.url.host == "knowledge":
+            if request.url.path == "/health":
+                return httpx.Response(200, json={"status": knowledge["status"], "version": knowledge["version"]})
             assert request.headers["Authorization"] == "Bearer " + "c"*32
             return httpx.Response(200, json=knowledge)
         assert request.url.host == "openrouter.ai"
@@ -87,6 +89,7 @@ def test_session_cookie_csrf_body_and_turnstile_validation(clients):
     make, app, calls, turnstile, _ = clients
     client = make()
     assert client.get("/api/session").json()["authenticated"] is False
+    calls.clear()
     assert client.post("/api/session", json={"turnstileToken": "proof"}, headers={"Origin": "https://evil.test"}).status_code == 403
     assert not calls
     for update in ({"success": False}, {"success": True, "hostname": "evil.test"},
@@ -236,7 +239,7 @@ def test_hour_and_day_quotas_cannot_be_reset_by_reverification(clients, count, a
     client.post("/api/session", json={"turnstileToken": "renewed"})
     response = client.post("/api/chat", json=question())
     assert response.status_code == 429 and int(response.headers["Retry-After"]) >= retry_min
-    assert not any(request.url.host in ("knowledge", "openrouter.ai") for request in calls)
+    assert not any(request.url.host == "openrouter.ai" or request.url.path == "/retrieve" for request in calls)
 
 
 def test_spent_budget_blocks_public_and_internal_outbound(clients):
@@ -337,3 +340,15 @@ def test_published_version_change_excludes_old_history_but_preserves_idempotency
     replay = client.post("/api/chat", json=original)
     assert replay.status_code == 200 and replay.json()["contentVersion"] == VERSION
     assert replay.json()["answer"] == first.json()["answer"] and len(histories) == 2
+
+
+def test_session_availability_waits_for_first_knowledge_snapshot(clients):
+    make, app, calls, _, knowledge = clients
+    knowledge["status"] = "waiting"
+    client = make()
+    assert client.get("/api/session").json()["available"] is False
+    response = client.post("/api/session", json={"turnstileToken": "proof"})
+    assert response.json()["authenticated"] is True and response.json()["available"] is False
+    knowledge["status"] = "ready"
+    assert client.get("/api/session").json()["available"] is True
+    assert not any(request.url.host == "openrouter.ai" for request in calls)

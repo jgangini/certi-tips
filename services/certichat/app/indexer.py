@@ -40,7 +40,7 @@ async def build(root: Path) -> None:
             path.write_text(source["text"], encoding="utf-8")
             await cognee.add(str(path), dataset_name=DATASET, data_per_batch=1,
                              skip_connection_test=True)
-        await cognee.cognify(datasets=[DATASET], data_per_batch=4, chunk_size=1000,
+        await cognee.cognify(datasets=[DATASET], data_per_batch=16, chunk_size=1000,
                              chunks_per_batch=1, extractor="llm", raise_on_error=True)
         evidence = await retrieve_evidence(documents[0]["title"])
         if not supported_fragments(evidence, sources, manifest):

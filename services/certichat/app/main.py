@@ -78,6 +78,18 @@ async def identity(request, verified=True):
     return row["token_hash"]
 
 
+async def service_available(request):
+    if not await db(request.app.state.store.available):
+        return False
+    try:
+        with anyio.fail_after(2):
+            response = await request.app.state.client.get(f"{request.app.state.settings.knowledge_url}/health", timeout=2)
+            response.raise_for_status()
+            return response.json().get("status") == "ready"
+    except (httpx.HTTPError, ValueError, AttributeError, TimeoutError):
+        return False
+
+
 def public_url(value, settings):
     if not isinstance(value, str) or not value.startswith(settings.site_url) or len(value) > 1024:
         return False
@@ -126,10 +138,14 @@ def create_app(settings=None, *, transport=None):
         try:
             await db(application.state.store.health)
             await db(application.state.store.cleanup)
-            async with httpx.AsyncClient(transport=transport, follow_redirects=False, trust_env=False,
-                                         limits=httpx.Limits(max_connections=12, max_keepalive_connections=8)) as client:
+            async with (
+                httpx.AsyncClient(transport=transport, follow_redirects=False, trust_env=False,
+                                  limits=httpx.Limits(max_connections=12, max_keepalive_connections=8)) as client,
+                httpx.AsyncClient(transport=transport, follow_redirects=False, trust_env=False,
+                                  limits=httpx.Limits(max_connections=32, max_keepalive_connections=16)) as index_client,
+            ):
                 application.state.client = client
-                application.state.provider = Provider(configured, application.state.store, client)
+                application.state.provider = Provider(configured, application.state.store, client, index_client)
                 cleanup = asyncio.create_task(maintain_retention(application.state.store))
                 try:
                     yield
@@ -166,7 +182,7 @@ def create_app(settings=None, *, transport=None):
         row = await db(store.session, token_digest(request.cookies.get(COOKIE)))
         return {"authenticated": row is not None, "verificationRequired": not row or not row["verified"],
                 "quota": await db(store.quota, row["token_hash"]) if row else None,
-                "available": await db(store.available)}
+                "available": await service_available(request)}
 
     @application.get("/api/session")
     async def get_session(request: Request):
@@ -193,7 +209,7 @@ def create_app(settings=None, *, transport=None):
         await db(store.verify_session, token_digest(token))
         set_cookie(response, token)
         return {"authenticated": True, "verificationRequired": False,
-                "quota": await db(store.quota, token_digest(token)), "available": await db(store.available)}
+                "quota": await db(store.quota, token_digest(token)), "available": await service_available(request)}
 
     @application.delete("/api/conversation")
     async def clear_conversation(body: StrictBody, request: Request):

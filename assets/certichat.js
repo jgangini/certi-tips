@@ -11,7 +11,7 @@ export function safeSourceURL(value, root) {
 
 export function quotaText(quota) {
   if (!quota) return "Consulta únicamente información publicada en CertiTips.";
-  return `${Number(quota.dayRemaining) || 0} consultas disponibles hoy · ${Number(quota.hourRemaining) || 0} esta hora.${quota.retryAfter > 0 ? ` Espera ${Math.ceil(quota.retryAfter)} segundos antes de volver a consultar.` : ""}`;
+  return `${Number(quota.dayRemaining) || 0} consultas disponibles / 24 h · ${Number(quota.hourRemaining) || 0} / hora.${quota.retryAfter > 0 ? ` Espera ${Math.ceil(quota.retryAfter)} segundos antes de volver a consultar.` : ""}`;
 }
 
 const root = typeof document === "undefined" ? null : document.querySelector("[data-certichat]");
@@ -143,7 +143,7 @@ if (root) {
     }
     const session = await api("session", undefined, "GET");
     updateAccess(session);
-    if (!verified) await verify();
+    if (!verified && available) await verify();
   }
 
   async function connect() {

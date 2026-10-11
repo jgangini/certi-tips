@@ -97,7 +97,7 @@ async def check(root):
     import cognee
     doc = {"id": "guide", "title": "CertiTips", "courseId": "course", "url": SITE + "guide/",
            "text": "CertiTips publica guías de estudio para preparar certificaciones."}
-    docs = [{**doc, "id": f"guide-{i}", "text": doc["text"] + f" Lección {i}."} for i in range(4)]
+    docs = [{**doc, "id": f"guide-{i}", "text": doc["text"] + f" Lección {i}."} for i in range(16)]
     source_map = segments(docs)
     (root / "sources").mkdir(parents=True)
     try:
@@ -105,7 +105,7 @@ async def check(root):
             path = root / "sources" / filename
             path.write_text(source["text"], encoding="utf-8")
             await cognee.add(str(path), dataset_name=DATASET, data_per_batch=1, skip_connection_test=True)
-        await cognee.cognify(datasets=[DATASET], data_per_batch=4, chunk_size=1000,
+        await cognee.cognify(datasets=[DATASET], data_per_batch=16, chunk_size=1000,
                              chunks_per_batch=1, extractor="llm", raise_on_error=True)
         evidence = await retrieve_evidence("¿Qué publica CertiTips?")
         latest = {"documents": [{**item, "hash": digest(item["text"])} for item in docs]}
@@ -115,13 +115,14 @@ async def check(root):
         from sqlalchemy import text
         async with get_relational_engine().get_async_session() as session:
             statuses = (await session.execute(text("SELECT pipeline_status FROM data"))).scalars().all()
-        assert len(statuses) == 4 and all("DATA_ITEM_PROCESSING_COMPLETED" in status for status in statuses), statuses
+        assert len(statuses) == 16 and all("DATA_ITEM_PROCESSING_COMPLETED" in
+            (json.loads(status).get("cognify_pipeline") or {}).values() for status in statuses), statuses
         for item in latest["documents"]:
             item["hash"] = "0" * 64
         assert not supported_fragments(evidence, source_map, latest)
         assert any(path.endswith("/embeddings") for path in REQUESTS)
         assert any(path.endswith("/chat/completions") for path in REQUESTS)
-        print(f"Cognee 1.6.1 four concurrent documents, graph provenance, stale filtering passed; {len(REQUESTS)} local stub calls.")
+        print(f"Cognee 1.6.1 sixteen concurrent documents, graph provenance, stale filtering passed; {len(REQUESTS)} local stub calls.")
     finally:
         await close_cognee()
 

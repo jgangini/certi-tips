@@ -5,7 +5,7 @@ async (page) => {
   const assert = (condition, message) => { if (!condition) throw new Error(message); };
   const calls = [], requests = [], errors = [];
   let quota = { dayRemaining: 20, hourRemaining: 10, minuteRemaining: 2, retryAfter: 0 };
-  let authenticated = true, rateLimited = false, loseResponse = false, failOnce = 0;
+  let authenticated = true, available = true, rateLimited = false, loseResponse = false, failOnce = 0;
   page.on('request', request => requests.push(request.url()));
   page.on('pageerror', error => errors.push(error.message));
   await page.route('https://certichat.cloudtechnext.net/**', async route => {
@@ -21,7 +21,7 @@ async (page) => {
       return route.fulfill({ headers, json: { answer: '<img src="https://evil.invalid/leak" onerror="alert(1)">\n![imagen](https://evil.invalid/) [enlace](javascript:alert(1))\nLos agentes utilizan herramientas.', sources: [{ id: 'agents', title: 'Agentes · Conceptos clave', url: 'https://jgangini.github.io/certi-tips/1Z0-1157-26/agents/#conceptos-clave' }, { title: 'External', url: 'https://evil.invalid/' }], quota, contentVersion: 'test' } });
     }
     if (path === '/api/session' && request.method() === 'POST') authenticated = true;
-    return route.fulfill({ headers, json: { authenticated, verificationRequired: !authenticated, quota, available: true } });
+    return route.fulfill({ headers, json: { authenticated, verificationRequired: !authenticated, quota, available } });
   });
   await page.goto(base);
   assert(!requests.some(url => /deep-chat\.js|turnstile|certichat\.cloudtechnext/.test(url)), 'Chat network loaded before opening');
@@ -78,6 +78,18 @@ async (page) => {
   assert(await page.locator('#certichat-panel').isHidden(), 'Escape did not close');
   assert(await page.getByRole('button', { name: 'CertiChat', exact: true }).evaluate(element => document.activeElement === element), 'Focus not restored');
   authenticated = false;
+  available = false;
+  await page.goto(base);
+  await page.locator('[data-certichat]').evaluate(element => { element.dataset.siteKey = 'test-unavailable-key'; });
+  await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
+  await page.waitForFunction(() => document.querySelector('[data-chat-status]').textContent.includes('actualizando'));
+  assert(!requests.some(url => url.includes('challenges.cloudflare.com')), 'Unavailable service starts unnecessary Turnstile');
+  authenticated = true;
+  await page.getByRole('button', { name: 'Reintentar conexión' }).click();
+  await page.waitForFunction(() => document.querySelector('[data-chat-clear]').disabled === false);
+  assert(await page.locator('deep-chat').evaluate(element => element.validateInput('Pregunta mientras indexa')) === false, 'Unavailable service accepts a verified question');
+  available = true;
+  authenticated = false;
   await page.goto(base);
   await page.locator('[data-certichat]').evaluate(element => { element.dataset.siteKey = ''; });
   await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
@@ -102,5 +114,5 @@ async (page) => {
   });
   assert(controlsSeparate, 'Chat launcher overlaps lesson completion');
   assert(errors.length === 0, `Page errors: ${errors.join('; ')}`);
-  return { checks: ['lazy local bundle', 'safe plaintext', 'sources', 'API contract', 'quotas', 'clear preserves quota', 'rate retry', 'idempotent transport retry', 'definitive failure retry', 'mobile geometry', 'Escape focus', 'missing Turnstile fails closed', 'Turnstile server handshake', 'dark theme', 'completion control coexistence'], requests: calls.length, errors };
+  return { checks: ['lazy local bundle', 'safe plaintext', 'sources', 'API contract', 'quotas', 'clear preserves quota', 'rate retry', 'idempotent transport retry', 'definitive failure retry', 'mobile geometry', 'Escape focus', 'unavailable disables input and Turnstile', 'missing Turnstile fails closed', 'Turnstile server handshake', 'dark theme', 'completion control coexistence'], requests: calls.length, errors };
 }

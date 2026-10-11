@@ -69,6 +69,8 @@ def prepare_request(kind, data, purpose):
                     or len(encoded(response_format)) > 12000):
                 raise ChatError("Formato de respuesta no válido.", 422)
             payload["response_format"] = response_format
+        if purpose == "index":
+            payload["provider"]["sort"] = "throughput"
         tokens = len(encoded(payload)) + 1024 + 32 * len(messages)
         if tokens > (32768 if purpose == "index" else 6000):
             raise ChatError("El contexto supera el límite permitido.", 413)
@@ -79,25 +81,28 @@ def prepare_request(kind, data, purpose):
 
 
 class Provider:
-    def __init__(self, settings, store, client):
+    def __init__(self, settings, store, client, index_client):
         self.settings = settings
         self.store = store
         self.client = client
+        self.index_client = index_client
 
     async def request(self, kind, data, purpose):
         payload, cost = prepare_request(kind, data, purpose)
         reservation = await anyio.to_thread.run_sync(self.store.reserve, purpose, cost)
+        client = self.index_client if purpose == "index" else self.client
         # Every incoming Cognee retry reserves independently. No automatic HTTP retries; uncertain costs stay reserved.
         try:
-            response = await self.client.post(f"https://openrouter.ai/api/v1/{kind}", json=payload,
-                                             headers={"Authorization": f"Bearer {self.settings.openrouter_api_key}",
-                                                      "HTTP-Referer": self.settings.site_url, "X-Title": "CertiChat"},
-                                             timeout=35 if purpose == "chat" else 90)
-            response.raise_for_status()
-            result = response.json()
-            if not isinstance(result, dict) or "error" in result:
-                raise ValueError("Invalid provider response")
-        except (httpx.HTTPError, ValueError):
+            with anyio.fail_after(35 if purpose == "chat" else 300):
+                response = await client.post(f"https://openrouter.ai/api/v1/{kind}", json=payload,
+                                                 headers={"Authorization": f"Bearer {self.settings.openrouter_api_key}",
+                                                          "HTTP-Referer": self.settings.site_url, "X-Title": "CertiChat"},
+                                                 timeout=35 if purpose == "chat" else 90)
+                response.raise_for_status()
+                result = response.json()
+                if not isinstance(result, dict) or "error" in result:
+                    raise ValueError("Invalid provider response")
+        except (httpx.HTTPError, ValueError, TimeoutError):
             raise ChatError("El proveedor no está disponible. Vuelve a intentarlo más tarde.") from None
         try:
             charged = Decimal(str(result.get("usage", {}).get("cost")))
