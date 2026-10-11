@@ -70,7 +70,7 @@ export function createNetwork(canvas, graph, onSelect, onAnchor) {
   const layout = layoutNetwork(graph), edgeKeys = new Set(layout.edges.map(edge => edge.key));
   const events = new AbortController(), pointers = new Map();
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-  let width = 0, height = 0, frame = 0, destroyed = false, moved = false, selected, pressPosition, camera;
+  let width = 0, height = 0, frame = 0, destroyed = false, moved = false, selected, pressPosition, camera, pulse;
   let activeNodes = new Set(), activeEdges = new Set();
   const view = { scale: 1, x: 0, y: 0 };
   canvas.style.touchAction = "none";
@@ -78,12 +78,13 @@ export function createNetwork(canvas, graph, onSelect, onAnchor) {
 
   function invalidate() { if (!frame && !destroyed) frame = requestAnimationFrame(draw); }
   function moveTo(target, animate) {
+    pulse = undefined;
     camera = animate && !reducedMotion.matches && Object.keys(target).some(key => target[key] !== view[key]) ? { from: { ...view }, target } : undefined;
     if (!camera) Object.assign(view, target);
     invalidate();
   }
   function fit(activeOnly = false) {
-    camera = undefined;
+    camera = pulse = undefined;
     const points = activeOnly ? layout.nodes.filter(node => activeNodes.has(node.id)) : layout.nodes;
     if (!points.length || !width || !height) return;
     const xs = points.map(node => node.x), ys = points.map(node => node.y);
@@ -95,7 +96,7 @@ export function createNetwork(canvas, graph, onSelect, onAnchor) {
   }
   function zoomAt(factor, x = width / 2, y = height / 2) {
     if (!Number.isFinite(factor) || factor <= 0) return;
-    camera = undefined;
+    camera = pulse = undefined;
     const scale = clamp(view.scale * factor, 0.04, 12), ratio = scale / view.scale;
     view.x = x - (x - view.x) * ratio; view.y = y - (y - view.y) * ratio; view.scale = scale;
     invalidate();
@@ -114,6 +115,24 @@ export function createNetwork(canvas, graph, onSelect, onAnchor) {
       if (candidate <= target && candidate < distance) { closest = node.id; distance = candidate; }
     }
     if (closest !== undefined) { select(closest); onSelect(closest); }
+  }
+  function drawPulse(time, red) {
+    if (!pulse) return;
+    pulse.started ??= time;
+    const elapsed = time - pulse.started;
+    if (reducedMotion.matches || elapsed >= 1200) { pulse = undefined; return; }
+    context.strokeStyle = red; context.lineWidth = 1.5 / view.scale;
+    for (const delay of [0, 240]) {
+      const progress = (elapsed - delay) / 960;
+      if (progress < 0 || progress >= 1) continue;
+      context.beginPath();
+      for (const id of activeNodes) {
+        const node = layout.nodes[layout.indexes.get(id)];
+        const radius = (node.radius * 1.25 + 4 + 28 * progress) / view.scale;
+        context.moveTo(node.x + radius, node.y); context.arc(node.x, node.y, radius, 0, Math.PI * 2);
+      }
+      context.globalAlpha = 0.38 * (1 - progress) ** 2; context.stroke();
+    }
   }
   function draw(time) {
     frame = 0;
@@ -155,6 +174,7 @@ export function createNetwork(canvas, graph, onSelect, onAnchor) {
       context.globalAlpha = active ? 1 : 0.5;
       context.fillStyle = active ? color("--red", "#c74634") : color("--muted", "#747680"); context.fill();
     }
+    drawPulse(time, color("--red", "#c74634"));
     context.globalAlpha = 1;
     const node = layout.nodes[layout.indexes.get(selected)];
     let anchor = null;
@@ -168,11 +188,11 @@ export function createNetwork(canvas, graph, onSelect, onAnchor) {
       }
     }
     onAnchor?.(anchor);
-    Object.assign(canvas.dataset, { nodeCount: String(layout.nodes.length), edgeCount: String(layout.edges.length), activeNodeCount: String(activeNodes.size), activeEdgeCount: String(activeEdges.size), drawCount: String(Number(canvas.dataset.drawCount || 0) + 1), scale: String(view.scale), panX: String(view.x), panY: String(view.y), cameraMoving: String(Boolean(camera)) });
-    if (camera) invalidate();
+    Object.assign(canvas.dataset, { nodeCount: String(layout.nodes.length), edgeCount: String(layout.edges.length), activeNodeCount: String(activeNodes.size), activeEdgeCount: String(activeEdges.size), drawCount: String(Number(canvas.dataset.drawCount || 0) + 1), scale: String(view.scale), panX: String(view.x), panY: String(view.y), cameraMoving: String(Boolean(camera)), pulseActive: String(Boolean(pulse)) });
+    if (camera || pulse) invalidate();
   }
   function resize() {
-    camera = undefined;
+    camera = pulse = undefined;
     const first = !width || !height, oldWidth = width, oldHeight = height;
     width = canvas.clientWidth; height = canvas.clientHeight;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -185,7 +205,8 @@ export function createNetwork(canvas, graph, onSelect, onAnchor) {
   listen("wheel", event => { event.preventDefault(); const p = point(event); zoomAt(Math.exp(clamp(-event.deltaY * 0.002, -0.4, 0.4)), p.x, p.y); }, { passive: false });
   listen("pointerdown", event => {
     if (event.button !== 0) return;
-    camera = undefined;
+    camera = pulse = undefined;
+    invalidate();
     canvas.focus({ preventScroll: true }); canvas.setPointerCapture(event.pointerId);
     if (!pointers.size) pressPosition = point(event);
     pointers.set(event.pointerId, point(event)); moved = pointers.size > 1;
@@ -213,7 +234,7 @@ export function createNetwork(canvas, graph, onSelect, onAnchor) {
     else if (event.key.toLowerCase() === "f") fit(true);
     else if (event.key === "Enter") hit(width / 2, height / 2);
     else if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
-      camera = undefined;
+      camera = pulse = undefined;
       view.x += event.key === "ArrowLeft" ? 40 : event.key === "ArrowRight" ? -40 : 0;
       view.y += event.key === "ArrowUp" ? 40 : event.key === "ArrowDown" ? -40 : 0; invalidate();
     } else return;
@@ -224,13 +245,17 @@ export function createNetwork(canvas, graph, onSelect, onAnchor) {
   resize();
   return {
     setTrace(trace) {
-      camera = undefined;
+      camera = pulse = undefined;
       selected = undefined;
       activeNodes = new Set((trace?.nodes || []).filter(id => layout.indexes.has(id)));
       activeEdges = new Set((trace?.edges || []).map(edgeKey).filter(key => edgeKeys.has(key)));
       invalidate();
     },
+    pulse() {
+      if (destroyed || reducedMotion.matches || !activeNodes.size) return;
+      pulse = {}; invalidate();
+    },
     select, fit, zoom: zoomAt,
-    destroy() { destroyed = true; camera = undefined; onAnchor?.(null); cancelAnimationFrame(frame); events.abort(); observer.disconnect(); theme.disconnect(); pointers.clear(); },
+    destroy() { destroyed = true; camera = pulse = undefined; canvas.dataset.pulseActive = "false"; onAnchor?.(null); cancelAnimationFrame(frame); events.abort(); observer.disconnect(); theme.disconnect(); pointers.clear(); },
   };
 }

@@ -3,7 +3,7 @@
 // DOM, geometry and interaction checks only; never takes screenshots.
 async (page) => {
   const origin = await page.evaluate(() => location.origin);
-  const base = `${origin}/certi-tips/`;
+  const base = `${origin}/certitips/`;
   const route = `${base}data-governance/`;
   const modules = ['governance', 'data-architecture', 'data-modeling', 'data-operations', 'data-security', 'data-integration', 'content-management', 'master-reference-data', 'data-warehousing-bi', 'metadata', 'data-quality'];
   const slugs = ['overview', ...modules, 'oracle-map', 'glossary', 'case-study', 'practice'];
@@ -30,7 +30,7 @@ async (page) => {
     await page.goto(base);
     const labels = await page.locator('.path-nav .path-group > summary').allTextContents();
     assert(labels.join('|') === 'Foundation|AI & Agents|Data & AI|Architecture|Governance', 'Expected five ordered navigation groups');
-    const courseLink = '.path-group-panel a[href="/certi-tips/data-governance/overview/"]';
+    const courseLink = '.path-group-panel a[href="/certitips/data-governance/overview/"]';
     assert(await page.locator(`.path-nav ${courseLink}`).count() === 1 && await page.locator(`.path-nav-mobile ${courseLink}`).count() === 1, 'Governance must have desktop and mobile routes');
     const indexed = await page.locator('[data-search-kind="topic"] a').evaluateAll(links => links.map(link => link.href).filter(url => url.includes('/data-governance/')));
     assert(indexed.length === slugs.length && slugs.every(slug => indexed.includes(`${route}${slug}/`)), 'Search must index all sixteen Governance pages');
@@ -53,9 +53,9 @@ async (page) => {
     await page.waitForURL(`${route}overview/`);
     await page.keyboard.press('Control+k');
     await page.locator('#search-query').fill('Governance');
-    assert(await page.locator('[data-search-kind="certification"]:visible a[href="/certi-tips/data-governance/overview/"]').count() === 1, 'Search cannot find the Governance course');
+    assert(await page.locator('[data-search-kind="certification"]:visible a[href="/certitips/data-governance/overview/"]').count() === 1, 'Search cannot find the Governance course');
     await page.locator('#search-query').fill('metadatos');
-    const metadata = page.locator('[data-search-kind="topic"]:visible a[href="/certi-tips/data-governance/metadata/"]');
+    const metadata = page.locator('[data-search-kind="topic"]:visible a[href="/certitips/data-governance/metadata/"]');
     assert(await metadata.count() === 1, 'Search cannot find the metadata module');
     await metadata.click();
     await page.waitForURL(`${route}metadata/`);
@@ -139,7 +139,7 @@ async (page) => {
       await page.locator('#question-form button').click();
       assert(await page.locator('.feedback li').count() === 4, 'Missing option explanations');
       assert(await page.locator('input[name="answer"]:disabled').count() === 4, 'Confirmed answer is not locked');
-      assert((await page.locator('.review-link').getAttribute('href')).startsWith('/certi-tips/data-governance/'), 'Feedback links to another course');
+      assert((await page.locator('.review-link').getAttribute('href')).startsWith('/certitips/data-governance/'), 'Feedback links to another course');
       return text;
     };
     for (let index = 0; index < 22; index++) {

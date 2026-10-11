@@ -1,8 +1,8 @@
-// Open http://127.0.0.1:4173/certi-tips/ in an isolated playwright-cli session, then:
+// Open http://127.0.0.1:4173/certitips/ in an isolated playwright-cli session, then:
 // npx playwright-cli run-code --filename scripts/certichat-mobile-smoke.cjs
 // Mocked API and synthetic visualViewport events; no screenshots or paid calls.
 async (page) => {
-  const base = new URL('/certi-tips/', page.url());
+  const base = new URL('/certitips/', page.url());
   if (base.origin !== 'http://127.0.0.1:4173') throw new Error('Run this check against the local preview on 127.0.0.1:4173.');
   const assert = (condition, message) => { if (!condition) throw new Error(message); };
   const context = await page.context().browser().newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
@@ -177,7 +177,7 @@ async (page) => {
     }
     assert(requests.filter(request => request.path === '/api/chat').length === 1, 'Unexpected chat submissions');
     phase = 'reference navigation';
-    const publicBase = new URL('https://jgangini.github.io/certi-tips/');
+    const publicBase = new URL('https://jgangini.github.io/certitips/');
     const guide = new URL('1Z0-1085-26/oci-architecture/#regiones-y-dominios-de-fallo', publicBase).href;
     const referenceTab = await context.newPage();
     diagnosticTab = referenceTab;

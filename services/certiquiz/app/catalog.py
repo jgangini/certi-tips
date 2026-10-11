@@ -10,7 +10,7 @@ from threading import Lock
 from time import monotonic
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 
-SOURCE = "https://raw.githubusercontent.com/jgangini/certi-tips/main/data/"
+SOURCE = "https://raw.githubusercontent.com/jgangini/certitips/main/data/"
 CATALOG_BYTES = 256 * 1024
 BANK_BYTES = 2 * 1024 * 1024
 REFRESH_BYTES = 8 * 1024 * 1024

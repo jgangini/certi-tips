@@ -4,13 +4,13 @@ import { validateSite } from '../scripts/check-site.mjs';
 
 function fixture() {
   const slugs = ['overview', 'agents', 'langchain', 'mcp', 'openai', 'oci-enterprise', 'oracle-database'];
-  const catalog = { base: '/certi-tips/', origin: 'https://example.test', courses: [{ id: 'course', questionBank: 'questions', coverage: 'coverage', lessonCounts: [1, 7, 8, 8, 11, 9, 9], exam: { code: 'course' }, modules: slugs.map((slug, i) => ({ slug, type: i ? 'module' : 'orientation' })), resources: [{ slug: 'practice' }] }] };
-  const files = new Map([['index.html', '<main id="main"><a href="/certi-tips/course/agents/#conceptos-clave">Guide</a><img src="/certi-tips/assets/logo.svg"><script type="module" src="/certi-tips/assets/main.js"></script></main>'], ['assets/logo.svg', '<svg></svg>'], ['assets/main.js', 'import { ready } from "./helper.js";'], ['assets/helper.js', 'export const ready = true;']]);
+  const catalog = { base: '/certitips/', origin: 'https://example.test', courses: [{ id: 'course', questionBank: 'questions', coverage: 'coverage', lessonCounts: [1, 7, 8, 8, 11, 9, 9], exam: { code: 'course' }, modules: slugs.map((slug, i) => ({ slug, type: i ? 'module' : 'orientation' })), resources: [{ slug: 'practice' }] }] };
+  const files = new Map([['index.html', '<main id="main"><a href="/certitips/course/agents/#conceptos-clave">Guide</a><img src="/certitips/assets/logo.svg"><script type="module" src="/certitips/assets/main.js"></script></main>'], ['assets/logo.svg', '<svg></svg>'], ['assets/main.js', 'import { ready } from "./helper.js";'], ['assets/helper.js', 'export const ready = true;']]);
   for (const slug of [...slugs, 'practice']) files.set(`course/${slug}/index.html`, '<main id="conceptos-clave"><a href="#conceptos-clave">Section</a></main>');
   const diagrams = ['agent-loop', 'guardrails', 'langchain-flow', 'mcp-architecture', 'openai-stack', 'handoffs', 'oci-runtime', 'vector-search', 'database-capabilities'];
   for (const diagram of diagrams) {
     files.set(`assets/diagrams/${diagram}.svg`, '<svg xmlns="http://www.w3.org/2000/svg"><title>Concept</title><desc>An explanation.</desc><defs><marker id="arrow"/></defs><path marker-end="url(#arrow)"/></svg>');
-    files.set('index.html', `${files.get('index.html')}<img src="/certi-tips/assets/diagrams/${diagram}.svg" alt="Concept">`);
+    files.set('index.html', `${files.get('index.html')}<img src="/certitips/assets/diagrams/${diagram}.svg" alt="Concept">`);
   }
   const questions = slugs.slice(1).flatMap(domain => Array.from({ length: 6 }, (_, i) => ({ id: `${domain}-${i + 1}`, domain, question: 'Which choice works?', options: ['a', 'b', 'c', 'd'].map(id => ({ id, text: `Choice ${id}`, explanation: `Reason ${id}` })), correctOption: 'b', reference: { module: domain, anchor: 'conceptos-clave', label: 'Review this concept' } })));
   files.set('assets/questions.json', JSON.stringify(questions));
@@ -55,7 +55,7 @@ test('validates a second course with independent coverage and bank, including it
 test('reports broken assets and exact-case route mismatches', () => {
   const input = fixture();
   input.files.delete('assets/logo.svg');
-  input.files.set('index.html', `${input.files.get('index.html')}<a href="/certi-tips/course/Agents/index.html">Bad case</a>`);
+  input.files.set('index.html', `${input.files.get('index.html')}<a href="/certitips/course/Agents/index.html">Bad case</a>`);
   const issues = validateSite(input);
   includesIssue(issues, /index\.html: missing target .*assets\/logo\.svg/);
   includesIssue(issues, /case mismatch; actual: course\/agents\/index\.html/);
@@ -66,7 +66,7 @@ test('checks local anchors, encoded fragments and links escaping the base', () =
   input.files.set('course/agents/index.html', '<main id="conceptos-clave"><a href="#CONCEPTOS">bad</a><a href="#conceptos%2Dclave">good</a><a href="/course/agents/">outside</a></main>');
   const issues = validateSite(input);
   includesIssue(issues, /missing anchor #CONCEPTOS/);
-  includesIssue(issues, /internal URL is outside \/certi-tips\//);
+  includesIssue(issues, /internal URL is outside \/certitips\//);
   assert.ok(!issues.some(issue => issue.includes('conceptos%2Dclave')));
 });
 
@@ -116,7 +116,7 @@ test('rejects copied transcripts, local source paths and box-drawing schematics'
 test('requires diagram use, accessible descriptions and self-contained SVG content', () => {
   const input = fixture();
   input.files.set('assets/diagrams/agent-loop.svg', '<svg><title>Loop</title><script>alert(1)</script><use href="https://remote.test/icon.svg"/></svg>');
-  input.files.set('index.html', input.files.get('index.html').replace('<img src="/certi-tips/assets/diagrams/guardrails.svg" alt="Concept">', ''));
+  input.files.set('index.html', input.files.get('index.html').replace('<img src="/certitips/assets/diagrams/guardrails.svg" alt="Concept">', ''));
   const issues = validateSite(input);
   includesIssue(issues, /agent-loop\.svg: missing nonempty SVG desc/);
   includesIssue(issues, /<script> is not allowed/);
@@ -158,7 +158,7 @@ test('SVG illustrations allow inline PNG only and still reject active or externa
 test('validates newly added diagrams as well as the required originals', () => {
   const input = fixture();
   const file = 'assets/diagrams/new-concept.svg';
-  input.files.set('index.html', `${input.files.get('index.html')}<img src="/certi-tips/${file}" alt="New concept">`);
+  input.files.set('index.html', `${input.files.get('index.html')}<img src="/certitips/${file}" alt="New concept">`);
   input.files.set(file, '<svg><title>New concept</title><desc>A useful explanation.</desc></svg>');
   assert.deepEqual(validateSite(input), []);
   input.files.set(file, '<svg onload="alert(1)"><title>New concept</title><script>alert(1)</script></svg>');

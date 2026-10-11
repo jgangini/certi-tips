@@ -1,12 +1,12 @@
 // Run against the local Docker service only:
 // Run the CertiTips preview on 4173; it routes CertiQuiz to the local API on 18740.
-// npx --yes --package @playwright/cli playwright-cli -s=certiquiz open http://127.0.0.1:4173/certi-tips/certiquiz/
+// npx --yes --package @playwright/cli playwright-cli -s=certiquiz open http://127.0.0.1:4173/certitips/certiquiz/
 // npx --yes --package @playwright/cli playwright-cli -s=certiquiz run-code --filename scripts/certiquiz-browser-smoke.cjs
 // Guests create their own rooms without a host key or account.
 // No screenshots, tracing, videos, or persistent browser profiles.
 async (page) => {
   const origin = new URL(page.url()).origin;
-  const appUrl = `${origin}/certi-tips/certiquiz/`;
+  const appUrl = `${origin}/certitips/certiquiz/`;
   const apiOrigin = 'http://127.0.0.1:18740';
   if (origin !== 'http://127.0.0.1:4173') throw new Error('This check requires the local CertiTips preview on 4173 and CertiQuiz API on 18740.');
   const assert = (condition, message) => { if (!condition) throw new Error(message); };
@@ -141,11 +141,11 @@ async (page) => {
       throw new Error(`Entry did not load with API ${await host.locator('.certiquiz-app').getAttribute('data-api-origin')}: ${await host.locator('main').innerText()} ${loadingErrors.join('; ')}`);
     });
     assert(await host.locator('.certiquiz-app').getAttribute('data-api-origin') === apiOrigin, 'Local preview did not route CertiQuiz to its local API');
-    assert(await host.locator('script[src$="/certiquiz.js"]').getAttribute('src') === '/certi-tips/assets/certiquiz.js', 'CertiQuiz JavaScript is not hosted by CertiTips');
-    assert(await host.locator('link[href$="/certiquiz.css"]').getAttribute('href') === '/certi-tips/assets/certiquiz.css', 'CertiQuiz CSS is not hosted by CertiTips');
+    assert(await host.locator('script[src$="/certiquiz.js"]').getAttribute('src') === '/certitips/assets/certiquiz.js', 'CertiQuiz JavaScript is not hosted by CertiTips');
+    assert(await host.locator('link[href$="/certiquiz.css"]').getAttribute('href') === '/certitips/assets/certiquiz.css', 'CertiQuiz CSS is not hosted by CertiTips');
     assert(await host.locator('.welcome > :is(h1, .lead, .eyebrow)').count() === 0, 'Entry retains removed CertiQuiz heading, lead or eyebrow');
     const breadcrumb = host.getByRole('navigation', { name: 'Ruta de navegación' });
-    assert(await breadcrumb.getByRole('link', { name: 'Home' }).getAttribute('href') === '/certi-tips/' && await breadcrumb.locator('[aria-current="page"]').textContent() === 'CertiQuiz', 'CertiQuiz lacks its home breadcrumb');
+    assert(await breadcrumb.getByRole('link', { name: 'Home' }).getAttribute('href') === '/certitips/' && await breadcrumb.locator('[aria-current="page"]').textContent() === 'CertiQuiz', 'CertiQuiz lacks its home breadcrumb');
     const roleCards = host.locator('.role-options > .role-card');
     assert(await roleCards.count() === 2 && await roleCards.evaluateAll(nodes => nodes.every(node => node.tagName === 'BUTTON' && node.getAttribute('data-role'))), 'Role choices are not full-card buttons');
     assert(await host.locator('.role-card .role-action').count() === 0, 'Role cards retain duplicate action buttons');
@@ -230,9 +230,9 @@ async (page) => {
     assert(await host.locator('#join-form').count() === 0 && await host.locator('#create-form').count() === 1, 'Host role does not isolate its form');
     assert(new URL(host.url()).hash === '#host', 'Host role does not have a shareable URL fragment');
     const certiQuizBreadcrumb = host.getByRole('navigation', { name: 'Ruta de navegación' }).getByRole('link', { name: 'CertiQuiz' });
-    assert((await host.locator('.certiquiz-breadcrumb').innerText()).replace(/\s+/g, ' ').trim() === 'Home / CertiQuiz / Anfitrión' && await certiQuizBreadcrumb.getAttribute('href') === '/certi-tips/certiquiz/', 'Host breadcrumb does not provide the CertiQuiz base route');
+    assert((await host.locator('.certiquiz-breadcrumb').innerText()).replace(/\s+/g, ' ').trim() === 'Home / CertiQuiz / Anfitrión' && await certiQuizBreadcrumb.getAttribute('href') === '/certitips/certiquiz/', 'Host breadcrumb does not provide the CertiQuiz base route');
     await certiQuizBreadcrumb.click();
-    await host.waitForURL(url => new URL(url).pathname === '/certi-tips/certiquiz/' && new URL(url).hash === '');
+    await host.waitForURL(url => new URL(url).pathname === '/certitips/certiquiz/' && new URL(url).hash === '');
     await host.locator('[data-role="host"]').waitFor();
     assert(await host.locator('#app form').count() === 0, 'CertiQuiz breadcrumb did not return to role selection');
     await host.evaluate(() => { location.hash = 'host'; });
@@ -249,7 +249,7 @@ async (page) => {
     await accentFocus(host, host.getByLabel('Número de preguntas', { exact: true }), 'Dark host form');
     checks.push('Keyboard role selection, one form, inline PIN error, no key, default ten seconds, limit500 and standard accent focus');
 
-    const bankResponse = await host.request.get('http://127.0.0.1:4173/certi-tips/assets/questions.json');
+    const bankResponse = await host.request.get('http://127.0.0.1:4173/certitips/assets/questions.json');
     assert(bankResponse.ok(), 'Start/rebuild the CertiTips preview on port 4173 before running this check');
     const bank = await bankResponse.json();
     await host.getByLabel('Número de preguntas', { exact: true }).fill('999');
@@ -299,7 +299,7 @@ async (page) => {
     const confirmation = host.locator('dialog[data-confirm]');
     assert(await confirmation.evaluate(node => node.open && node.matches(':modal')), 'Room exit did not open a native modal');
     assert(await confirmation.locator('#confirmation-title').evaluate(node => node === document.activeElement && getComputedStyle(node).outlineStyle === 'none'), 'Destructive confirmation did not focus its static heading');
-    assert(await confirmation.locator('use').getAttribute('href') === '/certi-tips/assets/confirmation-question.svg#question', 'Room exit lost the shared question icon');
+    assert(await confirmation.locator('use').getAttribute('href') === '/certitips/assets/confirmation-question.svg#question', 'Room exit lost the shared question icon');
     await host.keyboard.press('Tab');
     assert(await confirmation.locator('[data-confirm-no]').evaluate(node => node === document.activeElement && node.matches(':focus-visible') && getComputedStyle(node).outlineStyle !== 'none'), 'Keyboard navigation lost the visible Cancel focus');
     const confirmationSize = await confirmation.evaluate(node => ({
@@ -550,7 +550,7 @@ async (page) => {
     await first.locator('[data-exit]').waitFor(); await second.locator('[data-exit]').waitFor();
     const final = await snapshot(first, code);
     assert(final.status === 'finished' && final.leaderboard[0].nickname === playerName && final.leaderboard[0].score === firstPoints && final.leaderboard[1].score === 0, 'Final winner/ranking is incorrect');
-    assert(new URL(first.url()).origin === origin && new URL(first.url()).pathname === '/certi-tips/certiquiz/', 'The game navigated outside CertiTips');
+    assert(new URL(first.url()).origin === origin && new URL(first.url()).pathname === '/certitips/certiquiz/', 'The game navigated outside CertiTips');
     await geometry(first, '390px results'); await geometry(second, '320px results');
     checks.push('Server deadline, unanswered question, late-answer rejection, active refresh, final winner');
 
@@ -579,10 +579,10 @@ async (page) => {
     assert(await first.locator('.leaderboard thead th').last().textContent() === 'Puntos', 'Leaderboard still labels scores as correct-answer counts');
     checks.push('Second room: faster correct answer earns more integer points and ranks first');
 
-    await host.goto('http://127.0.0.1:4173/certi-tips/');
+    await host.goto('http://127.0.0.1:4173/certitips/');
     const link = host.getByRole('link', { name: 'CertiQuiz', exact: true });
     await link.waitFor();
-    assert(await link.getAttribute('href') === '/certi-tips/certiquiz/', 'Home link does not stay inside CertiTips');
+    assert(await link.getAttribute('href') === '/certitips/certiquiz/', 'Home link does not stay inside CertiTips');
     assert(await link.getAttribute('target') === null, 'CertiQuiz opens an unwanted second tab');
     assert(await link.locator('svg').getAttribute('viewBox') === '0 0 1920 1920', 'Home button is missing the requested rocket');
     assert(JSON.stringify(await link.locator('svg path').evaluateAll(nodes => nodes.map(node => node.getAttribute('d')))) === JSON.stringify(rocketPaths), 'Initial failure changed the requested rocket paths');
@@ -602,7 +602,7 @@ async (page) => {
     await link.click();
     await host.waitForURL(appUrl);
     await host.locator('.certiquiz-app').waitFor();
-    assert(await host.locator('.site-header .brand').getAttribute('href') === '/certi-tips/', 'CertiQuiz lost the shared CertiTips header');
+    assert(await host.locator('.site-header .brand').getAttribute('href') === '/certitips/', 'CertiQuiz lost the shared CertiTips header');
     assert(await host.locator('#course-navigation').count() === 0, 'CertiQuiz incorrectly shows a course sidebar');
     checks.push('CertiTips home: internal rocket link, same tab, common header, responsive geometry');
     assert(errors.length === 0, `Browser JavaScript errors: ${errors.join('; ')}`);

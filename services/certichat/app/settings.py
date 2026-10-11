@@ -21,7 +21,7 @@ class Settings:
     allowed_origins: tuple[str, ...] = ("https://jgangini.github.io",)
     turnstile_hostname: str = "jgangini.github.io"
     knowledge_url: str = "http://knowledge:8001"
-    site_url: str = "https://jgangini.github.io/certi-tips/"
+    site_url: str = "https://jgangini.github.io/certitips/"
     mode: str = "VPS"
     refresh_hours: int = 6
     questions: int = 20

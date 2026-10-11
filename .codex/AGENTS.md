@@ -6,7 +6,7 @@ Keep this file repo-specific. Do not duplicate universal rules that already live
 
 ## Project Identity
 
-CertiTips publishes Spanish study guides and explained practice at `/certi-tips/` in `jgangini/certi-tips`. Use Node.js 24 and the existing Markdown build; no backend or browser framework is needed. Keep source transcripts outside this repository.
+CertiTips publishes Spanish study guides and explained practice at `/certitips/` in `jgangini/certitips`. Use Node.js 24 and the existing Markdown build; no backend or browser framework is needed. Keep source transcripts outside this repository.
 
 Repository checks: `npm run build`, `npm test`, `npm run check`. The checker validates every course's catalog-defined coverage, questions, diagrams, paths and anchors. Rebuild/check even for headings-only edits. `dist/` is generated and replaced on build.
 

@@ -1,7 +1,7 @@
 // Run in an isolated playwright-cli session after opening the local preview. No screenshots.
 async (page) => {
   const origin = await page.evaluate(() => location.origin);
-  const base = `${origin}/certi-tips/`;
+  const base = `${origin}/certitips/`;
   const route = `${base}1Z0-1122-26/`;
   const quizKey = 'certitips:quiz:v1:oci-ai-foundations-2026';
   const progressKey = 'certitips:progress:v1:oci-ai-foundations-2026';
@@ -14,7 +14,7 @@ async (page) => {
   await page.goto(base);
   const pages = await page.locator('[data-search-kind="topic"] a').evaluateAll(links => links.map(link => link.href).filter(url => url.includes('/1Z0-1122-26/')));
   assert(pages.length === 13, 'Search must index all 13 AI Foundations pages');
-  assert(await page.locator('#oci-ai-foundations-2026 .certitips-button').getAttribute('href') === '/certi-tips/1Z0-1122-26/overview/', 'Home does not link to new course');
+  assert(await page.locator('#oci-ai-foundations-2026 .certitips-button').getAttribute('href') === '/certitips/1Z0-1122-26/overview/', 'Home does not link to new course');
   for (const width of [1280, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
     for (const url of pages) {

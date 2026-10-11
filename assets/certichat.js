@@ -20,14 +20,13 @@ export function quotaText(quota, now = Date.now()) {
   return `Tus consultas se renovarán en ${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
 }
 
-export function answerWithReferences(answer, question, sources, siteRoot) {
-  const request = question.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\bfuentes? de datos\b/g, "datos");
-  if (/\b(sin|no\s+(?:incluyas|muestres|agregues|quiero|necesito|deseo|compartas))\b.{0,40}\b(referencias?|fuentes?|enlaces?|links?|profundizar|ampliar)\b/.test(request)) return answer;
-  // ponytail: explicit Spanish requests only; expand these phrases when real requests need it.
-  const explicit = /\b(?:donde|como puedo)\b.{0,70}\b(?:leer|profundizar|ampliar|aprender|consultar|encontrar|investigar)\b|\b(?:dime|dame|darme|muestra(?:me)?|mostrarme|comparte|compartirme|recomienda(?:me)?|indica(?:me)?|pasame|pasarme|necesito|quiero|busco|incluye|cuales? son|cual es)\s+(?:(?:ver|consultar)\s+)?(?:(?:el|la|los|las|un|una|unos|unas|algun|algunos|alguna|algunas|tus|sus)\s+)?(?:referencias?|fuentes?|enlaces?|links?|profundizar|ampliar)\b|^\s*(?:referencias?|fuentes?|enlaces?|links?)[\s?.!]*$/.test(request);
-  if (!explicit) return answer;
-  const links = (Array.isArray(sources) ? sources : []).filter(source => typeof source?.title === "string" && safeSourceURL(source.url, siteRoot)).slice(0, 6).map(source => `[${source.title.replace(/[\[\]\r\n]/g, " ").slice(0, 200)}](${safeSourceURL(source.url, siteRoot)})`);
-  return links.length ? `${answer}\n\nPara profundizar:\n${links.join("\n")}` : answer;
+export function answerWithReferences(answer, sources, siteRoot) {
+  const links = new Map();
+  for (const source of Array.isArray(sources) ? sources : []) {
+    const url = safeSourceURL(source?.url, siteRoot);
+    if (url && typeof source?.title === "string" && source.title.trim() && !links.has(url)) links.set(url, `[${source.title.replace(/[\[\]\r\n]/g, " ").slice(0, 200)}](${url})`);
+  }
+  return links.size ? `${answer}\n\nPara profundizar:\n${[...links.values()].slice(0, 8).join("\n")}` : answer;
 }
 
 export function isChatPreview(pageURL, apiURL) {
@@ -105,9 +104,11 @@ if (root) {
   }
 
   function focusResponse(event) {
-    if (!dock || busy || (event.type === "pointerover" && event.pointerType !== "mouse")) return;
+    if (!dock || busy || event.target.closest?.("a")) return;
+    if (event.type === "keydown" && (!["Enter", " "].includes(event.key) || event.repeat)) return;
     const bubble = event.target.closest?.(responseSelector);
-    if (!bubble || bubble.classList.contains("streamed-message") || bubble.contains(event.relatedTarget)) return;
+    if (!bubble || bubble.classList.contains("streamed-message")) return;
+    if (event.type === "keydown") event.preventDefault();
     const index = [...chat.shadowRoot.querySelectorAll(responseSelector)].indexOf(bubble);
     const trace = responseTraces[index];
     window.dispatchEvent(new CustomEvent("certichat:focus", { detail: trace || null }));
@@ -201,6 +202,7 @@ if (root) {
       chat.messageStyles.loading = { message: { styles: { bubble: { display: "flex", alignItems: "center", justifyContent: "center", width: "56px", height: "36px", padding: "0", boxSizing: "border-box" } } } };
       chat.remarkable = { html: false, applyHTML: false };
       chat.auxiliaryStyle = "* { overflow-wrap: anywhere; } #chat-view { grid-template-rows: minmax(0, 1fr) auto auto; } #certichat-quota { color: var(--muted); text-align: center; font-size: 12px; line-height: 1.4; padding: 8px 12px; } #certichat-quota[hidden] { display: none; } a { color: var(--blue); text-decoration: underline; } a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; } @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }";
+      if (dock) chat.auxiliaryStyle += `${responseSelector}:not(.streamed-message) { border: 1px solid transparent; cursor: pointer; } ${responseSelector}:not(.streamed-message):hover { border-color: var(--red); } ${responseSelector}:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }`;
       chat.introMessage = { text: "Hola. Resuelve tus dudas sobre las guías y prácticas del sitio." };
       chat.history = saved.messages.map(({ role, text }) => ({ role, text }));
       chat.onMessage = ({ isHistory, message }) => {
@@ -225,8 +227,8 @@ if (root) {
         input?.setAttribute("enterkeyhint", "send");
         chat.shadowRoot.querySelector('.input-button.inside-end')?.setAttribute("aria-label", "Enviar consulta");
         if (dock) {
-          chat.shadowRoot.addEventListener("pointerover", focusResponse);
-          chat.shadowRoot.addEventListener("focusin", focusResponse);
+          chat.shadowRoot.addEventListener("click", focusResponse);
+          chat.shadowRoot.addEventListener("keydown", focusResponse);
           chat.shadowRoot.querySelectorAll(responseSelector).forEach(bubble => { bubble.tabIndex = 0; });
         }
         updateQuota();
@@ -263,7 +265,7 @@ if (root) {
             const result = await api("chat", pendingRequest);
             completedRequest = pendingRequest.requestId;
             completedTrace = normalizeTrace(result.graphTrace, root.dataset.siteRoot);
-            answer = answerWithReferences(String(result.answer || "No encontré una respuesta en las guías disponibles."), message, result.sources, root.dataset.siteRoot);
+            answer = answerWithReferences(String(result.answer || "No encontré una respuesta en las guías disponibles."), result.sources, root.dataset.siteRoot);
             updateQuota(result.quota); setStatus("");
             publishTrace(root.dataset.siteRoot, "ready", result.graphTrace);
           }

@@ -2,7 +2,8 @@
 
 Run in the API environment with --live --output /tmp/evaluation.json. This is not
 a unit test: retrieval and generation can incur charges. No automatic retries.
-Automated checks establish support/provenance, not semantic answer correctness.
+Automated checks establish support/provenance and named scenario coverage; full
+semantic answer correctness still needs review of the saved responses.
 """
 
 import argparse
@@ -11,6 +12,7 @@ from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
 import json
 from pathlib import Path
+import re
 import time
 from types import SimpleNamespace
 from uuid import uuid4
@@ -42,6 +44,11 @@ CASES = [
     ("followup_references", [("que sabes de dama y oci", True),
                              ("en donde puedo investigar mas sobre este tema o relacion", True)]),
     ("topic_switch", [("¿Qué es DAMA?", True), ("¿Qué es una región de OCI?", True)]),
+    ("topic_switch_certifications", [("que sabes de dama y oci", True),
+                                     ("donde buscar mas informacion", True),
+                                     ("dame en enlace", True),
+                                     ("me referia al enlace en estas guias", True),
+                                     ("cuales son las certificaciones de oci que tienes", True)]),
     ("partial_support", [("¿Qué es DAMA y qué tiempo hará mañana en Lima?", True)]),
     ("repeated_variants", [("De qué trata dama y OCI", True),
                             ("¿De qué tratan OCI y DAMA?", True),
@@ -87,7 +94,7 @@ async def evaluate_turn(application, provider, question, expected, history, publ
     start = time.monotonic()
     result = {"question": question, "expected_supported": expected, "input_history_turns": len(history)}
     try:
-        body = ChatBody(requestId=str(uuid4()), message=question, pageUrl=application.state.settings.site_url)
+        body = ChatBody(requestId=str(uuid4()), message=question, pageUrl=application.state.settings.site_url + "certichat/")
         version, fragments, trace = await retrieve(application, body, history)
         current_history = [{"question": row["question"], "answer": row["answer"]}
                            for row in history if row["version"] == version]
@@ -107,11 +114,24 @@ async def evaluate_turn(application, provider, question, expected, history, publ
     return result, history
 
 
-async def evaluate(output_path):
+def certification_coverage(answer, navigation):
+    checks = {name: bool(re.search(pattern, answer, re.IGNORECASE)) for name, pattern in {
+        "foundations": r"(?:OCI|Oracle Cloud Infrastructure)\s+Foundations",
+        "ai_foundations": r"(?:OCI|Oracle Cloud Infrastructure)\s+AI Foundations",
+        "agentic_foundations": r"(?:Oracle\s+|OCI\s+)?Agentic AI Foundations",
+    }.items()}
+    upcoming = [line.split(":", 1)[0] for line in navigation.splitlines() if "guía próximamente" in line]
+    checks["upcoming_guides_labeled"] = (not any(title.casefold() in answer.casefold() for title in upcoming)
+                                        or bool(re.search(r"próximamente|pendiente|aún no|todavía no", answer, re.IGNORECASE)))
+    return checks
+
+
+async def evaluate(output_path, case=None):
     settings = Settings.from_env()
     settings.validate()
     manifest = validate_manifest(json.loads(await download(MANIFEST_URL, 2_000_000)))
     documents = validate_corpus(await download(CORPUS_URL, 16_000_000), manifest)
+    navigation = "\n".join(doc["text"] for doc in documents if doc["url"] == settings.site_url)
     published = {name.removesuffix(".txt"): source for name, source in segments(documents).items()}
     report = {"started_at": datetime.now(timezone.utc).isoformat(), "corpus_version": manifest["contentHash"],
               "cost_scope": "Reported answer generation only; retrieval embeddings also use the persisted budget but are not included here.",
@@ -130,6 +150,8 @@ async def evaluate(output_path):
             provider = ObservedProvider(settings, store, client, client)
             application = SimpleNamespace(state=SimpleNamespace(settings=settings, client=client))
             for name, turns in CASES:
+                if case and name != case:
+                    continue
                 history = []
                 for turn_index, (question, expected) in enumerate(turns):
                     # Repeated variants are independent fresh conversations, not automatic retries.
@@ -139,6 +161,9 @@ async def evaluate(output_path):
                     result, history = await evaluate_turn(application, provider, question, expected,
                                                           history, published, manifest["contentHash"])
                     result.update(case=name, turn=turn_index + 1, http_failures=list(failures))
+                    if name == "topic_switch_certifications" and turn_index == len(turns) - 1:
+                        result["required_topic_coverage"] = certification_coverage(result.get("answer", ""), navigation)
+                        result["passed"] = result["passed"] and all(result["required_topic_coverage"].values())
                     report["results"].append(result)
                     output_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
                     print(json.dumps({key: result[key] for key in ("case", "turn", "passed", "seconds", "error")
@@ -152,6 +177,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--live", action="store_true", required=True, help="Authorize paid calls for these synthetic evaluation cases.")
     parser.add_argument("--output", type=Path, required=True, help="Private JSON report destination, for example /tmp/evaluation.json.")
+    parser.add_argument("--case", choices=[name for name, _ in CASES], help="Run just this scenario to bound paid diagnostic calls.")
     args = parser.parse_args()
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    raise SystemExit(0 if asyncio.run(evaluate(args.output)) else 1)
+    raise SystemExit(0 if asyncio.run(evaluate(args.output, args.case)) else 1)

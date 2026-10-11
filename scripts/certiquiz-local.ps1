@@ -46,5 +46,5 @@ Invoke-Docker @compose up -d --wait postgres
 Invoke-Docker @compose run --rm migrate
 Invoke-Docker @compose up -d --wait api
 if ($Test) { Invoke-Docker @compose --profile test run --build --rm test }
-Write-Output 'CertiQuiz frontend (CertiTips preview): http://127.0.0.1:4173/certi-tips/certiquiz/'
+Write-Output 'CertiQuiz frontend (CertiTips preview): http://127.0.0.1:4173/certitips/certiquiz/'
 Write-Output 'CertiQuiz API health: http://127.0.0.1:18740/api/health'

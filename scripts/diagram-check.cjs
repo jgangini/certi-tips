@@ -2,7 +2,7 @@
 async (page) => {
   const origin = await page.evaluate(() => location.origin);
   const sources = new Set();
-  await page.goto(`${origin}/certi-tips/`);
+  await page.goto(`${origin}/certitips/`);
   const pages = await page.locator('[data-search-kind="topic"] a').evaluateAll(links => links.map(link => link.href));
   for (const url of pages) {
     await page.goto(url);
@@ -173,7 +173,7 @@ async (page) => {
       return { name, labels: boxes.length, minimumFont: Math.min(...boxes.map(item => item.size)), slideSize, outside, overlaps, composition, coveredLabels, alignment, tableCellCount: markedCells.length, tableCells, tagAlignment, proximity, iconSpacing, borderCrossings, sourcedIcons: sourcedIcons.length, iconCollisions, detachedIcons };
     }, name));
   }
-  await page.goto(`${origin}/certi-tips/`);
+  await page.goto(`${origin}/certitips/`);
   // The user-supplied pyramid keeps its native 10/12px type, displayed at a uniform 1.72 scale.
   const issues = reports.filter(item => !item.slideSize || item.outside.length || item.overlaps.length || item.composition.length || item.coveredLabels.length || item.alignment.length || item.tableCells.length || item.tagAlignment.length || item.proximity.length || item.iconSpacing.length || item.borderCrossings.length || item.iconCollisions.length || item.detachedIcons.length || item.minimumFont < (item.name === 'gov-overview-map.svg' ? 10 : item.name.startsWith('gov-') ? 25.5 : 14));
   if (issues.length) throw new Error(JSON.stringify(issues));

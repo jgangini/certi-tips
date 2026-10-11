@@ -2,7 +2,7 @@
 // DOM and accessible-state checks, isolated mocked API, real public graph; no screenshots or paid calls.
 async page => {
   const assert = (condition, message) => { if (!condition) throw new Error(message); };
-  const base = new URL('/certi-tips/', page.url()), context = await page.context().browser().newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
+  const base = new URL('/certitips/', page.url()), context = await page.context().browser().newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
   const tab = await context.newPage(), requests = [], calls = [], errors = [], checks = [], geometry = [];
   let snapshot, graphOverride, reply = {}, releaseReply, pendingReply;
   const quota = { remaining: 20, limit: 20, refreshHours: 6, resetAt: null, minuteRemaining: 2, retryAfter: 0 };
@@ -17,7 +17,7 @@ async page => {
       if (url.pathname !== '/api/chat') return route.fulfill({ json: session });
       const response = reply;
       if (pendingReply) await pendingReply;
-      return route.fulfill({ status: response.status || 200, json: response.status ? { detail: 'simulated failure' } : { answer: response.answer, graphTrace: response.trace, sources: [], quota, contentVersion: 'different-manifest-version' } });
+      return route.fulfill({ status: response.status || 200, json: response.status ? { detail: 'simulated failure' } : { answer: response.answer, graphTrace: response.trace, sources: response.trace?.sources || [], quota, contentVersion: 'different-manifest-version' } });
     }
     if (url.pathname.endsWith('/assets/certichat/graph.json')) {
       if (graphOverride === 'error') return route.fulfill({ status: 503, body: '{}' });
@@ -189,8 +189,10 @@ async page => {
     await tab.waitForFunction(() => !document.querySelector('deep-chat').validateInput('Mientras espera'));
     await active([]);
     assert(await card.isHidden(), 'New query left the previous concept card visible');
+    assert(await tab.locator('[data-graph-trace]').isHidden() && !(await tab.locator('[data-graph-trace]').textContent()).trim(), 'Removed graph loading message is still shown');
     const responses = tab.locator('deep-chat .outer-message-container:not(.deep-chat-intro) .ai-message:not(.deep-chat-loading-message-bubble)');
     await responses.first().hover(); await active([]);
+    await responses.first().click({ position: { x: 5, y: 5 } }); await active([]);
     releaseReply(); pendingReply = undefined;
     await answered('Respuesta: Consulta dos.');
     await active(trace2.nodes, trace2.edges);
@@ -200,9 +202,21 @@ async page => {
     await tab.locator('[data-graph-fit]').click();
     await tab.emulateMedia({ reducedMotion: 'no-preference' });
     await tab.mouse.move(0, 0);
+    const beforeHover = await state();
     await responses.first().hover();
+    await active(trace2.nodes, trace2.edges);
+    assert(JSON.stringify(await state()) === JSON.stringify(beforeHover), 'Hover moved the camera or changed the active trace');
+    assert(await responses.first().evaluate(element => {
+      const style = getComputedStyle(element), reference = document.createElement('span');
+      reference.style.color = 'var(--red)'; element.append(reference);
+      const red = getComputedStyle(reference).color; reference.remove();
+      return style.borderTopWidth === '1px' && style.borderTopColor === red;
+    }), 'Explorer answer hover does not have the theme red border');
+    await responses.first().focus();
+    assert(JSON.stringify(await state()) === JSON.stringify(beforeHover), 'Keyboard focus moved the camera before activation');
+    await responses.first().click({ position: { x: 5, y: 5 } });
     await active(trace1.nodes, trace1.edges);
-    const hoverFrames = await canvas.evaluate(element => new Promise(resolve => {
+    const clickFrames = await canvas.evaluate(element => new Promise(resolve => {
       const frames = [];
       const sample = () => {
         frames.push({ ...element.dataset });
@@ -211,25 +225,37 @@ async page => {
       };
       sample();
     }));
-    assert(hoverFrames.length >= 3 && hoverFrames.at(-1).cameraMoving === 'false' && new Set(hoverFrames.map(frame => `${frame.scale}:${frame.panX}:${frame.panY}`)).size >= 3, 'Hover did not use smooth intermediate camera positions');
+    assert(clickFrames.length >= 3 && clickFrames.at(-1).cameraMoving === 'false' && new Set(clickFrames.map(frame => `${frame.scale}:${frame.panX}:${frame.panY}`)).size >= 3, 'Click did not use smooth intermediate camera positions');
+    assert(await canvas.getAttribute('data-pulse-active') === 'true', 'Click did not start the concept pulse');
+    await tab.waitForFunction(() => document.querySelector('canvas[data-graph-canvas]').dataset.pulseActive === 'false');
+    const idleDraws = await canvas.getAttribute('data-draw-count');
+    await canvas.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    assert(await canvas.getAttribute('data-draw-count') === idleDraws, 'Concept pulse kept drawing after finishing');
     await tab.locator(`[data-graph-active] button[data-concept="${first.source}"]`).click();
     await card.waitFor({ state: 'visible' });
-    assert(await card.locator('a').getAttribute('href') === trace1.sources[0].url, 'Hover restored concepts with the wrong response source');
+    assert(await card.locator('a').getAttribute('href') === trace1.sources[0].url, 'Click restored concepts with the wrong response source');
     await tab.emulateMedia({ reducedMotion: 'reduce' });
     await tab.waitForFunction(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
-    await responses.nth(1).focus(); await active(trace2.nodes, trace2.edges);
+    await responses.nth(1).focus(); await active(trace1.nodes, trace1.edges);
+    await responses.nth(1).press('Enter'); await active(trace2.nodes, trace2.edges);
     await canvas.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-    assert(await canvas.getAttribute('data-camera-moving') === 'false', 'Keyboard focus ignored reduced motion');
-    await responses.first().hover(); await active(trace1.nodes, trace1.edges);
-    assert(calls.filter(call => call.path === '/api/chat').length === countBeforeReload, 'Hover made an API request');
-    checks.push('response hover focuses its own concepts and sources smoothly; keyboard/reduced motion supported; pending response ignores hover');
+    assert(await canvas.getAttribute('data-camera-moving') === 'false' && await canvas.getAttribute('data-pulse-active') === 'false', 'Keyboard activation ignored reduced motion');
+    await responses.first().focus(); await responses.first().press('Space'); await active(trace1.nodes, trace1.edges);
+    await responses.nth(1).click({ position: { x: 5, y: 5 } }); await active(trace2.nodes, trace2.edges);
+    const beforeLink = await state(), guideLink = responses.first().locator('a');
+    await guideLink.evaluate(link => link.addEventListener('click', event => event.preventDefault(), { once: true }));
+    await guideLink.click();
+    assert(JSON.stringify(await state()) === JSON.stringify(beforeLink), 'Reference click also selected the answer graph');
+    assert(await tab.evaluate(root => sessionStorage.getItem(`certichat:${root}:reference`), siteRoot) === trace1.sources[0].url, 'Reference click lost its navigation marker');
+    assert(calls.filter(call => call.path === '/api/chat').length === countBeforeReload, 'Response interaction made an API request');
+    checks.push('answer hover shows red border without moving graph; click centers historical evidence smoothly and pulses briefly', 'Enter and Space activate responses, focus alone and reference clicks do not; reduced motion skips animation');
 
     await tab.reload(); await ready(); await active(trace2.nodes, trace2.edges);
     await openChat();
-    await responses.first().hover(); await active(trace1.nodes, trace1.edges);
-    await responses.nth(1).hover(); await active(trace2.nodes, trace2.edges);
+    await responses.first().click({ position: { x: 5, y: 5 } }); await active(trace1.nodes, trace1.edges);
+    await responses.nth(1).click({ position: { x: 5, y: 5 } }); await active(trace2.nodes, trace2.edges);
     assert(calls.filter(call => call.path === '/api/chat').length === countBeforeReload, 'Restoring trace submits a paid query');
-    checks.push('restored answers retain distinct traces; hovering history does not overwrite the latest saved trace');
+    checks.push('restored answers retain distinct traces; clicking history does not overwrite the latest saved trace');
     await tab.evaluate(() => {
       const key = `certichat:${document.querySelector('[data-certichat]').dataset.siteRoot}:graph`, saved = JSON.parse(sessionStorage.getItem(key));
       saved.updatedAt = Date.now() - 86400001; sessionStorage.setItem(key, JSON.stringify(saved));
@@ -244,10 +270,10 @@ async page => {
     await send('Consulta con otra versión', { ...trace2, version: 'f'.repeat(64) }); await answered('Respuesta: Consulta con otra versión.'); await active([]);
     assert(/versi[oó]n/i.test(await tab.locator('[data-graph-trace]').textContent()), 'Version mismatch has no accessible explanation');
     await send('Respuesta antigua sin traza'); await answered('Respuesta: Respuesta antigua sin traza.'); await active([]);
-    await responses.first().hover(); await active(trace1.nodes, trace1.edges);
-    await responses.last().hover(); await active([]);
-    await responses.first().hover(); await active(trace1.nodes, trace1.edges);
-    await responses.filter({ hasText: 'El servicio no está disponible' }).hover(); await active([]);
+    await responses.first().click({ position: { x: 5, y: 5 } }); await active(trace1.nodes, trace1.edges);
+    await responses.last().click({ position: { x: 5, y: 5 } }); await active([]);
+    await responses.first().click({ position: { x: 5, y: 5 } }); await active(trace1.nodes, trace1.edges);
+    await responses.filter({ hasText: 'El servicio no está disponible' }).click({ position: { x: 5, y: 5 } }); await active([]);
     checks.push('API errors and empty evidence clear trace', 'version mismatch stays gray', 'legacy response without trace stays gray');
 
     await send('Consulta antes de borrar', trace1); await answered('Respuesta: Consulta antes de borrar.'); await active(trace1.nodes, trace1.edges);
@@ -262,17 +288,23 @@ async page => {
     await send('Consulta después de borrar', trace2); await answered('Respuesta: Consulta después de borrar.');
     checks.push('first streamed response completed');
     await tab.locator('[data-graph-fit]').click();
-    await responses.first().hover(); await active(trace2.nodes, trace2.edges);
+    await responses.first().click({ position: { x: 5, y: 5 } }); await active(trace2.nodes, trace2.edges);
     await send('Consulta después de borrar', trace1); await answered('Respuesta: Consulta después de borrar.');
     await tab.waitForFunction(() => {
       const chat = document.querySelector('deep-chat');
       return chat.getMessages().length === 4 && chat.validateInput('Siguiente');
     });
     checks.push('duplicate streamed response completed');
-    await responses.first().hover(); await active(trace2.nodes, trace2.edges);
-    await responses.nth(1).hover(); await active(trace1.nodes, trace1.edges);
+    await responses.first().click({ position: { x: 5, y: 5 } }); await active(trace2.nodes, trace2.edges);
+    await responses.nth(1).click({ position: { x: 5, y: 5 } }); await active(trace1.nodes, trace1.edges);
     await tab.emulateMedia({ reducedMotion: 'reduce' });
     checks.push('simulated streaming and clearing keep response evidence aligned');
+    for (const question of ['donde buscar mas informacion', 'dame en enlace', 'me referia al enlace en estas guias']) {
+      await send(question, trace1); await answered(`Respuesta: ${question}.`);
+      const links = responses.last().locator('a');
+      assert(await links.count() === 1 && await links.getAttribute('href') === trace1.sources[0].url, `Follow-up did not show its verified guide link: ${question}`);
+    }
+    checks.push('source links appear for paraphrased follow-ups and typos, without intent matching');
 
     for (const width of [1440, 1280, 1024, 800, 360, 320]) {
       await tab.setViewportSize({ width, height: 900 });
@@ -321,6 +353,7 @@ async page => {
     await tab.waitForFunction(() => Number(document.querySelector('canvas[data-graph-canvas]').dataset.activeNodeCount) === 1);
     const labelButton = tab.locator('[data-graph-active] button[data-concept]');
     assert(await labelButton.textContent() === graphOverride.nodes[0].label && await labelButton.locator('img').count() === 0, 'Graph label activated HTML');
+    await tab.mouse.move(0, 0);
     await labelButton.focus(); await labelButton.press('Enter');
     await card.waitFor({ state: 'visible' });
     assert(await card.locator('img').count() === 0 && await card.locator('a').count() === 1 && await card.locator('a').textContent() === graphOverride.nodes[0].label, 'Card activated HTML or an unsafe URL');

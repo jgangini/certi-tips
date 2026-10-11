@@ -2,7 +2,7 @@
 
 Guías visuales en español para preparar certificaciones con conceptos, ejemplos y práctica explicada.
 
-**Sitio:** https://jgangini.github.io/certi-tips/
+**Sitio:** https://jgangini.github.io/certitips/
 
 La portada organiza once certificaciones en **Foundation Sprint** (tres certificaciones de nivel 1) y tres especialidades: **AI & Agents**, **Data & AI** y **Architecture**. Las flechas muestran un grupo a la vez, con sus certificaciones en lista; el menú superior permite ir directo a cualquiera. Dentro de cada especialidad, los niveles 2 y 3 van de fundamentos profesionales a aplicaciones más avanzadas. La secuencia es una recomendación editorial de CertiTips, no un prerrequisito oficial. **Oracle AI Data Platform Professional (1Z0-1154-26)** está en Data & AI, nivel 3: su [ruta oficial](https://mylearn.oracle.com/ou/learning-path/become-an-oracle-ai-data-platform-professional/164914) abarca datos gobernados y diseño, pruebas y despliegue de agentes. Essentials no se presenta como certificación. Los nombres visibles omiten el año; los códigos de examen y enlaces oficiales conservan su edición. Las rutas sin guía propia llevan al contenido oficial de Oracle.
 
@@ -28,14 +28,14 @@ npm run check
 npm run preview
 ```
 
-Abrir `http://127.0.0.1:4173/certi-tips/`. El servidor solo escucha en loopback. Las páginas generadas se encuentran en `dist/`; no se editan ni se registran en Git.
+Abrir `http://127.0.0.1:4173/certitips/`. El servidor solo escucha en loopback. Las páginas generadas se encuentran en `dist/`; no se editan ni se registran en Git.
 
 El botón **Search** y `Ctrl+K` buscan certificaciones y apartados de la guía; el botón contiguo cambia entre los modos claro y oscuro. La preferencia queda en el navegador.
 
 ## Actualizar el contenido
 
 - Editar los capítulos de `content/` para Agentic AI, `content/oci-ai-foundations-2026/` para AI Foundations y `content/oci-foundations-2026/` para OCI Foundations. El encabezado H1 procede del catálogo; usar H2/H3 dentro de cada capítulo.
-- `{{base}}` se convierte en `/certi-tips/` durante la construcción. Usarlo en enlaces internos e imágenes.
+- `{{base}}` se convierte en `/certitips/` durante la construcción. Usarlo en enlaces internos e imágenes.
 - Los IDs de encabezado se generan en minúsculas, sin tildes y con guiones. Si cambia un encabezado, actualizar las referencias que apunten a él.
 - En Data Management Fundamentals, los títulos de página, apartados y etiquetas de navegación llevan mayúscula inicial en las palabras significativas: «Gobierno de Datos», «Conceptos Clave» y «Fuentes y Repaso». Artículos, preposiciones y conjunciones quedan en minúscula salvo al inicio. Conservar siglas y nombres oficiales de productos.
 - `data/catalog.json` define rutas, módulos, recursos y ficha del examen. Cada curso selecciona `contentDir` (vacío para el original), `questionBank`, `coverage` y `lessonCounts` (conteos fuente en orden de módulos, incluida orientación). Los tres archivos `data/coverage*.json` relacionan 53, 72 y 57 lecciones con secciones reales. No se publican transcripciones ni rutas personales.

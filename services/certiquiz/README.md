@@ -1,6 +1,6 @@
 # CertiQuiz
 
-Práctica de grupo con los bancos de CertiTips. La interfaz permanece en `https://jgangini.github.io/certi-tips/certiquiz/`, con la navegación y el tema del sitio. El botón abre esa ruta en la misma pestaña. El VPS publica únicamente las APIs bajo `https://certiquiz.cloudtechnext.net/api/`; no aloja otra página de CertiQuiz.
+Práctica de grupo con los bancos de CertiTips. La interfaz permanece en `https://jgangini.github.io/certitips/certiquiz/`, con la navegación y el tema del sitio. El botón abre esa ruta en la misma pestaña. El VPS publica únicamente las APIs bajo `https://certiquiz.cloudtechnext.net/api/`; no aloja otra página de CertiQuiz.
 
 El subdominio es una dirección de servicio, no una segunda interfaz. Una ruta en otro dominio existente también funcionaría, pero el host dedicado separa la configuración y las cookies de otras aplicaciones. No requiere comprar otro dominio, ni concede acceso administrativo al VPS. GitHub Pages sirve archivos estáticos y no ejecuta la API.
 
@@ -32,7 +32,7 @@ npm run check
 node scripts/certiquiz-smoke.mjs --players=500
 ```
 
-Con `npm run preview`, la aplicación abre en `http://127.0.0.1:4173/certi-tips/certiquiz/`; la API escucha en 18740. El helper conserva las credenciales de base de datos en `services/certiquiz/.env`, excluido de Git y limitado al usuario de Windows. No se necesita una clave para crear salas. Los tests usan otra base desechable, en una red separada; nunca restauran ni alteran CloudTechNext. El sondeo HTTP usa una sala real de prueba en el CertiQuiz local y la finaliza al terminar. Las cargas mayores de 100 participantes solo se permiten contra loopback.
+Con `npm run preview`, la aplicación abre en `http://127.0.0.1:4173/certitips/certiquiz/`; la API escucha en 18740. El helper conserva las credenciales de base de datos en `services/certiquiz/.env`, excluido de Git y limitado al usuario de Windows. No se necesita una clave para crear salas. Los tests usan otra base desechable, en una red separada; nunca restauran ni alteran CloudTechNext. El sondeo HTTP usa una sala real de prueba en el CertiQuiz local y la finaliza al terminar. Las cargas mayores de 100 participantes solo se permiten contra loopback.
 
 La prueba de 500 usa el máximo de preguntas disponible (hasta 30), juega dos rondas de 10 segundos con respuestas en tandas de 64, comprueba el rechazo del participante 501 y finaliza la sala. El modo predeterminado `browser` reproduce la espera y la pausa durante el envío del navegador; mantiene una consulta independiente por participante y también mide la sala de espera y la revelación. Deja un participante sin responder para ejercitar el vencimiento. La prueba de integración separada verifica 500 respuestas aceptadas y puntuadas dentro de 10 segundos. El modo navegador exige p95 de consultas y respuestas de hasta un segundo, cada solicitud por debajo de 10 segundos, p95 entre inicios de consultas de hasta dos segundos y entrega de cada pregunta a todos en dos segundos. Estas pruebas no alteran las salas del usuario.
 
@@ -44,7 +44,7 @@ El build normal configura la API HTTPS productiva. `CERTIQUIZ_API_ORIGIN` es con
 
 ## Actualizar preguntas desde GitHub
 
-En producción, `CERTIQUIZ_CATALOG_SOURCE=github` consulta exclusivamente `jgangini/certi-tips`, rama `main`: `data/catalog.json` y los bancos identificados por `questionBank`. Cada cinco minutos, la siguiente consulta al catálogo puede actualizar una caché compartida por el proceso. El servidor valida el conjunto completo antes de sustituirlo; una descarga fallida o inválida conserva el último conjunto válido. Al iniciar, dispone de los bancos empaquetados como respaldo. Las salas en curso conservan las preguntas con las que se crearon.
+En producción, `CERTIQUIZ_CATALOG_SOURCE=github` consulta exclusivamente `jgangini/certitips`, rama `main`: `data/catalog.json` y los bancos identificados por `questionBank`. Cada cinco minutos, la siguiente consulta al catálogo puede actualizar una caché compartida por el proceso. El servidor valida el conjunto completo antes de sustituirlo; una descarga fallida o inválida conserva el último conjunto válido. Al iniciar, dispone de los bancos empaquetados como respaldo. Las salas en curso conservan las preguntas con las que se crearon.
 
 Para añadir preguntas basta con publicar los cambios válidos del banco en GitHub. Para añadir una certificación, también debe figurar en el catálogo con su banco. El navegador envía únicamente el identificador del curso y la configuración de la partida: no puede elegir una URL de descarga, respuestas correctas ni puntuaciones. Las descargas tienen límites de tiempo y tamaño y no siguen redirecciones. El modo local `bundled` permite probar los bancos del checkout sin publicarlos.
 
@@ -79,7 +79,7 @@ API publicada mediante el registro A `certiquiz.cloudtechnext.net → 187.77.63.
 
 Una prueba real en Chromium 154 desde `https://jgangini.github.io` verificó creación pública sin clave, recarga, dos participantes, puntuación, permisos y cierre de sesión contra la API pública actualizada. Las cookies `__Host-` tienen Secure, HttpOnly, SameSite=None y una partición asociada a `https://jgangini.github.io`; visitar directamente la API no reutiliza esa sesión. Se usaron certificados normales, sin simular respuestas ni tomar screenshots. Esta prueba valida las sesiones en ese navegador; no demuestra compatibilidad con todos los navegadores. El catálogo productivo devuelve las 36 preguntas de Agentic AI publicadas en GitHub.
 
-La ruta pública `/certi-tips/certiquiz/` todavía devolvía 404 al terminar esta publicación: el módulo está implementado y probado localmente, pero falta publicar su código en GitHub Pages. La autorización recibida en esta fase fue publicar únicamente la API.
+La ruta pública `/certitips/certiquiz/` todavía devolvía 404 al terminar esta publicación: el módulo está implementado y probado localmente, pero falta publicar su código en GitHub Pages. La autorización recibida en esta fase fue publicar únicamente la API.
 
 La actualización de capacidad del 2026-10-07 también quedó desplegada con respaldo privado: `/api/catalog` confirma el límite de 500, ambos contenedores están saludables y PostgreSQL sigue sin puerto público. La API conserva su enlace a `127.0.0.1:18740`; CloudTechNext mantiene su salud correcta. Se repitió la aceptación HTTPS desde GitHub Pages con dos participantes, puntuación y cookies particionadas. Las pruebas de 500 corresponden al entorno local descrito arriba; la interfaz de Pages sigue pendiente de publicación.
 

@@ -5,12 +5,13 @@ import hmac
 import os
 import time
 from contextlib import asynccontextmanager
+from itertools import zip_longest
 from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
-from .corpus import DATASET, public_url, read_json, snapshot_path, supported_fragments, validate_manifest
+from .corpus import DATASET, SITE, public_url, read_json, snapshot_path, supported_fragments, validate_manifest
 from .graph import graph_trace, node_documents, public_graph, read_graph
 
 
@@ -55,13 +56,22 @@ async def close_cognee() -> None:
     await get_relational_engine().engine.dispose()
 
 
-async def retrieve_evidence(message: str) -> list[dict]:
+async def retrieve_evidence(message: str, context: str | None = None) -> list[dict]:
     import cognee
     from cognee.api.v1.search import SearchType
-    results = await cognee.search(message, query_type=SearchType.GRAPH_COMPLETION,
-                                  datasets=[DATASET], only_context=True, verbose=True,
-                                  include_references=True, feedback_influence=0, top_k=8)
-    return [item for result in results for item in result.get("evidence", [])]
+    results = await asyncio.gather(*[
+        asyncio.wait_for(cognee.search(query, query_type=kind, datasets=[DATASET], only_context=True, verbose=True,
+                                      include_references=True, feedback_influence=0, top_k=8), timeout=18)
+        for query, kind in ((message, SearchType.RAG_COMPLETION), (context or message, SearchType.GRAPH_COMPLETION))],
+        return_exceptions=True)
+    successful = [lane for lane in results if not isinstance(lane, BaseException)]
+    evidence = [[item for result in lane for item in result.get("evidence", [])] for lane in successful]
+    segments = [[item for item in lane if item.get("kind") == "segment"] for lane in evidence]
+    if not any(segments) and len(successful) != len(results):
+        raise next(lane for lane in results if isinstance(lane, BaseException))
+    # Keep current-question document matches independent of history; reserve room for graph context by rank.
+    return ([item for pair in zip_longest(*segments) for item in pair if item is not None]
+            + [item for lane in evidence for item in lane if item.get("kind") != "segment"])
 
 
 class PreviousQuestion(BaseModel):
@@ -178,16 +188,19 @@ async def retrieve(body: Retrieval, authorization: str = Header(default="")):
     # Graph adapters use per-context state; serialize to keep one deterministic owner.
     async with app.state.lock:
         try:
-            evidence = await asyncio.wait_for(retrieve_evidence(retrieval_query(body, latest["contentHash"])), timeout=20)
+            evidence = await asyncio.wait_for(
+                retrieve_evidence(body.message, retrieval_query(body, latest["contentHash"])), timeout=20)
             projection = await cached_graph()
         except Exception:
             raise HTTPException(503, "Knowledge retrieval unavailable") from None
     # Re-read after search so removals published during retrieval are excluded too.
     latest = validate_manifest(read_json(latest_path))
-    # The explicit page context uses the same freshness and source checks as graph evidence.
+    # The published root describes site navigation; both it and the current page obey source/freshness limits.
     page_context = [{"kind": "segment", "document_name": name}
-                    for name, source in app.state.sources.items() if source["url"] == body.pageUrl]
+                    for name, source in app.state.sources.items() if source["url"] in (SITE, body.pageUrl)]
     fragments = supported_fragments(page_context + evidence, app.state.sources, latest)
+    # ponytail: suppress old graph relationships during reindex; highlighting resumes after snapshot promotion.
+    trace_evidence = evidence if fragments and latest["contentHash"] == app.state.version else []
     return {"version": latest["contentHash"], "fragments": fragments,
-            "graphTrace": graph_trace(evidence if fragments else [], projection, fragments,
+            "graphTrace": graph_trace(trace_evidence, projection, fragments,
                                       getattr(app.state, "node_documents", {}))}

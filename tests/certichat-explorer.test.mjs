@@ -31,10 +31,10 @@ test("the explorer is a standalone site page and offers an honest missing-snapsh
   site.certichat = { apiOrigin: "http://127.0.0.1:18741" };
   const body = certichatExplorerBody(site.base, false);
   const html = layout({ site, course: site.courses[0], page: { slug: "certichat", title: "Cómo funciona CertiChat" }, body });
-  assert.match(html, /rel="canonical" href="https:\/\/jgangini.github.io\/certi-tips\/certichat\/"/);
+  assert.match(html, /rel="canonical" href="https:\/\/jgangini.github.io\/certitips\/certichat\/"/);
   assert.match(html, /class="home-main certichat-main"/);
-  assert.match(html, /href="\/certi-tips\/assets\/certichat-explorer.css"/);
-  assert.match(html, /href="\/certi-tips\/certichat\/" aria-label="Ver el grafo de CertiChat"/);
+  assert.match(html, /href="\/certitips\/assets\/certichat-explorer.css"/);
+  assert.match(html, /href="\/certitips\/certichat\/" aria-label="Ver el grafo de CertiChat"/);
   assert.doesNotMatch(html, /<aside class="sidebar"|data-mark-complete=/);
   assert.match(body, /data-knowledge-graph=""/);
   assert.match(body, /instantánea del grafo todavía no está publicada/);
@@ -42,7 +42,7 @@ test("the explorer is a standalone site page and offers an honest missing-snapsh
   assert.match(body, /<canvas data-graph-canvas tabindex="0"[^>]+role="img"[^>]+aria-label="[^"]+"/);
   assert.doesNotMatch(body, /chat-graph-help|chat-graph-legend/);
   assert.match(body, /data-graph-active aria-label="Conceptos recuperados para esta consulta"/);
-  assert.match(certichatExplorerBody(site.base, true), /data-knowledge-graph="\/certi-tips\/assets\/certichat\/graph.json"/);
+  assert.match(certichatExplorerBody(site.base, true), /data-knowledge-graph="\/certitips\/assets\/certichat\/graph.json"/);
 });
 
 test("the published graph is a faithful static copy of the exported snapshot", () => {

@@ -435,7 +435,7 @@ def test_configuration_rejects_unsafe_production_defaults(tmp_path):
         Settings("postgresql://localhost/test", "http://quiz.example", (FRONTEND,), True, tmp_path).validate()
     with pytest.raises(ValueError, match="desarrollo"):
         Settings("postgresql://localhost/test", "https://quiz.example", (FRONTEND,), False, tmp_path).validate()
-    for origins in [(), ("*",), (FRONTEND + "/certi-tips/",), ("https://*.github.io",)]:
+    for origins in [(), ("*",), (FRONTEND + "/certitips/",), ("https://*.github.io",)]:
         with pytest.raises(ValueError):
             Settings("postgresql://localhost/test", ORIGIN, origins, True, tmp_path).validate()
 
@@ -451,7 +451,7 @@ def test_cors_only_allows_explicit_frontend_origin_and_methods(clients):
     assert response.headers["access-control-allow-credentials"] == "true"
     assert set(response.headers["access-control-allow-methods"].replace(" ", "").split(",")) == {"GET", "POST"}
     assert "Origin" in response.headers["vary"]
-    for forbidden in ("https://evil.test", "https://another.github.io", FRONTEND + "/certi-tips/"):
+    for forbidden in ("https://evil.test", "https://another.github.io", FRONTEND + "/certitips/"):
         response = client.options("/api/rooms", headers={**headers, "Origin": forbidden})
         assert response.status_code == 400 and "access-control-allow-origin" not in response.headers
     assert client.options("/api/rooms", headers={**headers, "Access-Control-Request-Method": "DELETE"}).status_code == 400

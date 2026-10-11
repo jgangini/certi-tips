@@ -51,7 +51,7 @@ test('practice preserves storage identity and offers the appropriate course foll
       const storageKeys = [];
       const root = { innerHTML: '', addEventListener() {}, querySelector: () => ({ addEventListener() {}, focus() {} }) };
       const context = vm.createContext({
-        document: { body: { dataset: { course: 'saved-course-id', courseRoute, courseHasExam: String(hasExam), base: '/certi-tips/', questionBank: 'questions', quizDomains: JSON.stringify(Object.fromEntries(domains.map(domain => [domain, domain]))) } }, querySelector: () => root, querySelectorAll: () => [] },
+        document: { body: { dataset: { course: 'saved-course-id', courseRoute, courseHasExam: String(hasExam), base: '/certitips/', questionBank: 'questions', quizDomains: JSON.stringify(Object.fromEntries(domains.map(domain => [domain, domain]))) } }, querySelector: () => root, querySelectorAll: () => [] },
         fetch: async () => ({ ok: true, json: async () => bank }),
         newAttempt, confirmAnswer, advance, results, reviewAttempt, restoreAttempt,
         readStored: key => { storageKeys.push(key); return saved; }, writeStored: () => true,
@@ -60,9 +60,9 @@ test('practice preserves storage identity and offers the appropriate course foll
       await context.loaded;
       assert.deepEqual(storageKeys, ['certitips:quiz:v1:saved-course-id']);
       if (saved) {
-        assert.ok(root.innerHTML.includes(`href="/certi-tips/${courseRoute}/${hasExam ? 'exam-checklist' : 'case-study'}/"`));
+        assert.ok(root.innerHTML.includes(`href="/certitips/${courseRoute}/${hasExam ? 'exam-checklist' : 'case-study'}/"`));
         assert.ok(root.innerHTML.includes(hasExam ? 'Ruta al examen oficial' : 'Caso integrador'));
-        if (results(saved, bank).wrong.length) assert.ok(root.innerHTML.includes(`href="/certi-tips/${courseRoute}/${domains[0]}/#conceptos-clave"`));
+        if (results(saved, bank).wrong.length) assert.ok(root.innerHTML.includes(`href="/certitips/${courseRoute}/${domains[0]}/#conceptos-clave"`));
       } else {
         assert.match(root.innerHTML, /data-start>Entrar/);
         assert.match(root.innerHTML, /class="quiz-facts"/);

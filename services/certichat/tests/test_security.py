@@ -34,13 +34,13 @@ def test_local_mode_requires_loopback_and_uses_separate_cookie():
                         mode="LOCAL", public_origin="http://127.0.0.1:18741",
                         allowed_origins=("http://127.0.0.1:4173", "http://localhost:4173"))
     settings.validate()
-    assert settings.site_url == "https://jgangini.github.io/certi-tips/"
+    assert settings.site_url == "https://jgangini.github.io/certitips/"
     for change in ({"public_origin": "https://certichat.cloudtechnext.net"},
                    {"allowed_origins": ("http://127.0.0.1.evil.test:4173",)},
                    {"allowed_origins": ("http://192.168.1.10:4173",)},
                    {"allowed_origins": ("http://user@localhost:4173",)},
                    {"allowed_origins": ("http://localhost:4173/path",)},
-                   {"site_url": "http://localhost:4173/certi-tips/"}, {"mode": "VPS"}):
+                   {"site_url": "http://localhost:4173/certitips/"}, {"mode": "VPS"}):
         with pytest.raises(ValueError):
             replace(settings, **change).validate()
     response = Response()

@@ -35,7 +35,7 @@ test("the image viewer refreshes its description when switching diagrams", () =>
 });
 
 const site = {
-  base: "/certi-tips/", origin: "https://example.test", repository: "https://example.test/repo",
+  base: "/certitips/", origin: "https://example.test", repository: "https://example.test/repo",
   paths: [
     { id: "foundation-sprint", label: "Foundation Sprint", items: [{ id: "course", title: "Course", guide: "course", officialUrl: "https://mylearn.oracle.com/example" }, { id: "pending", title: "Pending course", officialUrl: "https://mylearn.oracle.com/pending" }] },
     { id: "ai-first", label: "AI & Agents", items: [] },
@@ -73,23 +73,23 @@ test("an applied course has its own route, navigation and practice without an ex
   assert.equal(courseRoute(course), "EXAM-1");
   assert.equal(courseRoute(workshop), "data-governance");
   const html = layout({ site: catalog, course: workshop, page: workshop.modules[1], previous: workshop.modules[0], body: "" });
-  assert.match(html, /rel="canonical" href="https:\/\/example.test\/certi-tips\/data-governance\/agents\/"/);
+  assert.match(html, /rel="canonical" href="https:\/\/example.test\/certitips\/data-governance\/agents\/"/);
   assert.match(html, /data-course="data-governance" data-course-route="data-governance" data-course-has-exam="false"/);
   assert.doesNotMatch(html, /<nav class="breadcrumb"/);
   assert.match(html, /<summary>Governance<\/summary>/);
   assert.match(html, /<small>Curso · Governance<\/small>/);
-  assert.match(html, /href="\/certi-tips\/data-governance\/case-study\/"/);
-  assert.match(html, /href="\/certi-tips\/data-governance\/practice\/"/);
+  assert.match(html, /href="\/certitips\/data-governance\/case-study\/"/);
+  assert.match(html, /href="\/certitips\/data-governance\/practice\/"/);
   assert.match(html, /3 cursos disponibles\./);
   const navigation = sidebar(catalog, workshop, "agents", new Map([["agents", [{ id: "conceptos-clave", title: "Conceptos clave" }]]]));
   assert.match(navigation, /<span class="exam-code">DAMA<\/span>/);
   assert.match(navigation, /<strong>Gobierno de datos<\/strong>/);
   assert.match(sidebar(site, course, "overview"), /<strong>Curso de prueba 2026<\/strong>/);
-  assert.match(navigation, /href="\/certi-tips\/data-governance\/agents\/#conceptos-clave"/);
+  assert.match(navigation, /href="\/certitips\/data-governance\/agents\/#conceptos-clave"/);
   assert.doesNotMatch(navigation, /EXAM-1|exam-checklist|undefined/);
   const card = homeBody(catalog).match(/<li class="certification-item has-guide" id="data-governance">[\s\S]*?<\/li>/)[0];
   assert.match(card, /<span class="certification-level">Taller aplicado<\/span>/);
-  assert.match(card, /href="\/certi-tips\/data-governance\/overview\/"/);
+  assert.match(card, /href="\/certitips\/data-governance\/overview\/"/);
   assert.doesNotMatch(card, /Ruta de Oracle|undefined|Nivel /);
   const examHtml = layout({ site, course, page: course.modules[0], body: "" });
   assert.match(examHtml, /data-course="course" data-course-route="EXAM-1" data-course-has-exam="true"/);
@@ -101,12 +101,12 @@ test("sharing uses an English Oracle overview and a public PNG icon on every pag
   assert.match(home, /<meta name="description" content="Explore Oracle certification paths with visual study guides in Spanish, explained practice questions, and CertiQuiz team quizzes\."/);
   assert.doesNotMatch(home, /Ruta de certificaciones en Data e IA|Foundation Sprint y rutas/);
   for (const html of [home, layout({ site, course, page: course.modules[0], body: "" }), layout({ site, course, page: { slug: "certiquiz", title: "CertiQuiz" }, body: "" })]) {
-    assert.match(html, /<meta property="og:image" content="https:\/\/example\.test\/certi-tips\/assets\/favicon\.png">/);
+    assert.match(html, /<meta property="og:image" content="https:\/\/example\.test\/certitips\/assets\/favicon\.png">/);
     assert.match(html, /<meta property="og:image:type" content="image\/png">/);
     assert.match(html, /<meta property="og:image:width" content="512"><meta property="og:image:height" content="512">/);
     assert.match(html, /<meta property="og:image:alt" content="CertiTips logo">/);
-    assert.match(html, /<meta property="og:url" content="https:\/\/example\.test\/certi-tips\//);
-    assert.match(html, /<link rel="icon" href="\/certi-tips\/assets\/favicon\.png" type="image\/png" sizes="512x512">/);
+    assert.match(html, /<meta property="og:url" content="https:\/\/example\.test\/certitips\//);
+    assert.match(html, /<link rel="icon" href="\/certitips\/assets\/favicon\.png" type="image\/png" sizes="512x512">/);
   }
   const icon = readFileSync(new URL("../assets/favicon.png", import.meta.url));
   assert.equal(icon.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
@@ -116,7 +116,7 @@ test("sharing uses an English Oracle overview and a public PNG icon on every pag
 test("home keeps CertiQuiz beside GitHub inside the site in the same tab", () => {
   const html = homeBody(site);
   const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
-  assert.match(html, /class="hero-actions"><a class="button github-link"[^]*?<a class="button button-secondary certiquiz-link" href="\/certi-tips\/certiquiz\/">/);
+  assert.match(html, /class="hero-actions"><a class="button github-link"[^]*?<a class="button button-secondary certiquiz-link" href="\/certitips\/certiquiz\/">/);
   assert.match(html, /certiquiz-link"[^>]*><svg viewBox="0 0 1920 1920" width="20" height="20" fill="currentColor"[^]*?m746\.255 1466\.764/);
   assert.doesNotMatch(html.match(/<a class="button button-secondary certiquiz-link"[^>]*>/)[0], /target=/);
   assert.match(css, /\.hero-actions \.certiquiz-link,\s*\.certichat \.certichat-launcher\s*\{[^}]*border:\s*1px solid var\(--red\);/);
@@ -206,15 +206,15 @@ test("CertiQuiz host setup labels the room step and aligns its submit control", 
 test("CertiQuiz shares site navigation and theme without a course sidebar", () => {
   const html = layout({ site, course, page: { slug: 'certiquiz', title: 'CertiQuiz', description: 'Practica en equipo.' }, body: certiquizBody('https://api.example.test') });
   assert.match(html, /<title>CertiQuiz · CertiTips<\/title>/);
-  assert.match(html, /rel="canonical" href="https:\/\/example\.test\/certi-tips\/certiquiz\/"/);
+  assert.match(html, /rel="canonical" href="https:\/\/example\.test\/certitips\/certiquiz\/"/);
   assert.match(html, /class="home-page certiquiz-page"/);
   assert.match(html, /class="site-header"/);
   assert.match(html, /class="site-footer"/);
   assert.match(html, /data-theme-toggle/);
-  assert.match(html, /src="\/certi-tips\/assets\/site\.js"/);
-  assert.match(html, /src="\/certi-tips\/assets\/qrcode-generator\.js"/);
-  assert.match(html, /src="\/certi-tips\/assets\/certiquiz\.js"/);
-  assert.match(html, /href="\/certi-tips\/assets\/certiquiz\.css"/);
+  assert.match(html, /src="\/certitips\/assets\/site\.js"/);
+  assert.match(html, /src="\/certitips\/assets\/qrcode-generator\.js"/);
+  assert.match(html, /src="\/certitips\/assets\/certiquiz\.js"/);
+  assert.match(html, /href="\/certitips\/assets\/certiquiz\.css"/);
   assert.match(html, /data-api-origin="https:\/\/api\.example\.test"/);
   assert.match(html, /<div id="app" aria-busy="true"><section class="loading loading-full"><h1><svg[^>]*viewBox="0 0 1920 1920"[^>]*><g[^]*?<\/svg><span>Preparando la partida<\/span><\/h1><p role="status">Conectando con la sala de práctica\.<\/p><\/section>/);
   const certiquizCss = readFileSync(new URL("../assets/certiquiz.css", import.meta.url), "utf8");
@@ -279,7 +279,7 @@ test("the local QR generator encodes an invitation URL as SVG", () => {
   const context = {};
   vm.runInNewContext(readFileSync(new URL("../node_modules/qrcode-generator/qrcode.js", import.meta.url), "utf8"), context);
   const qr = context.qrcode(0, "H");
-  qr.addData("https://example.test/certi-tips/certiquiz/?room=601518");
+  qr.addData("https://example.test/certitips/certiquiz/?room=601518");
   qr.make();
   assert.match(qr.createSvgTag({ scalable: true, title: "Código QR", alt: "Invitación" }), /<svg[^>]*role="img"[^>]*><title[^>]*>Código QR<\/title>/);
 });
@@ -469,11 +469,11 @@ test("sidebar has native module and resource disclosures with only the active br
   assert.match(branches[1][1], /data-nav-page="agents" open/);
   assert.equal((html.match(/<summary class="nav-toggle"/g) || []).length, 3);
   assert.equal((html.match(/aria-current="page"/g) || []).length, 1);
-  assert.match(html, /<a class="nav-link" href="\/certi-tips\/EXAM-1\/agents\/" data-completion="agents" aria-current="page">/);
+  assert.match(html, /<a class="nav-link" href="\/certitips\/EXAM-1\/agents\/" data-completion="agents" aria-current="page">/);
   assert.match(branches[1][2], /<summary class="nav-toggle" aria-label="Secciones de Agentes de IA"><\/summary>/);
   assert.doesNotMatch(html, /Ver módulo/);
-  assert.match(html, /href="\/certi-tips\/EXAM-1\/review\/"/);
-  assert.match(branches[2][2], /href="\/certi-tips\/EXAM-1\/review\/#practicar">Antes de practicar/);
+  assert.match(html, /href="\/certitips\/EXAM-1\/review\/"/);
+  assert.match(branches[2][2], /href="\/certitips\/EXAM-1\/review\/#practicar">Antes de practicar/);
   assert.doesNotMatch(html, /role="tree(?:item)?"/);
   assert.doesNotMatch(html, /sidebar-all-paths|Ver todas las certificaciones/);
   assert.doesNotMatch(html, /sidebar-source|Abrir ruta oficial de Oracle/);
@@ -580,21 +580,21 @@ test("technical sections have captioned local graphics and exercise solutions st
 test("every sidebar branch links to its own rendered headings with a full base path", () => {
   const html = sidebar(site, course, "agents", tocByPage);
   for (const [slug, sections] of tocByPage) {
-    assert.ok(html.includes(`href="/certi-tips/EXAM-1/${slug}/"`));
-    for (const section of sections) assert.ok(html.includes(`href="/certi-tips/EXAM-1/${slug}/#${section.id}"`));
+    assert.ok(html.includes(`href="/certitips/EXAM-1/${slug}/"`));
+    for (const section of sections) assert.ok(html.includes(`href="/certitips/EXAM-1/${slug}/#${section.id}"`));
   }
   const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
   assert.match(css, /\.nav-toggle\s*\{[^}]*width:\s*44px;\s*height:\s*44px;/);
   assert.ok(html.includes("Conceptos &lt;clave&gt; &amp; seguridad"));
   assert.doesNotMatch(html, /href="#/);
-  assert.ok(sidebar(site, course, "review").includes('<a class="nav-link" href="/certi-tips/EXAM-1/review/" aria-current="page">'));
+  assert.ok(sidebar(site, course, "review").includes('<a class="nav-link" href="/certitips/EXAM-1/review/" aria-current="page">'));
 });
 
 test("practice in Prepárate opens the simulator landing directly", () => {
   const practiceCourse = { ...course, resources: [...course.resources, { slug: "practice", short: "Práctica" }] };
   const practice = sidebar(site, practiceCourse, "practice");
-  assert.match(practice, /PREPÁRATE[^]*<a class="nav-link nav-direct" href="\/certi-tips\/EXAM-1\/practice\/" aria-current="page">[^]*<span class="nav-title">Práctica<\/span><\/a>/);
-  assert.match(practice, /href="\/certi-tips\/EXAM-1\/practice\/" aria-current="page"/);
+  assert.match(practice, /PREPÁRATE[^]*<a class="nav-link nav-direct" href="\/certitips\/EXAM-1\/practice\/" aria-current="page">[^]*<span class="nav-title">Práctica<\/span><\/a>/);
+  assert.match(practice, /href="\/certitips\/EXAM-1\/practice\/" aria-current="page"/);
   assert.doesNotMatch(practice, /data-nav-page="practice"|Ver recurso<span class="visually-hidden">: Práctica|Práctica explicada/);
 });
 
@@ -603,7 +603,7 @@ test("layout moves the contents into the sidebar while preserving reading and si
   assert.doesNotMatch(html, /breadcrumb|Ruta de navegación/);
   assert.doesNotMatch(html, /Todas las certificaciones/);
   assert.doesNotMatch(html, /class="contents"|En este apartado/);
-  assert.match(html, /<aside[^]*href="\/certi-tips\/EXAM-1\/agents\/#conceptos-clave"[^]*<\/aside>/);
+  assert.match(html, /<aside[^]*href="\/certitips\/EXAM-1\/agents\/#conceptos-clave"[^]*<\/aside>/);
   assert.match(html, /<article class="prose"><h2 id="conceptos-clave">Conceptos<\/h2><\/article>/);
   assert.match(html, /class="site-footer"/);
   assert.match(html, /Made with .* at Certi<span class="brand-accent">Tips<\/span> .* Developed by <a href="https:\/\/www\.linkedin\.com\/in\/jgangini\/"[^>]*>Joel Gangini<\/a>/);
@@ -614,9 +614,9 @@ test("layout moves the contents into the sidebar while preserving reading and si
   assert.match(html, /<article class="prose">[^]*<\/article><div data-completion-trigger aria-hidden="true"><\/div><button[^>]+data-mark-complete="agents"[^>]+hidden>/);
   assert.match(html, /<summary>Foundation Sprint<\/summary>/);
   assert.doesNotMatch(html, /Ver grupo completo/);
-  assert.match(html, /href="\/certi-tips\/EXAM-1\/overview\/"><span class="path-title">Course<\/span><\/a>/);
+  assert.match(html, /href="\/certitips\/EXAM-1\/overview\/"><span class="path-title">Course<\/span><\/a>/);
   assert.match(html, /href="https:\/\/mylearn\.oracle\.com\/pending" target="_blank" rel="noopener noreferrer"[^>]*><span class="path-title">Pending course<\/span><span class="coming-soon"/);
-  assert.doesNotMatch(html, /href="\/certi-tips\/#(?:course|pending)"/);
+  assert.doesNotMatch(html, /href="\/certitips\/#(?:course|pending)"/);
   assert.match(html, /data-theme-toggle aria-pressed="false"/);
   assert.doesNotMatch(html, /data-theme-label|>Dark mode<\/span>/);
   assert.match(html, /data-search-open aria-keyshortcuts="Control\+K Meta\+K"/);
@@ -754,7 +754,7 @@ test("home shows each certification and applied course once and links every avai
   assert.match(html, /Foundation reúne tres certificaciones de nivel 1/);
   assert.ok(html.includes(`Foundation · 1 de ${catalog.paths.length}`));
   assert.match(html, /<svg viewBox="0 0 16 16"[^>]*fill="currentColor"/);
-  assert.match(html, /href="\/certi-tips\/1Z0-1157-26\/overview\/"/);
+  assert.match(html, /href="\/certitips\/1Z0-1157-26\/overview\/"/);
   assert.match(html, /id="oci-enablers"/);
   assert.match(html, /class="oracle-badge"><svg viewBox="0 0 32 32" fill="currentColor"[^>]*><path d="M21\.272 22\.141h-10\.538/);
   assert.match(html, /<span>Oracle Cloud Infrastructure<\/span><\/div><h1><span>De los Fundamentos<\/span><span>a tu Especialidad<\/span><\/h1>/);
@@ -779,7 +779,7 @@ test("home shows each certification and applied course once and links every avai
   assert.doesNotMatch(html, /assets\/motion\/certification-path\.mp4/);
   const withMotion = homeBody(catalog, true);
   assert.match(withMotion, /assets\/motion\/certification-path\.mp4/);
-  assert.match(withMotion, /data-hero-flow data-light-src="\/certi-tips\/assets\/motion\/certification-path\.mp4" data-dark-src="\/certi-tips\/assets\/motion\/certification-path-dark\.mp4" autoplay loop muted playsinline/);
+  assert.match(withMotion, /data-hero-flow data-light-src="\/certitips\/assets\/motion\/certification-path\.mp4" data-dark-src="\/certitips\/assets\/motion\/certification-path-dark\.mp4" autoplay loop muted playsinline/);
   const siteScript = readFileSync(new URL("../assets/site.js", import.meta.url), "utf8");
   assert.match(siteScript, /const syncHeroFlowTheme = \(\) => \{[\s\S]*?heroFlow\.load\(\);/);
   assert.match(siteScript, /function syncTheme\(\) \{[\s\S]*?syncHeroFlowTheme\(\);/);

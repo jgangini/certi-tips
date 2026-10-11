@@ -9,7 +9,7 @@ from urllib.parse import unquote, urlsplit
 
 import httpx
 
-SITE = "https://jgangini.github.io/certi-tips/"
+SITE = "https://jgangini.github.io/certitips/"
 MANIFEST_URL = SITE + "assets/certichat/manifest.json"
 CORPUS_URL = SITE + "assets/certichat/corpus.json"
 HASH = re.compile(r"[a-f0-9]{64}")
@@ -26,7 +26,7 @@ def public_url(value: str) -> bool:
     parsed = urlsplit(value)
     decoded = unquote(parsed.path)
     return (parsed.scheme == "https" and parsed.netloc == "jgangini.github.io"
-            and decoded.startswith("/certi-tips/") and not parsed.query
+            and decoded.startswith("/certitips/") and not parsed.query
             and "\\" not in decoded and not any(p in {".", ".."} for p in decoded.split("/"))
             and not any(ord(c) < 32 for c in value))
 

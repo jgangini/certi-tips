@@ -8,7 +8,7 @@ from types import SimpleNamespace
 import pytest
 
 from app import knowledge
-from app.corpus import CORPUS_URL, SITE, atomic_json, digest, segments, snapshot_path
+from app.corpus import CORPUS_URL, SITE, atomic_json, digest, segments, snapshot_path, supported_fragments
 
 
 @pytest.mark.parametrize("vector_ready", [True, False])
@@ -113,7 +113,7 @@ def test_retrieval_uses_latest_manifest_after_search_while_health_keeps_snapshot
                             sources=sources, lock=asyncio.Lock())
     monkeypatch.setattr(knowledge.app, "state", state)
 
-    async def evidence(_message):
+    async def evidence(_message, _context):
         atomic_json(tmp_path / "latest.json", current)
         return [{"kind": "segment", "document_name": name.removesuffix(".txt")} for name in sources]
 
@@ -136,7 +136,7 @@ def test_current_page_precedes_graph_results_with_existing_source_limit(tmp_path
     monkeypatch.setattr(knowledge.app, "state", SimpleNamespace(
         root=tmp_path, token="test-token", snapshot=tmp_path, version="a"*64, sources=sources, lock=asyncio.Lock()))
 
-    async def evidence(_message):
+    async def evidence(_message, _context):
         names = list(sources)
         return [{"kind": "segment", "document_name": name} for name in [*names[1:], names[0]]]
 
@@ -144,6 +144,32 @@ def test_current_page_precedes_graph_results_with_existing_source_limit(tmp_path
     result = asyncio.run(knowledge.retrieve(
         knowledge.Retrieval(message="Información de esta página", pageUrl=SITE + "current/"), "Bearer test-token"))
     assert [fragment["title"] for fragment in result["fragments"]] == ["current", *[f"graph{i}" for i in range(7)]]
+
+
+@pytest.mark.parametrize("fresh", [True, False])
+def test_chat_page_includes_published_navigation_only_while_its_hash_matches(tmp_path, monkeypatch, fresh):
+    documents = [{"id": "home", "title": "Oferta y rutas", "courseId": "site", "url": SITE,
+                  "text": "Curso publicado: Fundamentos. Curso futuro: Diseño."},
+                 {"id": "guide", "title": "Guía", "courseId": "course", "url": SITE + "guide/#concept",
+                  "text": "Concepto publicado en la guía."}]
+    sources = segments(documents)
+    manifest = {"schemaVersion": 1, "contentHash": "a"*64, "corpusUrl": CORPUS_URL,
+                "documents": [{key: value for key, value in doc.items() if key != "text"} |
+                              {"hash": digest(doc["text"])} for doc in documents]}
+    if not fresh:
+        manifest["documents"][0]["hash"] = digest("Nueva oferta publicada")
+    atomic_json(tmp_path / "latest.json", manifest)
+    monkeypatch.setattr(knowledge.app, "state", SimpleNamespace(
+        root=tmp_path, token="test-token", snapshot=tmp_path, version="a"*64, sources=sources, lock=asyncio.Lock()))
+
+    async def evidence(message, context):
+        assert message == context == "¿Qué puedo estudiar aquí?"
+        return [{"kind": "segment", "document_name": list(sources)[1]}]
+
+    monkeypatch.setattr(knowledge, "retrieve_evidence", evidence)
+    result = asyncio.run(knowledge.retrieve(
+        knowledge.Retrieval(message="¿Qué puedo estudiar aquí?", pageUrl=SITE + "certichat/"), "Bearer test-token"))
+    assert [fragment["title"] for fragment in result["fragments"]] == (["Oferta y rutas", "Guía"] if fresh else ["Guía"])
 
 
 @pytest.mark.parametrize("question", ["que sabes de dama y oci", "Qué cursos reúne Foundation"])
@@ -164,7 +190,7 @@ def test_compound_evidence_preserves_retrieved_order_and_late_source(tmp_path, m
     monkeypatch.setattr(knowledge.app, "state", SimpleNamespace(
         root=tmp_path, token="test-token", snapshot=tmp_path, version="a"*64, sources=sources, lock=asyncio.Lock()))
 
-    async def evidence(_message):
+    async def evidence(_message, _context):
         return [{"kind": "segment", "document_name": name} for name in sources]
 
     monkeypatch.setattr(knowledge, "retrieve_evidence", evidence)
@@ -186,8 +212,8 @@ def test_followup_retrieval_uses_only_current_version_questions(tmp_path, monkey
         root=tmp_path, token="test-token", snapshot=tmp_path, version="a"*64, sources={}, lock=asyncio.Lock()))
     queries = []
 
-    async def evidence(message):
-        queries.append(message)
+    async def evidence(message, context):
+        queries.append((message, context))
         return []
 
     monkeypatch.setattr(knowledge, "retrieve_evidence", evidence)
@@ -195,8 +221,9 @@ def test_followup_retrieval_uses_only_current_version_questions(tmp_path, monkey
     body = knowledge.Retrieval(message=question, history=[
         {"question": "que sabes de dama y oci", "version": ("a" if current else "b") * 64}])
     asyncio.run(knowledge.retrieve(body, "Bearer test-token"))
-    assert question in queries[0]
-    assert ("que sabes de dama y oci" in queries[0]) is current
+    assert queries[0][0] == question
+    assert question in queries[0][1]
+    assert ("que sabes de dama y oci" in queries[0][1]) is current
 
 
 def test_retrieval_context_preserves_current_question_and_bounds_recent_history():
@@ -209,22 +236,108 @@ def test_retrieval_context_preserves_current_question_and_bounds_recent_history(
     assert len(query.split("solo contexto):\n")[1].encode()) <= 2000
 
 
-@pytest.mark.parametrize("current", [True, False])
-def test_trace_uses_same_search_evidence_and_active_version_only_with_valid_sources(tmp_path, monkeypatch, current):
+@pytest.mark.parametrize("question,previous", [
+    ("¿Qué es una región?", []),
+    ("¿Qué sabes de DAMA y OCI?", []),
+    ("Dame los enlaces de esos temas", ["¿Qué sabes de DAMA y OCI?"]),
+    ("cuales son las certificaciones de oci que tienes", ["que sabes de dama y oci", "dame los enlaces"]),
+])
+def test_native_document_question_stays_independent_and_balanced_with_graph_context(monkeypatch, question, previous):
+    body = knowledge.Retrieval(message=question, history=[{"question": q, "version": "a"*64} for q in previous])
+    context = knowledge.retrieval_query(body, "a"*64)
+    documents = [{"id": f"{lane}{i}", "title": f"{lane}{i}", "courseId": "course",
+                  "url": SITE + f"{lane}/#source-{i}", "text": "Información publicada. "*80}
+                 for lane in ("document", "graph") for i in range(8)]
+    sources = segments(documents)
+    manifest = {"documents": [{key: value for key, value in doc.items() if key != "text"} |
+                              {"hash": digest(doc["text"])} for doc in documents]}
+    names = list(sources)
+    calls = []
+
+    async def search(query, **options):
+        calls.append((query, options))
+        start = 0 if options["query_type"] == "document" else 8
+        # Graph metadata must not consume the source slots before alternating the actual segments.
+        return [{"evidence": [{"kind": "graph_node", "artifact_id": "node"}]
+                 + [{"kind": "segment", "document_name": name.removesuffix(".txt")} for name in names[start:start+8]]}]
+
+    monkeypatch.setitem(sys.modules, "cognee", SimpleNamespace(search=search))
+    monkeypatch.setitem(sys.modules, "cognee.api.v1.search", SimpleNamespace(
+        SearchType=SimpleNamespace(RAG_COMPLETION="document", GRAPH_COMPLETION="graph")))
+    evidence = asyncio.run(knowledge.retrieve_evidence(question, context))
+    assert [call[0] for call in calls] == [question, context]
+    assert all(call[1] == {"query_type": lane, "datasets": ["certitips"], "only_context": True,
+                          "verbose": True, "include_references": True, "feedback_influence": 0, "top_k": 8}
+               for call, lane in zip(calls, ("document", "graph")))
+    fragments = supported_fragments(evidence, sources, manifest)
+    assert [f["title"] for f in fragments] == [f"{lane}{i}" for i in range(4) for lane in ("document", "graph")]
+    assert sum(len(f["text"].encode()) for f in fragments) <= 16000
+    assert all("#source-" in f["url"] for f in fragments)
+
+
+@pytest.mark.parametrize("failures,empty", [({"document"}, False), ({"graph"}, False),
+                                          ({"document", "graph"}, False), ({"document"}, True)])
+def test_native_search_uses_surviving_lane_but_does_not_hide_total_failure(monkeypatch, failures, empty):
+    async def search(_query, **options):
+        lane = options["query_type"]
+        if lane in failures:
+            raise RuntimeError(lane)
+        return [{"evidence": [] if empty else [{"kind": "segment", "document_name": lane}]}]
+
+    monkeypatch.setitem(sys.modules, "cognee", SimpleNamespace(search=search))
+    monkeypatch.setitem(sys.modules, "cognee.api.v1.search", SimpleNamespace(
+        SearchType=SimpleNamespace(RAG_COMPLETION="document", GRAPH_COMPLETION="graph")))
+    if len(failures) == 2 or empty:
+        with pytest.raises(RuntimeError, match="document"):
+            asyncio.run(knowledge.retrieve_evidence("Pregunta"))
+    else:
+        assert asyncio.run(knowledge.retrieve_evidence("Pregunta")) == [
+            {"kind": "segment", "document_name": next(iter({"document", "graph"} - failures))}]
+
+
+def test_native_search_timeout_cancels_slow_lane_and_keeps_completed_evidence(monkeypatch):
+    cancelled = []
+    wait_for = asyncio.wait_for
+
+    async def search(_query, **options):
+        if options["query_type"] == "graph":
+            try:
+                await asyncio.Event().wait()
+            finally:
+                cancelled.append(True)
+        return [{"evidence": [{"kind": "segment", "document_name": "current"}]}]
+
+    async def bounded(awaitable, timeout):
+        assert timeout == 18
+        return await wait_for(awaitable, timeout=.01)
+
+    monkeypatch.setitem(sys.modules, "cognee", SimpleNamespace(search=search))
+    monkeypatch.setitem(sys.modules, "cognee.api.v1.search", SimpleNamespace(
+        SearchType=SimpleNamespace(RAG_COMPLETION="document", GRAPH_COMPLETION="graph")))
+    monkeypatch.setattr(knowledge.asyncio, "wait_for", bounded)
+    assert asyncio.run(knowledge.retrieve_evidence("Pregunta")) == [
+        {"kind": "segment", "document_name": "current"}]
+    assert cancelled == [True]
+
+
+@pytest.mark.parametrize("current,active_version", [(True, "b"*64), (False, "a"*64), (True, "a"*64)])
+def test_trace_waits_for_current_snapshot_even_when_published_navigation_survives(tmp_path, monkeypatch, current, active_version):
     node = "00000000-0000-0000-0000-000000000001"
     doc = {"id": "guide", "title": "Guía", "courseId": "course", "url": SITE + "guide/", "text": "Información publicada."}
-    sources = segments([doc])
+    home = {"id": "home", "title": "Rutas", "courseId": "site", "url": SITE, "text": "Oferta publicada."}
+    sources = segments([doc, home])
     manifest = {"schemaVersion": 1, "contentHash": "b"*64, "corpusUrl": CORPUS_URL,
                 "documents": [{key: value for key, value in doc.items() if key != "text"} |
-                              {"hash": digest(doc["text"] if current else "Nuevo contenido")}]}
+                              {"hash": digest(doc["text"] if current else "Nuevo contenido")},
+                              {key: value for key, value in home.items() if key != "text"} | {"hash": digest(home["text"])}]}
     atomic_json(tmp_path / "latest.json", manifest)
-    projection = {"version": "a"*64, "nodes": [{"id": node}], "edges": []}
+    projection = {"version": active_version, "nodes": [{"id": node}], "edges": []}
     monkeypatch.setattr(knowledge.app, "state", SimpleNamespace(
-        root=tmp_path, token="test-token", snapshot=tmp_path, version="a"*64, sources=sources,
+        root=tmp_path, token="test-token", snapshot=tmp_path, version=active_version, sources=sources,
         lock=asyncio.Lock(), public_graph=projection, node_documents={node: {next(iter(sources))}}))
     calls = []
 
-    async def evidence(message):
+    async def evidence(message, _context):
         calls.append(message)
         return [{"kind": "graph_node", "artifact_id": node},
                 {"kind": "segment", "document_name": next(iter(sources))}]
@@ -232,5 +345,7 @@ def test_trace_uses_same_search_evidence_and_active_version_only_with_valid_sour
     monkeypatch.setattr(knowledge, "retrieve_evidence", evidence)
     result = asyncio.run(knowledge.retrieve(knowledge.Retrieval(message="Consulta"), "Bearer test-token"))
     assert calls == ["Consulta"] and result["version"] == "b"*64
-    assert result["graphTrace"] == {"version": "a"*64, "nodes": [node] if current else [], "edges": [], "truncated": False,
-                                    **({"sources": [{"nodeId": node, "title": doc["title"], "url": doc["url"]}]} if current else {})}
+    assert any(fragment["url"] == SITE for fragment in result["fragments"])
+    highlight = current and active_version == result["version"]
+    assert result["graphTrace"] == {"version": active_version, "nodes": [node] if highlight else [], "edges": [], "truncated": False,
+                                    **({"sources": [{"nodeId": node, "title": doc["title"], "url": doc["url"]}]} if highlight else {})}

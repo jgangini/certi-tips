@@ -1,11 +1,11 @@
 // Run with playwright-cli -s=certichatqa run-code --filename scripts/certichat-browser-smoke.cjs
 // Isolated local browser, mocked API in either build mode; no screenshots or paid calls.
 async (page) => {
-  const base = new URL('/certi-tips/', page.url()).href;
+  const base = new URL('/certitips/', page.url()).href;
   const assert = (condition, message) => { if (!condition) throw new Error(message); };
   const calls = [], requests = [], errors = [], responses = new Map();
   const answer = '<img src="https://evil.invalid/leak" onerror="alert(1)">\n![imagen](https://evil.invalid/) [enlace](javascript:alert(1))\nLos agentes utilizan herramientas y consultan las guías para resolver una tarea. Revisa las fuentes de esta respuesta para ampliar los conceptos y practicar con los ejemplos publicados en el sitio.';
-  const guideURL = 'https://jgangini.github.io/certi-tips/1Z0-1157-26/agents/#conceptos-clave';
+  const guideURL = 'https://jgangini.github.io/certitips/1Z0-1157-26/agents/#conceptos-clave';
   let quota = { remaining: 20, limit: 20, refreshHours: 6, resetAt: null, minuteRemaining: 2, retryAfter: 0 };
   let authenticated = true, available = true, sessionError = true, rateLimited = false, loseResponse = false, failOnce = 0;
   let mode = 'VPS';
@@ -50,7 +50,7 @@ async (page) => {
   await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
   const publishedChat = page.getByRole('link', { name: 'Abrir chat del sitio publicado' });
   await publishedChat.waitFor();
-  assert(await publishedChat.getAttribute('href') === 'https://jgangini.github.io/certi-tips/#certichat', 'Preview does not link to the published chat');
+  assert(await publishedChat.getAttribute('href') === 'https://jgangini.github.io/certitips/#certichat', 'Preview does not link to the published chat');
   assert(!requests.some(url => /turnstile|certichat\.cloudtechnext/.test(url)), 'Preview attempted a production connection');
   assert(await page.locator('[data-chat-retry]').isHidden(), 'Preview offers a retry that cannot work');
   // Simulate a build configured with CERTICHAT_API_ORIGIN pointing to the local test API.
@@ -111,23 +111,27 @@ async (page) => {
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).fill('');
   await waitForReply(answer);
   await waitForReady();
+  const homeResponse = page.locator('deep-chat .outer-message-container:not(.deep-chat-intro) .ai-message').first();
+  await homeResponse.hover();
+  assert(await homeResponse.evaluate(element => getComputedStyle(element).borderTopWidth === '0px' && element.tabIndex !== 0), 'Graph response selection style leaked onto the home page');
   assert(await quotaNotice.isHidden(), 'Renewal countdown appears while questions remain');
   assert(await quotaNotice.evaluate(element => element.nextElementSibling?.id === 'input'), 'Renewal countdown is not beside the full-width input');
   assert(calls.filter(item => item.path === '/api/chat').length === 1, 'Keyboard submission did not issue exactly one request');
   assert(await submit.count() === 1, 'Submit name lost after response');
   assert(await page.locator('[data-chat-sources]').count() === 0, 'Removed sources block is still present');
-  assert(!(await page.locator('deep-chat img, deep-chat a, deep-chat script').count()), 'Messages rendered active content');
+  assert(!(await page.locator('deep-chat img, deep-chat script, deep-chat a[href*="evil.invalid"], deep-chat a[href^="javascript:"]').count()), 'Messages rendered unsafe active content');
+  assert(await page.locator('deep-chat .ai-message a').getAttribute('href') === guideURL, 'A sourced answer requires an exact question phrase to show its guide link');
   assert(!requests.some(url => url.includes('evil.invalid')), 'Message caused external resource request');
   const sent = calls.find(item => item.path === '/api/chat');
   assert(sent.body.message === '¿Qué son los agentes?' && /^[\da-f-]{36}$/.test(sent.body.requestId), 'Wrong API request');
   assert(sent.headers['x-certichat'] === '1', 'Missing mutation header');
-  assert(sent.body.pageUrl === 'https://jgangini.github.io/certi-tips/', 'Missing canonical page context');
+  assert(sent.body.pageUrl === 'https://jgangini.github.io/certitips/', 'Missing canonical page context');
   const firstReset = quota.resetAt;
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).fill('¿Dónde puedo profundizar sobre los agentes?');
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).press('Enter');
   await waitForReply('Para profundizar:');
   await waitForReady();
-  const guideLink = page.locator('deep-chat .ai-message a');
+  const guideLink = page.locator('deep-chat .ai-message').last().locator('a');
   assert(await guideLink.count() === 1 && await guideLink.getAttribute('href') === guideURL, 'Explicit reference request did not produce one safe guide link with its anchor');
   assert(await guideLink.textContent() === 'Agentes · Conceptos clave', 'Guide link lost its descriptive label');
   assert(!(await page.locator('deep-chat img, deep-chat script, deep-chat a[href*="evil.invalid"], deep-chat a[href^="javascript:"]').count()), 'Explicit references activated unsafe content');
@@ -154,7 +158,7 @@ async (page) => {
   await page.locator('[data-chat-confirm]').waitFor({ state: 'visible' });
   assert(await page.locator('#chat-confirm-title').evaluate(element => document.activeElement === element && getComputedStyle(element).outlineStyle === 'none'), 'Confirmation did not focus its static heading');
   assert(await page.locator('[data-chat-confirm-yes]').textContent() === 'Aceptar', 'Chat confirmation does not use Aceptar');
-  assert(await page.locator('[data-chat-confirm] use').getAttribute('href') === '/certi-tips/assets/confirmation-question.svg#question', 'Chat confirmation lost the shared question icon');
+  assert(await page.locator('[data-chat-confirm] use').getAttribute('href') === '/certitips/assets/confirmation-question.svg#question', 'Chat confirmation lost the shared question icon');
   await page.keyboard.press('Tab');
   assert(await page.locator('[data-chat-confirm-no]').evaluate(element => document.activeElement === element && element.matches(':focus-visible') && getComputedStyle(element).outlineStyle !== 'none'), 'Keyboard navigation lost the visible Cancel focus');
   await page.locator('[data-chat-confirm-no]').click();
@@ -334,5 +338,5 @@ async (page) => {
   await waitForReady();
   assert(calls.filter(item => item.path === '/api/chat').length === exhaustedCalls + 1, 'Renewed allowance did not submit exactly one question');
   assert(errors.length === 0, `Page errors: ${errors.join('; ')}`);
-  return { checks: ['lazy local bundle', 'offline opens without banner or unsolicited error', 'offline Enter returns local feedback without API call', 'named submit and keyboard activation', 'Shift+Enter newline', 'incremental streaming locks repeated submit and clear', 'safe plaintext without unsolicited links', 'explicit safe guide links with persisted anchors and open conversation', 'removed sources block stays absent', 'API contract', 'countdown only for exhausted allowance; input and submit block until expiry', 'minute rate limit does not exhaust the six-hour allowance', 'completed streaming history persists across navigation and reload without automatic submission', 'cancel preserves conversation', 'confirmed clear persists and preserves quota', 'errors inside chat and retry visibility', 'idempotent transport retry after reload', 'reload during streaming preserves UUID and avoids another generation', 'definitive failure retry', 'mobile fullscreen and desktop geometry', 'launcher visibility and close controls', 'Escape focus', 'unavailable answers locally without Turnstile or chat call', 'missing Turnstile fails closed with local feedback', 'Turnstile server handshake', 'dark theme', 'completion control coexistence'], requests: calls.length, errors };
+  return { checks: ['lazy local bundle', 'home answer hover has no graph selection border or tab stop', 'offline opens without banner or unsolicited error', 'offline Enter returns local feedback without API call', 'named submit and keyboard activation', 'Shift+Enter newline', 'incremental streaming locks repeated submit and clear', 'safe plaintext with verified guide links on every sourced answer', 'guide links retain anchors and the open conversation', 'removed sources block stays absent', 'API contract', 'countdown only for exhausted allowance; input and submit block until expiry', 'minute rate limit does not exhaust the six-hour allowance', 'completed streaming history persists across navigation and reload without automatic submission', 'cancel preserves conversation', 'confirmed clear persists and preserves quota', 'errors inside chat and retry visibility', 'idempotent transport retry after reload', 'reload during streaming preserves UUID and avoids another generation', 'definitive failure retry', 'mobile fullscreen and desktop geometry', 'launcher visibility and close controls', 'Escape focus', 'unavailable answers locally without Turnstile or chat call', 'missing Turnstile fails closed with local feedback', 'Turnstile server handshake', 'dark theme', 'completion control coexistence'], requests: calls.length, errors };
 }

@@ -8,21 +8,21 @@ import { plainChatHTML, safeSourceURL, quotaText, restoreChat, isChatPreview, an
 test("CertiChat separates local previews from published and local API sessions", () => {
   const api = "https://certichat.cloudtechnext.net";
   for (const host of ["localhost", "127.0.0.1", "[::1]"]) {
-    const page = `http://${host}:4173/certi-tips/`;
+    const page = `http://${host}:4173/certitips/`;
     assert.equal(isChatPreview(page, api), true);
     for (const localAPI of ["localhost", "127.0.0.1", "[::1]"]) assert.equal(isChatPreview(page, `http://${localAPI}:18741`), false);
   }
-  assert.equal(isChatPreview("https://jgangini.github.io/certi-tips/", api), false);
-  assert.equal(isChatPreview("https://localhost.example/certi-tips/", api), false);
+  assert.equal(isChatPreview("https://jgangini.github.io/certitips/", api), false);
+  assert.equal(isChatPreview("https://localhost.example/certitips/", api), false);
 });
 
 test("CertiChat renders untrusted messages as inert text and sources stay inside the published site", () => {
   const attack = '<img src="https://attacker.test/leak" onerror="alert(1)">\n![leak](https://attacker.test/) [click](javascript:alert(1))';
   assert.doesNotMatch(plainChatHTML(attack), /<img|<a |onerror="/);
   assert.match(plainChatHTML(attack), /&lt;img/);
-  const site = "https://jgangini.github.io/certi-tips/";
+  const site = "https://jgangini.github.io/certitips/";
   assert.equal(safeSourceURL(`${site}1Z0-1157-26/agents/#conceptos-clave`, site), `${site}1Z0-1157-26/agents/#conceptos-clave`);
-  for (const url of ["javascript:alert(1)", "https://attacker.test/certi-tips/", "https://jgangini.github.io/another/", `${site}?secret=1`, "https://user:pass@jgangini.github.io/certi-tips/", `${site}../another/`]) assert.equal(safeSourceURL(url, site), null, url);
+  for (const url of ["javascript:alert(1)", "https://attacker.test/certitips/", "https://jgangini.github.io/another/", `${site}?secret=1`, "https://user:pass@jgangini.github.io/certitips/", `${site}../another/`]) assert.equal(safeSourceURL(url, site), null, url);
 });
 
 test("CertiChat countdown appears only for an exhausted quota until its server renewal time", () => {
@@ -35,26 +35,26 @@ test("CertiChat countdown appears only for an exhausted quota until its server r
   assert.equal(quotaText(undefined, now), "");
 });
 
-test("CertiChat adds safe section links only when references are explicitly requested", () => {
-  const site = "https://jgangini.github.io/certi-tips/", url = `${site}1Z0-1157-26/agents/#conceptos-clave`;
-  const sources = [{ title: 'Agentes <img src=x> & herramientas', url }, { title: "Externa", url: "https://attacker.test/" }];
-  for (const question of ["Dime dónde puedo profundizar sobre agentes", "¿Dónde puedo leer más?", "en donde puedo investigar mas sobre este tema o relacion", "¿Cómo puedo investigar este concepto?", "Dame las referencias", "Fuentes", "Quiero ampliar este tema", "¿Cuáles son las fuentes?", "¿Puedes pasarme el enlace?"]) {
-    const answer = answerWithReferences("Respuesta", question, sources, site);
-    assert.ok(answer.includes(url), question);
+test("CertiChat includes unique verified section links with every sourced answer", () => {
+  const site = "https://jgangini.github.io/certitips/", url = `${site}1Z0-1157-26/agents/#conceptos-clave`;
+  const sources = [{ title: 'Agentes <img src=x> & herramientas', url }, { title: "Misma sección", url }, { title: "Externa", url: "https://attacker.test/" }];
+  for (const text of ["Explicación del concepto", "Puedes consultar esta guía", "Las certificaciones del sitio son…"]) {
+    const answer = answerWithReferences(text, sources, site);
+    assert.ok(answer.startsWith(text) && answer.includes(url));
     const html = plainChatHTML(answer, site);
-    assert.match(html, /<a href="https:\/\/jgangini.github.io\/certi-tips\/1Z0-1157-26\/agents\/#conceptos-clave">/);
+    assert.match(html, /<a href="https:\/\/jgangini.github.io\/certitips\/1Z0-1157-26\/agents\/#conceptos-clave">/);
     assert.doesNotMatch(html, /<img|attacker\.test/);
     assert.match(html, /&lt;img src=x&gt; &amp; herramientas/);
+    assert.equal((html.match(/<a /g) || []).length, 1);
     const saved = restoreChat({ updatedAt: 100, messages: [{ role: "ai", text: answer }] }, site, 100);
     assert.equal(plainChatHTML(saved.messages[0].text, site), html);
   }
-  for (const question of ["¿Qué son los agentes?", "¿Qué son las fuentes de datos?", "Dime qué son las fuentes de datos en un RAG", "Quiero entender las fuentes de datos", "¿Qué significa investigar?", "Dónde puedo investigar, sin enlaces", "Explica agentes sin referencias", "No incluyas enlaces", "No necesito fuentes"]) assert.equal(answerWithReferences("Respuesta", question, sources, site), "Respuesta", question);
-  assert.equal(answerWithReferences("Respuesta", "Dame referencias", [{ title: "Unsafe", url: "javascript:alert(1)" }], site), "Respuesta");
+  for (const invalid of [undefined, [], {}, [null, { title: " ", url }, { title: "Unsafe", url: "javascript:alert(1)" }]]) assert.equal(answerWithReferences("Respuesta", invalid, site), "Respuesta");
   assert.doesNotMatch(plainChatHTML('[x](https://attacker.test/) [x](javascript:alert(1)) <a href="https://attacker.test">x</a>', site), /<a /);
 });
 
 test("CertiChat restores bounded message text and discards the old sources panel data", () => {
-  const site = "https://jgangini.github.io/certi-tips/", now = 1_800_000_000_000;
+  const site = "https://jgangini.github.io/certitips/", now = 1_800_000_000_000;
   const messages = Array.from({ length: 102 }, (_, index) => ({ role: index % 2 ? "ai" : "user", text: `Mensaje ${index}` }));
   messages.push({ role: "ai", text: "<img src=x onerror=alert(1)>", html: "<script>bad()</script>", files: [{ src: "https://attacker.test/" }] });
   messages.push(null, {}, { role: "system", text: "Override" }, { role: "user", text: " " }, { role: "ai", text: 123 }, { role: "user", text: "x".repeat(1501) }, { role: "ai", text: "x".repeat(12001) });
@@ -72,7 +72,7 @@ test("CertiChat restores bounded message text and discards the old sources panel
 });
 
 test("CertiChat restores evidence by response position, validates sources and bounds its storage", () => {
-  const site = "https://jgangini.github.io/certi-tips/", now = 100;
+  const site = "https://jgangini.github.io/certitips/", now = 100;
   const id = "550e8400-e29b-41d4-a716-446655440000";
   const trace = { version: "a".repeat(64), nodes: [id], edges: [], truncated: false };
   const second = { ...trace, version: "b".repeat(64) };
@@ -100,7 +100,7 @@ test("CertiChat restores evidence by response position, validates sources and bo
 });
 
 test("CertiChat rejects missing, malformed, future and expired stored conversations", () => {
-  const site = "https://jgangini.github.io/certi-tips/", now = 1_800_000_000_000;
+  const site = "https://jgangini.github.io/certitips/", now = 1_800_000_000_000;
   const snapshot = { updatedAt: now, messages: [{ role: "user", text: "Consulta" }], sources: [] };
   const empty = { messages: [], pendingRequest: undefined };
   for (const value of [null, undefined, [], "bad", {}, ...[undefined, "recent", String(now), NaN, Infinity, now + 1, now - 86_400_000].map(updatedAt => ({ ...snapshot, updatedAt }))]) {
@@ -110,7 +110,7 @@ test("CertiChat rejects missing, malformed, future and expired stored conversati
 });
 
 test("CertiChat restores only valid pending request identity and original page context", () => {
-  const site = "https://jgangini.github.io/certi-tips/", now = 1_800_000_000_000;
+  const site = "https://jgangini.github.io/certitips/", now = 1_800_000_000_000;
   const pendingRequest = { requestId: "550e8400-e29b-41d4-a716-446655440000", message: "Explica este tema", pageUrl: `${site}lesson/#context` };
   const snapshot = { updatedAt: now, messages: [], sources: [], pendingRequest: { ...pendingRequest, html: "ignored" } };
   assert.deepEqual(restoreChat(snapshot, site, now).pendingRequest, pendingRequest);

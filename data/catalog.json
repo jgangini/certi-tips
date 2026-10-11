@@ -1,8 +1,8 @@
 {
   "name": "CertiTips",
-  "base": "/certi-tips/",
+  "base": "/certitips/",
   "origin": "https://jgangini.github.io",
-  "repository": "https://github.com/jgangini/certi-tips",
+  "repository": "https://github.com/jgangini/certitips",
   "paths": [
     {
       "id": "foundation-sprint",

@@ -1,11 +1,11 @@
 // playwright-cli -s=anchors run-code --filename scripts/anchor-navigation-smoke.cjs
 // Real browser navigation with delayed local images and a mocked chat; no screenshots or paid calls.
 async page => {
-  const base = new URL('/certi-tips/', page.url());
+  const base = new URL('/certitips/', page.url());
   if (base.origin !== 'http://127.0.0.1:4173') throw new Error('Run against the local preview on 127.0.0.1:4173.');
   const assert = (condition, message) => { if (!condition) throw new Error(message); };
   const context = await page.context().browser().newContext({ reducedMotion: 'reduce' });
-  const errors = [], checks = [], publicBase = new URL('https://jgangini.github.io/certi-tips/');
+  const errors = [], checks = [], publicBase = new URL('https://jgangini.github.io/certitips/');
   const route = '1Z0-1157-26/oci-enterprise/';
   const target = 'primeros-pasos-verificados';
   let releaseImages, waitForImages;

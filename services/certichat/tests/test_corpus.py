@@ -32,9 +32,9 @@ def test_hash_validation_and_published_sources():
         validate_manifest(invalid)
 
 
-@pytest.mark.parametrize("url", ["https://jgangini.github.io.evil.test/certi-tips/x",
-    SITE + "%2e%2e/.private/x", SITE + "%5cx", "http://jgangini.github.io/certi-tips/x",
-    SITE + "x?redirect=evil", "https://user@jgangini.github.io/certi-tips/x"])
+@pytest.mark.parametrize("url", ["https://jgangini.github.io.evil.test/certitips/x",
+    SITE + "%2e%2e/.private/x", SITE + "%5cx", "http://jgangini.github.io/certitips/x",
+    SITE + "x?redirect=evil", "https://user@jgangini.github.io/certitips/x"])
 def test_reject_ambiguous_public_urls(url):
     assert not public_url(url)
 

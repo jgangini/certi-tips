@@ -136,10 +136,37 @@ test("Canvas preserves trace membership, camera control and selection styling", 
     step(5420);
     assert.ok(Math.abs(centeredNode.x * pose()[0] + pose()[1] - canvas.clientWidth / 2) < 1e-9);
     assert.ok(Math.abs(centeredNode.y * pose()[0] + pose()[2] - canvas.clientHeight / 2) < 1e-9);
+    renderer.setTrace({ nodes: ["a", "b"], edges: [] }); flush();
+    const pulseStart = strokes.length;
+    renderer.pulse(); step(6000);
+    const firstWave = strokes.slice(pulseStart).find(stroke => stroke.color === "#c74634" && stroke.opacity === 0.38);
+    assert.equal(firstWave.radii.length, 2, "waves must mark only the retrieved nodes");
+    assert.equal(canvas.dataset.pulseActive, "true");
+    const pulseMiddle = strokes.length;
+    step(6480);
+    const fadingWave = strokes.slice(pulseMiddle).find(stroke => stroke.color === "#c74634" && stroke.opacity < 0.38);
+    assert.ok(fadingWave.radii[0] > firstWave.radii[0] && fadingWave.opacity < firstWave.opacity, "red waves must expand and fade");
+    step(7200);
+    assert.equal(canvas.dataset.pulseActive, "false");
+    assert.equal(frames.size, 0, "pulse must stop requesting frames after 1.2 seconds");
+    for (const interrupt of [() => renderer.zoom(1.1), () => renderer.fit(),
+      () => events.get("pointerdown")(pointerPan),
+      () => events.get("keydown")({ key: "ArrowRight", preventDefault() {} }),
+      () => renderer.setTrace({ nodes: ["c"], edges: [] })]) {
+      renderer.pulse(); step(8000); interrupt(); step(8016);
+      assert.equal(canvas.dataset.pulseActive, "false", "manual camera controls and new evidence must cancel the pulse");
+      assert.equal(frames.size, 0);
+    }
+    motion.matches = true; renderer.pulse();
+    assert.equal(frames.size, 0, "reduced motion must not start a pulse");
+    motion.matches = false; renderer.pulse(); step(9000); motion.matches = true; step(9016);
+    assert.equal(canvas.dataset.pulseActive, "false", "enabling reduced motion must stop an active pulse");
+    assert.equal(frames.size, 0);
     motion.matches = true; renderer.select("a", true); flush();
     assert.equal(canvas.dataset.cameraMoving, "false", "reduced motion centers concepts immediately");
-    motion.matches = false; startKeyboardFit();
+    motion.matches = false; startKeyboardFit(); renderer.pulse();
     renderer.destroy();
+    assert.equal(canvas.dataset.pulseActive, "false");
     assert.equal(destroyed, 2);
     assert.equal(frames.size, 0, "destroy must cancel a pending camera frame");
     let picked;

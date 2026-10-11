@@ -23,7 +23,7 @@ FRONTEND = "https://jgangini.github.io"
 HEADERS = {"Origin": FRONTEND, "X-CertiChat": "1"}
 VERSION = "a"*64
 TRACE = {"version": VERSION, "nodes": ["00000000-0000-0000-0000-000000000001"], "edges": [], "truncated": False}
-FRAGMENT = {"id": "guide", "title": "Guía", "url": f"{FRONTEND}/certi-tips/guide.html", "text": "Oracle almacena datos."}
+FRAGMENT = {"id": "guide", "title": "Guía", "url": f"{FRONTEND}/certitips/guide.html", "text": "Oracle almacena datos."}
 
 
 @pytest.fixture
