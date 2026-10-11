@@ -8,6 +8,13 @@ import shlex
 import pytest
 
 
+def test_indexer_compose_command_keeps_python_entrypoint():
+    compose = Path(__file__).resolve().parents[1] / "compose.yml"
+    text = compose.read_text().split("  indexer:\n", 1)[1].split("\n  volume-init:", 1)[0]
+    assert "entrypoint: [python, -m, app.indexer]" in text
+    assert "command: [build]" in text
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="Run Linux shell checks through scripts/certichat-local.ps1 -Test")
 @pytest.mark.parametrize("fault", ["none", "activate", "killed", "candidate"])
 def test_activation_recovery(tmp_path, fault):

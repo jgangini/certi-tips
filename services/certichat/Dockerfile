@@ -32,5 +32,6 @@ COPY services/certichat/requirements-test.txt /app/requirements-test.txt
 RUN pip install --no-cache-dir --require-hashes -r requirements-test.txt
 COPY --chown=10001:10001 services/certichat/tests /app/tests
 COPY --chown=10001:10001 services/certichat/*.sh /app/
+COPY --chown=10001:10001 services/certichat/compose.yml /app/
 USER 10001:10001
 CMD ["python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "/app/tests"]

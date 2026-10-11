@@ -8,7 +8,7 @@ Asistente de las guías publicadas en [CertiTips](https://jgangini.github.io/cer
 
 El modelo es `qwen/qwen3-235b-a22b-2507`, mediante OpenRouter; los embeddings usan `openai/text-embedding-3-small`. La API exige una respuesta estructurada con IDs de fuentes recuperadas. Rechaza respuestas sin evidencia, enlaces inventados o HTML. El navegador presenta texto escapado y construye los enlaces de fuentes por separado. El modelo puede equivocarse: estas barreras acotan el uso, pero no constituyen una prueba semántica de todas sus afirmaciones.
 
-El indexador descarga únicamente los dos archivos públicos en la URL fija de CertiTips. Construye un candidato en un directorio permanente por hash; lo valida antes de activar y conserva la versión anterior para recuperación. El worker abre un solo índice mediante SQLite, LanceDB y Ladybug. No se copia ni renombra una base abierta. Las consultas excluyen inmediatamente documentos modificados o eliminados según el manifiesto publicado, aunque la nueva indexación siga en curso. Si no se puede verificar el manifiesto durante 30 minutos, dejan de responder hasta recuperar esa comprobación.
+El indexador descarga únicamente los dos archivos públicos en la URL fija de CertiTips. Construye un candidato en un directorio permanente por hash; lo valida antes de activar y conserva la versión anterior para recuperación. El worker abre un solo índice mediante SQLite, LanceDB y Ladybug. No se copia ni renombra una base abierta. Las consultas excluyen documentos modificados o eliminados desde la siguiente comprobación del manifiesto, cada cinco minutos, aunque la nueva indexación siga en curso. Si no se puede verificar el manifiesto durante 30 minutos, dejan de responder hasta recuperar esa comprobación.
 
 ## Acceso y presupuesto
 
@@ -21,7 +21,7 @@ Turnstile valida el hostname `jgangini.github.io` y la acción `certichat_sessio
 | API | Cuatro consultas admitidas simultáneamente |
 | Buscador | Una búsqueda activa, sin cola ilimitada |
 | Mensaje / respuesta | 1.500 caracteres / 800 tokens de salida |
-| Historial | Cuatro turnos, hasta 24 horas; mismo hash del contenido |
+| Historial | Cuatro turnos utilizables durante 24 horas; limpieza física cada minuto; mismo hash del contenido |
 | Consultas | US$0,50/día y US$7/mes |
 | Indexación | US$2/mes |
 | Total local / clave OpenRouter | US$9/mes / US$10/mes |
@@ -32,7 +32,7 @@ El piloto permite 50 participantes compartiendo una IP, con los límites anterio
 
 ## Configuración y despliegue
 
-1. Guardar localmente `OPENROUTER_API_KEY`, `CERTICHAT_TURNSTILE_SITE_KEY` y `CERTICHAT_TURNSTILE_SECRET` en el archivo ignorado `.private/certichat.env`. No incluirlo en un commit ni compartirlo en el chat.
+1. Guardar localmente `OPENROUTER_API_KEY`, `CERTICHAT_TURNSTILE_SITE_KEY` y `CERTICHAT_TURNSTILE_SECRET` en el archivo ignorado `.private/certichat.env`. No incluirlo en un commit ni compartirlo en el chat. Configurar en OpenRouter el límite de esa clave en US$10 con reinicio mensual; la aplicación no modifica ese ajuste. En el despliegue inicial se comprobó el límite en el panel del proveedor.
 2. Crear el widget Managed de Turnstile para `jgangini.github.io`. Configurar en GitHub la variable pública `CERTICHAT_TURNSTILE_SITE_KEY`. El workflow de Pages la entrega al build; nunca necesita la clave privada.
 3. Crear el registro A `certichat.cloudtechnext.net` hacia la VPS. Instalar solamente las claves OpenRouter y Turnstile privada en `/opt/jarvis/apps/certichat/services/certichat/.env`, con permisos 600 y directorios privados.
 4. Ejecutar `./scripts/certichat-deploy.ps1` desde la raíz. Transfiere exclusivamente `services/certichat`, sin archivos de entorno. Genera credenciales independientes en la VPS, aplica el esquema con un rol administrador y usa un rol DML limitado en ejecución. Configura Caddy y los temporizadores de sincronización.
