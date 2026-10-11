@@ -20,7 +20,7 @@ export function safeSourceURL(value, root) {
 
 export function quotaText(quota, now = Date.now()) {
   const reset = typeof quota?.resetAt === "string" ? Date.parse(quota.resetAt) : NaN;
-  if (!Number.isFinite(reset) || reset <= now) return "";
+  if (!Number.isFinite(quota?.remaining) || quota.remaining > 0 || !Number.isFinite(reset) || reset <= now) return "";
   const minutes = Math.ceil((reset - now) / 60000);
   return `Tus consultas se renovarán en ${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
 }
@@ -52,6 +52,16 @@ export function restoreChat(value, siteRoot, now = Date.now()) {
 const root = typeof document === "undefined" ? null : document.querySelector("[data-certichat]");
 if (root) {
   const panel = root.querySelector("#certichat-panel"), launcher = root.querySelector("[data-chat-open]");
+  const mobileChat = matchMedia("(max-width: 800px)");
+  function fitMobileViewport() {
+    const viewport = window.visualViewport;
+    // ponytail: track the keyboard viewport, while preserving deliberate pinch zoom.
+    if (panel.hidden || !mobileChat.matches || !viewport || viewport.scale !== 1) return;
+    for (const [name, value] of Object.entries({ top: viewport.offsetTop, left: viewport.offsetLeft, width: viewport.width, height: viewport.height })) panel.style.setProperty(`--chat-${name}`, `${value}px`);
+  }
+  window.visualViewport?.addEventListener("resize", fitMobileViewport);
+  window.visualViewport?.addEventListener("scroll", fitMobileViewport);
+  mobileChat.addEventListener("change", fitMobileViewport);
   const status = root.querySelector("[data-chat-status]"), verification = root.querySelector("[data-chat-verification]");
   const clear = root.querySelector("[data-chat-clear]"), retry = root.querySelector("[data-chat-retry]");
   const confirmation = root.querySelector("[data-chat-confirm]"), confirmClear = confirmation.querySelector("[data-chat-confirm-yes]"), cancelClear = confirmation.querySelector("[data-chat-confirm-no]");
@@ -67,6 +77,14 @@ if (root) {
     quota = value;
     quotaNotice.textContent = quotaText(quota);
     quotaNotice.hidden = !quotaNotice.textContent;
+    const input = chat?.shadowRoot.querySelector('[role="textbox"]');
+    if (!input) return;
+    const exhausted = !quotaNotice.hidden;
+    // ponytail: update the native textbox; changing textInput would recreate the ongoing conversation.
+    input.contentEditable = String(!exhausted);
+    input.setAttribute("aria-disabled", String(exhausted));
+    input.classList.toggle("text-input-disabled", exhausted);
+    chat.disableSubmitButton(exhausted);
   }
   setInterval(() => updateQuota(), 30000);
 
@@ -154,12 +172,13 @@ if (root) {
       chat.textInput = {
         characterLimit: 1500, placeholder: { text: "Escribe tu consulta", style: { color: "var(--muted)" } },
         styles: {
-          container: { width: "100%", margin: "0", backgroundColor: "var(--paper)", border: "unset", borderTop: "1px solid var(--line)", borderRadius: "0", boxShadow: "unset" },
-          text: { color: "var(--ink)", fontSize: "1.05em", paddingTop: "11px", paddingBottom: "13px", paddingLeft: "12px", paddingRight: "2.4em" },
+          container: { width: "100%", boxSizing: "border-box", margin: "0", backgroundColor: "var(--paper)", border: "unset", borderTop: "1px solid var(--line)", borderRadius: "0", boxShadow: "unset" },
+          text: { color: "var(--ink)", fontSize: "16px", paddingTop: "11px", paddingBottom: "13px", paddingLeft: "12px", paddingRight: "2.4em" },
         },
       };
       chat.submitButtonStyles = { submit: { container: { default: { transform: "scale(1.21)", marginBottom: "-3px", marginRight: "0.4em" } } } };
       chat.messageStyles = { default: { shared: { bubble: { maxWidth: "92%", fontSize: "14px", lineHeight: "1.5" } }, ai: { bubble: { backgroundColor: "var(--hover)", color: "var(--ink)" } }, user: { bubble: { backgroundColor: "var(--accent)", color: "var(--on-red)" } } } };
+      chat.messageStyles.loading = { message: { styles: { bubble: { display: "flex", alignItems: "center", justifyContent: "center", width: "56px", height: "36px", padding: "0", boxSizing: "border-box" } } } };
       chat.remarkable = { html: false, applyHTML: false };
       chat.auxiliaryStyle = "* { overflow-wrap: anywhere; } #chat-view { grid-template-rows: minmax(0, 1fr) auto auto; } #certichat-quota { color: var(--muted); text-align: center; font-size: 12px; line-height: 1.4; padding: 8px 12px; } #certichat-quota[hidden] { display: none; } a { color: var(--blue); text-decoration: underline; } a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; } @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }";
       chat.introMessage = { text: "Hola. Resuelve tus dudas sobre las guías y prácticas del sitio." };
@@ -176,13 +195,14 @@ if (root) {
       };
       chat.errorMessages = { displayServiceErrorMessages: true };
       chat.requestBodyLimits = { maxMessages: 1 };
-      chat.validateInput = text => !busy && Boolean(text?.trim()) && text.length <= 1500;
+      chat.validateInput = text => !busy && !quotaText(quota) && Boolean(text?.trim()) && text.length <= 1500;
       chat.onComponentRender = () => {
         chat.shadowRoot.querySelector("#input")?.before(quotaNotice);
         const input = chat.shadowRoot.querySelector('[role="textbox"]');
         input?.setAttribute("aria-label", "Escribe tu consulta");
         input?.setAttribute("enterkeyhint", "send");
         chat.shadowRoot.querySelector('.input-button.inside-end')?.setAttribute("aria-label", "Enviar consulta");
+        updateQuota();
       };
       chat.addEventListener("keydown", event => {
         const input = event.composedPath()[0];
@@ -192,7 +212,9 @@ if (root) {
       }, { capture: true });
       chat.addEventListener("click", event => {
         const link = event.composedPath().find(node => node.tagName === "A");
-        if (link && safeSourceURL(link.href, root.dataset.siteRoot) && event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) closePanel();
+        if (link && safeSourceURL(link.href, root.dataset.siteRoot) && event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
+          try { sessionStorage.setItem(`${storageKey}:reference`, link.href); } catch { /* The open panel remains usable without storage. */ }
+        }
       });
       // ponytail: reveal the validated answer progressively; raw model tokens cannot bypass source validation.
       chat.connect = { stream: matchMedia("(prefers-reduced-motion: reduce)").matches ? undefined : { simulation: 6 }, handler: async (body, signals) => {
@@ -255,14 +277,23 @@ if (root) {
     catch { setStatus("Sin conexión. Vuelve a intentarlo.", true); }
     finally { retry.disabled = false; }
   }
-  function closePanel() { panel.hidden = true; launcher.hidden = false; launcher.setAttribute("aria-expanded", "false"); launcher.focus(); }
+  function closePanel() {
+    try { sessionStorage.removeItem(`${storageKey}:reference`); } catch { /* Storage is optional. */ }
+    panel.hidden = true; launcher.hidden = false; launcher.setAttribute("aria-expanded", "false"); launcher.focus();
+  }
   launcher.addEventListener("click", async () => {
     if (!panel.hidden) return closePanel();
     panel.hidden = false; launcher.hidden = true; launcher.setAttribute("aria-expanded", "true");
+    fitMobileViewport();
     root.querySelector("[data-chat-close]").focus();
     if (!opening) { opening = connect(); await opening; opening = undefined; }
   });
-  if (location.hash === "#certichat") launcher.click();
+  let followedReference = false;
+  try {
+    followedReference = sessionStorage.getItem(`${storageKey}:reference`) === location.href;
+    sessionStorage.removeItem(`${storageKey}:reference`);
+  } catch { /* Browsers may disable session storage. */ }
+  if (location.hash === "#certichat" || followedReference) launcher.click();
   root.querySelector("[data-chat-close]").addEventListener("click", closePanel);
   panel.addEventListener("keydown", event => { if (event.key === "Escape") { event.preventDefault(); closePanel(); } });
   retry.addEventListener("click", connect);

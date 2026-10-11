@@ -1,5 +1,5 @@
 // Run with playwright-cli -s=certichatqa run-code --filename scripts/certichat-browser-smoke.cjs
-// Build with CERTICHAT_MODE=VPS first. Isolated local browser, mocked API; no screenshots or paid calls.
+// Isolated local browser, mocked API in either build mode; no screenshots or paid calls.
 async (page) => {
   const base = new URL('/certi-tips/', page.url()).href;
   const assert = (condition, message) => { if (!condition) throw new Error(message); };
@@ -9,10 +9,10 @@ async (page) => {
   let quota = { remaining: 20, limit: 20, refreshHours: 6, resetAt: null, minuteRemaining: 2, retryAfter: 0 };
   let authenticated = true, available = true, sessionError = true, rateLimited = false, loseResponse = false, failOnce = 0;
   let mode = 'VPS';
-  const waitForReply = async text => page.waitForFunction(expected => {
+  const waitForReply = async (text, canSubmit = true) => page.waitForFunction(({ expected, canSubmit }) => {
     const chat = document.querySelector('deep-chat'), last = chat?.getMessages().at(-1);
-    return last?.role === 'ai' && last.text.includes(expected) && chat.validateInput('Siguiente consulta');
-  }, text);
+    return last?.role === 'ai' && last.text.includes(expected) && chat.validateInput('Siguiente consulta') === canSubmit;
+  }, { expected: text, canSubmit });
   const waitForReady = async () => page.waitForFunction(() => {
     const status = document.querySelector('[data-chat-status]');
     return document.querySelector('deep-chat')?.shadowRoot?.querySelector('#certichat-quota') &&
@@ -41,6 +41,11 @@ async (page) => {
     if (path === '/api/session' && request.method() === 'POST') authenticated = true;
     return route.fulfill({ headers, json: { mode, authenticated, verificationRequired: !authenticated, quota, available } });
   });
+  await page.route(`${base}**`, async route => {
+    if (!route.request().isNavigationRequest()) return route.fallback();
+    const response = await route.fetch();
+    return route.fulfill({ response, body: (await response.text()).replace(/data-api="[^"]+"/, 'data-api="https://certichat.cloudtechnext.net"') });
+  });
   await page.goto(base);
   await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
   const publishedChat = page.getByRole('link', { name: 'Abrir chat del sitio publicado' });
@@ -52,7 +57,7 @@ async (page) => {
   await page.route(`${base}**`, async route => {
     if (!route.request().isNavigationRequest()) return route.fallback();
     const response = await route.fetch();
-    return route.fulfill({ response, body: (await response.text()).replace('data-api="https://certichat.cloudtechnext.net"', 'data-api="http://127.0.0.1:18741"') });
+    return route.fulfill({ response, body: (await response.text()).replace(/data-api="[^"]+"/, 'data-api="http://127.0.0.1:18741"') });
   });
   mode = 'LOCAL'; authenticated = false; sessionError = false;
   await page.goto(base);
@@ -106,7 +111,7 @@ async (page) => {
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).fill('');
   await waitForReply(answer);
   await waitForReady();
-  assert(/^Tus consultas se renovarán en \d{2}:[0-5]\d$/.test(await quotaNotice.textContent()), 'Missing renewal countdown in HH:MM');
+  assert(await quotaNotice.isHidden(), 'Renewal countdown appears while questions remain');
   assert(await quotaNotice.evaluate(element => element.nextElementSibling?.id === 'input'), 'Renewal countdown is not beside the full-width input');
   assert(calls.filter(item => item.path === '/api/chat').length === 1, 'Keyboard submission did not issue exactly one request');
   assert(await submit.count() === 1, 'Submit name lost after response');
@@ -130,9 +135,7 @@ async (page) => {
   // Keep this mocked browser on its fixture while checking the real link activation handler.
   await guideLink.evaluate(link => link.addEventListener('click', event => event.preventDefault(), { once: true }));
   await guideLink.click();
-  assert(await page.locator('#certichat-panel').isHidden() && await page.locator('[data-chat-open]').isVisible(), 'Following a reference did not uncover the document');
-  await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
-  await waitForReady();
+  assert(await page.locator('#certichat-panel').isVisible() && await page.locator('[data-chat-open]').isHidden(), 'Following a reference closed the conversation');
   assert(quota.remaining === 18 && quota.resetAt === firstReset, 'Following question moved the fixed quota window');
   const transcript = await page.locator('deep-chat').evaluate(element => JSON.stringify(element.getMessages()));
   const chatCalls = calls.filter(item => item.path === '/api/chat').length;
@@ -159,7 +162,7 @@ async (page) => {
   await page.locator('[data-chat-confirm]').waitFor({ state: 'hidden' });
   await page.waitForFunction(() => document.querySelector('[data-chat-clear]').disabled === false);
   assert(calls.some(item => item.path === '/api/conversation' && item.method === 'DELETE'), 'No server conversation deletion');
-  assert(await quotaNotice.isVisible() && quota.remaining === 18 && quota.resetAt === firstReset, 'Clear reset quota');
+  assert(await quotaNotice.isHidden() && quota.remaining === 18 && quota.resetAt === firstReset, 'Clear reset quota or displayed the countdown before exhaustion');
   await page.reload();
   await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
   await waitForReady();
@@ -172,6 +175,7 @@ async (page) => {
   await waitForReply('31 segundos');
   assert(await page.locator('[data-chat-status]').isHidden(), 'Rate limit shows an error banner instead of a chat reply');
   assert(await page.locator('[data-chat-retry]').isVisible(), 'Error does not show Retry');
+  assert(await quotaNotice.isHidden() && await page.getByRole('textbox', { name: 'Escribe tu consulta' }).isEditable(), 'Minute rate limit exhausted the six-hour allowance');
   rateLimited = false;
   loseResponse = true;
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).fill('Consulta con conexión interrumpida');
@@ -223,8 +227,12 @@ async (page) => {
   }
   for (const width of [1280, 390, 320]) {
     await page.setViewportSize({ width, height: 740 });
+    if (width <= 800) await page.waitForFunction(() => {
+      const box = document.querySelector('#certichat-panel').getBoundingClientRect();
+      return Math.abs(box.width - visualViewport.width) < 1 && Math.abs(box.height - visualViewport.height) < 1;
+    });
     const geometry = await page.locator('#certichat-panel').evaluate(element => { const box = element.getBoundingClientRect(), style = getComputedStyle(element); return { left: box.left, right: box.right, top: box.top, bottom: box.bottom, viewport: innerWidth, height: innerHeight, footer: document.querySelector('.site-footer').getBoundingClientRect().top, border: style.borderTopWidth, radius: style.borderRadius, overflow: getComputedStyle(document.body).overflow }; });
-    if (width <= 520) {
+    if (width <= 800) {
       assert(Math.abs(geometry.left) < 1 && Math.abs(geometry.top) < 1 && Math.abs(geometry.right - geometry.viewport) < 1 && Math.abs(geometry.bottom - geometry.height) < 1, `Mobile panel is not fullscreen at ${width}`);
       assert(geometry.border === '0px' && geometry.radius === '0px' && geometry.overflow === 'hidden', `Mobile panel keeps borders or background scrolling at ${width}`);
     } else assert(geometry.left >= 0 && geometry.right <= width && geometry.top >= 0 && geometry.bottom < geometry.footer, `Desktop panel escapes viewport/footer at ${width}`);
@@ -287,6 +295,40 @@ async (page) => {
     return launcher.bottom <= completion.top || launcher.top >= completion.bottom || launcher.right <= completion.left || launcher.left >= completion.right;
   });
   assert(controlsSeparate, 'Chat launcher overlaps lesson completion');
+  // Server quota fixtures exercise exhaustion and expiry without using paid API calls.
+  quota = { ...quota, remaining: 1, resetAt: new Date(Date.now() + 6 * 3600000).toISOString() };
+  await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
+  await waitForReady();
+  const input = page.getByRole('textbox', { name: 'Escribe tu consulta' });
+  assert(await quotaNotice.isHidden() && await input.isEditable(), 'Last available question was blocked');
+  await input.fill('Última consulta disponible');
+  await input.press('Enter');
+  await waitForReply(answer, false);
+  await waitForReady();
+  assert(/^Tus consultas se renovarán en \d{2}:[0-5]\d$/.test(await quotaNotice.textContent()), 'Exhausted allowance has no HH:MM countdown');
+  assert(!(await input.isEditable()) && await input.getAttribute('aria-disabled') === 'true', 'Exhausted allowance leaves the textbox editable');
+  assert(await submit.getAttribute('aria-disabled') === 'true', 'Exhausted allowance leaves submit enabled');
+  const exhaustedCalls = calls.filter(item => item.path === '/api/chat').length;
+  const exhaustedTranscript = await page.locator('deep-chat').evaluate(element => JSON.stringify(element.getMessages()));
+  await input.press('Enter');
+  await submit.dispatchEvent('click');
+  await page.locator('deep-chat').evaluate(element => element.submitUserMessage({ text: 'Consulta bloqueada' }));
+  await page.waitForTimeout(50);
+  assert(calls.filter(item => item.path === '/api/chat').length === exhaustedCalls, 'Exhausted allowance sent another API request');
+  assert(await page.locator('deep-chat').evaluate(element => JSON.stringify(element.getMessages())) === exhaustedTranscript, 'Blocking quota submission changed the conversation');
+  quota = { remaining: 20, limit: 20, refreshHours: 6, resetAt: null, minuteRemaining: 2, retryAfter: 0 };
+  await page.clock.setFixedTime(new Date(Date.now() + 6 * 3600000));
+  await page.waitForFunction(() => {
+    const root = document.querySelector('deep-chat')?.shadowRoot;
+    return root?.querySelector('#certichat-quota')?.hidden && root.querySelector('[role="textbox"]')?.isContentEditable;
+  }, undefined, { timeout: 35000 });
+  assert(await quotaNotice.isHidden() && await input.isEditable(), 'Quota expiry did not restore the textbox and hide the countdown');
+  await input.fill('Consulta después de renovar');
+  assert(await submit.getAttribute('aria-disabled') !== 'true', 'Quota expiry left submit disabled');
+  await input.press('Enter');
+  await waitForReply(answer);
+  await waitForReady();
+  assert(calls.filter(item => item.path === '/api/chat').length === exhaustedCalls + 1, 'Renewed allowance did not submit exactly one question');
   assert(errors.length === 0, `Page errors: ${errors.join('; ')}`);
-  return { checks: ['lazy local bundle', 'offline opens without banner or unsolicited error', 'offline Enter returns local feedback without API call', 'named submit and keyboard activation', 'Shift+Enter newline', 'incremental streaming locks repeated submit and clear', 'safe plaintext without unsolicited links', 'explicit safe guide links with persisted anchors', 'removed sources block stays absent', 'API contract', 'hidden initial quota and fixed six-hour renewal countdown', 'completed streaming history persists across navigation and reload without automatic submission', 'cancel preserves conversation', 'confirmed clear persists and preserves quota', 'errors inside chat and retry visibility', 'idempotent transport retry after reload', 'reload during streaming preserves UUID and avoids another generation', 'definitive failure retry', 'mobile fullscreen and desktop geometry', 'launcher visibility and close controls', 'Escape focus', 'unavailable answers locally without Turnstile or chat call', 'missing Turnstile fails closed with local feedback', 'Turnstile server handshake', 'dark theme', 'completion control coexistence'], requests: calls.length, errors };
+  return { checks: ['lazy local bundle', 'offline opens without banner or unsolicited error', 'offline Enter returns local feedback without API call', 'named submit and keyboard activation', 'Shift+Enter newline', 'incremental streaming locks repeated submit and clear', 'safe plaintext without unsolicited links', 'explicit safe guide links with persisted anchors and open conversation', 'removed sources block stays absent', 'API contract', 'countdown only for exhausted allowance; input and submit block until expiry', 'minute rate limit does not exhaust the six-hour allowance', 'completed streaming history persists across navigation and reload without automatic submission', 'cancel preserves conversation', 'confirmed clear persists and preserves quota', 'errors inside chat and retry visibility', 'idempotent transport retry after reload', 'reload during streaming preserves UUID and avoids another generation', 'definitive failure retry', 'mobile fullscreen and desktop geometry', 'launcher visibility and close controls', 'Escape focus', 'unavailable answers locally without Turnstile or chat call', 'missing Turnstile fails closed with local feedback', 'Turnstile server handshake', 'dark theme', 'completion control coexistence'], requests: calls.length, errors };
 }

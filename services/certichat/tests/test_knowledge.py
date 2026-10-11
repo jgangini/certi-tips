@@ -54,3 +54,32 @@ def test_current_page_precedes_graph_results_with_existing_source_limit(tmp_path
     result = asyncio.run(knowledge.retrieve(
         knowledge.Retrieval(message="Información de esta página", pageUrl=SITE + "current/"), "Bearer test-token"))
     assert [fragment["title"] for fragment in result["fragments"]] == ["current", *[f"graph{i}" for i in range(5)]]
+
+
+@pytest.mark.parametrize("question,first", [("que sabes de dama y oci", "governance"),
+                                           ("Qué cursos reúne Foundation", "home")])
+def test_specific_visible_evidence_precedes_home_before_context_limits(tmp_path, monkeypatch, question, first):
+    documents = [{"id": "home", "title": "Rutas", "courseId": "site", "url": SITE,
+                  "text": "Foundation reúne tres cursos. " + "OCI: " * 340 + "DAMA está en Governance."},
+                 *[{"id": f"oci{i}", "title": "OCI Enterprise AI", "courseId": "agents",
+                    "url": SITE + f"oci{i}/", "text": "OCI Enterprise AI usa proyectos y herramientas. " * 35}
+                   for i in range(6)],
+                 {"id": "governance", "title": "Tu punto de partida", "courseId": "data-governance",
+                  "url": SITE + "data-governance/overview/", "text":
+                  "DAMA es un marco de gestión de datos. El taller aplica sus principios con Oracle Cloud."}]
+    sources = segments(documents)
+    manifest = {"schemaVersion": 1, "contentHash": "a"*64, "corpusUrl": CORPUS_URL,
+                "documents": [{key: value for key, value in doc.items() if key != "text"} |
+                              {"hash": digest(doc["text"])} for doc in documents]}
+    atomic_json(tmp_path / "latest.json", manifest)
+    monkeypatch.setattr(knowledge.app, "state", SimpleNamespace(
+        root=tmp_path, token="test-token", snapshot=tmp_path, sources=sources, lock=asyncio.Lock()))
+
+    async def evidence(_message):
+        return [{"kind": "segment", "document_name": name} for name in sources]
+
+    monkeypatch.setattr(knowledge, "retrieve_evidence", evidence)
+    result = asyncio.run(knowledge.retrieve(
+        knowledge.Retrieval(message=question, pageUrl=SITE), "Bearer test-token"))
+    assert result["fragments"][0]["url"] == (SITE if first == "home" else SITE + "data-governance/overview/")
+    assert len(result["fragments"]) == 6

@@ -297,7 +297,7 @@
     {
       "id": "data-governance",
       "title": "Data Management Fundamentals",
-      "sidebarLabel": "DAMA",
+      "sidebarLabel": "CDMP-DMF",
       "edition": "2026",
       "description": "Fundamentos de gestión de datos con DAMA, aplicados a Oracle Cloud mediante Oracle AI Data Platform y Oracle Autonomous AI Lakehouse.",
       "contentDir": "data-governance",

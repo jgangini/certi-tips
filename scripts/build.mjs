@@ -5,6 +5,7 @@ import { parseEnv } from "node:util";
 import MarkdownIt from "markdown-it";
 import { layout, homeBody, certiquizBody, escapeHtml, courseRoute } from "./layout.mjs";
 import { annotateHeadings, pageDocuments, corpusArtifacts, contentHash } from "./certichat-corpus.mjs";
+import { certichatExplorerBody } from "./certichat-explorer.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const output = path.join(root, "dist");
@@ -128,6 +129,9 @@ knowledge.push({ id: "home", title: "CertiTips · Rutas de aprendizaje", url: `$
 const { corpus, manifest } = corpusArtifacts(knowledge, `${site.origin}${site.base}assets/certichat/corpus.json`);
 await save("assets/certichat/corpus.json", corpus);
 await save("assets/certichat/manifest.json", manifest);
+const graphFile = path.join(root, "data/certichat-graph.json");
+const hasGraph = existsSync(graphFile);
+if (hasGraph) await cp(graphFile, path.join(output, "assets/certichat/graph.json"));
 await save(
   "index.html",
   layout({
@@ -145,6 +149,15 @@ await save(
     course: site.courses[0],
     page: { slug: "certiquiz", title: "CertiQuiz · Aprende en equipo", description: "Practica en grupo: crea una sala, comparte el código y aprende con cada respuesta." },
     body: certiquizBody(certiquizApi.origin),
+  }),
+);
+await save(
+  "certichat/index.html",
+  layout({
+    site,
+    course: site.courses[0],
+    page: { slug: "certichat", title: "Cómo funciona CertiChat", description: "Conoce cómo se responde una consulta y explora el mapa de conocimiento de las guías." },
+    body: certichatExplorerBody(site.base, hasGraph),
   }),
 );
 await save(

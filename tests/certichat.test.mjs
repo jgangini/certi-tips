@@ -25,12 +25,13 @@ test("CertiChat renders untrusted messages as inert text and sources stay inside
   for (const url of ["javascript:alert(1)", "https://attacker.test/certi-tips/", "https://jgangini.github.io/another/", `${site}?secret=1`, "https://user:pass@jgangini.github.io/certi-tips/", `${site}../another/`]) assert.equal(safeSourceURL(url, site), null, url);
 });
 
-test("CertiChat countdown uses the server renewal time without exposing quota counts", () => {
+test("CertiChat countdown appears only for an exhausted quota until its server renewal time", () => {
   const now = Date.parse("2026-10-11T12:00:00Z");
-  assert.equal(quotaText({ resetAt: "2026-10-11T18:00:00Z", remaining: 19 }, now), "Tus consultas se renovarán en 06:00");
-  assert.equal(quotaText({ resetAt: "2026-10-11T12:01:01Z" }, now), "Tus consultas se renovarán en 00:02");
-  assert.equal(quotaText({ resetAt: "2026-10-12T12:00:00Z" }, now), "Tus consultas se renovarán en 24:00");
-  for (const resetAt of [null, undefined, "bad", "2026-10-11T11:00:00Z", "2026-10-11T12:00:00Z"]) assert.equal(quotaText({ resetAt }, now), "");
+  assert.equal(quotaText({ resetAt: "2026-10-11T18:00:00Z", remaining: 0 }, now), "Tus consultas se renovarán en 06:00");
+  assert.equal(quotaText({ resetAt: "2026-10-11T12:01:01Z", remaining: 0 }, now), "Tus consultas se renovarán en 00:02");
+  assert.equal(quotaText({ resetAt: "2026-10-12T12:00:00Z", remaining: -1 }, now), "Tus consultas se renovarán en 24:00");
+  for (const remaining of [20, 19, 1, null, undefined, "0", NaN, Infinity]) assert.equal(quotaText({ resetAt: "2026-10-11T18:00:00Z", remaining, minuteRemaining: 0 }, now), "");
+  for (const resetAt of [null, undefined, "bad", "2026-10-11T11:00:00Z", "2026-10-11T12:00:00Z"]) assert.equal(quotaText({ resetAt, remaining: 0 }, now), "");
   assert.equal(quotaText(undefined, now), "");
 });
 

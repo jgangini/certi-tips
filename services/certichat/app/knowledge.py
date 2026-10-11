@@ -11,6 +11,7 @@ from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
 from .corpus import DATASET, public_url, read_json, snapshot_path, supported_fragments, validate_manifest
+from .graph import public_graph, read_graph
 
 
 def configure_cognee(snapshot: Path, token: str) -> None:
@@ -106,6 +107,20 @@ async def health():
     return {"status": "ready" if app.state.snapshot else "waiting", "version": getattr(app.state, "version", None)}
 
 
+@app.get("/graph")
+async def graph(authorization: str = Header(default="")):
+    if not hmac.compare_digest(authorization, f"Bearer {app.state.token}"):
+        raise HTTPException(401, "Unauthorized")
+    if not app.state.snapshot or app.state.lock.locked():
+        raise HTTPException(503, "Knowledge graph unavailable")
+    async with app.state.lock:
+        try:
+            nodes, edges = await asyncio.wait_for(read_graph(), timeout=30)
+            return public_graph(nodes, edges, app.state.version)
+        except Exception:
+            raise HTTPException(503, "Knowledge graph unavailable") from None
+
+
 @app.post("/retrieve")
 async def retrieve(body: Retrieval, authorization: str = Header(default="")):
     if not hmac.compare_digest(authorization, f"Bearer {app.state.token}"):
@@ -136,4 +151,4 @@ async def retrieve(body: Retrieval, authorization: str = Header(default="")):
     page_context = [{"kind": "segment", "document_name": name}
                     for name, source in app.state.sources.items() if source["url"] == body.pageUrl]
     return {"version": latest["contentHash"],
-            "fragments": supported_fragments(page_context + evidence, app.state.sources, latest)}
+            "fragments": supported_fragments(page_context + evidence, app.state.sources, latest, body.message)}
