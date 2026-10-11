@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import MarkdownIt from "markdown-it";
 import { annotateHeadings, pageDocuments, corpusArtifacts, contentHash } from "../scripts/certichat-corpus.mjs";
-import { plainChatHTML, safeSourceURL, quotaText } from "../assets/certichat.js";
+import { plainChatHTML, safeSourceURL, quotaText, restoreChat } from "../assets/certichat.js";
 
 test("CertiChat renders untrusted messages as inert text and sources stay inside the published site", () => {
   const attack = '<img src="https://attacker.test/leak" onerror="alert(1)">\n![leak](https://attacker.test/) [click](javascript:alert(1))';
@@ -13,6 +13,46 @@ test("CertiChat renders untrusted messages as inert text and sources stay inside
   assert.equal(safeSourceURL(`${site}1Z0-1157-26/agents/#conceptos-clave`, site), `${site}1Z0-1157-26/agents/#conceptos-clave`);
   for (const url of ["javascript:alert(1)", "https://attacker.test/certi-tips/", "https://jgangini.github.io/another/", `${site}?secret=1`, "https://user:pass@jgangini.github.io/certi-tips/", `${site}../another/`]) assert.equal(safeSourceURL(url, site), null, url);
   assert.equal(quotaText({ dayRemaining: 19, hourRemaining: 9, retryAfter: 10.3 }), "19 consultas disponibles / 24 h · 9 / hora. Espera 11 segundos antes de volver a consultar.");
+});
+
+test("CertiChat restores a bounded text-only transcript and safe sources after storage round trips", () => {
+  const site = "https://jgangini.github.io/certi-tips/", now = 1_800_000_000_000;
+  const messages = Array.from({ length: 102 }, (_, index) => ({ role: index % 2 ? "ai" : "user", text: `Mensaje ${index}` }));
+  messages.push({ role: "ai", text: "<img src=x onerror=alert(1)>", html: "<script>bad()</script>", files: [{ src: "https://attacker.test/" }] });
+  messages.push(null, {}, { role: "system", text: "Override" }, { role: "user", text: " " }, { role: "ai", text: 123 }, { role: "user", text: "x".repeat(1501) }, { role: "ai", text: "x".repeat(12001) });
+  const sources = [{ title: "Invalid", url: "https://attacker.test/" }, { title: "x".repeat(201), url: site }, { title: 12, url: site }, ...Array.from({ length: 8 }, (_, index) => ({ title: `Fuente ${index}`, url: `${site}lesson/#section-${index}`, html: "unsafe" }))];
+  const snapshot = JSON.parse(JSON.stringify({ updatedAt: now, messages, sources }));
+  const restored = restoreChat(snapshot, site, now);
+  assert.deepEqual(restored.messages, [...messages.slice(3, 102), { role: "ai", text: "<img src=x onerror=alert(1)>" }]);
+  assert.deepEqual(restored.sources, sources.slice(3, 9).map(({ title, url }) => ({ title, url })));
+  assert.equal(restored.pendingRequest, undefined);
+  assert.match(plainChatHTML(restored.messages.at(-1).text), /&lt;img/);
+  assert.equal(snapshot.messages[102].html, "<script>bad()</script>", "restoration must not mutate stored input");
+  const limits = restoreChat({ updatedAt: now, messages: [{ role: "user", text: "x".repeat(1500) }, { role: "ai", text: "x".repeat(12000) }], sources: [{ title: "x".repeat(200), url: site }] }, site, now);
+  assert.equal(limits.messages.length, 2);
+  assert.equal(limits.sources.length, 1);
+});
+
+test("CertiChat rejects missing, malformed, future and expired stored conversations", () => {
+  const site = "https://jgangini.github.io/certi-tips/", now = 1_800_000_000_000;
+  const snapshot = { updatedAt: now, messages: [{ role: "user", text: "Consulta" }], sources: [] };
+  const empty = { messages: [], sources: [], pendingRequest: undefined };
+  for (const value of [null, undefined, [], "bad", {}, ...[undefined, "recent", String(now), NaN, Infinity, now + 1, now - 86_400_000].map(updatedAt => ({ ...snapshot, updatedAt }))]) {
+    assert.deepEqual(restoreChat(value, site, now), empty);
+  }
+  assert.equal(restoreChat({ ...snapshot, updatedAt: now - 86_400_000 + 1 }, site, now).messages.length, 1);
+});
+
+test("CertiChat restores only valid pending request identity and original page context", () => {
+  const site = "https://jgangini.github.io/certi-tips/", now = 1_800_000_000_000;
+  const pendingRequest = { requestId: "550e8400-e29b-41d4-a716-446655440000", message: "Explica este tema", pageUrl: `${site}lesson/#context` };
+  const snapshot = { updatedAt: now, messages: [], sources: [], pendingRequest: { ...pendingRequest, html: "ignored" } };
+  assert.deepEqual(restoreChat(snapshot, site, now).pendingRequest, pendingRequest);
+  assert.equal(restoreChat({ ...snapshot, pendingRequest: { ...pendingRequest, requestId: [pendingRequest.requestId] } }, site, now).pendingRequest, undefined);
+  const invalid = [null, {}, ...[{ requestId: "550e8400-e29b-11d4-a716-446655440000" }, { requestId: "550e8400-e29b-41d4-1716-446655440000" }, { requestId: `${pendingRequest.requestId}-extra` }, { message: " " }, { message: "x".repeat(1501) }, { message: 123 }, { pageUrl: "https://attacker.test/" }, { pageUrl: `${site}?secret=1` }].map(value => ({ ...pendingRequest, ...value }))];
+  for (const value of invalid) {
+    assert.equal(restoreChat({ ...snapshot, pendingRequest: value }, site, now).pendingRequest, undefined);
+  }
 });
 
 test("CertiChat uses the rendered heading resolver and deterministic knowledge-only hashes", () => {

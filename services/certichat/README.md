@@ -2,6 +2,8 @@
 
 Asistente de las guías publicadas en [CertiTips](https://jgangini.github.io/certi-tips/). Deep Chat 2.5.1 se carga al abrir el panel; la API FastAPI vive en `https://certichat.cloudtechnext.net`. Cognee 1.6.1 mantiene el índice privado. Solo la API posee la clave de OpenRouter.
 
+El navegador restaura la conversación al navegar o recargar desde una copia local de los últimos 100 mensajes, válida durante 24 horas desde la última escritura. Solo admite texto y fuentes del sitio; no guarda credenciales ni permite HTML o archivos del almacenamiento. Conserva el identificador de una consulta pendiente para recuperar su resultado sin duplicar el cobro. Restaurar mensajes no envía consultas. Este historial visible es independiente de los cuatro turnos que el servidor admite como contexto. Borrar requiere el popup de confirmación compartido con CertiQuiz y elimina la copia local solo después de que la API confirme el borrado; conserva las cuotas.
+
 ## Contenido y respuestas
 
 `npm run build` produce `dist/assets/certichat/manifest.json` y `dist/assets/certichat/corpus.json`, publicados bajo `/certi-tips/assets/certichat/`: portada, guías, apartados y preguntas explicadas del catálogo. No publica el código, `.private`, documentación de operaciones ni transcripciones. Las fuentes de cada respuesta son enlaces canónicos del sitio. El corpus se valida por hash antes de indexarlo. El contexto prioriza la página que el participante está viendo y se completa con resultados de Cognee; ambos pasan por los mismos filtros de vigencia y procedencia.

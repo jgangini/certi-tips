@@ -1155,6 +1155,7 @@ body[data-course="data-governance"] .diagram > span {
   font-size: 0.78rem;
   text-align: center;
 }
+.site-footer > span { min-width: 0; white-space: nowrap; }
 .footer-heart,
 .site-footer a {
   color: var(--red-dark);
@@ -1180,6 +1181,25 @@ html[data-theme="dark"] .site-footer a {
 .course-page .site-footer {
   margin-left: var(--sidebar);
 }
+:is(.certiquiz-app, .certichat) { --surface: var(--hover); --accent: var(--red); --accent-hover: var(--red-dark); --success: #22684c; --success-bg: #eaf6ef; --warning: #8a5a00; --warning-bg: #fff7db; --error: #a52f2c; --error-bg: #fff0ef; }
+html[data-theme="dark"] :is(.certiquiz-app, .certichat) { --success: #9bd8b8; --success-bg: #1b352b; --warning: #ffdc82; --warning-bg: #44330c; --error: #ffb0a8; --error-bg: #382322; }
+:is(.certiquiz-app, .certichat) .notice { display: flex; align-items: flex-start; gap: 10px; border: 1px solid var(--line); padding: 14px 18px; border-radius: 9px; background: var(--surface); font-size: 14px; line-height: 1.45; margin-bottom: 18px; }
+:is(.certiquiz-app, .certichat) .notice > svg { flex: 0 0 auto; width: 20px; height: 20px; margin-top: 1px; }
+:is(.certiquiz-app, .certichat) .notice > span { flex: 1 1 auto; }
+:is(.certiquiz-app, .certichat) .error { color: var(--error); background: var(--error-bg); border-color: var(--error); }
+:is(.certiquiz-app, .certichat) .warning { color: var(--warning); background: var(--warning-bg); border-color: var(--warning); }
+:is(.certiquiz-app, .certichat) .success { color: var(--success); background: var(--success-bg); border-color: var(--success); }
+:is(.certiquiz-app, .certichat) .confirmation { width: min(400px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 0; border: 0; border-radius: 16px; background: var(--paper); color: var(--ink); box-shadow: 0 20px 60px #0003; }
+:is(.certiquiz-app, .certichat) .confirmation::backdrop { background: #18191f66; backdrop-filter: blur(3px); }
+:is(.certiquiz-app, .certichat) .confirmation-body { padding: 24px 24px 26px; text-align: center; }
+:is(.certiquiz-app, .certichat) .confirmation-icon { display: grid; place-items: center; width: 76px; height: 76px; margin: 0 auto 14px; border: 7px solid var(--error-bg); border-radius: 50%; background: var(--tint); color: var(--accent); }
+:is(.certiquiz-app, .certichat) .confirmation-icon svg { width: 32px; height: 32px; }
+:is(.certiquiz-app, .certichat) .confirmation h2 { font-size: 22px; margin: 0 0 10px; }
+:is(.certiquiz-app, .certichat) .confirmation p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
+:is(.certiquiz-app, .certichat) .confirmation .notice { margin: 16px 0 0; text-align: left; }
+:is(.certiquiz-app, .certichat) .confirmation-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--line); }
+:is(.certiquiz-app, .certichat) .confirmation-actions .button { min-height: 52px; border: 0; border-radius: 0; padding: 11px 12px; }
+:is(.certiquiz-app, .certichat) .confirmation-actions .button:focus-visible { outline-offset: -5px; }
 dialog {
   width: min(1200px, 95vw);
   max-height: 94vh;

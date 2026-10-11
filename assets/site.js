@@ -1,8 +1,13 @@
 import { readStored, writeStored } from "./storage.js";
 
 const footer = document.querySelector(".site-footer");
-// Reserve the wrapped height, including zoom and mobile safe-area padding.
+const footerCredit = footer?.querySelector(".footer-credit");
+// Measure one line before hiding the credit; its visibility cannot resize the footer.
 if (footer) new ResizeObserver(() => {
+  if (footerCredit) {
+    footerCredit.hidden = false;
+    footerCredit.hidden = footerCredit.parentElement.scrollWidth > footerCredit.parentElement.clientWidth;
+  }
   document.documentElement.style.setProperty("--footer-height", `${footer.getBoundingClientRect().height}px`);
 }).observe(footer);
 

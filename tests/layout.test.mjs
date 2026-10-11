@@ -286,6 +286,7 @@ test("the local QR generator encodes an invitation URL as SVG", () => {
 test("CertiQuiz host lobby keeps facts beside its actions and uses a compact confirmation dialog", () => {
   const script = readFileSync(new URL("../assets/certiquiz.js", import.meta.url), "utf8");
   const css = readFileSync(new URL("../assets/certiquiz.css", import.meta.url), "utf8");
+  const sharedCss = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
   assert.doesNotMatch(script, /500–1000 puntos por acierto/);
   assert.match(script, /const hostFooter = `<div class="lobby-footer">\$\{facts\}<div class="actions game-actions">\$\{lobbyWaitTimer\}/);
   assert.match(script, /data-lobby-wait-timer role="timer" aria-live="off" aria-label="Tiempo restante para iniciar la sala">\$\{formatCountdown\(lobbyWaitSeconds\(\)\)\}/);
@@ -323,17 +324,17 @@ test("CertiQuiz host lobby keeps facts beside its actions and uses a compact con
   assert.doesNotMatch(css, /avatar-name|data-expand-side|--expand-x|--expand-y/);
   assert.doesNotMatch(css, /player-list li:is\(:nth-child\(5\), :nth-child\(8\)/);
   assert.equal(new Set([...css.matchAll(/\.avatar-tone-\d\s*\{\s*--avatar-color:\s*(#[a-f0-9]+);/g)].map(match => match[1])).size, 8);
-  assert.match(css, /\.certiquiz-app \.notice > svg\s*\{[^}]*width:\s*20px;[^}]*height:\s*20px;/);
+  assert.match(sharedCss, /:is\(\.certiquiz-app, \.certichat\) \.notice > svg\s*\{[^}]*width:\s*20px;[^}]*height:\s*20px;/);
   assert.match(css, /\.certiquiz-app \.notice-countdown\s*\{[^}]*font-variant-numeric:\s*tabular-nums;/);
   assert.doesNotMatch(css, /--expand-[xy]|translate:\s*calc\(var\(--cluster-x\) \+ var\(--expand-x\)\)|data-expand-side/);
   assert.doesNotMatch(css, /max-height:\s*420px|grid-auto-rows:\s*56px|grid-auto-flow:\s*dense|--ring-radius/);
   assert.match(css, /\.certiquiz-app \.player-list > li\[data-player-id\]\s*\{[^}]*animation:\s*certiquiz-orbit/);
   assert.match(css, /\.certiquiz-app \.player-avatar\s*\{[^}]*opacity:\s*0;[^}]*animation:\s*certiquiz-absorb/);
-  assert.match(css, /\.certiquiz-app \.warning\s*\{[^}]*color:\s*var\(--warning\);[^}]*background:\s*var\(--warning-bg\);/);
-  assert.match(css, /\.certiquiz-app \.confirmation\s*\{[^}]*width: min\(400px, calc\(100vw - 32px\)\);/);
-  assert.match(css, /\.certiquiz-app \.confirmation-icon\s*\{[^}]*width: 76px;[^}]*height: 76px;/);
+  assert.match(sharedCss, /:is\(\.certiquiz-app, \.certichat\) \.warning\s*\{[^}]*color:\s*var\(--warning\);[^}]*background:\s*var\(--warning-bg\);/);
+  assert.match(sharedCss, /:is\(\.certiquiz-app, \.certichat\) \.confirmation\s*\{[^}]*width: min\(400px, calc\(100vw - 32px\)\);/);
+  assert.match(sharedCss, /:is\(\.certiquiz-app, \.certichat\) \.confirmation-icon\s*\{[^}]*width: 76px;[^}]*height: 76px;/);
   assert.match(css, /\.certiquiz-app \.confirmation-expired \.confirmation-actions \.button\s*\{\s*grid-column: 2;/);
-  assert.match(css, /\.certiquiz-app \.confirmation-actions \.button\s*\{[^}]*min-height: 52px;/);
+  assert.match(sharedCss, /:is\(\.certiquiz-app, \.certichat\) \.confirmation-actions \.button\s*\{[^}]*min-height: 52px;/);
   assert.doesNotMatch(script, /\(tú\)/);
   assert.match(css, /\.certiquiz-app \.leaderboard \.is-me\s*\{[^}]*background:\s*var\(--chrome-bg\);/);
   assert.match(script, /send\.disabled = locked \|\| busy; send\.textContent = 'Enviar';/);
