@@ -14,10 +14,7 @@
 .certichat-actions button:hover { filter: brightness(.95); }
 .certichat-actions svg { width: 12px; height: 12px; }
 .certichat-actions [data-chat-close] svg { width: 10px; height: 10px; }
-.certichat-status { margin: 0 16px 8px; font-size: 12px; line-height: 1.45; }
-.certichat-status:not(.notice) { color: var(--ink); }
-.certichat .certichat-status.notice { align-items: center; gap: 8px; padding: 6px 10px; margin-bottom: 8px; font-size: 12px; line-height: 1.4; }
-.certichat .certichat-status.notice > svg { width: 16px; height: 16px; margin-top: 0; }
+.certichat-status { margin: 0 16px 8px; color: var(--ink); font-size: 12px; line-height: 1.45; }
 .certichat-verification { padding: 0 12px; }
 .certichat-verification:empty { display: none; }
 .certichat-messages { min-height: 100px; flex: 1; display: flex; }

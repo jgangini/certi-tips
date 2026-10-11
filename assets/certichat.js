@@ -35,7 +35,7 @@ if (root) {
   const storageKey = `certichat:${root.dataset.siteRoot}`;
   const saved = restoreChat(readStored(storageKey, null), root.dataset.siteRoot);
   let chat, opening, verifying = false, verified = false, available = false, busy = false, turnstileId, turnstileLoad;
-  let pendingRequest = saved.pendingRequest, lastSources = saved.sources;
+  let pendingRequest = saved.pendingRequest, lastSources = saved.sources, accessError = "", completedRequest;
 
   function persist() {
     // ponytail: one bounded text snapshot; the server remains authoritative for context and quotas.
@@ -44,10 +44,8 @@ if (root) {
 
   function setStatus(message, error = false) {
     status.querySelector("[data-chat-status-text]").textContent = message;
-    status.classList.toggle("notice", error);
-    status.classList.toggle("warning", error);
-    status.querySelector("svg").toggleAttribute("hidden", !error);
-    status.setAttribute("role", error ? "alert" : "status");
+    status.hidden = error;
+    accessError = error ? message : "";
     retry.hidden = !error;
   }
 
@@ -73,12 +71,10 @@ if (root) {
     available = session.available !== false;
     setStatus(session.available === false ? "El servicio está actualizando su contenido o alcanzó su límite de uso. Inténtalo más tarde." : quotaText(session.quota), session.available === false);
     clear.disabled = !verified || busy;
-    chat?.disableSubmitButton(!verified || session.available === false);
   }
 
   async function verify() {
     verified = false;
-    chat?.disableSubmitButton(true);
     if (!root.dataset.siteKey) {
       setStatus("La verificación de acceso no está disponible. Inténtalo más tarde.", true);
       return;
@@ -110,7 +106,7 @@ if (root) {
         } catch (error) { setStatus(error.message, true); }
         finally { verifying = false; }
       },
-      "expired-callback": () => { verified = false; chat?.disableSubmitButton(true); setStatus("La verificación caducó. Pulsa Reintentar conexión.", true); },
+      "expired-callback": () => { verified = false; setStatus("La verificación caducó. Pulsa Reintentar conexión.", true); },
       "error-callback": () => { setStatus("No se pudo verificar el acceso. Pulsa Reintentar conexión.", true); },
     });
   }
@@ -152,16 +148,24 @@ if (root) {
       chat.auxiliaryStyle = "* { overflow-wrap: anywhere; } @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }";
       chat.introMessage = { text: "Hola. Resuelve tus dudas sobre las guías y prácticas del sitio." };
       chat.history = saved.messages;
-      chat.onMessage = ({ isHistory }) => { if (!isHistory) persist(); };
+      chat.onMessage = ({ isHistory, message }) => {
+        if (isHistory) return;
+        if (message.role === "ai") {
+          if (pendingRequest?.requestId === completedRequest) pendingRequest = undefined;
+          completedRequest = undefined;
+          busy = false; clear.disabled = !verified;
+          chat.shadowRoot.querySelector('[aria-label="Detener respuesta"]')?.setAttribute("aria-label", "Enviar consulta");
+        }
+        persist();
+      };
       chat.errorMessages = { displayServiceErrorMessages: true };
       chat.requestBodyLimits = { maxMessages: 1 };
-      chat.validateInput = text => verified && available && !busy && Boolean(text?.trim()) && text.length <= 1500;
+      chat.validateInput = text => !busy && Boolean(text?.trim()) && text.length <= 1500;
       chat.onComponentRender = () => {
         const input = chat.shadowRoot.querySelector('[role="textbox"]');
         input?.setAttribute("aria-label", "Escribe tu consulta");
         input?.setAttribute("enterkeyhint", "send");
-        chat.disableSubmitButton(!verified || !available);
-        chat.shadowRoot.querySelector("#submit-icon")?.closest('[role="button"]')?.setAttribute("aria-label", "Enviar consulta");
+        chat.shadowRoot.querySelector('.input-button.inside-end')?.setAttribute("aria-label", "Enviar consulta");
       };
       chat.addEventListener("keydown", event => {
         const input = event.composedPath()[0];
@@ -169,24 +173,34 @@ if (root) {
         event.preventDefault(); event.stopImmediatePropagation();
         if (chat.validateInput(input.innerText)) chat.submitUserMessage({ text: input.innerText });
       }, { capture: true });
-      chat.connect = { handler: async (body, signals) => {
-        busy = true; clear.disabled = true; setStatus("Consultando las guías…");
-        const message = body.messages?.at(-1)?.text?.trim() || "";
-        // A transport retry reuses the UUID; the server deduplicates any paid generation.
-        if (pendingRequest?.message !== message) pendingRequest = { requestId: crypto.randomUUID(), message, pageUrl: document.querySelector('link[rel="canonical"]')?.href || root.dataset.siteRoot };
-        persist();
+      // ponytail: reveal the validated answer progressively; raw model tokens cannot bypass source validation.
+      chat.connect = { stream: matchMedia("(prefers-reduced-motion: reduce)").matches ? undefined : { simulation: 6 }, handler: async (body, signals) => {
+        busy = true; clear.disabled = true;
+        let answer;
         try {
-          const result = await api("chat", pendingRequest);
-          pendingRequest = undefined;
-          await signals.onResponse({ text: String(result.answer || "No encontré una respuesta en las guías disponibles.") });
-          showSources(result.sources); setStatus(quotaText(result.quota));
+          if (!verified || !available) {
+            answer = accessError || (available ? "Completa la verificación de acceso para enviar tu consulta." : "El servicio no está disponible. Pulsa Reintentar conexión.");
+            setStatus(answer, true);
+          } else {
+            setStatus("Consultando las guías…");
+            const message = body.messages?.at(-1)?.text?.trim() || "";
+            // A transport retry reuses the UUID; the server deduplicates any paid generation.
+            if (pendingRequest?.message !== message) pendingRequest = { requestId: crypto.randomUUID(), message, pageUrl: document.querySelector('link[rel="canonical"]')?.href || root.dataset.siteRoot };
+            persist();
+            const result = await api("chat", pendingRequest);
+            completedRequest = pendingRequest.requestId;
+            answer = String(result.answer || "No encontré una respuesta en las guías disponibles.");
+            showSources(result.sources); setStatus(quotaText(result.quota));
+          }
         } catch (error) {
           if (error.status && (error.status !== 409 || ["request_failed", "request_expired"].includes(error.code))) pendingRequest = undefined;
-          const message = error.name === "TimeoutError" ? "La consulta tardó demasiado. Puedes repetirla para recuperar su resultado." : error.status ? error.message : "Sin conexión. Vuelve a intentarlo.";
-          await signals.onResponse({ error: message });
-          setStatus(message, true);
-          if ([401, 403].includes(error.status)) { verified = false; chat.disableSubmitButton(true); }
-        } finally { busy = false; clear.disabled = !verified; persist(); }
+          answer = error.name === "TimeoutError" ? "La consulta tardó demasiado. Puedes repetirla para recuperar su resultado." : error.status ? error.message : "Sin conexión. Vuelve a intentarlo.";
+          setStatus(answer, true);
+          if ([401, 403].includes(error.status)) verified = false;
+        }
+        chat.shadowRoot.querySelector('[aria-label="Enviar consulta"]')?.setAttribute("aria-label", "Detener respuesta");
+        await signals.onResponse({ text: answer });
+        persist();
       } };
       root.querySelector("[data-chat-messages]").append(chat);
       showSources(saved.sources);
@@ -197,6 +211,7 @@ if (root) {
   }
 
   async function connect() {
+    verified = false; available = false; clear.disabled = true;
     retry.disabled = true;
     setStatus("Conectando con el asistente…");
     try { await initialize(); }
