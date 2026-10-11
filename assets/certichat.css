@@ -5,9 +5,9 @@
 .certichat button:disabled { cursor: default; opacity: .55; }
 .certichat button:focus-visible, .certichat a:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 .certichat-panel { position: absolute; right: 0; bottom: 0; width: min(420px, calc(100vw - 32px)); height: min(650px, calc(100dvh - var(--footer-height) - 48px - var(--certichat-lift))); display: flex; flex-direction: column; overflow: auto; background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-top: 4px solid var(--red); border-radius: var(--radius); box-shadow: 0 8px 36px var(--shadow); }
-.certichat-heading { display: flex; justify-content: space-between; align-items: flex-start; padding: 12px 16px 8px; }
+.certichat-heading { display: flex; justify-content: space-between; align-items: flex-start; padding: 12px 16px 8px; margin-bottom: 8px; border-bottom: 1px solid var(--line); }
 .certichat-heading #certichat-title { display: block; line-height: 1.05; }
-.certichat-actions { display: flex; align-items: center; gap: 12px; padding-top: 3px; }
+.certichat-actions { display: flex; align-items: center; gap: 8px; padding-top: 3px; }
 .certichat-actions button { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 19px; width: 19px; height: 19px; padding: 0; border: 1px solid var(--line); border-radius: 4px; }
 .certichat-actions button::after { content: ""; position: absolute; inset: -3px; }
 .certichat-actions button:not(.warning) { background: var(--paper); color: var(--ink); }
@@ -16,7 +16,8 @@
 .certichat-actions [data-chat-close] svg { width: 10px; height: 10px; }
 .certichat-status { margin: 0 16px 8px; font-size: 12px; line-height: 1.45; }
 .certichat-status:not(.notice) { color: var(--ink); }
-.certichat .certichat-status.notice { margin-bottom: 8px; }
+.certichat .certichat-status.notice { align-items: center; gap: 8px; padding: 6px 10px; margin-bottom: 8px; font-size: 12px; line-height: 1.4; }
+.certichat .certichat-status.notice > svg { width: 16px; height: 16px; margin-top: 0; }
 .certichat-verification { padding: 0 12px; }
 .certichat-verification:empty { display: none; }
 .certichat-messages { min-height: 100px; flex: 1; display: flex; }
@@ -26,15 +27,12 @@
 .certichat-sources strong { font-size: 12px; }
 .certichat-sources ul { margin: 4px 0 0; padding-left: 18px; font-size: 12px; }
 .certichat-sources a { color: var(--blue); overflow-wrap: anywhere; }
-.certichat-controls { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--line); }
-.certichat-controls small { width: 100%; color: var(--muted); font-size: 11px; line-height: 1.4; }
 @media (max-width: 520px) {
   .certichat { right: 12px; bottom: calc(var(--footer-height) + 10px + var(--certichat-lift)); }
   body:has(.certichat-panel:not([hidden])) { overflow: hidden; }
   body:has(.certichat-panel:not([hidden])) > :not(.certichat), body:has(.certichat-panel:not([hidden])) > :not(.certichat) * { visibility: hidden !important; }
-  .certichat-panel { position: fixed; inset: 0; width: 100%; height: 100dvh; border: 0; border-radius: 0; box-shadow: none; }
+  .certichat-panel { position: fixed; inset: 0; width: 100%; height: 100dvh; padding-bottom: env(safe-area-inset-bottom); border: 0; border-radius: 0; box-shadow: none; }
   .certichat-heading { padding-top: max(12px, env(safe-area-inset-top)); }
-  .certichat-controls { padding-bottom: max(10px, env(safe-area-inset-bottom)); }
 }
 @media (prefers-reduced-motion: reduce) { .certichat *, .certichat *::before, .certichat *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 @media print { .certichat { display: none; } }

@@ -91,7 +91,7 @@ async (page) => {
   loseResponse = true;
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).fill('Consulta con conexión interrumpida');
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).press('Enter');
-  await page.waitForFunction(() => document.querySelector('[data-chat-status]').textContent.includes('No se pudo conectar. Revisa tu conexión'));
+  await page.waitForFunction(() => document.querySelector('[data-chat-status]').textContent.includes('Sin conexión. Vuelve a intentarlo.'));
   const beforeRecovery = calls.filter(item => item.path === '/api/chat').length;
   await page.reload();
   await page.getByRole('button', { name: 'CertiChat', exact: true }).click();

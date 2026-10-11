@@ -139,11 +139,18 @@ if (root) {
       window.remarkable_plugins = [{ plugin: markdown => { markdown.render = plainChatHTML; } }];
       chat = document.createElement("deep-chat");
       chat.chatStyle = { border: "none", width: "100%", height: "100%", backgroundColor: "var(--paper)", color: "var(--ink)", fontFamily: "inherit" };
-      chat.textInput = { characterLimit: 1500, placeholder: { text: "Escribe tu consulta" }, styles: { container: { backgroundColor: "var(--paper)", border: "1px solid var(--line)", borderRadius: "8px" }, text: { color: "var(--ink)" } } };
+      chat.textInput = {
+        characterLimit: 1500, placeholder: { text: "Escribe tu consulta", style: { color: "var(--muted)" } },
+        styles: {
+          container: { width: "100%", margin: "0", backgroundColor: "var(--paper)", border: "unset", borderTop: "1px solid var(--line)", borderRadius: "0", boxShadow: "unset" },
+          text: { color: "var(--ink)", fontSize: "1.05em", paddingTop: "11px", paddingBottom: "13px", paddingLeft: "12px", paddingRight: "2.4em" },
+        },
+      };
+      chat.submitButtonStyles = { submit: { container: { default: { transform: "scale(1.21)", marginBottom: "-3px", marginRight: "0.4em" } } } };
       chat.messageStyles = { default: { shared: { bubble: { maxWidth: "92%", fontSize: "14px", lineHeight: "1.5" } }, ai: { bubble: { backgroundColor: "var(--hover)", color: "var(--ink)" } }, user: { bubble: { backgroundColor: "var(--tint)", color: "var(--ink)" } } } };
       chat.remarkable = { html: false, applyHTML: false };
       chat.auxiliaryStyle = "* { overflow-wrap: anywhere; } @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }";
-      chat.introMessage = { text: "Resuelve tus dudas sobre las guías y prácticas del sitio." };
+      chat.introMessage = { text: "Hola. Resuelve tus dudas sobre las guías y prácticas del sitio." };
       chat.history = saved.messages;
       chat.onMessage = ({ isHistory }) => { if (!isHistory) persist(); };
       chat.errorMessages = { displayServiceErrorMessages: true };
@@ -175,7 +182,7 @@ if (root) {
           showSources(result.sources); setStatus(quotaText(result.quota));
         } catch (error) {
           if (error.status && (error.status !== 409 || ["request_failed", "request_expired"].includes(error.code))) pendingRequest = undefined;
-          const message = error.name === "TimeoutError" ? "La consulta tardó demasiado. Puedes repetirla para recuperar su resultado." : error.status ? error.message : "No se pudo conectar. Revisa tu conexión y vuelve a intentarlo.";
+          const message = error.name === "TimeoutError" ? "La consulta tardó demasiado. Puedes repetirla para recuperar su resultado." : error.status ? error.message : "Sin conexión. Vuelve a intentarlo.";
           await signals.onResponse({ error: message });
           setStatus(message, true);
           if ([401, 403].includes(error.status)) { verified = false; chat.disableSubmitButton(true); }
@@ -193,7 +200,7 @@ if (root) {
     retry.disabled = true;
     setStatus("Conectando con el asistente…");
     try { await initialize(); }
-    catch { setStatus("No se pudo conectar. Revisa tu conexión y vuelve a intentarlo.", true); }
+    catch { setStatus("Sin conexión. Vuelve a intentarlo.", true); }
     finally { retry.disabled = false; }
   }
   function closePanel() { panel.hidden = true; launcher.hidden = false; launcher.setAttribute("aria-expanded", "false"); launcher.focus(); }
