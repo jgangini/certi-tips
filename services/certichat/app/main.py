@@ -17,6 +17,7 @@ import psycopg
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .provider import Provider, REFUSAL
+from .graph import validate_trace
 from .security import ChatError, GuardMiddleware, cookie_name, network_digest, new_token, set_cookie, token_digest
 from .settings import Settings
 from .store import Store
@@ -123,7 +124,7 @@ async def retrieve(application, body):
                     or not public_url(fragment.get("url"), settings)):
                 raise ValueError("Invalid fragment")
             ids.add(fragment["id"])
-        return version, fragments
+        return version, fragments, validate_trace(result["graphTrace"])
     except (httpx.HTTPError, KeyError, TypeError, ValueError):
         raise ChatError("El contenido está actualizándose o no está disponible. Inténtalo más tarde.") from None
 
@@ -236,11 +237,13 @@ def create_app(settings=None, *, transport=None):
             async with asyncio.timeout(45):
                 if not await db(store.available):
                     raise ChatError("CertiChat alcanzó su presupuesto de uso. Inténtalo más adelante.", 503, 3600)
-                version, fragments = await retrieve(request.app, body)
+                version, fragments, graph_trace = await retrieve(request.app, body)
                 history = await db(store.history, token_hash, version)
                 answer, sources = await request.app.state.provider.answer(body.message, fragments, history) if fragments else (REFUSAL, [])
+                if not sources:
+                    graph_trace = {**graph_trace, "nodes": [], "edges": [], "truncated": False}
                 result = {"requestId": body.requestId, "answer": answer, "sources": sources,
-                          "quota": await db(store.quota, token_hash), "contentVersion": version}
+                          "quota": await db(store.quota, token_hash), "contentVersion": version, "graphTrace": graph_trace}
                 await db(store.finish_request, token_hash, body.requestId, result, body.message)
                 return result
         except BaseException as error:

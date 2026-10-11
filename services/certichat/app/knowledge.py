@@ -11,7 +11,7 @@ from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
 from .corpus import DATASET, public_url, read_json, snapshot_path, supported_fragments, validate_manifest
-from .graph import public_graph, read_graph
+from .graph import graph_trace, public_graph, read_graph
 
 
 def configure_cognee(snapshot: Path, token: str) -> None:
@@ -94,6 +94,8 @@ async def lifespan(app: FastAPI):
         async with set_database_global_context_variables(datasets[0].id, user.id):
             if await (await get_graph_engine()).is_empty():
                 raise RuntimeError("Snapshot graph is empty")
+        async with app.state.lock:
+            await cached_graph()
     yield
     if app.state.snapshot:
         await close_cognee()
@@ -107,6 +109,16 @@ async def health():
     return {"status": "ready" if app.state.snapshot else "waiting", "version": getattr(app.state, "version", None)}
 
 
+async def cached_graph():
+    # The owning process has one immutable active snapshot; callers hold its graph lock.
+    cached = getattr(app.state, "public_graph", None)
+    if cached is None or cached["version"] != app.state.version:
+        nodes, edges = await asyncio.wait_for(read_graph(), timeout=30)
+        cached = public_graph(nodes, edges, app.state.version)
+        app.state.public_graph = cached
+    return cached
+
+
 @app.get("/graph")
 async def graph(authorization: str = Header(default="")):
     if not hmac.compare_digest(authorization, f"Bearer {app.state.token}"):
@@ -115,8 +127,7 @@ async def graph(authorization: str = Header(default="")):
         raise HTTPException(503, "Knowledge graph unavailable")
     async with app.state.lock:
         try:
-            nodes, edges = await asyncio.wait_for(read_graph(), timeout=30)
-            return public_graph(nodes, edges, app.state.version)
+            return await cached_graph()
         except Exception:
             raise HTTPException(503, "Knowledge graph unavailable") from None
 
@@ -143,6 +154,7 @@ async def retrieve(body: Retrieval, authorization: str = Header(default="")):
     async with app.state.lock:
         try:
             evidence = await asyncio.wait_for(retrieve_evidence(body.message), timeout=20)
+            projection = await cached_graph()
         except Exception:
             raise HTTPException(503, "Knowledge retrieval unavailable") from None
     # Re-read after search so removals published during retrieval are excluded too.
@@ -150,5 +162,6 @@ async def retrieve(body: Retrieval, authorization: str = Header(default="")):
     # The explicit page context uses the same freshness and source checks as graph evidence.
     page_context = [{"kind": "segment", "document_name": name}
                     for name, source in app.state.sources.items() if source["url"] == body.pageUrl]
-    return {"version": latest["contentHash"],
-            "fragments": supported_fragments(page_context + evidence, app.state.sources, latest, body.message)}
+    fragments = supported_fragments(page_context + evidence, app.state.sources, latest, body.message)
+    return {"version": latest["contentHash"], "fragments": fragments,
+            "graphTrace": graph_trace(evidence if fragments else [], projection)}

@@ -22,6 +22,7 @@ ORIGIN = "https://certichat.test"
 FRONTEND = "https://jgangini.github.io"
 HEADERS = {"Origin": FRONTEND, "X-CertiChat": "1"}
 VERSION = "a"*64
+TRACE = {"version": VERSION, "nodes": ["00000000-0000-0000-0000-000000000001"], "edges": [], "truncated": False}
 FRAGMENT = {"id": "guide", "title": "Guía", "url": f"{FRONTEND}/certi-tips/guide.html", "text": "Oracle almacena datos."}
 
 
@@ -45,7 +46,7 @@ def clients(database_url, request):
                         **getattr(request, "param", {"public_origin": ORIGIN}))
     calls = []
     turnstile = {"success": True, "hostname": "jgangini.github.io", "action": "certichat_session"}
-    knowledge = {"version": VERSION, "fragments": [FRAGMENT], "status": "ready"}
+    knowledge = {"version": VERSION, "fragments": [FRAGMENT], "status": "ready", "graphTrace": TRACE}
 
     def handler(request):
         calls.append(request)
@@ -413,14 +414,45 @@ def test_published_version_change_excludes_old_history_but_preserves_idempotency
     original = question()
     first = client.post("/api/chat", json=original)
     assert first.status_code == 200 and first.json()["contentVersion"] == VERSION
+    assert first.json()["graphTrace"] == TRACE
     assert app.state.store.history(token_digest(client.cookies[COOKIE]), VERSION)
     knowledge["version"] = "b"*64
+    knowledge["graphTrace"] = {**TRACE, "version": "c"*64}
     second = client.post("/api/chat", json=question())
     assert second.status_code == 200 and second.json()["contentVersion"] == "b"*64
+    assert second.json()["graphTrace"]["version"] == "c"*64
     assert histories == [[], []]
     replay = client.post("/api/chat", json=original)
     assert replay.status_code == 200 and replay.json()["contentVersion"] == VERSION
+    assert replay.json()["graphTrace"] == TRACE
     assert replay.json()["answer"] == first.json()["answer"] and len(histories) == 2
+
+
+def test_invalid_worker_trace_stops_before_provider_call(clients):
+    make, _, calls, _, knowledge = clients
+    client = session(make)
+    knowledge["graphTrace"] = {**TRACE, "nodes": ["private/path"]}
+    calls.clear()
+    response = client.post("/api/chat", json=question())
+    assert response.status_code == 503 and "private/path" not in response.text
+    assert not any(request.url.host == "openrouter.ai" for request in calls)
+
+
+@pytest.mark.parametrize("no_fragments", [False, True])
+def test_unsupported_answer_has_no_graph_highlights(clients, monkeypatch, no_fragments):
+    make, app, _, _, knowledge = clients
+    client = session(make)
+    if no_fragments:
+        knowledge["fragments"] = []
+
+    async def unsupported(*_args):
+        assert not no_fragments
+        return "No dispongo de información suficiente para responder esa consulta.", []
+
+    monkeypatch.setattr(app.state.provider, "answer", unsupported)
+    response = client.post("/api/chat", json=question())
+    assert response.status_code == 200
+    assert response.json()["graphTrace"] == {**TRACE, "nodes": [], "edges": []}
 
 
 def test_session_availability_waits_for_first_knowledge_snapshot(clients):

@@ -1,0 +1,201 @@
+const edgeKey = edge => JSON.stringify([edge.source, edge.target, edge.label]);
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+export function layoutNetwork(graph) {
+  const nodes = graph.nodes.map(node => ({ id: node.id, label: node.label, x: 0, y: 0 }));
+  const indexes = new Map(nodes.map((node, index) => [node.id, index]));
+  const neighbors = nodes.map(() => []), edges = [];
+  for (const edge of graph.edges) {
+    const a = indexes.get(edge.source), b = indexes.get(edge.target);
+    if (a === undefined || b === undefined) continue;
+    edges.push({ a, b, key: edgeKey(edge) });
+    if (a !== b) { neighbors[a].push(b); neighbors[b].push(a); }
+  }
+  // A deterministic breadth-first seed places connected components together, including isolated nodes.
+  const seeds = nodes.map((_, i) => i).sort((a, b) => neighbors[b].length - neighbors[a].length || nodes[a].id.localeCompare(nodes[b].id));
+  const seen = new Set(), columns = Math.max(1, Math.ceil(Math.sqrt(nodes.length)));
+  let position = 0;
+  for (const seed of seeds) {
+    if (seen.has(seed)) continue;
+    const queue = [seed]; seen.add(seed);
+    for (let cursor = 0; cursor < queue.length; cursor++) {
+      const index = queue[cursor], node = nodes[index];
+      // Break exact grid symmetry so separate concepts do not converge to identical coordinates.
+      node.x = (position % columns) * 24 + Math.sin(index * 2.39996) * 0.1;
+      node.y = Math.floor(position / columns) * 24 + Math.cos(index * 2.39996) * 0.1;
+      position++;
+      for (const next of neighbors[index]) if (!seen.has(next)) { seen.add(next); queue.push(next); }
+    }
+  }
+  // ponytail: 36 bounded passes, with at most eight repulsion samples per grid cell.
+  // Dense cells trade exact force simulation for predictable mobile work; move layout offline if the graph grows.
+  for (let pass = 0; pass < 36; pass++) {
+    const cells = new Map(), dx = new Float64Array(nodes.length), dy = new Float64Array(nodes.length);
+    nodes.forEach((node, index) => {
+      const key = `${Math.floor(node.x / 24)},${Math.floor(node.y / 24)}`;
+      if (!cells.has(key)) cells.set(key, []);
+      const cell = cells.get(key);
+      if (cell.length < 8) cell.push(index);
+    });
+    for (const { a, b } of edges) {
+      if (a === b) continue;
+      const x = nodes[b].x - nodes[a].x, y = nodes[b].y - nodes[a].y, distance = Math.max(1, Math.hypot(x, y));
+      const force = 0.08 * (distance - 32) / distance;
+      dx[a] += x * force / Math.max(1, neighbors[a].length); dy[a] += y * force / Math.max(1, neighbors[a].length);
+      dx[b] -= x * force / Math.max(1, neighbors[b].length); dy[b] -= y * force / Math.max(1, neighbors[b].length);
+    }
+    nodes.forEach((node, index) => {
+      const cx = Math.floor(node.x / 24), cy = Math.floor(node.y / 24);
+      for (let x = cx - 1; x <= cx + 1; x++) for (let y = cy - 1; y <= cy + 1; y++) {
+        for (const other of cells.get(`${x},${y}`) || []) {
+          if (other === index) continue;
+          const vx = node.x - nodes[other].x, vy = node.y - nodes[other].y, distance = Math.max(0.1, Math.hypot(vx, vy));
+          if (distance < 24) { dx[index] += vx / distance * (24 - distance) * 0.25; dy[index] += vy / distance * (24 - distance) * 0.25; }
+        }
+      }
+    });
+    nodes.forEach((node, index) => { node.x += clamp(dx[index], -5, 5); node.y += clamp(dy[index], -5, 5); });
+  }
+  return { nodes, edges, indexes };
+}
+
+export function createNetwork(canvas, graph, onSelect) {
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Canvas is unavailable");
+  const layout = layoutNetwork(graph), edgeKeys = new Set(layout.edges.map(edge => edge.key));
+  const events = new AbortController(), pointers = new Map();
+  let width = 0, height = 0, frame = 0, destroyed = false, moved = false, selected, pressPosition;
+  let activeNodes = new Set(), activeEdges = new Set();
+  const view = { scale: 1, x: 0, y: 0 };
+  canvas.style.touchAction = "none";
+  if (!canvas.hasAttribute("tabindex")) canvas.tabIndex = 0;
+
+  function invalidate() { if (!frame && !destroyed) frame = requestAnimationFrame(draw); }
+  function fit(activeOnly = false) {
+    const points = activeOnly ? layout.nodes.filter(node => activeNodes.has(node.id)) : layout.nodes;
+    if (!points.length || !width || !height) return;
+    const xs = points.map(node => node.x), ys = points.map(node => node.y);
+    const left = Math.min(...xs), right = Math.max(...xs), top = Math.min(...ys), bottom = Math.max(...ys);
+    view.scale = clamp(Math.min((width - 48) / Math.max(80, right - left), (height - 48) / Math.max(80, bottom - top)), 0.04, 4);
+    view.x = width / 2 - (left + right) / 2 * view.scale;
+    view.y = height / 2 - (top + bottom) / 2 * view.scale;
+    invalidate();
+  }
+  function zoomAt(factor, x = width / 2, y = height / 2) {
+    if (!Number.isFinite(factor) || factor <= 0) return;
+    const scale = clamp(view.scale * factor, 0.04, 12), ratio = scale / view.scale;
+    view.x = x - (x - view.x) * ratio; view.y = y - (y - view.y) * ratio; view.scale = scale;
+    invalidate();
+  }
+  function select(id) { selected = layout.indexes.has(id) ? id : undefined; invalidate(); }
+  function hit(x, y) {
+    let closest, distance = 14;
+    for (const node of layout.nodes) {
+      const candidate = Math.hypot(node.x * view.scale + view.x - x, node.y * view.scale + view.y - y);
+      if (candidate < distance) { closest = node.id; distance = candidate; }
+    }
+    if (closest !== undefined) { select(closest); onSelect(closest); }
+  }
+  function draw() {
+    frame = 0;
+    if (!width || !height || destroyed) return;
+    const style = getComputedStyle(canvas), color = (name, fallback) => style.getPropertyValue(name).trim() || fallback;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    context.setTransform(dpr, 0, 0, dpr, 0, 0); context.clearRect(0, 0, width, height);
+    context.translate(view.x, view.y); context.scale(view.scale, view.scale);
+    const lines = active => {
+      context.beginPath();
+      for (const edge of layout.edges) {
+        if (active && !activeEdges.has(edge.key)) continue;
+        const a = layout.nodes[edge.a], b = layout.nodes[edge.b];
+        context.moveTo(a.x, a.y);
+        if (edge.a === edge.b) context.arc(a.x, a.y - 5 / view.scale, 5 / view.scale, 0, Math.PI * 2);
+        else context.lineTo(b.x, b.y);
+      }
+      context.strokeStyle = active ? color("--red", "#c74634") : color("--muted", "#747680");
+      context.globalAlpha = active ? 0.95 : 0.18; context.lineWidth = (active ? 1.6 : 0.55) / view.scale; context.stroke();
+    };
+    lines(false); lines(true);
+    for (const active of [false, true]) {
+      context.beginPath();
+      const radius = (active ? 3.5 : 1.8) / view.scale;
+      for (const node of layout.nodes) {
+        if (active && !activeNodes.has(node.id)) continue;
+        context.moveTo(node.x + radius, node.y); context.arc(node.x, node.y, radius, 0, Math.PI * 2);
+      }
+      context.globalAlpha = active ? 1 : 0.7;
+      context.fillStyle = active ? color("--red", "#c74634") : color("--muted", "#747680"); context.fill();
+    }
+    context.globalAlpha = 1;
+    const node = layout.nodes[layout.indexes.get(selected)];
+    if (node) {
+      context.beginPath(); context.arc(node.x, node.y, 7 / view.scale, 0, Math.PI * 2);
+      context.strokeStyle = color("--blue", "#2469ad"); context.lineWidth = 2 / view.scale; context.stroke();
+      context.setTransform(dpr, 0, 0, dpr, 0, 0); context.font = "14px system-ui";
+      const label = node.label.length > 55 ? `${node.label.slice(0, 54)}…` : node.label;
+      const size = Math.min(width - 16, context.measureText(label).width + 16);
+      const x = clamp(node.x * view.scale + view.x + 12, 8, Math.max(8, width - size - 8));
+      const y = clamp(node.y * view.scale + view.y - 30, 8, Math.max(8, height - 32));
+      context.fillStyle = color("--paper", "#fff"); context.fillRect(x, y, size, 26);
+      context.fillStyle = color("--ink", "#303440"); context.fillText(label, x + 8, y + 18, size - 16);
+    }
+    Object.assign(canvas.dataset, { nodeCount: String(layout.nodes.length), edgeCount: String(layout.edges.length), activeNodeCount: String(activeNodes.size), activeEdgeCount: String(activeEdges.size), drawCount: String(Number(canvas.dataset.drawCount || 0) + 1), scale: String(view.scale), panX: String(view.x), panY: String(view.y) });
+  }
+  function resize() {
+    const first = !width || !height, oldWidth = width, oldHeight = height;
+    width = canvas.clientWidth; height = canvas.clientHeight;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr);
+    if (first) fit();
+    else { view.x += (width - oldWidth) / 2; view.y += (height - oldHeight) / 2; invalidate(); }
+  }
+  const point = event => { const rect = canvas.getBoundingClientRect(); return { x: event.clientX - rect.left, y: event.clientY - rect.top }; };
+  const listen = (name, handler, options = {}) => canvas.addEventListener(name, handler, { ...options, signal: events.signal });
+  listen("wheel", event => { event.preventDefault(); const p = point(event); zoomAt(Math.exp(clamp(-event.deltaY * 0.002, -0.4, 0.4)), p.x, p.y); }, { passive: false });
+  listen("pointerdown", event => {
+    if (event.button !== 0) return;
+    canvas.focus({ preventScroll: true }); canvas.setPointerCapture(event.pointerId);
+    if (!pointers.size) pressPosition = point(event);
+    pointers.set(event.pointerId, point(event)); moved = pointers.size > 1;
+  });
+  listen("pointermove", event => {
+    if (!pointers.has(event.pointerId)) return;
+    const previous = [...pointers.values()], from = pointers.get(event.pointerId), to = point(event);
+    pointers.set(event.pointerId, to);
+    if (Math.hypot(to.x - pressPosition.x, to.y - pressPosition.y) > 4) moved = true;
+    if (pointers.size === 1) { view.x += to.x - from.x; view.y += to.y - from.y; invalidate(); }
+    else {
+      const current = [...pointers.values()];
+      const distance = points => Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
+      const x = (current[0].x + current[1].x) / 2, y = (current[0].y + current[1].y) / 2;
+      view.x += x - (previous[0].x + previous[1].x) / 2; view.y += y - (previous[0].y + previous[1].y) / 2;
+      zoomAt(distance(current) / Math.max(1, distance(previous)), x, y);
+    }
+  });
+  listen("pointerup", event => { const p = point(event); if (pointers.size === 1 && !moved) hit(p.x, p.y); pointers.delete(event.pointerId); });
+  listen("pointercancel", event => { pointers.delete(event.pointerId); moved = true; });
+  listen("keydown", event => {
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    if (["+", "=", "-"].includes(event.key)) zoomAt(event.key === "-" ? 0.8 : 1.25);
+    else if (event.key === "Home") fit();
+    else if (event.key.toLowerCase() === "f") fit(true);
+    else if (event.key === "Enter") hit(width / 2, height / 2);
+    else if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
+      view.x += event.key === "ArrowLeft" ? 40 : event.key === "ArrowRight" ? -40 : 0;
+      view.y += event.key === "ArrowUp" ? 40 : event.key === "ArrowDown" ? -40 : 0; invalidate();
+    } else return;
+    event.preventDefault();
+  });
+  const observer = new ResizeObserver(resize), theme = new MutationObserver(invalidate);
+  observer.observe(canvas); theme.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "class"] });
+  resize();
+  return {
+    setTrace(trace) {
+      activeNodes = new Set((trace?.nodes || []).filter(id => layout.indexes.has(id)));
+      activeEdges = new Set((trace?.edges || []).map(edgeKey).filter(key => edgeKeys.has(key)));
+      invalidate();
+    },
+    select, fit, zoom: zoomAt,
+    destroy() { destroyed = true; cancelAnimationFrame(frame); events.abort(); observer.disconnect(); theme.disconnect(); pointers.clear(); },
+  };
+}

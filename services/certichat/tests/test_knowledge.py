@@ -9,6 +9,13 @@ from app import knowledge
 from app.corpus import CORPUS_URL, SITE, atomic_json, digest, segments
 
 
+@pytest.fixture(autouse=True)
+def empty_graph(monkeypatch):
+    async def read():
+        return [], []
+    monkeypatch.setattr(knowledge, "read_graph", read)
+
+
 @pytest.mark.parametrize("page_url", [None, SITE + "changed/", SITE + "removed/"])
 def test_retrieval_uses_latest_manifest_after_search_while_health_keeps_snapshot(tmp_path, monkeypatch, page_url):
     documents = [{"id": name, "title": name, "courseId": "course", "url": SITE + name + "/",
@@ -31,6 +38,7 @@ def test_retrieval_uses_latest_manifest_after_search_while_health_keeps_snapshot
     monkeypatch.setattr(knowledge, "retrieve_evidence", evidence)
     result = asyncio.run(knowledge.retrieve(knowledge.Retrieval(message="Información del curso", pageUrl=page_url), "Bearer test-token"))
     assert result["version"] == current["contentHash"]
+    assert result["graphTrace"]["version"] == initial["contentHash"]
     assert [fragment["url"] for fragment in result["fragments"]] == [SITE + "stable/"]
     assert asyncio.run(knowledge.health()) == {"status": "ready", "version": "a"*64}
 
@@ -73,7 +81,7 @@ def test_specific_visible_evidence_precedes_home_before_context_limits(tmp_path,
                               {"hash": digest(doc["text"])} for doc in documents]}
     atomic_json(tmp_path / "latest.json", manifest)
     monkeypatch.setattr(knowledge.app, "state", SimpleNamespace(
-        root=tmp_path, token="test-token", snapshot=tmp_path, sources=sources, lock=asyncio.Lock()))
+        root=tmp_path, token="test-token", snapshot=tmp_path, version="a"*64, sources=sources, lock=asyncio.Lock()))
 
     async def evidence(_message):
         return [{"kind": "segment", "document_name": name} for name in sources]
@@ -83,3 +91,29 @@ def test_specific_visible_evidence_precedes_home_before_context_limits(tmp_path,
         knowledge.Retrieval(message=question, pageUrl=SITE), "Bearer test-token"))
     assert result["fragments"][0]["url"] == (SITE if first == "home" else SITE + "data-governance/overview/")
     assert len(result["fragments"]) == 6
+
+
+@pytest.mark.parametrize("current", [True, False])
+def test_trace_uses_same_search_evidence_and_active_version_only_with_valid_sources(tmp_path, monkeypatch, current):
+    node = "00000000-0000-0000-0000-000000000001"
+    doc = {"id": "guide", "title": "Guía", "courseId": "course", "url": SITE + "guide/", "text": "Información publicada."}
+    sources = segments([doc])
+    manifest = {"schemaVersion": 1, "contentHash": "b"*64, "corpusUrl": CORPUS_URL,
+                "documents": [{key: value for key, value in doc.items() if key != "text"} |
+                              {"hash": digest(doc["text"] if current else "Nuevo contenido")}]}
+    atomic_json(tmp_path / "latest.json", manifest)
+    projection = {"version": "a"*64, "nodes": [{"id": node}], "edges": []}
+    monkeypatch.setattr(knowledge.app, "state", SimpleNamespace(
+        root=tmp_path, token="test-token", snapshot=tmp_path, version="a"*64, sources=sources,
+        lock=asyncio.Lock(), public_graph=projection))
+    calls = []
+
+    async def evidence(message):
+        calls.append(message)
+        return [{"kind": "graph_node", "artifact_id": node},
+                {"kind": "segment", "document_name": next(iter(sources))}]
+
+    monkeypatch.setattr(knowledge, "retrieve_evidence", evidence)
+    result = asyncio.run(knowledge.retrieve(knowledge.Retrieval(message="Consulta"), "Bearer test-token"))
+    assert calls == ["Consulta"] and result["version"] == "b"*64
+    assert result["graphTrace"] == {"version": "a"*64, "nodes": [node] if current else [], "edges": [], "truncated": False}

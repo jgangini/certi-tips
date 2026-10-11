@@ -170,12 +170,23 @@ async (page) => {
   };
   await answerCurrent(false);
   const savedProgress = await page.evaluate(key => localStorage.getItem(key), progressKey);
-  // CLI reports native dialogs out-of-band; test both decisions synchronously here.
-  await page.evaluate(() => { window.confirm = () => false; });
   await page.locator('[data-reset]').click();
+  const resetDialog = page.locator('[data-reset-confirm]');
+  assert(await resetDialog.evaluate(node => node.matches(':modal')), 'Reset did not open a native confirmation modal');
+  assert(await page.locator('#reset-confirm-title').evaluate(node => node === document.activeElement), 'Reset confirmation did not focus its heading');
+  assert(await resetDialog.locator('use').getAttribute('href') === '/certi-tips/assets/confirmation-question.svg#question', 'Reset confirmation lost the shared question icon');
+  await page.keyboard.press('Tab');
+  assert(await page.locator('[data-reset-no]').evaluate(node => node === document.activeElement && node.matches(':focus-visible') && getComputedStyle(node).outlineStyle !== 'none'), 'Reset confirmation lost visible keyboard focus');
+  await page.locator('[data-reset-no]').click();
+  await resetDialog.waitFor({ state: 'detached' });
   assert(await page.locator('.feedback').count() === 1, 'Cancelled reset discarded the response');
-  await page.evaluate(() => { window.confirm = () => true; });
   await page.locator('[data-reset]').click();
+  await page.keyboard.press('Escape');
+  await resetDialog.waitFor({ state: 'detached' });
+  assert(await page.locator('.feedback').count() === 1, 'Escape discarded the response');
+  await page.locator('[data-reset]').click();
+  await page.locator('[data-reset-yes]').click();
+  await resetDialog.waitFor({ state: 'detached' });
   assert(await page.locator('[data-start]').isVisible(), 'Reset did not return to start');
   assert(await page.locator('[data-practice-intro]:not([hidden])').count() === 0, 'Reset must not restore surrounding text');
   assert(await page.evaluate(key => localStorage.getItem(key), quizKey) === null, 'Reset did not clear saved test');

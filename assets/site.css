@@ -1189,17 +1189,20 @@ html[data-theme="dark"] :is(.certiquiz-app, .certichat) { --success: #9bd8b8; --
 :is(.certiquiz-app, .certichat) .error { color: var(--error); background: var(--error-bg); border-color: var(--error); }
 :is(.certiquiz-app, .certichat) .warning { color: var(--warning); background: var(--warning-bg); border-color: var(--warning); }
 :is(.certiquiz-app, .certichat) .success { color: var(--success); background: var(--success-bg); border-color: var(--success); }
-:is(.certiquiz-app, .certichat) .confirmation { width: min(400px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 0; border: 0; border-radius: 16px; background: var(--paper); color: var(--ink); box-shadow: 0 20px 60px #0003; }
-:is(.certiquiz-app, .certichat) .confirmation::backdrop { background: #18191f66; backdrop-filter: blur(3px); }
-:is(.certiquiz-app, .certichat) .confirmation-body { padding: 24px 24px 26px; text-align: center; }
-:is(.certiquiz-app, .certichat) .confirmation-icon { display: grid; place-items: center; width: 76px; height: 76px; margin: 0 auto 14px; border: 7px solid var(--error-bg); border-radius: 50%; background: var(--tint); color: var(--accent); }
-:is(.certiquiz-app, .certichat) .confirmation-icon svg { width: 32px; height: 32px; }
-:is(.certiquiz-app, .certichat) .confirmation h2 { font-size: 22px; margin: 0 0 10px; }
-:is(.certiquiz-app, .certichat) .confirmation p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
-:is(.certiquiz-app, .certichat) .confirmation .notice { margin: 16px 0 0; text-align: left; }
-:is(.certiquiz-app, .certichat) .confirmation-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--line); }
-:is(.certiquiz-app, .certichat) .confirmation-actions .button { min-height: 52px; border: 0; border-radius: 0; padding: 11px 12px; }
-:is(.certiquiz-app, .certichat) .confirmation-actions .button:focus-visible { outline-offset: -5px; }
+#quiz .confirmation { --error-bg: #fff0ef; }
+html[data-theme="dark"] #quiz .confirmation { --error-bg: #382322; }
+:is(.certiquiz-app, .certichat, #quiz) .confirmation { width: min(400px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 0; border: 0; border-radius: 16px; background: var(--paper); color: var(--ink); box-shadow: 0 20px 60px #0003; }
+:is(.certiquiz-app, .certichat, #quiz) .confirmation::backdrop { background: #18191f66; backdrop-filter: blur(3px); }
+:is(.certiquiz-app, .certichat, #quiz) .confirmation-body { padding: 24px 24px 26px; text-align: center; }
+:is(.certiquiz-app, .certichat, #quiz) .confirmation-icon { display: grid; place-items: center; width: 76px; height: 76px; margin: 0 auto 14px; border: 7px solid var(--error-bg); border-radius: 50%; background: var(--tint); color: var(--accent); }
+:is(.certiquiz-app, .certichat, #quiz) .confirmation-icon svg { width: 32px; height: 32px; }
+:is(.certiquiz-app, .certichat, #quiz) .confirmation h2 { font-size: 22px; margin: 0 0 10px; }
+:is(.certiquiz-app, .certichat, #quiz) .confirmation h2[tabindex="-1"]:focus { outline: none; }
+:is(.certiquiz-app, .certichat, #quiz) .confirmation p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
+:is(.certiquiz-app, .certichat, #quiz) .confirmation .notice { margin: 16px 0 0; text-align: left; }
+:is(.certiquiz-app, .certichat, #quiz) .confirmation-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--line); }
+:is(.certiquiz-app, .certichat, #quiz) .confirmation-actions .button { min-height: 52px; border: 0; border-radius: 0; padding: 11px 12px; }
+:is(.certiquiz-app, .certichat, #quiz) .confirmation-actions .button:focus-visible { outline-offset: -5px; }
 dialog {
   width: min(1200px, 95vw);
   max-height: 94vh;

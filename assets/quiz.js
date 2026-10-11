@@ -28,8 +28,29 @@ function intro(moveFocus = false) {
   if (moveFocus) root.querySelector('[data-start]').focus();
 }
 
-function reset() {
-  if (attempt.index < attempt.ids.length && !globalThis.confirm('¿Reiniciar el test? Se borrarán las respuestas de este intento. Tu progreso de estudio no cambiará.')) return;
+function reset(confirmed = false) {
+  if (confirmed !== true && attempt.index < attempt.ids.length) {
+    if (root.querySelector('[data-reset-confirm]')) return;
+    const dialog = document.createElement('dialog');
+    dialog.className = 'confirmation'; dialog.dataset.resetConfirm = '';
+    dialog.setAttribute('aria-labelledby', 'reset-confirm-title'); dialog.setAttribute('aria-describedby', 'reset-confirm-message');
+    dialog.innerHTML = `<div class="confirmation-body"><span class="confirmation-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="currentColor" focusable="false"><use href="${base}assets/confirmation-question.svg#question"/></svg></span><h2 id="reset-confirm-title" tabindex="-1" autofocus>¿Reiniciar el test?</h2><p id="reset-confirm-message">Se borrarán las respuestas de este intento. Tu progreso de estudio no cambiará.</p></div><div class="confirmation-actions"><button class="button button-secondary" type="button" data-reset-no>Cancelar</button><button class="button" type="button" data-reset-yes>Aceptar</button></div>`;
+    root.append(dialog);
+    dialog.querySelector('[data-reset-no]').addEventListener('click', () => dialog.close());
+    dialog.querySelector('[data-reset-yes]').addEventListener('click', () => dialog.close('reset'));
+    dialog.addEventListener('click', event => {
+      if (event.target !== dialog) return;
+      const bounds = dialog.getBoundingClientRect();
+      if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
+    });
+    dialog.addEventListener('close', () => {
+      dialog.remove();
+      if (dialog.returnValue === 'reset') reset(true);
+      else root.querySelector('[data-reset]')?.focus();
+    });
+    dialog.showModal();
+    return;
+  }
   attempt = null;
   try {
     globalThis.localStorage.removeItem(key);

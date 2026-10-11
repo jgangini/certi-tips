@@ -156,7 +156,7 @@ await save(
   layout({
     site,
     course: site.courses[0],
-    page: { slug: "certichat", title: "Cómo funciona CertiChat", description: "Conoce cómo se responde una consulta y explora el mapa de conocimiento de las guías." },
+    page: { slug: "certichat", title: "CertiChat en acción", description: "Explora el grafo de conocimiento y descubre qué conceptos recupera CertiChat para responder a tus preguntas." },
     body: certichatExplorerBody(site.base, hasGraph),
   }),
 );

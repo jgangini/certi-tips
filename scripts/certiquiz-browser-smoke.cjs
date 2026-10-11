@@ -298,7 +298,10 @@ async (page) => {
     await exitRoom.click();
     const confirmation = host.locator('dialog[data-confirm]');
     assert(await confirmation.evaluate(node => node.open && node.matches(':modal')), 'Room exit did not open a native modal');
-    assert(await confirmation.locator('[data-confirm-no]').evaluate(node => node === document.activeElement), 'Destructive confirmation did not focus Cancel');
+    assert(await confirmation.locator('#confirmation-title').evaluate(node => node === document.activeElement && getComputedStyle(node).outlineStyle === 'none'), 'Destructive confirmation did not focus its static heading');
+    assert(await confirmation.locator('use').getAttribute('href') === '/certi-tips/assets/confirmation-question.svg#question', 'Room exit lost the shared question icon');
+    await host.keyboard.press('Tab');
+    assert(await confirmation.locator('[data-confirm-no]').evaluate(node => node === document.activeElement && node.matches(':focus-visible') && getComputedStyle(node).outlineStyle !== 'none'), 'Keyboard navigation lost the visible Cancel focus');
     const confirmationSize = await confirmation.evaluate(node => ({
       width: node.getBoundingClientRect().width,
       icon: node.querySelector('.confirmation-icon').getBoundingClientRect().width,
@@ -513,7 +516,7 @@ async (page) => {
     assert(await host.locator('[data-finish]').evaluate(node => node.textContent === 'Finalizar' && node.nextElementSibling?.hasAttribute('data-next') && node.nextElementSibling.textContent === 'Siguiente' && node.parentElement.classList.contains('game-actions')), 'Finalizar and Siguiente are not together in the game actions');
     await host.locator('[data-finish]').click();
     await confirmation.waitFor({ state: 'visible' });
-    assert(await confirmation.getByRole('heading').textContent() === '¿Finalizar la partida?' && await confirmation.locator('[data-confirm-no]').evaluate(node => node === document.activeElement), 'Finalizar lacks a focused confirmation popup');
+    assert(await confirmation.getByRole('heading').textContent() === '¿Finalizar la partida?' && await confirmation.locator('#confirmation-title').evaluate(node => node === document.activeElement), 'Finalizar lacks a focused confirmation heading');
     await confirmation.locator('[data-confirm-no]').click();
     assert(await host.locator('[data-finish]').evaluate(node => node === document.activeElement), 'Cancelling Finalizar lost its trigger focus');
     current = await snapshot(first, code);

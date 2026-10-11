@@ -1,0 +1,49 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { normalizeTrace, readTrace, publishTrace } from "../assets/certichat-trace.js";
+
+const a = "00000000-0000-4000-8000-000000000001", b = "00000000-0000-4000-8000-000000000002";
+const trace = { version: "a".repeat(64), nodes: [a, b], edges: [{ source: a, target: b, label: "relacionado" }], truncated: false };
+
+test("trace accepts bounded identifiers and edges, never a fragment ID or dangling relationship", () => {
+  assert.deepEqual(normalizeTrace(trace), trace);
+  assert.equal(normalizeTrace(null), null);
+  assert.equal(normalizeTrace({ ...trace, version: [trace.version] }), null);
+  assert.equal(normalizeTrace({ ...trace, nodes: ["fragment-1"] }), null);
+  assert.equal(normalizeTrace({ ...trace, nodes: [a] }), null);
+  assert.equal(normalizeTrace({ ...trace, edges: [{ source: a, target: b, label: {} }] }), null);
+  assert.equal(normalizeTrace({ ...trace, nodes: Array(513).fill(a) }), null);
+  assert.equal(normalizeTrace({ ...trace, edges: Array(1025).fill(trace.edges[0]) }), null);
+});
+
+test("trace remains tab-local, expires after 24 hours and clears on new query, failure or conversation reset", t => {
+  const storage = new Map(), events = [], siteRoot = "https://example.com/guides/";
+  t.mock.method(Date, "now", () => 100000000);
+  const originals = Object.fromEntries(["sessionStorage", "window"].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
+  t.after(() => {
+    for (const [key, descriptor] of Object.entries(originals)) {
+      if (descriptor) Object.defineProperty(globalThis, key, descriptor);
+      else delete globalThis[key];
+    }
+  });
+  Object.defineProperty(globalThis, "sessionStorage", { configurable: true, value: {
+    getItem: key => storage.get(key) || null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key),
+  } });
+  Object.defineProperty(globalThis, "window", { configurable: true, value: { dispatchEvent: event => events.push(event) } });
+  publishTrace(siteRoot, "ready", trace);
+  assert.deepEqual(readTrace(siteRoot), trace);
+  assert.equal(readTrace("https://another.example/"), null);
+  assert.equal(readTrace(siteRoot, Date.now() + 86400000), null);
+  for (const status of ["loading", "error", "idle"]) {
+    publishTrace(siteRoot, "ready", trace);
+    publishTrace(siteRoot, status);
+    assert.equal(readTrace(siteRoot), null);
+    assert.equal(events.at(-1).detail.status, status);
+    assert.equal(events.at(-1).detail.trace, null);
+  }
+  publishTrace(siteRoot, "ready", trace);
+  assert.equal(readTrace(siteRoot, Date.now() - 1), null);
+  t.mock.method(sessionStorage, "setItem", () => { throw new Error("Storage denied"); });
+  publishTrace(siteRoot, "ready", trace);
+  assert.deepEqual(events.at(-1).detail.trace, trace);
+});

@@ -1,4 +1,5 @@
 import { readStored, writeStored } from "./storage.js";
+import { publishTrace } from "./certichat-trace.js";
 
 const escapeChat = text => String(text).replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -219,11 +220,13 @@ if (root) {
       // ponytail: reveal the validated answer progressively; raw model tokens cannot bypass source validation.
       chat.connect = { stream: matchMedia("(prefers-reduced-motion: reduce)").matches ? undefined : { simulation: 6 }, handler: async (body, signals) => {
         busy = true; clear.disabled = true;
+        publishTrace(root.dataset.siteRoot, "loading");
         let answer;
         try {
           if (!verified || !available) {
             answer = accessError || (available ? "Completa la verificación de acceso para enviar tu consulta." : "El servicio no está disponible. Pulsa Reintentar conexión.");
             setStatus(answer, true);
+            publishTrace(root.dataset.siteRoot, "error");
           } else {
             setStatus("Consultando las guías…");
             const message = body.messages?.at(-1)?.text?.trim() || "";
@@ -234,8 +237,10 @@ if (root) {
             completedRequest = pendingRequest.requestId;
             answer = answerWithReferences(String(result.answer || "No encontré una respuesta en las guías disponibles."), message, result.sources, root.dataset.siteRoot);
             updateQuota(result.quota); setStatus("");
+            publishTrace(root.dataset.siteRoot, "ready", result.graphTrace);
           }
         } catch (error) {
+          publishTrace(root.dataset.siteRoot, "error");
           if (error.status && (error.status !== 409 || ["request_failed", "request_expired"].includes(error.code))) pendingRequest = undefined;
           answer = error.name === "TimeoutError" ? "La consulta tardó demasiado. Puedes repetirla para recuperar su resultado." : error.status ? error.message : "Sin conexión. Vuelve a intentarlo.";
           setStatus(answer, true);
@@ -280,10 +285,12 @@ if (root) {
   function closePanel() {
     try { sessionStorage.removeItem(`${storageKey}:reference`); } catch { /* Storage is optional. */ }
     panel.hidden = true; launcher.hidden = false; launcher.setAttribute("aria-expanded", "false"); launcher.focus();
+    document.body.classList.remove("chat-explorer-open");
   }
   launcher.addEventListener("click", async () => {
     if (!panel.hidden) return closePanel();
     panel.hidden = false; launcher.hidden = true; launcher.setAttribute("aria-expanded", "true");
+    if (document.querySelector("[data-knowledge-graph]")) document.body.classList.add("chat-explorer-open");
     fitMobileViewport();
     root.querySelector("[data-chat-close]").focus();
     if (!opening) { opening = connect(); await opening; opening = undefined; }
@@ -295,6 +302,17 @@ if (root) {
   } catch { /* Browsers may disable session storage. */ }
   if (location.hash === "#certichat" || followedReference) launcher.click();
   root.querySelector("[data-chat-close]").addEventListener("click", closePanel);
+  if (document.querySelector("[data-knowledge-graph]")) {
+    const map = root.querySelector('a[aria-label="Ver el grafo y el flujo de CertiChat"]');
+    map.dataset.chatMap = "";
+    map.setAttribute("aria-label", "Ver mapa de conocimiento");
+    map.title = "Ver mapa";
+    map.addEventListener("click", event => {
+      if (event.button || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      event.preventDefault(); closePanel();
+      document.querySelector("[data-explorer-chat]")?.focus({ preventScroll: true });
+    });
+  }
   panel.addEventListener("keydown", event => { if (event.key === "Escape") { event.preventDefault(); closePanel(); } });
   retry.addEventListener("click", connect);
   clear.addEventListener("click", () => {
@@ -315,6 +333,7 @@ if (root) {
     try {
       const result = await api("conversation", {}, "DELETE");
       chat.clearMessages(); pendingRequest = undefined; persist();
+      publishTrace(root.dataset.siteRoot, "idle");
       updateQuota(result.quota); setStatus(""); confirmation.close();
     } catch {
       const error = confirmation.querySelector("[data-chat-clear-error]");

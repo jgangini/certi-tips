@@ -41,7 +41,10 @@ test("the explorer is a standalone site page and offers an honest missing-snapsh
   assert.doesNotMatch(html, /<aside class="sidebar"|data-mark-complete=/);
   assert.match(body, /data-knowledge-graph=""/);
   assert.match(body, /instantánea del grafo todavía no está publicada/);
-  assert.match(body, /no una vista en tiempo real/);
+  assert.match(body, /información recuperada, no el razonamiento interno del modelo/);
+  assert.match(body, /únicamente tu última consulta/);
+  assert.match(body, /<canvas data-graph-canvas tabindex="0"[^>]+aria-describedby="chat-graph-help"/);
+  assert.match(body, /data-graph-active aria-label="Conceptos recuperados para esta consulta"/);
   assert.match(certichatExplorerBody(site.base, true), /data-knowledge-graph="\/certi-tips\/assets\/certichat\/graph.json"/);
 });
 
