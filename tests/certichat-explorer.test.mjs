@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { indexGraph, findConcepts } from "../assets/certichat-explorer.js";
+import { indexGraph } from "../assets/certichat-explorer.js";
 import { certichatExplorerBody } from "../scripts/certichat-explorer.mjs";
 import { layout } from "../scripts/layout.mjs";
 
@@ -23,9 +23,6 @@ test("knowledge exploration indexes real directions, self-links and labels witho
   assert.equal(graph.neighbors.get("a").get("b").length, 2);
   assert.equal(graph.neighbors.get("b").get("b").length, 1);
   assert.equal(graph.neighbors.get("c").size, 0);
-  assert.deepEqual(findConcepts(graph, "oci REGION").map(node => node.id), ["a"]);
-  assert.deepEqual(findConcepts(graph, "inexistente"), []);
-  assert.equal(findConcepts(graph, "").length, 3);
   assert.throws(() => indexGraph({ nodes: [] }), /Invalid knowledge graph/);
 });
 
@@ -37,12 +34,11 @@ test("the explorer is a standalone site page and offers an honest missing-snapsh
   assert.match(html, /rel="canonical" href="https:\/\/jgangini.github.io\/certi-tips\/certichat\/"/);
   assert.match(html, /class="home-main certichat-main"/);
   assert.match(html, /href="\/certi-tips\/assets\/certichat-explorer.css"/);
-  assert.match(html, /href="\/certi-tips\/certichat\/" aria-label="Ver el grafo y el flujo de CertiChat"/);
+  assert.match(html, /href="\/certi-tips\/certichat\/" aria-label="Ver el grafo de CertiChat"/);
   assert.doesNotMatch(html, /<aside class="sidebar"|data-mark-complete=/);
   assert.match(body, /data-knowledge-graph=""/);
   assert.match(body, /instantánea del grafo todavía no está publicada/);
-  assert.match(body, /información recuperada, no el razonamiento interno del modelo/);
-  assert.match(body, /únicamente tu última consulta/);
+  assert.doesNotMatch(body, /id="consulta"|data-explorer-chat(?=[\s=>])|chat-explorer-flow|chat-graph-inspector|Cómo se prepara una respuesta|Explorar conceptos y relaciones/);
   assert.match(body, /<canvas data-graph-canvas tabindex="0"[^>]+aria-describedby="chat-graph-help"/);
   assert.match(body, /data-graph-active aria-label="Conceptos recuperados para esta consulta"/);
   assert.match(certichatExplorerBody(site.base, true), /data-knowledge-graph="\/certi-tips\/assets\/certichat\/graph.json"/);

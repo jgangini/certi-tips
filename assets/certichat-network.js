@@ -2,27 +2,32 @@ const edgeKey = edge => JSON.stringify([edge.source, edge.target, edge.label]);
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 export function layoutNetwork(graph) {
-  const nodes = graph.nodes.map(node => ({ id: node.id, label: node.label, x: 0, y: 0 }));
+  const nodes = graph.nodes.map(node => ({ id: node.id, label: node.label, degree: 0, radius: 0, x: 0, y: 0 }));
   const indexes = new Map(nodes.map((node, index) => [node.id, index]));
   const neighbors = nodes.map(() => []), edges = [];
   for (const edge of graph.edges) {
     const a = indexes.get(edge.source), b = indexes.get(edge.target);
     if (a === undefined || b === undefined) continue;
     edges.push({ a, b, key: edgeKey(edge) });
+    nodes[a].degree++;
+    if (a !== b) nodes[b].degree++;
     if (a !== b) { neighbors[a].push(b); neighbors[b].push(a); }
   }
-  // A deterministic breadth-first seed places connected components together, including isolated nodes.
+  // Node area grows with incident relationships; the offset keeps sparse concepts legible.
+  for (const node of nodes) node.radius = 0.8 * Math.sqrt(4 + node.degree);
+  // Seed around the most connected concepts without imposing rows, columns or concentric rings.
   const seeds = nodes.map((_, i) => i).sort((a, b) => neighbors[b].length - neighbors[a].length || nodes[a].id.localeCompare(nodes[b].id));
-  const seen = new Set(), columns = Math.max(1, Math.ceil(Math.sqrt(nodes.length)));
+  const seen = new Set();
   let position = 0;
   for (const seed of seeds) {
     if (seen.has(seed)) continue;
     const queue = [seed]; seen.add(seed);
     for (let cursor = 0; cursor < queue.length; cursor++) {
       const index = queue[cursor], node = nodes[index];
-      // Break exact grid symmetry so separate concepts do not converge to identical coordinates.
-      node.x = (position % columns) * 24 + Math.sin(index * 2.39996) * 0.1;
-      node.y = Math.floor(position / columns) * 24 + Math.cos(index * 2.39996) * 0.1;
+      const angle = position * 2.399963229728653 + Math.sin(index * 12.9898) * 0.35;
+      const radius = 12 * Math.sqrt(position) * (0.9 + Math.sin(index * 78.233) * 0.1);
+      node.x = Math.cos(angle) * radius;
+      node.y = Math.sin(angle) * radius;
       position++;
       for (const next of neighbors[index]) if (!seen.has(next)) { seen.add(next); queue.push(next); }
     }
@@ -76,7 +81,8 @@ export function createNetwork(canvas, graph, onSelect) {
     if (!points.length || !width || !height) return;
     const xs = points.map(node => node.x), ys = points.map(node => node.y);
     const left = Math.min(...xs), right = Math.max(...xs), top = Math.min(...ys), bottom = Math.max(...ys);
-    view.scale = clamp(Math.min((width - 48) / Math.max(80, right - left), (height - 48) / Math.max(80, bottom - top)), 0.04, 4);
+    const padding = 12 + Math.max(...points.map(node => node.radius * 1.25 + 3));
+    view.scale = clamp(Math.min((width - padding * 2) / Math.max(80, right - left), (height - padding * 2) / Math.max(80, bottom - top)), 0.04, 4);
     view.x = width / 2 - (left + right) / 2 * view.scale;
     view.y = height / 2 - (top + bottom) / 2 * view.scale;
     invalidate();
@@ -89,10 +95,11 @@ export function createNetwork(canvas, graph, onSelect) {
   }
   function select(id) { selected = layout.indexes.has(id) ? id : undefined; invalidate(); }
   function hit(x, y) {
-    let closest, distance = 14;
+    let closest, distance = Infinity;
     for (const node of layout.nodes) {
       const candidate = Math.hypot(node.x * view.scale + view.x - x, node.y * view.scale + view.y - y);
-      if (candidate < distance) { closest = node.id; distance = candidate; }
+      const target = Math.max(14, node.radius * (activeNodes.has(node.id) ? 1.25 : 1) + 4);
+      if (candidate <= target && candidate < distance) { closest = node.id; distance = candidate; }
     }
     if (closest !== undefined) { select(closest); onSelect(closest); }
   }
@@ -109,7 +116,10 @@ export function createNetwork(canvas, graph, onSelect) {
         if (active && !activeEdges.has(edge.key)) continue;
         const a = layout.nodes[edge.a], b = layout.nodes[edge.b];
         context.moveTo(a.x, a.y);
-        if (edge.a === edge.b) context.arc(a.x, a.y - 5 / view.scale, 5 / view.scale, 0, Math.PI * 2);
+        if (edge.a === edge.b) {
+          const radius = (a.radius * 1.25 + 4) / view.scale;
+          context.arc(a.x, a.y - radius, radius, 0, Math.PI * 2);
+        }
         else context.lineTo(b.x, b.y);
       }
       context.strokeStyle = active ? color("--red", "#c74634") : color("--muted", "#747680");
@@ -118,9 +128,9 @@ export function createNetwork(canvas, graph, onSelect) {
     lines(false); lines(true);
     for (const active of [false, true]) {
       context.beginPath();
-      const radius = (active ? 3.5 : 1.8) / view.scale;
       for (const node of layout.nodes) {
         if (active && !activeNodes.has(node.id)) continue;
+        const radius = node.radius * (active ? 1.25 : 1) / view.scale;
         context.moveTo(node.x + radius, node.y); context.arc(node.x, node.y, radius, 0, Math.PI * 2);
       }
       context.globalAlpha = active ? 1 : 0.7;
@@ -129,13 +139,14 @@ export function createNetwork(canvas, graph, onSelect) {
     context.globalAlpha = 1;
     const node = layout.nodes[layout.indexes.get(selected)];
     if (node) {
-      context.beginPath(); context.arc(node.x, node.y, 7 / view.scale, 0, Math.PI * 2);
+      const radius = node.radius * (activeNodes.has(node.id) ? 1.25 : 1);
+      context.beginPath(); context.arc(node.x, node.y, (radius + 3) / view.scale, 0, Math.PI * 2);
       context.strokeStyle = color("--blue", "#2469ad"); context.lineWidth = 2 / view.scale; context.stroke();
       context.setTransform(dpr, 0, 0, dpr, 0, 0); context.font = "14px system-ui";
       const label = node.label.length > 55 ? `${node.label.slice(0, 54)}…` : node.label;
       const size = Math.min(width - 16, context.measureText(label).width + 16);
-      const x = clamp(node.x * view.scale + view.x + 12, 8, Math.max(8, width - size - 8));
-      const y = clamp(node.y * view.scale + view.y - 30, 8, Math.max(8, height - 32));
+      const x = clamp(node.x * view.scale + view.x + radius + 8, 8, Math.max(8, width - size - 8));
+      const y = clamp(node.y * view.scale + view.y - radius - 26, 8, Math.max(8, height - 32));
       context.fillStyle = color("--paper", "#fff"); context.fillRect(x, y, size, 26);
       context.fillStyle = color("--ink", "#303440"); context.fillText(label, x + 8, y + 18, size - 16);
     }

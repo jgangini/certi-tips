@@ -53,11 +53,17 @@ export function restoreChat(value, siteRoot, now = Date.now()) {
 const root = typeof document === "undefined" ? null : document.querySelector("[data-certichat]");
 if (root) {
   const panel = root.querySelector("#certichat-panel"), launcher = root.querySelector("[data-chat-open]");
+  const dock = document.querySelector("[data-explorer-chat-slot]");
+  if (dock) {
+    dock.append(root);
+    panel.setAttribute("role", "region");
+    root.querySelector("[data-chat-close]").disabled = true;
+  }
   const mobileChat = matchMedia("(max-width: 800px)");
   function fitMobileViewport() {
     const viewport = window.visualViewport;
     // ponytail: track the keyboard viewport, while preserving deliberate pinch zoom.
-    if (panel.hidden || !mobileChat.matches || !viewport || viewport.scale !== 1) return;
+    if (dock || panel.hidden || !mobileChat.matches || !viewport || viewport.scale !== 1) return;
     for (const [name, value] of Object.entries({ top: viewport.offsetTop, left: viewport.offsetLeft, width: viewport.width, height: viewport.height })) panel.style.setProperty(`--chat-${name}`, `${value}px`);
   }
   window.visualViewport?.addEventListener("resize", fitMobileViewport);
@@ -283,16 +289,15 @@ if (root) {
     finally { retry.disabled = false; }
   }
   function closePanel() {
+    if (dock) return;
     try { sessionStorage.removeItem(`${storageKey}:reference`); } catch { /* Storage is optional. */ }
     panel.hidden = true; launcher.hidden = false; launcher.setAttribute("aria-expanded", "false"); launcher.focus();
-    document.body.classList.remove("chat-explorer-open");
   }
   launcher.addEventListener("click", async () => {
     if (!panel.hidden) return closePanel();
     panel.hidden = false; launcher.hidden = true; launcher.setAttribute("aria-expanded", "true");
-    if (document.querySelector("[data-knowledge-graph]")) document.body.classList.add("chat-explorer-open");
     fitMobileViewport();
-    root.querySelector("[data-chat-close]").focus();
+    if (!dock) root.querySelector("[data-chat-close]").focus();
     if (!opening) { opening = connect(); await opening; opening = undefined; }
   });
   let followedReference = false;
@@ -300,17 +305,17 @@ if (root) {
     followedReference = sessionStorage.getItem(`${storageKey}:reference`) === location.href;
     sessionStorage.removeItem(`${storageKey}:reference`);
   } catch { /* Browsers may disable session storage. */ }
-  if (location.hash === "#certichat" || followedReference) launcher.click();
+  if (dock || location.hash === "#certichat" || followedReference) launcher.click();
   root.querySelector("[data-chat-close]").addEventListener("click", closePanel);
-  if (document.querySelector("[data-knowledge-graph]")) {
-    const map = root.querySelector('a[aria-label="Ver el grafo y el flujo de CertiChat"]');
+  if (dock) {
+    const map = root.querySelector('a[aria-label="Ver el grafo de CertiChat"]');
     map.dataset.chatMap = "";
     map.setAttribute("aria-label", "Ver mapa de conocimiento");
     map.title = "Ver mapa";
     map.addEventListener("click", event => {
       if (event.button || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
-      event.preventDefault(); closePanel();
-      document.querySelector("[data-explorer-chat]")?.focus({ preventScroll: true });
+      event.preventDefault();
+      document.querySelector("[data-graph-canvas]")?.focus();
     });
   }
   panel.addEventListener("keydown", event => { if (event.key === "Escape") { event.preventDefault(); closePanel(); } });

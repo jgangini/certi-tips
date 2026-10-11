@@ -25,8 +25,8 @@
   .certichat { right: 12px; bottom: calc(var(--footer-height) + 10px); }
   .certichat .certichat-launcher { width: 48px; height: 48px; padding: 0; gap: 0; }
   .certichat-launcher > span { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  body:has(.certichat-panel:not([hidden])) { overflow: hidden; }
-  body:has(.certichat-panel:not([hidden])) > :not(.certichat), body:has(.certichat-panel:not([hidden])) > :not(.certichat) * { visibility: hidden !important; }
+  body:not(.certichat-page):has(.certichat-panel:not([hidden])) { overflow: hidden; }
+  body:not(.certichat-page):has(.certichat-panel:not([hidden])) > :not(.certichat), body:not(.certichat-page):has(.certichat-panel:not([hidden])) > :not(.certichat) * { visibility: hidden !important; }
   .certichat-panel { position: fixed; inset: var(--chat-top, 0px) auto auto var(--chat-left, 0px); width: var(--chat-width, 100%); height: var(--chat-height, 100dvh); padding-bottom: env(safe-area-inset-bottom); border: 0; border-radius: 0; box-shadow: none; }
   .certichat-heading { padding-top: max(12px, env(safe-area-inset-top)); }
 }

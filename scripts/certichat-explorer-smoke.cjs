@@ -33,17 +33,21 @@ async page => {
   const canvas = tab.locator('canvas[data-graph-canvas]');
   const ready = () => tab.waitForFunction(() => Number(document.querySelector('canvas[data-graph-canvas]')?.dataset.drawCount) > 0);
   const state = () => canvas.evaluate(element => ({ nodes: Number(element.dataset.nodeCount), edges: Number(element.dataset.edgeCount), activeNodes: Number(element.dataset.activeNodeCount), activeEdges: Number(element.dataset.activeEdgeCount), scale: Number(element.dataset.scale), panX: Number(element.dataset.panX), panY: Number(element.dataset.panY) }));
-  const active = async (ids, edges = 0) => {
+  const active = async (ids, edges = []) => {
     await tab.waitForFunction(({ ids, edges }) => {
       const data = document.querySelector('canvas[data-graph-canvas]')?.dataset;
       const actual = [...document.querySelectorAll('[data-graph-active] button[data-concept]')].map(item => item.dataset.concept).sort();
       return Number(data?.activeNodeCount) === ids.length && Number(data?.activeEdgeCount) === edges && JSON.stringify(actual) === JSON.stringify([...ids].sort());
-    }, { ids, edges });
+    }, { ids, edges: edges.length });
     const labels = await tab.locator('[data-graph-active] button[data-concept]').evaluateAll(items => items.map(item => ({ id: item.dataset.concept, label: item.textContent })));
     assert(labels.every(item => snapshot.nodes.some(node => node.id === item.id && node.label === item.label)), 'Active concepts fabricated names absent from the public graph');
+    const names = new Map(snapshot.nodes.map(node => [node.id, node.label]));
+    const expectedRelations = edges.map(edge => `${names.get(edge.source)} → ${edge.label || 'relacionado con'} → ${names.get(edge.target)}`).sort();
+    const actualRelations = (await tab.locator('[data-graph-active-relations] li').allTextContents()).sort();
+    assert(JSON.stringify(actualRelations) === JSON.stringify(expectedRelations), 'Accessible relationships do not match the actual trace');
   };
   const openChat = async () => {
-    if (await tab.locator('#certichat-panel').isHidden()) await tab.locator('[data-explorer-chat]').click();
+    await tab.locator('#certichat-panel').waitFor({ state: 'visible' });
     await tab.waitForFunction(() => document.querySelector('deep-chat')?.validateInput('Prueba') && !document.querySelector('[data-chat-clear]').disabled);
   };
   const send = async (question, trace, status = 0) => {
@@ -73,25 +77,14 @@ async page => {
     const provenance = await tab.locator('[data-graph-meta]').textContent();
     assert(provenance.includes('Instantánea del') && provenance.includes('Fuente: Cognee') && provenance.includes(snapshot.version.slice(0, 12)), 'Missing graph source, snapshot date or version');
     assert(await tab.locator('.sidebar').count() === 0, 'Standalone page inherits a course sidebar');
+    assert(await tab.locator('#consulta, .chat-explorer-intro, .chat-explorer-breadcrumb, .chat-explorer-flow, .chat-graph-inspector, [data-explorer-chat]').count() === 0, 'Removed introductory or exploration sections returned');
+    await openChat();
+    assert(await tab.locator('[data-chat-close]').isDisabled(), 'Explorer permits closing its persistent chat');
+    assert(await tab.locator('[data-chat-open]').isHidden(), 'Auto-opened chat leaves a redundant launcher');
+    await tab.getByRole('textbox', { name: 'Escribe tu consulta', exact: true }).press('Escape');
+    assert(await tab.locator('#certichat-panel').isVisible(), 'Escape closes the persistent explorer chat');
     checks.push('real 4k/10k graph initialized within 15s', 'initial graph has no active trace', 'snapshot provenance');
-
-    await tab.locator('.chat-graph-inspector > summary').click();
-    const search = tab.getByRole('searchbox', { name: 'Buscar un concepto' });
-    await search.fill('agent');
-    await tab.waitForFunction(() => document.querySelectorAll('#chat-concept-results button').length > 0);
-    const result = tab.locator('#chat-concept-results button').first(), label = await result.textContent();
-    await search.press('Tab');
-    assert(await result.evaluate(element => document.activeElement === element), 'Search results are not keyboard reachable');
-    await result.press('Enter');
-    assert(await tab.locator('[data-concept-title]').textContent() === label, 'Keyboard search selection did not show the concept');
-    await active([]);
-    await search.fill('zzzz-no-such-concept');
-    assert(await tab.locator('.chat-graph-empty').isVisible(), 'Missing empty search feedback');
-    await search.fill('oracle cloud infrastructure');
-    await tab.locator('#chat-concept-results').getByRole('button', { name: 'oracle cloud infrastructure', exact: true }).click();
-    await tab.locator('[data-relations-next]').click();
-    assert((await tab.locator('[data-relations-page]').textContent()).startsWith('7–'), 'Accessible relationship paging did not advance');
-    await tab.locator('[data-relations-previous]').click();
+    checks.push('removed intro/sections stay absent', 'chat opens automatically with disabled X and ignores Escape');
     const beforeZoom = await state();
     await tab.locator('[data-graph-zoom-in]').click();
     await tab.waitForFunction(scale => Number(document.querySelector('canvas[data-graph-canvas]').dataset.scale) > scale, beforeZoom.scale);
@@ -104,7 +97,7 @@ async page => {
     await canvas.press('+');
     await canvas.press('Home');
     await tab.locator('[data-graph-fit]').click();
-    checks.push('search, keyboard selection, accessible relations, empty search', 'zoom and keyboard pan/fit');
+    checks.push('zoom and keyboard pan/fit');
 
     const first = snapshot.edges.find(edge => edge.source !== edge.target);
     const firstIds = [first.source, first.target];
@@ -114,13 +107,14 @@ async page => {
     const trace1 = makeTrace(first), trace2 = makeTrace(second), empty = { version: snapshot.version, nodes: [], edges: [], truncated: false };
     await send('Consulta uno', trace1);
     await answered('Respuesta: Consulta uno.');
-    await active(trace1.nodes, 1);
+    await active(trace1.nodes, trace1.edges);
     assert(await tab.locator('[data-graph-active-fit]').isEnabled(), 'Received trace cannot be fitted');
     await tab.locator('[data-graph-active-fit]').click();
+    await tab.getByRole('link', { name: 'Ver mapa de conocimiento', exact: true }).click();
+    assert(await canvas.evaluate(element => document.activeElement === element) && await tab.locator('#certichat-panel').isVisible(), 'Brain control does not focus the map while keeping chat open');
+    await active(trace1.nodes, trace1.edges);
     assert(calls.at(-1).path === '/api/chat' && calls.at(-1).body.message === 'Consulta uno', 'Real chat UI did not send the question');
-    const desktop = await tab.evaluate(() => ({ reserved: document.body.classList.contains('chat-explorer-open'), map: document.querySelector('canvas[data-graph-canvas]').getBoundingClientRect().right, panel: document.querySelector('#certichat-panel').getBoundingClientRect().left }));
-    assert(desktop.reserved && desktop.map <= desktop.panel + 1, 'Desktop chat covers the graph instead of reserving space');
-    checks.push('real textbox Enter publishes matching-version graphTrace', 'desktop map/chat coexistence');
+    checks.push('real textbox Enter publishes matching-version graphTrace');
 
     pendingReply = new Promise(resolve => releaseReply = resolve);
     await send('Consulta dos', trace2);
@@ -128,11 +122,11 @@ async page => {
     await active([]);
     releaseReply(); pendingReply = undefined;
     await answered('Respuesta: Consulta dos.');
-    await active(trace2.nodes, 1);
+    await active(trace2.nodes, trace2.edges);
     checks.push('new query clears prior highlights while pending', 'second trace replaces first IDs, never accumulates');
 
     const countBeforeReload = calls.filter(call => call.path === '/api/chat').length;
-    await tab.reload(); await ready(); await active(trace2.nodes, 1);
+    await tab.reload(); await ready(); await active(trace2.nodes, trace2.edges);
     assert(calls.filter(call => call.path === '/api/chat').length === countBeforeReload, 'Restoring trace submits a paid query');
     await tab.evaluate(() => {
       const key = `certichat:${document.querySelector('[data-certichat]').dataset.siteRoot}:graph`, saved = JSON.parse(sessionStorage.getItem(key));
@@ -141,16 +135,16 @@ async page => {
     await tab.reload(); await ready(); await active([]);
     checks.push('same-tab reload restores trace without another query', '24-hour expired trace stays gray');
 
-    await send('Consulta antes del error', trace1); await answered('Respuesta: Consulta antes del error.'); await active(trace1.nodes, 1);
+    await send('Consulta antes del error', trace1); await answered('Respuesta: Consulta antes del error.'); await active(trace1.nodes, trace1.edges);
     await send('Consulta fallida', undefined, 503); await answered('El servicio no está disponible'); await active([]);
-    await send('Consulta antes del rechazo', trace1); await answered('Respuesta: Consulta antes del rechazo.'); await active(trace1.nodes, 1);
+    await send('Consulta antes del rechazo', trace1); await answered('Respuesta: Consulta antes del rechazo.'); await active(trace1.nodes, trace1.edges);
     await send('Consulta sin evidencia', empty); await answered('Respuesta: Consulta sin evidencia.'); await active([]);
     await send('Consulta con otra versión', { ...trace2, version: 'f'.repeat(64) }); await answered('Respuesta: Consulta con otra versión.'); await active([]);
     assert(/versi[oó]n/i.test(await tab.locator('[data-graph-trace]').textContent()), 'Version mismatch has no accessible explanation');
     await send('Respuesta antigua sin traza'); await answered('Respuesta: Respuesta antigua sin traza.'); await active([]);
     checks.push('API errors and empty evidence clear trace', 'version mismatch stays gray', 'legacy response without trace stays gray');
 
-    await send('Consulta antes de borrar', trace1); await answered('Respuesta: Consulta antes de borrar.'); await active(trace1.nodes, 1);
+    await send('Consulta antes de borrar', trace1); await answered('Respuesta: Consulta antes de borrar.'); await active(trace1.nodes, trace1.edges);
     await tab.locator('[data-chat-clear]').click();
     await tab.locator('[data-chat-confirm-yes]').click();
     await tab.locator('[data-chat-confirm]').waitFor({ state: 'hidden' });
@@ -159,22 +153,30 @@ async page => {
     await tab.reload(); await ready(); await active([]);
     checks.push('confirmed clear removes active and persisted trace');
 
-    for (const width of [1280, 800, 360, 320]) {
+    for (const width of [1440, 1280, 1024, 800, 360, 320]) {
       await tab.setViewportSize({ width, height: 900 });
+      await tab.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
       await tab.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-      const measured = await canvas.evaluate(element => { const b = element.getBoundingClientRect(); return { width: innerWidth, page: document.documentElement.scrollWidth, left: b.left, right: b.right, height: b.height }; });
-      assert(measured.page <= width + 1 && measured.left >= -1 && measured.right <= width + 1 && measured.height >= 200, `Map overflows or collapses at ${width}: ${JSON.stringify(measured)}`);
       await openChat();
-      if (width <= 800) {
-        await tab.locator('[data-chat-map]').waitFor({ state: 'visible' });
-        const panel = await tab.locator('#certichat-panel').boundingBox();
-        assert(Math.abs(panel.width - width) <= 1 && panel.x <= 1, `Mobile chat is not full width at ${width}`);
-        await tab.locator('[data-chat-map]').click();
-        assert(await tab.locator('#certichat-panel').isHidden() && await canvas.isVisible(), 'Mapa button does not return to the network');
-      } else await tab.locator('[data-chat-close]').click();
+      const measured = await tab.evaluate(() => {
+        const box = element => { const b = element.getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width, height: b.height }; };
+        const map = document.querySelector('[data-knowledge-graph]'), chat = document.querySelector('#certichat-panel');
+        const style = element => { const s = getComputedStyle(element); return { border: s.borderTopWidth, color: s.borderTopColor, position: s.position }; };
+        return { width: innerWidth, page: document.documentElement.scrollWidth, map: box(map), chat: box(chat), canvas: box(map.querySelector('canvas')), mapHeading: box(map.querySelector('header')), chatHeading: box(chat.querySelector('header')), mapStyle: style(map), chatStyle: style(chat), bodyOverflow: getComputedStyle(document.body).overflow };
+      });
+      assert(measured.page <= width + 1 && measured.canvas.left >= -1 && measured.canvas.right <= width + 1 && measured.canvas.height >= 200, `Map overflows or collapses at ${width}: ${JSON.stringify(measured)}`);
+      assert(measured.mapStyle.border === '4px' && measured.chatStyle.border === '4px' && measured.mapStyle.color === measured.chatStyle.color, `Map and chat lost their matching red top borders at ${width}`);
+      assert(Math.abs(measured.mapHeading.height - measured.chatHeading.height) <= 1, `Map/chat header heights diverge at ${width}`);
+      if (width >= 1024) {
+        assert(measured.map.right <= measured.chat.left && Math.abs(measured.map.top - measured.chat.top) <= 1 && Math.abs(measured.map.height - measured.chat.height) <= 1, `Desktop panels are not aligned side by side at ${width}`);
+      } else {
+        assert(measured.map.bottom <= measured.chat.top && Math.abs(measured.map.left - measured.chat.left) <= 1 && Math.abs(measured.map.width - measured.chat.width) <= 1, `Mobile panels do not stack with matching widths at ${width}`);
+        assert(measured.chatStyle.position !== 'fixed' && measured.bodyOverflow !== 'hidden', `Mobile explorer still uses a fullscreen overlay at ${width}`);
+      }
+      assert(await tab.locator('[data-chat-close]').isDisabled() && await tab.locator('#certichat-panel').isVisible(), `Chat can be closed at ${width}`);
       geometry.push(measured);
     }
-    checks.push('1280/800/360/320 geometry and mobile Mapa/Chat switching');
+    checks.push('aligned desktop map/chat and in-page mobile stack at 1440/1280/1024/800/360/320');
     for (const theme of ['dark', 'light']) {
       await tab.evaluate(value => document.documentElement.dataset.theme = value, theme);
       await tab.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
@@ -184,11 +186,16 @@ async page => {
 
     graphOverride = { version: snapshot.version, generatedAt: new Date().toISOString(), nodes: [{ id: first.source, label: '<img src="https://evil.invalid/x" onerror="alert(1)">', type: 'Entity' }], edges: [] };
     await tab.reload(); await ready();
-    await tab.locator('.chat-graph-inspector > summary').click();
-    await tab.locator('#chat-concept-results button').first().click();
-    assert(await tab.locator('[data-concept-title] img, #chat-concept-results img, [data-graph-active] img').count() === 0, 'Graph label activated HTML');
+    await send('Consulta de etiqueta', { version: snapshot.version, nodes: [first.source], edges: [], truncated: false });
+    await answered('Respuesta: Consulta de etiqueta.');
+    await tab.waitForFunction(() => Number(document.querySelector('canvas[data-graph-canvas]').dataset.activeNodeCount) === 1);
+    const labelButton = tab.locator('[data-graph-active] button[data-concept]');
+    assert(await labelButton.textContent() === graphOverride.nodes[0].label && await labelButton.locator('img').count() === 0, 'Graph label activated HTML');
+    await labelButton.focus(); await labelButton.press('Enter');
+    const selection = tab.locator('[data-graph-selection]');
+    assert(await selection.textContent() === `${graphOverride.nodes[0].label}. 0 conceptos relacionados.` && await selection.locator('img').count() === 0, 'Selected concept announcement loses its safe label or relation count');
     assert(!requests.some(url => url.includes('evil.invalid')), 'Graph label made an external request');
-    assert((await tab.locator('[data-relations-page]').textContent()) === 'Sin conexiones registradas', 'Isolated concept lacks accessible explanation');
+    assert((await state()).nodes === 1 && (await state()).edges === 0, 'Isolated concept could not be rendered');
     graphOverride = 'error';
     await tab.reload();
     await tab.locator('[data-graph-status]').filter({ hasText: 'No se pudo cargar la instantánea' }).waitFor();
