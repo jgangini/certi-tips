@@ -127,6 +127,12 @@ async (page) => {
   assert(await guideLink.textContent() === 'Agentes · Conceptos clave', 'Guide link lost its descriptive label');
   assert(!(await page.locator('deep-chat img, deep-chat script, deep-chat a[href*="evil.invalid"], deep-chat a[href^="javascript:"]').count()), 'Explicit references activated unsafe content');
   assert(!requests.some(url => url.includes('evil.invalid')), 'Explicit reference answer requested an external resource');
+  // Keep this mocked browser on its fixture while checking the real link activation handler.
+  await guideLink.evaluate(link => link.addEventListener('click', event => event.preventDefault(), { once: true }));
+  await guideLink.click();
+  assert(await page.locator('#certichat-panel').isHidden() && await page.locator('[data-chat-open]').isVisible(), 'Following a reference did not uncover the document');
+  await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
+  await waitForReady();
   assert(quota.remaining === 18 && quota.resetAt === firstReset, 'Following question moved the fixed quota window');
   const transcript = await page.locator('deep-chat').evaluate(element => JSON.stringify(element.getMessages()));
   const chatCalls = calls.filter(item => item.path === '/api/chat').length;

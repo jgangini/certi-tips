@@ -190,6 +190,10 @@ if (root) {
         event.preventDefault(); event.stopImmediatePropagation();
         if (chat.validateInput(input.innerText)) chat.submitUserMessage({ text: input.innerText });
       }, { capture: true });
+      chat.addEventListener("click", event => {
+        const link = event.composedPath().find(node => node.tagName === "A");
+        if (link && safeSourceURL(link.href, root.dataset.siteRoot) && event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) closePanel();
+      });
       // ponytail: reveal the validated answer progressively; raw model tokens cannot bypass source validation.
       chat.connect = { stream: matchMedia("(prefers-reduced-motion: reduce)").matches ? undefined : { simulation: 6 }, handler: async (body, signals) => {
         busy = true; clear.disabled = true;
