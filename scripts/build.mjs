@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import MarkdownIt from "markdown-it";
 import { layout, homeBody, certiquizBody, escapeHtml, courseRoute } from "./layout.mjs";
-import { annotateHeadings, pageDocuments, corpusArtifacts } from "./certichat-corpus.mjs";
+import { annotateHeadings, pageDocuments, corpusArtifacts, contentHash } from "./certichat-corpus.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const output = path.join(root, "dist");
@@ -17,6 +17,7 @@ const certichatApi = new URL(process.env.CERTICHAT_API_ORIGIN || "https://certic
 if ((certichatApi.protocol !== "https:" && !(certichatApi.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(certichatApi.hostname))) || certichatApi.username || certichatApi.password || certichatApi.pathname !== "/" || certichatApi.search || certichatApi.hash)
   throw new Error("CERTICHAT_API_ORIGIN must be an HTTPS origin (HTTP only on loopback), without credentials, path, query, or fragment.");
 site.certichat = { apiOrigin: certichatApi.origin, siteKey: process.env.CERTICHAT_TURNSTILE_SITE_KEY || "" };
+site.certichat.version = contentHash((await Promise.all(["js", "css"].map(extension => readFile(path.join(root, `assets/certichat.${extension}`), "utf8")))).join("\n")).slice(0, 12);
 const knowledge = [];
 const md = new MarkdownIt({ html: true, linkify: true });
 
