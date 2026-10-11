@@ -119,7 +119,7 @@ test("home keeps CertiQuiz beside GitHub inside the site in the same tab", () =>
   assert.match(html, /class="hero-actions"><a class="button github-link"[^]*?<a class="button button-secondary certiquiz-link" href="\/certi-tips\/certiquiz\/">/);
   assert.match(html, /certiquiz-link"[^>]*><svg viewBox="0 0 1920 1920" width="20" height="20" fill="currentColor"[^]*?m746\.255 1466\.764/);
   assert.doesNotMatch(html.match(/<a class="button button-secondary certiquiz-link"[^>]*>/)[0], /target=/);
-  assert.match(css, /\.hero-actions \.certiquiz-link\s*\{[^}]*border:\s*1px solid var\(--red\);/);
+  assert.match(css, /\.hero-actions \.certiquiz-link,\s*\.certichat \.certichat-launcher\s*\{[^}]*border:\s*1px solid var\(--red\);/);
 });
 test("CertiQuiz role choices are full-card buttons without duplicate actions", () => {
   const script = readFileSync(new URL("../assets/certiquiz.js", import.meta.url), "utf8");
