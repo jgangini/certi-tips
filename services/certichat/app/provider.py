@@ -42,7 +42,8 @@ def prepare_request(kind, data, purpose):
             raise ChatError("Embeddings requiere texto acotado.", 422)
         size = len(encoded(values))
         if size > 32768 or any(len(value.encode("utf-8")) > 6000 for value in values):
-            raise ChatError("Entrada interna demasiado grande.", 413)
+            # Cognee's installed adapter splits oversized inputs on this OpenAI-compatible length error.
+            raise ChatError("maximum input length is 6000 UTF-8 bytes per text or 32768 UTF-8 bytes per batch", 400)
         payload = {"model": EMBEDDING_MODEL, "input": inputs, "encoding_format": "float",
                    "provider": {"max_price": {"prompt": 0.03, "request": 0}, "data_collection": "deny", "allow_fallbacks": True}}
         tokens = size + 128 * len(values)

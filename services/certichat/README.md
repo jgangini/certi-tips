@@ -32,6 +32,8 @@ Turnstile valida el hostname `jgangini.github.io` y la acción `certichat_sessio
 
 Las ventanas diarias y mensuales de gasto usan UTC. PostgreSQL conserva cuotas, solicitudes idempotentes y reservas de coste; borrar la conversación no restablece las cuotas. La red se guarda como HMAC, sin registrar la IP en las tablas. Cada llamada, incluidos embeddings y reintentos de Cognee, reserva presupuesto antes de salir. Una llamada cuyo coste sea incierto conserva la reserva. OpenRouter debe ofrecer un proveedor con precio máximo US$0,20/M entrada y US$0,80/M salida, sin tarifa por solicitud y sin recopilación de datos; de lo contrario la llamada falla cerrada.
 
+Los embeddings conservan límites de 6.000 bytes UTF-8 por texto y 32.768 por lote. Si Cognee genera una entrada mayor, el gateway devuelve el error de longitud compatible con OpenAI que activa la división nativa de Cognee; las partes válidas se procesan con el mismo control de gasto. El rechazo previo no consume presupuesto.
+
 El piloto permite 50 participantes compartiendo una IP, con los límites anteriores; no promete 50 generaciones simultáneas. Sin cuentas, borrar cookies puede crear otra sesión, por lo que la cuota de red y el presupuesto global son las barreras compartidas. Esto tampoco sustituye protección de red frente a tráfico volumétrico. Preguntas, contexto e historial pertinente se envían a OpenRouter para responder; no se deben introducir secretos.
 
 ## Configuración y despliegue

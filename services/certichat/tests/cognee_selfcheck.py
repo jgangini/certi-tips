@@ -15,8 +15,10 @@ from pathlib import Path
 from app.corpus import DATASET, SITE, digest, segments, supported_fragments
 from app.knowledge import close_cognee, configure_cognee, retrieve_evidence
 from app.provider import prepare_request
+from app.security import ChatError
 
 REQUESTS = []
+REJECTIONS = []
 
 
 def structured(schema, root):
@@ -50,17 +52,26 @@ class Stub(BaseHTTPRequestHandler):
     def do_POST(self):
         payload = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
         assert self.headers["Authorization"] == "Bearer " + "i" * 64
-        prepare_request(self.path.removeprefix("/internal/llm/v1/"), payload, "index")
         REQUESTS.append(self.path)
+        try:
+            prepare_request(self.path.removeprefix("/internal/llm/v1/"), payload, "index")
+        except ChatError as error:
+            values = payload["input"]
+            REJECTIONS.append((len(values), max(len(value.encode("utf-8")) for value in values)))
+            self.reply(error.status, {"detail": str(error)})
+            return
         if self.path.endswith("/embeddings"):
             texts = payload["input"]
             if isinstance(texts, str):
                 texts = [texts]
-            vector = [0.1] * 1536
-            if payload.get("encoding_format") == "base64":
-                vector = base64.b64encode(struct.pack("<1536f", *vector)).decode()
+            vectors = []
+            for text in texts:
+                vector = [len(text.encode("utf-8")) / 10000] * 1536
+                if payload.get("encoding_format") == "base64":
+                    vector = base64.b64encode(struct.pack("<1536f", *vector)).decode()
+                vectors.append(vector)
             result = {"object": "list", "data": [{"object": "embedding", "index": i, "embedding": vector}
-                                                   for i, _ in enumerate(texts)],
+                                                   for i, vector in enumerate(vectors)],
                       "model": payload["model"], "usage": {"prompt_tokens": 10, "total_tokens": 10}}
         else:
             response_format = payload.get("response_format", {})
@@ -84,8 +95,11 @@ class Stub(BaseHTTPRequestHandler):
             result = {"id": "stub", "object": "chat.completion", "created": 1, "model": payload["model"],
                       "choices": [{"index": 0, "message": {"role": "assistant", "content": content}, "finish_reason": "stop"}],
                       "usage": {"prompt_tokens": 10, "completion_tokens": 10, "total_tokens": 20}}
+        self.reply(200, result)
+
+    def reply(self, status, result):
         raw = json.dumps(result).encode()
-        self.send_response(200)
+        self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(raw)))
         self.end_headers()
@@ -122,7 +136,18 @@ async def check(root):
         assert not supported_fragments(evidence, source_map, latest)
         assert any(path.endswith("/embeddings") for path in REQUESTS)
         assert any(path.endswith("/chat/completions") for path in REQUESTS)
-        print(f"Cognee 1.6.1 sixteen concurrent documents, graph provenance, stale filtering passed; {len(REQUESTS)} local stub calls.")
+        from cognee.infrastructure.databases.vector.embeddings.LiteLLMEmbeddingEngine import LiteLLMEmbeddingEngine
+        engine = LiteLLMEmbeddingEngine(model="openai/text-embedding-3-small", dimensions=1536,
+            api_key="i" * 64, endpoint="http://api:8000/internal/llm/v1", batch_size=8)
+        single = await engine.embed_text(["á" * 3001])
+        assert len(single) == 1 and len(single[0]) == 1536
+        # Native overlap splitting yields 4000-byte and 4002-byte pieces, then averages vectors.
+        assert all(abs(value - 0.4001) < 0.000001 for value in single[0]), single[0][:2]
+        batch = await engine.embed_text(["b" * 4500] * 8)
+        assert len(batch) == 8 and all(len(vector) == 1536 for vector in batch)
+        assert all(abs(value - 0.45) < 0.000001 for vector in batch for value in vector)
+        assert (1, 6002) in REJECTIONS and (8, 4500) in REJECTIONS, REJECTIONS
+        print(f"Cognee 1.6.1 sixteen concurrent documents, provenance, stale filtering and native oversized-embedding split/pool passed; {len(REQUESTS)} local stub calls.")
     finally:
         await close_cognee()
 
