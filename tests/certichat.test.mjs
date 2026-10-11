@@ -3,7 +3,18 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import MarkdownIt from "markdown-it";
 import { annotateHeadings, pageDocuments, corpusArtifacts, contentHash } from "../scripts/certichat-corpus.mjs";
-import { plainChatHTML, safeSourceURL, quotaText, restoreChat } from "../assets/certichat.js";
+import { plainChatHTML, safeSourceURL, quotaText, restoreChat, isChatPreview } from "../assets/certichat.js";
+
+test("CertiChat separates local previews from published and local API sessions", () => {
+  const api = "https://certichat.cloudtechnext.net";
+  for (const host of ["localhost", "127.0.0.1", "[::1]"]) {
+    const page = `http://${host}:4173/certi-tips/`;
+    assert.equal(isChatPreview(page, api), true);
+    for (const localAPI of ["localhost", "127.0.0.1", "[::1]"]) assert.equal(isChatPreview(page, `http://${localAPI}:18741`), false);
+  }
+  assert.equal(isChatPreview("https://jgangini.github.io/certi-tips/", api), false);
+  assert.equal(isChatPreview("https://localhost.example/certi-tips/", api), false);
+});
 
 test("CertiChat renders untrusted messages as inert text and sources stay inside the published site", () => {
   const attack = '<img src="https://attacker.test/leak" onerror="alert(1)">\n![leak](https://attacker.test/) [click](javascript:alert(1))';

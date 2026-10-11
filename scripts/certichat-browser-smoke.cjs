@@ -13,7 +13,7 @@ async (page) => {
   }, text);
   page.on('request', request => requests.push(request.url()));
   page.on('pageerror', error => errors.push(error.message));
-  await page.route('https://certichat.cloudtechnext.net/**', async route => {
+  await page.route('http://127.0.0.1:18741/**', async route => {
     const request = route.request(), path = new URL(request.url()).pathname;
     const headers = { 'access-control-allow-origin': new URL(base).origin, 'access-control-allow-credentials': 'true', 'access-control-allow-methods': 'GET,POST,DELETE,OPTIONS', 'access-control-allow-headers': 'x-certichat,content-type' };
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
@@ -33,6 +33,20 @@ async (page) => {
     if (path === '/api/session' && request.method() === 'POST') authenticated = true;
     return route.fulfill({ headers, json: { authenticated, verificationRequired: !authenticated, quota, available } });
   });
+  await page.goto(base);
+  await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
+  const publishedChat = page.getByRole('link', { name: 'Abrir chat del sitio publicado' });
+  await publishedChat.waitFor();
+  assert(await publishedChat.getAttribute('href') === 'https://jgangini.github.io/certi-tips/#certichat', 'Preview does not link to the published chat');
+  assert(!requests.some(url => /turnstile|certichat\.cloudtechnext/.test(url)), 'Preview attempted a production connection');
+  assert(await page.locator('[data-chat-retry]').isHidden(), 'Preview offers a retry that cannot work');
+  // Simulate a build configured with CERTICHAT_API_ORIGIN pointing to the local test API.
+  await page.route(`${base}**`, async route => {
+    if (!route.request().isNavigationRequest()) return route.fallback();
+    const response = await route.fetch();
+    return route.fulfill({ response, body: (await response.text()).replace('data-api="https://certichat.cloudtechnext.net"', 'data-api="http://127.0.0.1:18741"') });
+  });
+  requests.length = 0;
   await page.goto(base);
   assert(!requests.some(url => /deep-chat\.js|turnstile|certichat\.cloudtechnext/.test(url)), 'Chat network loaded before opening');
   await page.getByRole('button', { name: 'CertiChat', exact: true }).click();

@@ -58,6 +58,8 @@ Desde la raíz: `npm run build`, `npm test`, `npm run check`, `./scripts/arch-po
 
 `services/certichat/tests/cognee_selfcheck.py` comprueba el flujo de la versión instalada de Cognee con un gateway local simulado. `scripts/certichat-browser-smoke.cjs` comprueba contrato HTTP, reintentos, cuotas, fuentes, teclado y geometría móvil mediante DOM, sin capturas. La aceptación pública debe comprobar por separado Turnstile, cookies entre sitios, HTTPS, consulta con fuentes y rechazo de temas ajenos.
 
+La vista previa en localhost conserva el panel para revisar su diseño y ofrece un enlace al chat publicado (`#certichat`) para consultas reales. No intenta conectar con la API pública desde ese origen: CORS, Turnstile y la cookie de acceso están configurados para `jgangini.github.io`. Para pruebas con una API local, compilar con `CERTICHAT_API_ORIGIN` apuntando a loopback; esa configuración conserva el flujo normal de conexión.
+
 Deep Chat incluye una dependencia transitiva de CLI con aviso moderado de `sprintf-js`; no está en el bundle publicado ni se ejecuta esa CLI. No se aplican overrides incompatibles para ocultar el aviso; revisar cuando el proveedor publique una corrección.
 
 ## Aceptación pública · 2026-10-11

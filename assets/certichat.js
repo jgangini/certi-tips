@@ -16,6 +16,11 @@ export function quotaText(quota) {
   return `${Number(quota.dayRemaining) || 0} consultas disponibles / 24 h · ${Number(quota.hourRemaining) || 0} / hora.${quota.retryAfter > 0 ? ` Espera ${Math.ceil(quota.retryAfter)} segundos antes de volver a consultar.` : ""}`;
 }
 
+export function isChatPreview(pageURL, apiURL) {
+  const loopback = ["localhost", "127.0.0.1", "[::1]"];
+  return loopback.includes(new URL(pageURL).hostname) && !loopback.includes(new URL(apiURL).hostname);
+}
+
 export function restoreChat(value, siteRoot, now = Date.now()) {
   const empty = { messages: [], sources: [], pendingRequest: undefined };
   if (!value || !Number.isFinite(value.updatedAt) || value.updatedAt > now || now - value.updatedAt >= 86400000) return empty;
@@ -34,6 +39,7 @@ if (root) {
   const confirmation = root.querySelector("[data-chat-confirm]"), confirmClear = confirmation.querySelector("[data-chat-confirm-yes]"), cancelClear = confirmation.querySelector("[data-chat-confirm-no]");
   const storageKey = `certichat:${root.dataset.siteRoot}`;
   const saved = restoreChat(readStored(storageKey, null), root.dataset.siteRoot);
+  const preview = isChatPreview(location.href, root.dataset.api);
   let chat, opening, verifying = false, verified = false, available = false, busy = false, turnstileId, turnstileLoad;
   let pendingRequest = saved.pendingRequest, lastSources = saved.sources, accessError = "", completedRequest;
 
@@ -46,7 +52,7 @@ if (root) {
     status.querySelector("[data-chat-status-text]").textContent = message;
     status.hidden = error;
     accessError = error ? message : "";
-    retry.hidden = !error;
+    retry.hidden = preview || !error;
   }
 
   async function api(route, body, method = "POST") {
@@ -143,7 +149,7 @@ if (root) {
         },
       };
       chat.submitButtonStyles = { submit: { container: { default: { transform: "scale(1.21)", marginBottom: "-3px", marginRight: "0.4em" } } } };
-      chat.messageStyles = { default: { shared: { bubble: { maxWidth: "92%", fontSize: "14px", lineHeight: "1.5" } }, ai: { bubble: { backgroundColor: "var(--hover)", color: "var(--ink)" } }, user: { bubble: { backgroundColor: "var(--tint)", color: "var(--ink)" } } } };
+      chat.messageStyles = { default: { shared: { bubble: { maxWidth: "92%", fontSize: "14px", lineHeight: "1.5" } }, ai: { bubble: { backgroundColor: "var(--hover)", color: "var(--ink)" } }, user: { bubble: { backgroundColor: "var(--accent)", color: "var(--on-red)" } } } };
       chat.remarkable = { html: false, applyHTML: false };
       chat.auxiliaryStyle = "* { overflow-wrap: anywhere; } @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }";
       chat.introMessage = { text: "Hola. Resuelve tus dudas sobre las guías y prácticas del sitio." };
@@ -205,6 +211,16 @@ if (root) {
       root.querySelector("[data-chat-messages]").append(chat);
       showSources(saved.sources);
     }
+    // ponytail: real queries use the published origin; a loopback API remains available for local tests.
+    if (preview) {
+      const link = document.createElement("a");
+      link.href = `${document.querySelector('link[rel="canonical"]')?.href || root.dataset.siteRoot}#certichat`;
+      link.textContent = "Abrir chat del sitio publicado"; link.className = "button button-secondary";
+      link.target = "_blank"; link.rel = "noopener noreferrer";
+      verification.replaceChildren(link);
+      setStatus("Esta vista previa no admite consultas. Abre el chat del sitio publicado.", true);
+      return;
+    }
     const session = await api("session", undefined, "GET");
     updateAccess(session);
     if (!verified && available) await verify();
@@ -225,6 +241,7 @@ if (root) {
     root.querySelector("[data-chat-close]").focus();
     if (!opening) { opening = connect(); await opening; opening = undefined; }
   });
+  if (location.hash === "#certichat") launcher.click();
   root.querySelector("[data-chat-close]").addEventListener("click", closePanel);
   panel.addEventListener("keydown", event => { if (event.key === "Escape") { event.preventDefault(); closePanel(); } });
   retry.addEventListener("click", connect);
