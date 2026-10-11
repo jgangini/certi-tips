@@ -17,6 +17,9 @@ services:
     build: {context: ., dockerfile: services/certichat/Dockerfile, target: runtime}
     command: [uvicorn, app.main:app, --host, 0.0.0.0, --port, "8000", --workers, "1", --proxy-headers, --forwarded-allow-ips, "${CERTICHAT_TRUSTED_PROXY_IPS:-127.0.0.1}", --limit-concurrency, "64", --no-access-log, --no-server-header, --timeout-graceful-shutdown, "50"]
     environment:
+      CERTICHAT_MODE: ${CERTICHAT_MODE:-VPS}
+      CERTICHAT_REFRESH: ${CERTICHAT_REFRESH:-6}
+      CERTICHAT_QUESTIONS: ${CERTICHAT_QUESTIONS:-20}
       CERTICHAT_DATABASE_URL: ${CERTICHAT_DATABASE_URL:?Configure private database credentials}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:?Configure the private OpenRouter key}
       CERTICHAT_TURNSTILE_SECRET: ${CERTICHAT_TURNSTILE_SECRET:?Configure Turnstile}
@@ -74,6 +77,20 @@ services:
     networks: [app, knowledge]
     cpus: 1.5
     mem_limit: 6g
+
+  local-refresh:
+    <<: *hardened
+    image: certichat-knowledge:${CERTICHAT_IMAGE_TAG:-local}
+    profiles: [local]
+    entrypoint: [/bin/sh, -c]
+    command: ['test "$$CERTICHAT_MODE" = LOCAL || exit 1; while true; do python -m app.indexer refresh; sleep 300; done']
+    environment:
+      CERTICHAT_MODE: ${CERTICHAT_MODE:-VPS}
+    volumes: [knowledge_data:/data]
+    networks: [app]
+    restart: unless-stopped
+    cpus: 0.25
+    mem_limit: 256m
 
   volume-init:
     image: certichat-api:${CERTICHAT_IMAGE_TAG:-local}

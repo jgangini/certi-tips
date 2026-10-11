@@ -2,6 +2,7 @@
 
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
+from datetime import datetime, timezone
 import json
 import os
 import time
@@ -13,7 +14,7 @@ import psycopg
 import pytest
 
 from app.main import create_app
-from app.security import COOKIE, ChatError, network_digest, new_token, token_digest
+from app.security import COOKIE, LOCAL_COOKIE, ChatError, network_digest, new_token, token_digest
 from app.settings import Settings
 from app.store import Store
 
@@ -39,8 +40,9 @@ def database_url():
 
 
 @pytest.fixture
-def clients(database_url):
-    settings = Settings(database_url, "a"*32, "b"*32, "c"*32, "d"*32, "e"*32, public_origin=ORIGIN)
+def clients(database_url, request):
+    settings = Settings(database_url, "a"*32, "b"*32, "c"*32, "d"*32, "e"*32,
+                        **getattr(request, "param", {"public_origin": ORIGIN}))
     calls = []
     turnstile = {"success": True, "hostname": "jgangini.github.io", "action": "certichat_session"}
     knowledge = {"version": VERSION, "fragments": [FRAGMENT], "status": "ready"}
@@ -64,10 +66,11 @@ def clients(database_url):
 
     application = create_app(settings, transport=httpx.MockTransport(handler))
     with ExitStack() as stack:
-        stack.enter_context(TestClient(application, base_url=ORIGIN))
+        stack.enter_context(TestClient(application, base_url=settings.public_origin))
 
         def make(ip="192.0.2.10"):
-            client = TestClient(application, base_url=ORIGIN, headers=HEADERS, client=(ip, 50000))
+            client = TestClient(application, base_url=settings.public_origin,
+                                headers={**HEADERS, "Origin": settings.allowed_origins[0]}, client=(ip, 50000))
             stack.callback(client.close)
             return client
 
@@ -111,6 +114,49 @@ def test_session_cookie_csrf_body_and_turnstile_validation(clients):
     assert client.get("/api/health").headers["cache-control"] == "no-store"
 
 
+def test_vps_cannot_select_local_mode_from_request(clients):
+    make, app, calls, _, _ = clients
+    client = make()
+    state = client.get("/api/session")
+    assert state.json()["mode"] == "VPS" and "set-cookie" not in state.headers
+    calls.clear()
+    assert client.post("/api/session", json={"mode": "LOCAL"}).status_code == 422
+    assert client.post("/api/session", json={}, headers={"CERTICHAT_MODE": "LOCAL"}).status_code == 403
+    assert client.post("/api/session", json={}, headers={"Origin": "http://127.0.0.1:4173"}).status_code == 403
+    assert not calls and not client.cookies
+
+
+@pytest.mark.parametrize("clients", [{"mode": "LOCAL", "public_origin": "http://127.0.0.1:18741",
+                                      "allowed_origins": ("http://127.0.0.1:4173",)}], indirect=True)
+def test_local_session_without_turnstile_preserves_guards_and_quotas(clients):
+    make, app, calls, _, _ = clients
+    client = make()
+    state = client.get("/api/session")
+    assert state.json()["mode"] == "LOCAL" and not state.json()["authenticated"]
+    assert "set-cookie" not in state.headers
+    assert client.post("/api/chat", json=question()).status_code == 401
+    assert client.post("/api/session", json={}, headers={"Origin": FRONTEND}).status_code == 403
+    assert client.post("/api/session", json={}, headers={"X-CertiChat": ""}).status_code == 403
+    response = client.post("/api/session", json={})
+    assert response.status_code == 200 and response.json()["verificationRequired"] is False
+    cookie = response.headers["set-cookie"].lower()
+    assert cookie.startswith(LOCAL_COOKIE + "=") and COOKIE not in client.cookies
+    assert "httponly" in cookie and "samesite=lax" in cookie
+    assert "secure" not in cookie and "partitioned" not in cookie
+    assert client.get("/api/session").json()["authenticated"] is True
+    body = question()
+    first = client.post("/api/chat", json=body)
+    assert first.status_code == 200
+    count = len(calls)
+    assert client.post("/api/chat", json=body).json() == first.json() and len(calls) == count
+    token = client.cookies[LOCAL_COOKIE]
+    assert client.post("/api/session", json={}).json()["quota"]["remaining"] == 19
+    assert client.cookies[LOCAL_COOKIE] == token
+    assert client.post("/api/chat", json=question()).status_code == 200
+    assert client.post("/api/chat", json=question(), headers={"X-Forwarded-For": "198.51.100.7"}).status_code == 429
+    assert not any(call.url.host == "challenges.cloudflare.com" for call in calls)
+
+
 def test_answer_sources_idempotency_and_clear_preserve_quota(clients):
     make, app, calls, _, _ = clients
     client = session(make)
@@ -123,11 +169,11 @@ def test_answer_sources_idempotency_and_clear_preserve_quota(clients):
     second = client.post("/api/chat", json=body)
     assert second.json() == first.json() and len(calls) == count
     assert client.post("/api/chat", json={**body, "message": "otra"}).json()["code"] == "request_conflict"
-    assert client.request("DELETE", "/api/conversation", json={}).json()["quota"]["dayRemaining"] == 19
+    assert client.request("DELETE", "/api/conversation", json={}).json()["quota"]["remaining"] == 19
     assert client.post("/api/chat", json=body).json()["code"] == "request_expired"
     assert len(calls) == count
     token = client.cookies[COOKIE]
-    assert client.post("/api/session", json={"turnstileToken": "fresh"}).json()["quota"]["dayRemaining"] == 19
+    assert client.post("/api/session", json={"turnstileToken": "fresh"}).json()["quota"]["remaining"] == 19
     assert client.cookies[COOKIE] == token
 
 
@@ -227,19 +273,54 @@ def test_atomic_admission_single_session_global_limit_and_expired_leases(clients
     assert admit(hashes[outcomes.index(429)]) is None
 
 
-@pytest.mark.parametrize("count,age,retry_min", [(10, "2 minutes", 3400), (20, "2 hours", 79000)])
-def test_hour_and_day_quotas_cannot_be_reset_by_reverification(clients, count, age, retry_min):
+def test_window_limit_cannot_be_reset_by_reverification_or_clearing(clients):
     make, app, calls, _, _ = clients
     client = session(make)
     token = token_digest(client.cookies[COOKIE])
+    assert client.post("/api/chat", json=question()).status_code == 200
     with app.state.store.pool.connection() as connection:
-        for _ in range(count):
-            connection.execute("INSERT INTO cc_requests(session_hash,request_id,input_hash,network_hash,status,created_at) "
-                               "VALUES (%s,%s,'input','network','complete',now()-%s::interval)", (token, uuid4(), age))
-    client.post("/api/session", json={"turnstileToken": "renewed"})
+        connection.execute("UPDATE cc_rate_limits SET hits=20,expires_at=now()+interval '1 hour' WHERE bucket=%s",
+                           (f"chat:{token}",))
+    state = client.get("/api/session").json()["quota"]
+    assert state["remaining"] == 0 and state["retryAfter"] >= 3590
+    renewed = client.post("/api/session", json={"turnstileToken": "renewed"}).json()["quota"]
+    cleared = client.request("DELETE", "/api/conversation", json={}).json()["quota"]
+    for quota in (renewed, cleared):
+        assert quota["remaining"] == 0 and quota["resetAt"] == state["resetAt"]
+    calls.clear()
     response = client.post("/api/chat", json=question())
-    assert response.status_code == 429 and int(response.headers["Retry-After"]) >= retry_min
+    assert response.status_code == 429 and int(response.headers["Retry-After"]) >= 3590
     assert not any(request.url.host == "openrouter.ai" or request.url.path == "/retrieve" for request in calls)
+
+
+@pytest.mark.parametrize("clients", [{"public_origin": ORIGIN, "refresh_hours": 2, "questions": 3}], indirect=True)
+def test_fixed_window_starts_on_first_question_and_resets_without_sliding(clients):
+    make, app, _, _, _ = clients
+    client = session(make)
+    initial = client.get("/api/session").json()["quota"]
+    assert initial["remaining"] == 3 and initial["resetAt"] is None and initial["refreshHours"] == 2
+    body = question()
+    first = client.post("/api/chat", json=body).json()["quota"]
+    assert first["remaining"] == 2 and first["limit"] == 3
+    until_reset = (datetime.fromisoformat(first["resetAt"]) - datetime.now(timezone.utc)).total_seconds()
+    assert 7190 <= until_reset <= 7200
+    second = client.post("/api/chat", json=question()).json()["quota"]
+    assert second["remaining"] == 1 and second["resetAt"] == first["resetAt"]
+    replay = client.post("/api/chat", json=body).json()["quota"]
+    assert replay["remaining"] == 1 and replay["resetAt"] == first["resetAt"]
+    assert client.post("/api/chat", json=question()).status_code == 429
+    token = token_digest(client.cookies[COOKIE])
+    with app.state.store.pool.connection() as connection:
+        connection.execute("UPDATE cc_requests SET created_at=now()-interval '2 minutes' WHERE session_hash=%s", (token,))
+    exhausted = client.post("/api/chat", json=question()).json()["quota"]
+    assert exhausted["remaining"] == 0 and exhausted["resetAt"] == first["resetAt"]
+    assert client.post("/api/chat", json=question()).status_code == 429
+    with app.state.store.pool.connection() as connection:
+        connection.execute("UPDATE cc_rate_limits SET expires_at=now()-interval '1 second' WHERE bucket=%s", (f"chat:{token}",))
+    reset = client.get("/api/session").json()["quota"]
+    assert reset["remaining"] == 3 and reset["resetAt"] is None
+    fresh = client.post("/api/chat", json=question()).json()["quota"]
+    assert fresh["remaining"] == 2 and fresh["resetAt"] != first["resetAt"]
 
 
 def test_spent_budget_blocks_public_and_internal_outbound(clients):

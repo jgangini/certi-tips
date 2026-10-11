@@ -1,6 +1,7 @@
 import { readFile, readdir, mkdir, writeFile, cp, realpath, rm } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
+import { parseEnv } from "node:util";
 import MarkdownIt from "markdown-it";
 import { layout, homeBody, certiquizBody, escapeHtml, courseRoute } from "./layout.mjs";
 import { annotateHeadings, pageDocuments, corpusArtifacts, contentHash } from "./certichat-corpus.mjs";
@@ -13,9 +14,14 @@ const site = JSON.parse(
 const certiquizApi = new URL(process.env.CERTIQUIZ_API_ORIGIN || "https://certiquiz.cloudtechnext.net");
 if ((certiquizApi.protocol !== "https:" && !(certiquizApi.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(certiquizApi.hostname))) || certiquizApi.username || certiquizApi.password || certiquizApi.pathname !== "/" || certiquizApi.search || certiquizApi.hash)
   throw new Error("CERTIQUIZ_API_ORIGIN must be an HTTPS origin (HTTP only on loopback), without credentials, path, query, or fragment.");
-const certichatApi = new URL(process.env.CERTICHAT_API_ORIGIN || "https://certichat.cloudtechnext.net");
+const chatEnvFile = path.join(root, ".private/certichat.env");
+const certichatMode = process.env.CERTICHAT_MODE || (existsSync(chatEnvFile) ? parseEnv(await readFile(chatEnvFile, "utf8")).CERTICHAT_MODE : undefined) || "VPS";
+if (!["LOCAL", "VPS"].includes(certichatMode)) throw new Error("CERTICHAT_MODE must be LOCAL or VPS.");
+const certichatApi = new URL(process.env.CERTICHAT_API_ORIGIN || (certichatMode === "LOCAL" ? "http://127.0.0.1:18741" : "https://certichat.cloudtechnext.net"));
 if ((certichatApi.protocol !== "https:" && !(certichatApi.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(certichatApi.hostname))) || certichatApi.username || certichatApi.password || certichatApi.pathname !== "/" || certichatApi.search || certichatApi.hash)
   throw new Error("CERTICHAT_API_ORIGIN must be an HTTPS origin (HTTP only on loopback), without credentials, path, query, or fragment.");
+if ((certichatMode === "LOCAL") !== ["localhost", "127.0.0.1", "[::1]"].includes(certichatApi.hostname))
+  throw new Error("LOCAL requires a loopback API; VPS requires a public HTTPS API.");
 site.certichat = { apiOrigin: certichatApi.origin, siteKey: process.env.CERTICHAT_TURNSTILE_SITE_KEY || "" };
 site.certichat.version = contentHash((await Promise.all(["js", "css"].map(extension => readFile(path.join(root, `assets/certichat.${extension}`), "utf8")))).join("\n")).slice(0, 12);
 const knowledge = [];

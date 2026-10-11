@@ -26,7 +26,7 @@ Turnstile valida el hostname `jgangini.github.io` y la acción `certichat_sessio
 
 | Recurso | Límite |
 | --- | --- |
-| Sesión | 2 consultas/minuto, 10/hora, 20 en 24 horas; ventanas móviles y una en curso |
+| Sesión | 2 consultas/minuto y `CERTICHAT_QUESTIONS` por periodo de `CERTICHAT_REFRESH` horas (por defecto 20 cada 6 horas); una en curso |
 | Red de origen | 60 consultas/minuto y 600/hora; IPv6 agrupada por /64 |
 | API | Cuatro consultas admitidas simultáneamente |
 | Buscador | Una búsqueda activa, sin cola ilimitada |
@@ -38,19 +38,29 @@ Turnstile valida el hostname `jgangini.github.io` y la acción `certichat_sessio
 
 Las ventanas diarias y mensuales de gasto usan UTC. PostgreSQL conserva cuotas, solicitudes idempotentes y reservas de coste; borrar la conversación no restablece las cuotas. La red se guarda como HMAC, sin registrar la IP en las tablas. Cada llamada, incluidos embeddings y reintentos de Cognee, reserva presupuesto antes de salir. Una llamada cuyo coste sea incierto conserva la reserva. OpenRouter debe ofrecer un proveedor con precio máximo US$0,20/M entrada y US$0,80/M salida, sin tarifa por solicitud y sin recopilación de datos; de lo contrario la llamada falla cerrada.
 
+El periodo de consultas empieza con la primera consulta admitida y conserva una hora de renovación fija. Al vencer, la próxima consulta inicia un periodo nuevo. `CERTICHAT_REFRESH` acepta enteros de 1 a 24 horas y `CERTICHAT_QUESTIONS`, de 1 a 100 consultas; los valores predeterminados son 6 y 20. El límite de 2 consultas por minuto sigue activo. Estas variables no cambian la vigencia de Turnstile ni la sincronización del conocimiento.
+
 Los embeddings conservan límites de 6.000 bytes UTF-8 por texto y 32.768 por lote. Si Cognee genera una entrada mayor, el gateway devuelve el error de longitud compatible con OpenAI que activa la división nativa de Cognee; las partes válidas se procesan con el mismo control de gasto. El rechazo previo no consume presupuesto.
 
 El piloto permite 50 participantes compartiendo una IP, con los límites anteriores; no promete 50 generaciones simultáneas. Sin cuentas, borrar cookies puede crear otra sesión, por lo que la cuota de red y el presupuesto global son las barreras compartidas. Esto tampoco sustituye protección de red frente a tráfico volumétrico. Preguntas, contexto e historial pertinente se envían a OpenRouter para responder; no se deben introducir secretos.
 
 ## Configuración y despliegue
 
-1. Guardar localmente `OPENROUTER_API_KEY`, `CERTICHAT_TURNSTILE_SITE_KEY` y `CERTICHAT_TURNSTILE_SECRET` en el archivo ignorado `.private/certichat.env`. No incluirlo en un commit ni compartirlo en el chat. Configurar en OpenRouter el límite de esa clave en US$10 con reinicio mensual; la aplicación no modifica ese ajuste. En el despliegue inicial se comprobó el límite en el panel del proveedor.
+1. Guardar localmente `OPENROUTER_API_KEY`, `CERTICHAT_TURNSTILE_SITE_KEY` y `CERTICHAT_TURNSTILE_SECRET` en el archivo ignorado `.private/certichat.env`. Usar `CERTICHAT_MODE=LOCAL` para desarrollo o `CERTICHAT_MODE=VPS` para generar manualmente el sitio público. Añadir `CERTICHAT_REFRESH=6` y `CERTICHAT_QUESTIONS=20` para definir la cuota. No incluirlo en un commit ni compartirlo en el chat. Configurar en OpenRouter el límite de esa clave en US$10 con reinicio mensual; la aplicación no modifica ese ajuste. En el despliegue inicial se comprobó el límite en el panel del proveedor.
 2. Crear el widget Managed de Turnstile para `jgangini.github.io`. Configurar en GitHub la variable pública `CERTICHAT_TURNSTILE_SITE_KEY`. El workflow de Pages la entrega al build; nunca necesita la clave privada.
 3. Crear el registro A `certichat.cloudtechnext.net` hacia la VPS. Instalar solamente las claves OpenRouter y Turnstile privada en `/opt/jarvis/apps/certichat/services/certichat/.env`, con permisos 600 y directorios privados.
-4. Ejecutar `./scripts/certichat-deploy.ps1` desde la raíz. Transfiere exclusivamente `services/certichat`, sin archivos de entorno. Genera credenciales independientes en la VPS, aplica el esquema con un rol administrador y usa un rol DML limitado en ejecución. Configura Caddy y los temporizadores de sincronización.
+4. Ejecutar `./scripts/certichat-deploy.ps1` desde la raíz. Transfiere exclusivamente `services/certichat`, sin archivos de entorno. Lee de `.private/certichat.env` únicamente los dos parámetros numéricos de cuota, los valida y los instala en el entorno privado de la VPS; si faltan, aplica 6 horas y 20 consultas. Genera credenciales independientes en la VPS, aplica el esquema con un rol administrador y usa un rol DML limitado en ejecución. Fuerza `CERTICHAT_MODE=VPS`, orígenes públicos HTTPS y cookies seguras antes de iniciar Docker, incluso si había valores locales en el entorno. Configura Caddy y los temporizadores de sincronización. El workflow de Pages también fuerza `CERTICHAT_MODE=VPS`; el modo local no se publica.
 5. Publicar el build de Pages y comprobar la primera indexación. Una API saludable puede estar todavía esperando su primer índice; no equivale a un chat listo.
 
 El despliegue mantiene una copia privada de la base y del release previo. Si falla una actualización restaura las imágenes y fuentes anteriores; las migraciones deben ser aditivas. No revierte automáticamente datos. Los contenedores usan usuario sin privilegios, sistemas de archivos de solo lectura, límites de CPU/memoria y redes privadas para PostgreSQL y el buscador. Ninguno comparte datos ni credenciales con CertiQuiz.
+
+## Desarrollo local
+
+Con `CERTICHAT_MODE=LOCAL` en `.private/certichat.env`, ejecutar `./scripts/certichat-local.ps1 -Build`, `npm run build` y `npm run preview`. Abrir `http://127.0.0.1:4173/certi-tips/`: el build dirige el chat a `http://127.0.0.1:18741`. La sesión local omite Turnstile y usa una cookie local; conserva comprobación del origen exacto, límites, presupuesto y filtros de contenido. La API solo se publica en el loopback del equipo, sin modificar el acceso de la VPS.
+
+El script lee únicamente el modo, la clave OpenRouter y los dos parámetros de cuota del archivo privado. Genera credenciales independientes y persistentes en `services/certichat/.env`, también ignorado por Git; rechaza sobrescribir un archivo de servicio que no sea `LOCAL`. Los datos usan volúmenes del proyecto Docker `certichat-local`. Las consultas reales consumen OpenRouter; `-Test` sigue usando proveedores simulados y credenciales desechables.
+
+Una API local nueva necesita un índice de conocimiento. Para reutilizar el índice ya calculado sin volver a pagar su extracción, exportar una copia consistente después de detener limpiamente el worker de origen, conservando las rutas `active.json` y `snapshots/<hash>/...`. Guardarla como archivo tar privado e importarla una sola vez con `./scripts/certichat-local.ps1 -Build -SnapshotArchive .private/certichat-snapshot.tar`. La importación rechaza enlaces, rutas externas y la sustitución de un índice local activo. El arranque actualiza únicamente el manifiesto público mediante `indexer refresh` e inicia `local-refresh`, que repite esa comprobación cada cinco minutos; nunca inicia una indexación de pago automáticamente. Si no existe índice, la salud de la API responde pero las consultas esperan contenido. Si el manifiesto no se puede actualizar durante 30 minutos, la recuperación deja de responder hasta que vuelva a verificarse. El servicio de refresco pertenece al perfil Docker `local` y rechaza iniciar en modo `VPS`.
 
 ## Comprobaciones
 
@@ -58,7 +68,7 @@ Desde la raíz: `npm run build`, `npm test`, `npm run check`, `./scripts/arch-po
 
 `services/certichat/tests/cognee_selfcheck.py` comprueba el flujo de la versión instalada de Cognee con un gateway local simulado. `scripts/certichat-browser-smoke.cjs` comprueba contrato HTTP, reintentos, cuotas, fuentes, teclado y geometría móvil mediante DOM, sin capturas. La aceptación pública debe comprobar por separado Turnstile, cookies entre sitios, HTTPS, consulta con fuentes y rechazo de temas ajenos.
 
-La vista previa en localhost conserva el panel para revisar su diseño y ofrece un enlace al chat publicado (`#certichat`) para consultas reales. No intenta conectar con la API pública desde ese origen: CORS, Turnstile y la cookie de acceso están configurados para `jgangini.github.io`. Para pruebas con una API local, compilar con `CERTICHAT_API_ORIGIN` apuntando a loopback; esa configuración conserva el flujo normal de conexión.
+En modo `VPS`, la vista previa en localhost conserva el panel para revisar su diseño y ofrece un enlace al chat publicado (`#certichat`) para consultas reales. La API pública mantiene CORS, Turnstile y la cookie de acceso restringidos a `jgangini.github.io`. El modo `LOCAL` conecta exclusivamente con la API local; no desactiva ninguna protección del servidor público.
 
 Deep Chat incluye una dependencia transitiva de CLI con aviso moderado de `sprintf-js`; no está en el bundle publicado ni se ejecuta esa CLI. No se aplican overrides incompatibles para ocultar el aviso; revisar cuando el proveedor publique una corrección.
 

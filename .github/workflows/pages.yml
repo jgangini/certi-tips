@@ -21,6 +21,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run build
         env:
+          CERTICHAT_MODE: VPS
           CERTICHAT_TURNSTILE_SITE_KEY: ${{ vars.CERTICHAT_TURNSTILE_SITE_KEY }}
       - run: npm test
       - run: npm run check

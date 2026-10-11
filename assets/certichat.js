@@ -1,8 +1,15 @@
 import { readStored, writeStored } from "./storage.js";
 
-// Deep Chat's documented Remarkable plugin hook renders both roles as inert text.
-// ponytail: plain text avoids a second Markdown sanitizer; verified sources are separate DOM links.
-export const plainChatHTML = text => `<p>${String(text).replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]).replace(/\n/g, "<br>")}</p>`;
+const escapeChat = text => String(text).replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
+
+// ponytail: support only text and validated guide links, without enabling arbitrary Markdown/HTML.
+export function plainChatHTML(text, siteRoot) {
+  return `<p>${String(text).split(/(\[[^\[\]\n]+\]\(https:\/\/[^\s()]+\))/g).map(part => {
+    const link = part.match(/^\[([^\[\]\n]+)\]\((https:\/\/[^\s()]+)\)$/);
+    const url = link && safeSourceURL(link[2], siteRoot);
+    return url ? `<a href="${escapeChat(url)}">${escapeChat(link[1])}</a>` : escapeChat(part);
+  }).join("").replace(/\n/g, "<br>")}</p>`;
+}
 
 export function safeSourceURL(value, root) {
   try {
@@ -11,9 +18,21 @@ export function safeSourceURL(value, root) {
   } catch { return null; }
 }
 
-export function quotaText(quota) {
-  if (!quota) return "Consulta únicamente información publicada en CertiTips.";
-  return `${Number(quota.dayRemaining) || 0} consultas disponibles / 24 h · ${Number(quota.hourRemaining) || 0} / hora.${quota.retryAfter > 0 ? ` Espera ${Math.ceil(quota.retryAfter)} segundos antes de volver a consultar.` : ""}`;
+export function quotaText(quota, now = Date.now()) {
+  const reset = typeof quota?.resetAt === "string" ? Date.parse(quota.resetAt) : NaN;
+  if (!Number.isFinite(reset) || reset <= now) return "";
+  const minutes = Math.ceil((reset - now) / 60000);
+  return `Tus consultas se renovarán en ${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+}
+
+export function answerWithReferences(answer, question, sources, siteRoot) {
+  const request = question.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\bfuentes? de datos\b/g, "datos");
+  if (/\b(sin|no\s+(?:incluyas|muestres|agregues|quiero|necesito|deseo|compartas))\b.{0,40}\b(referencias?|fuentes?|enlaces?|links?|profundizar|ampliar)\b/.test(request)) return answer;
+  // ponytail: explicit Spanish requests only; expand these phrases when real requests need it.
+  const explicit = /\b(?:donde|como puedo)\b.{0,70}\b(?:leer|profundizar|ampliar|aprender|consultar|encontrar)\b|\b(?:dime|dame|darme|muestra(?:me)?|mostrarme|comparte|compartirme|recomienda(?:me)?|indica(?:me)?|pasame|pasarme|necesito|quiero|busco|incluye|cuales? son|cual es)\s+(?:(?:ver|consultar)\s+)?(?:(?:el|la|los|las|un|una|unos|unas|algun|algunos|alguna|algunas|tus|sus)\s+)?(?:referencias?|fuentes?|enlaces?|links?|profundizar|ampliar)\b|^\s*(?:referencias?|fuentes?|enlaces?|links?)[\s?.!]*$/.test(request);
+  if (!explicit) return answer;
+  const links = (Array.isArray(sources) ? sources : []).filter(source => typeof source?.title === "string" && safeSourceURL(source.url, siteRoot)).slice(0, 6).map(source => `[${source.title.replace(/[\[\]\r\n]/g, " ").slice(0, 200)}](${safeSourceURL(source.url, siteRoot)})`);
+  return links.length ? `${answer}\n\nPara profundizar:\n${links.join("\n")}` : answer;
 }
 
 export function isChatPreview(pageURL, apiURL) {
@@ -22,35 +41,43 @@ export function isChatPreview(pageURL, apiURL) {
 }
 
 export function restoreChat(value, siteRoot, now = Date.now()) {
-  const empty = { messages: [], sources: [], pendingRequest: undefined };
+  const empty = { messages: [], pendingRequest: undefined };
   if (!value || !Number.isFinite(value.updatedAt) || value.updatedAt > now || now - value.updatedAt >= 86400000) return empty;
   const messages = (Array.isArray(value.messages) ? value.messages : []).filter(item => item && ["user", "ai"].includes(item.role) && typeof item.text === "string" && item.text.trim() && item.text.length <= (item.role === "user" ? 1500 : 12000)).slice(-100).map(({ role, text }) => ({ role, text }));
-  const sources = (Array.isArray(value.sources) ? value.sources : []).filter(item => item && typeof item.title === "string" && item.title.trim() && item.title.length <= 200 && safeSourceURL(item.url, siteRoot)).slice(0, 6).map(({ title, url }) => ({ title, url }));
   const pending = value.pendingRequest;
   const pendingRequest = pending && typeof pending.requestId === "string" && /^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/i.test(pending.requestId) && typeof pending.message === "string" && pending.message.trim() && pending.message.length <= 1500 && safeSourceURL(pending.pageUrl, siteRoot) ? { requestId: pending.requestId, message: pending.message, pageUrl: pending.pageUrl } : undefined;
-  return { messages, sources, pendingRequest };
+  return { messages, pendingRequest };
 }
 
 const root = typeof document === "undefined" ? null : document.querySelector("[data-certichat]");
 if (root) {
   const panel = root.querySelector("#certichat-panel"), launcher = root.querySelector("[data-chat-open]");
   const status = root.querySelector("[data-chat-status]"), verification = root.querySelector("[data-chat-verification]");
-  const sources = root.querySelector("[data-chat-sources]"), clear = root.querySelector("[data-chat-clear]"), retry = root.querySelector("[data-chat-retry]");
+  const clear = root.querySelector("[data-chat-clear]"), retry = root.querySelector("[data-chat-retry]");
   const confirmation = root.querySelector("[data-chat-confirm]"), confirmClear = confirmation.querySelector("[data-chat-confirm-yes]"), cancelClear = confirmation.querySelector("[data-chat-confirm-no]");
   const storageKey = `certichat:${root.dataset.siteRoot}`;
   const saved = restoreChat(readStored(storageKey, null), root.dataset.siteRoot);
   const preview = isChatPreview(location.href, root.dataset.api);
   let chat, opening, verifying = false, verified = false, available = false, busy = false, turnstileId, turnstileLoad;
-  let pendingRequest = saved.pendingRequest, lastSources = saved.sources, accessError = "", completedRequest;
+  let pendingRequest = saved.pendingRequest, accessError = "", completedRequest, quota;
+  const quotaNotice = document.createElement("div");
+  quotaNotice.id = "certichat-quota";
+  quotaNotice.hidden = true;
+  function updateQuota(value = quota) {
+    quota = value;
+    quotaNotice.textContent = quotaText(quota);
+    quotaNotice.hidden = !quotaNotice.textContent;
+  }
+  setInterval(() => updateQuota(), 30000);
 
   function persist() {
     // ponytail: one bounded text snapshot; the server remains authoritative for context and quotas.
-    writeStored(storageKey, { updatedAt: Date.now(), ...restoreChat({ updatedAt: Date.now(), messages: chat.getMessages(), sources: lastSources, pendingRequest }, root.dataset.siteRoot) });
+    writeStored(storageKey, { updatedAt: Date.now(), ...restoreChat({ updatedAt: Date.now(), messages: chat.getMessages(), pendingRequest }, root.dataset.siteRoot) });
   }
 
   function setStatus(message, error = false) {
     status.querySelector("[data-chat-status-text]").textContent = message;
-    status.hidden = error;
+    status.hidden = error || !message;
     accessError = error ? message : "";
     retry.hidden = preview || !error;
   }
@@ -75,7 +102,8 @@ if (root) {
   function updateAccess(session) {
     verified = Boolean(session.authenticated && !session.verificationRequired);
     available = session.available !== false;
-    setStatus(session.available === false ? "El servicio está actualizando su contenido o alcanzó su límite de uso. Inténtalo más tarde." : quotaText(session.quota), session.available === false);
+    updateQuota(session.quota);
+    setStatus(session.available === false ? "El servicio está actualizando su contenido o alcanzó su límite de uso. Inténtalo más tarde." : "", session.available === false);
     clear.disabled = !verified || busy;
   }
 
@@ -117,28 +145,10 @@ if (root) {
     });
   }
 
-  function showSources(items) {
-    lastSources = items;
-    sources.replaceChildren();
-    const list = document.createElement("ul");
-    for (const source of (Array.isArray(items) ? items : []).slice(0, 6)) {
-      const url = safeSourceURL(source.url, root.dataset.siteRoot);
-      if (!url) continue;
-      const item = document.createElement("li"), link = document.createElement("a");
-      link.href = url; link.textContent = source.title; link.target = "_blank"; link.rel = "noopener noreferrer";
-      item.append(link); list.append(item);
-    }
-    sources.hidden = !list.childElementCount;
-    if (!sources.hidden) {
-      const title = document.createElement("strong"); title.textContent = "Fuentes de la última respuesta";
-      sources.append(title, list);
-    }
-  }
-
   async function initialize() {
     if (!chat) {
       await import("./deep-chat.js");
-      window.remarkable_plugins = [{ plugin: markdown => { markdown.render = plainChatHTML; } }];
+      window.remarkable_plugins = [{ plugin: markdown => { markdown.render = text => plainChatHTML(text, root.dataset.siteRoot); } }];
       chat = document.createElement("deep-chat");
       chat.chatStyle = { border: "none", width: "100%", height: "100%", backgroundColor: "var(--paper)", color: "var(--ink)", fontFamily: "inherit" };
       chat.textInput = {
@@ -151,7 +161,7 @@ if (root) {
       chat.submitButtonStyles = { submit: { container: { default: { transform: "scale(1.21)", marginBottom: "-3px", marginRight: "0.4em" } } } };
       chat.messageStyles = { default: { shared: { bubble: { maxWidth: "92%", fontSize: "14px", lineHeight: "1.5" } }, ai: { bubble: { backgroundColor: "var(--hover)", color: "var(--ink)" } }, user: { bubble: { backgroundColor: "var(--accent)", color: "var(--on-red)" } } } };
       chat.remarkable = { html: false, applyHTML: false };
-      chat.auxiliaryStyle = "* { overflow-wrap: anywhere; } @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }";
+      chat.auxiliaryStyle = "* { overflow-wrap: anywhere; } #chat-view { grid-template-rows: minmax(0, 1fr) auto auto; } #certichat-quota { color: var(--muted); text-align: center; font-size: 12px; line-height: 1.4; padding: 8px 12px; } #certichat-quota[hidden] { display: none; } a { color: var(--blue); text-decoration: underline; } a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; } @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }";
       chat.introMessage = { text: "Hola. Resuelve tus dudas sobre las guías y prácticas del sitio." };
       chat.history = saved.messages;
       chat.onMessage = ({ isHistory, message }) => {
@@ -168,6 +178,7 @@ if (root) {
       chat.requestBodyLimits = { maxMessages: 1 };
       chat.validateInput = text => !busy && Boolean(text?.trim()) && text.length <= 1500;
       chat.onComponentRender = () => {
+        chat.shadowRoot.querySelector("#input")?.before(quotaNotice);
         const input = chat.shadowRoot.querySelector('[role="textbox"]');
         input?.setAttribute("aria-label", "Escribe tu consulta");
         input?.setAttribute("enterkeyhint", "send");
@@ -195,21 +206,23 @@ if (root) {
             persist();
             const result = await api("chat", pendingRequest);
             completedRequest = pendingRequest.requestId;
-            answer = String(result.answer || "No encontré una respuesta en las guías disponibles.");
-            showSources(result.sources); setStatus(quotaText(result.quota));
+            answer = answerWithReferences(String(result.answer || "No encontré una respuesta en las guías disponibles."), message, result.sources, root.dataset.siteRoot);
+            updateQuota(result.quota); setStatus("");
           }
         } catch (error) {
           if (error.status && (error.status !== 409 || ["request_failed", "request_expired"].includes(error.code))) pendingRequest = undefined;
           answer = error.name === "TimeoutError" ? "La consulta tardó demasiado. Puedes repetirla para recuperar su resultado." : error.status ? error.message : "Sin conexión. Vuelve a intentarlo.";
           setStatus(answer, true);
           if ([401, 403].includes(error.status)) verified = false;
+          if (error.status === 429) {
+            try { updateQuota((await api("session", undefined, "GET")).quota); } catch { /* Keep the last known renewal time. */ }
+          }
         }
         chat.shadowRoot.querySelector('[aria-label="Enviar consulta"]')?.setAttribute("aria-label", "Detener respuesta");
         await signals.onResponse({ text: answer });
         persist();
       } };
       root.querySelector("[data-chat-messages]").append(chat);
-      showSources(saved.sources);
     }
     // ponytail: real queries use the published origin; a loopback API remains available for local tests.
     if (preview) {
@@ -221,7 +234,11 @@ if (root) {
       setStatus("Esta vista previa no admite consultas. Abre el chat del sitio publicado.", true);
       return;
     }
-    const session = await api("session", undefined, "GET");
+    let session = await api("session", undefined, "GET");
+    if (session.mode === "LOCAL" && (!session.authenticated || session.verificationRequired)) {
+      await api("session", {});
+      session = await api("session", undefined, "GET");
+    }
     updateAccess(session);
     if (!verified && available) await verify();
   }
@@ -262,8 +279,8 @@ if (root) {
     confirmation.setAttribute("aria-busy", "true");
     try {
       const result = await api("conversation", {}, "DELETE");
-      chat.clearMessages(); showSources([]); pendingRequest = undefined; persist();
-      setStatus(quotaText(result.quota)); confirmation.close();
+      chat.clearMessages(); pendingRequest = undefined; persist();
+      updateQuota(result.quota); setStatus(""); confirmation.close();
     } catch {
       const error = confirmation.querySelector("[data-chat-clear-error]");
       error.textContent = "No se pudo borrar la conversación. Vuelve a intentarlo."; error.hidden = false;

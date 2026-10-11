@@ -1,16 +1,24 @@
 // Run with playwright-cli -s=certichatqa run-code --filename scripts/certichat-browser-smoke.cjs
-// Isolated local browser, mocked API, DOM/network assertions; no screenshots or paid calls.
+// Build with CERTICHAT_MODE=VPS first. Isolated local browser, mocked API; no screenshots or paid calls.
 async (page) => {
   const base = new URL('/certi-tips/', page.url()).href;
   const assert = (condition, message) => { if (!condition) throw new Error(message); };
   const calls = [], requests = [], errors = [], responses = new Map();
   const answer = '<img src="https://evil.invalid/leak" onerror="alert(1)">\n![imagen](https://evil.invalid/) [enlace](javascript:alert(1))\nLos agentes utilizan herramientas y consultan las guías para resolver una tarea. Revisa las fuentes de esta respuesta para ampliar los conceptos y practicar con los ejemplos publicados en el sitio.';
-  let quota = { dayRemaining: 20, hourRemaining: 10, minuteRemaining: 2, retryAfter: 0 };
+  const guideURL = 'https://jgangini.github.io/certi-tips/1Z0-1157-26/agents/#conceptos-clave';
+  let quota = { remaining: 20, limit: 20, refreshHours: 6, resetAt: null, minuteRemaining: 2, retryAfter: 0 };
   let authenticated = true, available = true, sessionError = true, rateLimited = false, loseResponse = false, failOnce = 0;
+  let mode = 'VPS';
   const waitForReply = async text => page.waitForFunction(expected => {
     const chat = document.querySelector('deep-chat'), last = chat?.getMessages().at(-1);
     return last?.role === 'ai' && last.text.includes(expected) && chat.validateInput('Siguiente consulta');
   }, text);
+  const waitForReady = async () => page.waitForFunction(() => {
+    const status = document.querySelector('[data-chat-status]');
+    return document.querySelector('deep-chat')?.shadowRoot?.querySelector('#certichat-quota') &&
+      status.hidden && !status.textContent.trim() && !document.querySelector('[data-chat-clear]').disabled;
+  });
+  const quotaNotice = page.locator('deep-chat #certichat-quota');
   page.on('request', request => requests.push(request.url()));
   page.on('pageerror', error => errors.push(error.message));
   await page.route('http://127.0.0.1:18741/**', async route => {
@@ -20,18 +28,18 @@ async (page) => {
     calls.push({ path, method: request.method(), body: request.postDataJSON(), headers: request.headers() });
     if (path === '/api/chat') {
       const requestId = request.postDataJSON().requestId;
-      if (responses.has(requestId)) return route.fulfill({ headers, json: responses.get(requestId) });
+      if (responses.has(requestId)) return route.fulfill({ headers, json: { ...responses.get(requestId), quota } });
       if (loseResponse) { loseResponse = false; return route.abort('failed'); }
       if (failOnce) { const status = failOnce; failOnce = 0; return route.fulfill({ status, headers, json: { detail: 'previous failure', code: status === 409 ? 'request_failed' : undefined } }); }
       if (rateLimited) return route.fulfill({ status: 429, headers: { ...headers, 'retry-after': '31', 'access-control-expose-headers': 'retry-after' }, json: { detail: 'rate_limit' } });
-      quota = { dayRemaining: 19, hourRemaining: 9, minuteRemaining: 1, retryAfter: 0 };
-      const response = { answer, sources: [{ id: 'agents', title: 'Agentes · Conceptos clave', url: 'https://jgangini.github.io/certi-tips/1Z0-1157-26/agents/#conceptos-clave' }, { title: 'External', url: 'https://evil.invalid/' }], quota, contentVersion: 'test' };
+      quota = { ...quota, remaining: Math.max(0, quota.remaining - 1), resetAt: quota.resetAt || new Date(Date.now() + 6 * 3600000).toISOString(), minuteRemaining: 1 };
+      const response = { answer, sources: [{ id: 'agents', title: 'Agentes · Conceptos clave', url: guideURL }, { title: 'External', url: 'https://evil.invalid/' }], quota, contentVersion: 'test' };
       responses.set(requestId, response);
       return route.fulfill({ headers, json: response });
     }
     if (path === '/api/session' && sessionError) return route.abort('failed');
     if (path === '/api/session' && request.method() === 'POST') authenticated = true;
-    return route.fulfill({ headers, json: { authenticated, verificationRequired: !authenticated, quota, available } });
+    return route.fulfill({ headers, json: { mode, authenticated, verificationRequired: !authenticated, quota, available } });
   });
   await page.goto(base);
   await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
@@ -46,6 +54,15 @@ async (page) => {
     const response = await route.fetch();
     return route.fulfill({ response, body: (await response.text()).replace('data-api="https://certichat.cloudtechnext.net"', 'data-api="http://127.0.0.1:18741"') });
   });
+  mode = 'LOCAL'; authenticated = false; sessionError = false;
+  await page.goto(base);
+  await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
+  await waitForReady();
+  assert(await quotaNotice.isHidden(), 'Renewal countdown appears before the first question');
+  assert(calls.some(call => call.path === '/api/session' && call.method === 'POST' && Object.keys(call.body).length === 0), 'LOCAL did not create its development session');
+  assert(!requests.some(url => url.includes('challenges.cloudflare.com')), 'LOCAL loaded public Turnstile');
+  mode = 'VPS'; authenticated = true; sessionError = true;
+  calls.length = 0;
   requests.length = 0;
   await page.goto(base);
   assert(!requests.some(url => /deep-chat\.js|turnstile|certichat\.cloudtechnext/.test(url)), 'Chat network loaded before opening');
@@ -61,7 +78,8 @@ async (page) => {
   assert(!calls.some(item => item.path === '/api/chat'), 'Offline Enter attempted a paid request');
   sessionError = false;
   await page.getByRole('button', { name: 'Reintentar conexión' }).click();
-  await page.waitForFunction(() => document.querySelector('[data-chat-status]').textContent.includes('20 consultas'));
+  await waitForReady();
+  assert(await quotaNotice.isHidden(), 'Reconnecting starts the renewal window without a question');
   assert(await page.locator('[data-chat-open]').isHidden(), 'Launcher remains visible while chat is open');
   assert(await page.locator('[data-chat-retry]').isHidden(), 'Retry appears without an error');
   assert(requests.some(url => url.endsWith('/assets/deep-chat.js')), 'Missing local Deep Chat');
@@ -87,26 +105,40 @@ async (page) => {
   assert(calls.filter(item => item.path === '/api/chat').length === streamingCalls, 'Enter during streaming sent another request');
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).fill('');
   await waitForReply(answer);
-  await page.waitForFunction(() => document.querySelector('[data-chat-status]').textContent.includes('19 consultas'));
+  await waitForReady();
+  assert(/^Tus consultas se renovarán en \d{2}:[0-5]\d$/.test(await quotaNotice.textContent()), 'Missing renewal countdown in HH:MM');
+  assert(await quotaNotice.evaluate(element => element.nextElementSibling?.id === 'input'), 'Renewal countdown is not beside the full-width input');
   assert(calls.filter(item => item.path === '/api/chat').length === 1, 'Keyboard submission did not issue exactly one request');
   assert(await submit.count() === 1, 'Submit name lost after response');
-  assert(await page.locator('[data-chat-sources] a').count() === 1, 'Unsafe source URL shown');
+  assert(await page.locator('[data-chat-sources]').count() === 0, 'Removed sources block is still present');
   assert(!(await page.locator('deep-chat img, deep-chat a, deep-chat script').count()), 'Messages rendered active content');
   assert(!requests.some(url => url.includes('evil.invalid')), 'Message caused external resource request');
   const sent = calls.find(item => item.path === '/api/chat');
   assert(sent.body.message === '¿Qué son los agentes?' && /^[\da-f-]{36}$/.test(sent.body.requestId), 'Wrong API request');
   assert(sent.headers['x-certichat'] === '1', 'Missing mutation header');
   assert(sent.body.pageUrl === 'https://jgangini.github.io/certi-tips/', 'Missing canonical page context');
+  const firstReset = quota.resetAt;
+  await page.getByRole('textbox', { name: 'Escribe tu consulta' }).fill('¿Dónde puedo profundizar sobre los agentes?');
+  await page.getByRole('textbox', { name: 'Escribe tu consulta' }).press('Enter');
+  await waitForReply('Para profundizar:');
+  await waitForReady();
+  const guideLink = page.locator('deep-chat .ai-message a');
+  assert(await guideLink.count() === 1 && await guideLink.getAttribute('href') === guideURL, 'Explicit reference request did not produce one safe guide link with its anchor');
+  assert(await guideLink.textContent() === 'Agentes · Conceptos clave', 'Guide link lost its descriptive label');
+  assert(!(await page.locator('deep-chat img, deep-chat script, deep-chat a[href*="evil.invalid"], deep-chat a[href^="javascript:"]').count()), 'Explicit references activated unsafe content');
+  assert(!requests.some(url => url.includes('evil.invalid')), 'Explicit reference answer requested an external resource');
+  assert(quota.remaining === 18 && quota.resetAt === firstReset, 'Following question moved the fixed quota window');
   const transcript = await page.locator('deep-chat').evaluate(element => JSON.stringify(element.getMessages()));
   const chatCalls = calls.filter(item => item.path === '/api/chat').length;
   for (const destination of [null, `${base}1Z0-1157-26/agents/`, base]) {
     if (destination) await page.goto(destination); else await page.reload();
     await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
-    await page.waitForFunction(() => document.querySelector('[data-chat-status]').textContent.includes('19 consultas'));
+    await waitForReady();
     assert(await page.locator('deep-chat').evaluate(element => JSON.stringify(element.getMessages())) === transcript, 'Navigation or reload lost the transcript');
-    assert(await page.locator('[data-chat-sources] a').count() === 1, 'Navigation or reload lost safe sources');
+    assert(await guideLink.count() === 1 && await guideLink.getAttribute('href') === guideURL, 'Navigation or reload lost the persisted guide link or anchor');
+    assert(await page.locator('[data-chat-sources]').count() === 0, 'Navigation restored the removed sources block');
     assert(calls.filter(item => item.path === '/api/chat').length === chatCalls, 'Restoring history automatically resubmitted a question');
-    assert(!(await page.locator('deep-chat img, deep-chat a, deep-chat script').count()), 'Restored transcript rendered active content');
+    assert(!(await page.locator('deep-chat img, deep-chat script, deep-chat a[href*="evil.invalid"], deep-chat a[href^="javascript:"]').count()), 'Restored transcript activated unsafe content');
   }
   const deletes = calls.filter(item => item.method === 'DELETE').length;
   await page.locator('[data-chat-clear]').click();
@@ -121,12 +153,12 @@ async (page) => {
   await page.locator('[data-chat-confirm]').waitFor({ state: 'hidden' });
   await page.waitForFunction(() => document.querySelector('[data-chat-clear]').disabled === false);
   assert(calls.some(item => item.path === '/api/conversation' && item.method === 'DELETE'), 'No server conversation deletion');
-  assert((await page.locator('[data-chat-status]').textContent()).includes('19 consultas'), 'Clear reset quota');
+  assert(await quotaNotice.isVisible() && quota.remaining === 18 && quota.resetAt === firstReset, 'Clear reset quota');
   await page.reload();
   await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
-  await page.waitForFunction(() => document.querySelector('[data-chat-status]').textContent.includes('19 consultas'));
+  await waitForReady();
   assert(await page.locator('deep-chat').evaluate(element => element.getMessages().length) === 0, 'Cleared history returned after reload');
-  assert(await page.locator('[data-chat-sources]').isHidden(), 'Cleared sources returned after reload');
+  assert(await page.locator('[data-chat-sources]').count() === 0 && await guideLink.count() === 0, 'Cleared reference links returned after reload');
   assert(calls.filter(item => item.path === '/api/chat').length === chatCalls, 'Reload after clear submitted a question');
   rateLimited = true;
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).fill('Otra consulta');
@@ -142,12 +174,12 @@ async (page) => {
   const beforeRecovery = calls.filter(item => item.path === '/api/chat').length;
   await page.reload();
   await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
-  await page.waitForFunction(() => document.querySelector('[data-chat-status]').textContent.includes('19 consultas'));
+  await waitForReady();
   assert(calls.filter(item => item.path === '/api/chat').length === beforeRecovery, 'Pending request was automatically resent after reload');
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).fill('Consulta con conexión interrumpida');
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).press('Enter');
   await waitForReply(answer);
-  await page.waitForFunction(() => document.querySelector('[data-chat-status]').textContent.includes('19 consultas'));
+  await waitForReady();
   const retried = calls.filter(item => item.body?.message === 'Consulta con conexión interrumpida');
   assert(retried.length === 2 && retried[0].body.requestId === retried[1].body.requestId && retried[0].body.pageUrl === retried[1].body.pageUrl, 'Transport retry after reload changes the billable UUID or page context');
   assert(await page.locator('[data-chat-retry]').isHidden(), 'Retry remains visible after successful recovery');
@@ -161,7 +193,7 @@ async (page) => {
   }, answer);
   await page.reload();
   await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
-  await page.waitForFunction(() => document.querySelector('[data-chat-status]').textContent.includes('19 consultas'));
+  await waitForReady();
   assert(calls.filter(item => item.body?.message === interruptedQuestion).length === 1, 'Reload during streaming automatically resubmitted the question');
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).fill(interruptedQuestion);
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).press('Enter');
@@ -179,7 +211,7 @@ async (page) => {
     await page.getByRole('textbox', { name: 'Escribe tu consulta' }).fill(question);
     await page.getByRole('textbox', { name: 'Escribe tu consulta' }).press('Enter');
     await waitForReply(answer);
-    await page.waitForFunction(() => document.querySelector('[data-chat-status]').textContent.includes('19 consultas'));
+    await waitForReady();
     const retried = calls.filter(item => item.body?.message === question);
     assert(retried.length === 2 && retried[0].body.requestId !== retried[1].body.requestId, `Definitive ${code} failure traps the same question`);
   }
@@ -236,7 +268,7 @@ async (page) => {
     window.turnstile = { render: (element, options) => { if (options.action !== 'certichat_session') throw new Error('Wrong Turnstile action'); queueMicrotask(() => options.callback('test-single-use-token')); return 'test-widget'; }, remove() {} };
   });
   await page.getByRole('button', { name: 'Reintentar conexión' }).click();
-  await page.waitForFunction(() => document.querySelector('[data-chat-status]').textContent.includes('19 consultas'));
+  await waitForReady();
   assert(calls.some(item => item.path === '/api/session' && item.body?.turnstileToken === 'test-single-use-token'), 'Turnstile token not verified by server');
   await page.evaluate(() => { document.documentElement.dataset.theme = 'dark'; });
   const darkColors = await page.locator('deep-chat').evaluate(element => ({ background: getComputedStyle(element).backgroundColor, text: getComputedStyle(element).color }));
@@ -250,5 +282,5 @@ async (page) => {
   });
   assert(controlsSeparate, 'Chat launcher overlaps lesson completion');
   assert(errors.length === 0, `Page errors: ${errors.join('; ')}`);
-  return { checks: ['lazy local bundle', 'offline opens without banner or unsolicited error', 'offline Enter returns local feedback without API call', 'named submit and keyboard activation', 'Shift+Enter newline', 'incremental streaming locks repeated submit and clear', 'safe plaintext', 'sources', 'API contract', 'quotas', 'completed streaming history persists across navigation and reload without automatic submission', 'cancel preserves conversation', 'confirmed clear persists and preserves quota', 'errors inside chat and retry visibility', 'idempotent transport retry after reload', 'reload during streaming preserves UUID and avoids another generation', 'definitive failure retry', 'mobile fullscreen and desktop geometry', 'launcher visibility and close controls', 'Escape focus', 'unavailable answers locally without Turnstile or chat call', 'missing Turnstile fails closed with local feedback', 'Turnstile server handshake', 'dark theme', 'completion control coexistence'], requests: calls.length, errors };
+  return { checks: ['lazy local bundle', 'offline opens without banner or unsolicited error', 'offline Enter returns local feedback without API call', 'named submit and keyboard activation', 'Shift+Enter newline', 'incremental streaming locks repeated submit and clear', 'safe plaintext without unsolicited links', 'explicit safe guide links with persisted anchors', 'removed sources block stays absent', 'API contract', 'hidden initial quota and fixed six-hour renewal countdown', 'completed streaming history persists across navigation and reload without automatic submission', 'cancel preserves conversation', 'confirmed clear persists and preserves quota', 'errors inside chat and retry visibility', 'idempotent transport retry after reload', 'reload during streaming preserves UUID and avoids another generation', 'definitive failure retry', 'mobile fullscreen and desktop geometry', 'launcher visibility and close controls', 'Escape focus', 'unavailable answers locally without Turnstile or chat call', 'missing Turnstile fails closed with local feedback', 'Turnstile server handshake', 'dark theme', 'completion control coexistence'], requests: calls.length, errors };
 }

@@ -17,7 +17,7 @@ import psycopg
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .provider import Provider, REFUSAL
-from .security import COOKIE, ChatError, GuardMiddleware, network_digest, new_token, set_cookie, token_digest
+from .security import ChatError, GuardMiddleware, cookie_name, network_digest, new_token, set_cookie, token_digest
 from .settings import Settings
 from .store import Store
 
@@ -39,7 +39,7 @@ class StrictBody(BaseModel):
 
 
 class SessionBody(StrictBody):
-    turnstileToken: str = Field(min_length=1, max_length=2048)
+    turnstileToken: str | None = Field(default=None, min_length=1, max_length=2048)
 
 
 class ChatBody(StrictBody):
@@ -72,7 +72,8 @@ def network(request):
 
 
 async def identity(request, verified=True):
-    row = await db(request.app.state.store.session, token_digest(request.cookies.get(COOKIE)))
+    row = await db(request.app.state.store.session,
+                   token_digest(request.cookies.get(cookie_name(request.app.state.settings))))
     if not row or (verified and not row["verified"]):
         raise ChatError("Verifica tu acceso para continuar.", 401)
     return row["token_hash"]
@@ -133,7 +134,7 @@ def create_app(settings=None, *, transport=None):
         configured = settings or Settings.from_env()
         configured.validate()
         application.state.settings = configured
-        application.state.store = Store(configured.database_url)
+        application.state.store = Store(configured.database_url, configured.refresh_hours, configured.questions)
         await db(application.state.store.open)
         try:
             await db(application.state.store.health)
@@ -179,8 +180,9 @@ def create_app(settings=None, *, transport=None):
 
     async def session_state(request):
         store = request.app.state.store
-        row = await db(store.session, token_digest(request.cookies.get(COOKIE)))
-        return {"authenticated": row is not None, "verificationRequired": not row or not row["verified"],
+        row = await db(store.session, token_digest(request.cookies.get(cookie_name(request.app.state.settings))))
+        return {"mode": request.app.state.settings.mode,
+                "authenticated": row is not None, "verificationRequired": not row or not row["verified"],
                 "quota": await db(store.quota, row["token_hash"]) if row else None,
                 "available": await service_available(request)}
 
@@ -193,22 +195,25 @@ def create_app(settings=None, *, transport=None):
         store = request.app.state.store
         await db(store.session_attempt, network(request))
         settings = request.app.state.settings
-        try:
-            verification = await request.app.state.client.post("https://challenges.cloudflare.com/turnstile/v0/siteverify",
+        if settings.mode == "VPS":
+            if not body.turnstileToken:
+                raise ChatError("Verifica tu acceso para continuar.", 403)
+            try:
+                verification = await request.app.state.client.post("https://challenges.cloudflare.com/turnstile/v0/siteverify",
                            data={"secret": settings.turnstile_secret, "response": body.turnstileToken}, timeout=10)
-            verification.raise_for_status()
-            result = verification.json()
-            if (result.get("success") is not True or result.get("hostname") != settings.turnstile_hostname
+                verification.raise_for_status()
+                result = verification.json()
+                if (result.get("success") is not True or result.get("hostname") != settings.turnstile_hostname
                     or result.get("action") != "certichat_session"):
-                raise ChatError("La verificación caducó o no es válida. Inténtalo de nuevo.", 403)
-        except (httpx.HTTPError, ValueError, AttributeError):
-            raise ChatError("No se pudo verificar el acceso. Inténtalo más tarde.") from None
-        old = request.cookies.get(COOKIE)
+                    raise ChatError("La verificación caducó o no es válida. Inténtalo de nuevo.", 403)
+            except (httpx.HTTPError, ValueError, AttributeError):
+                raise ChatError("No se pudo verificar el acceso. Inténtalo más tarde.") from None
+        old = request.cookies.get(cookie_name(settings))
         existing = await db(store.session, token_digest(old))
         token = old if existing else new_token()
         await db(store.verify_session, token_digest(token))
-        set_cookie(response, token)
-        return {"authenticated": True, "verificationRequired": False,
+        set_cookie(response, token, settings)
+        return {"mode": settings.mode, "authenticated": True, "verificationRequired": False,
                 "quota": await db(store.quota, token_digest(token)), "available": await service_available(request)}
 
     @application.delete("/api/conversation")

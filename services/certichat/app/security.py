@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 COOKIE = "__Host-certichat"
+LOCAL_COOKIE = "certichat-local"
 SESSION_SECONDS = 30 * 24 * 60 * 60
 
 
@@ -42,9 +43,16 @@ def network_digest(address, secret):
     return hmac.new(secret.encode(), network.encode(), hashlib.sha256).hexdigest()
 
 
-def set_cookie(response, token):
-    response.set_cookie(COOKIE, token, max_age=SESSION_SECONDS, httponly=True, secure=True,
-                        samesite="none", path="/")
+def cookie_name(settings):
+    return LOCAL_COOKIE if settings.mode == "LOCAL" else COOKIE
+
+
+def set_cookie(response, token, settings):
+    local = settings.mode == "LOCAL"
+    response.set_cookie(cookie_name(settings), token, max_age=SESSION_SECONDS, httponly=True, secure=not local,
+                        samesite="lax" if local else "none", path="/")
+    if local:
+        return
     # Python 3.12 lacks CHIPS serialization; append the standardized flag to this cookie only.
     header, value = response.raw_headers[-1]
     response.raw_headers[-1] = (header, value + b"; Partitioned")
@@ -60,8 +68,11 @@ class GuardMiddleware:
             return await self.app(scope, receive, send)
         settings = scope["app"].state.settings
         headers = {key.decode("latin1").lower(): value.decode("latin1") for key, value in scope["headers"]}
-        host = headers.get("host", "").split(":")[0].lower()
-        if host not in {urlsplit(settings.public_origin).hostname, "api", "certichat-api", "testserver", "localhost", "127.0.0.1"}:
+        try:
+            host = urlsplit("//" + headers.get("host", "")).hostname
+        except ValueError:
+            host = None
+        if host not in {urlsplit(settings.public_origin).hostname, "api", "certichat-api", "testserver", "localhost", "127.0.0.1", "::1"}:
             return await JSONResponse({"detail": "Host no permitido."}, 400)(scope, receive, send)
         if self.cors is None:
             self.cors = CORSMiddleware(self.checked_request, allow_origins=list(settings.allowed_origins),

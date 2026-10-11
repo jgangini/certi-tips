@@ -23,18 +23,29 @@ values = {
     'CERTICHAT_CHAT_INTERNAL_TOKEN': secrets.token_hex(32),
     'CERTICHAT_INDEX_INTERNAL_TOKEN': secrets.token_hex(32),
     'CERTICHAT_NETWORK_SECRET': secrets.token_hex(32),
+}
+production = {
+    'CERTICHAT_MODE': 'VPS',
     'CERTICHAT_PUBLIC_ORIGIN': 'https://certichat.cloudtechnext.net',
     'CERTICHAT_ALLOWED_ORIGINS': 'https://jgangini.github.io',
     'CERTICHAT_TURNSTILE_HOSTNAME': 'jgangini.github.io',
     'CERTICHAT_PORT': '18741', 'CERTICHAT_SECURE_COOKIES': 'true',
 }
-with env.open('a') as stream:
-    stream.write('\n')
-    for name, value in values.items():
-        if name not in existing:
-            stream.write(f"{name}='{value}'\n")
+for name, default, maximum in (('CERTICHAT_REFRESH', '6', 24), ('CERTICHAT_QUESTIONS', '20', 100)):
+    value = os.environ.get(name, existing.get(name, default)).strip("'\"")
+    if not value.isascii() or not value.isdecimal() or not 1 <= int(value) <= maximum:
+        raise SystemExit(f'{name} must be an integer from 1 to {maximum}.')
+    production[name] = str(int(value))
+lines = [line for line in env.read_text().splitlines() if line.split('=', 1)[0].strip() not in production]
+lines.extend(f"{name}='{value}'" for name, value in values.items() if name not in existing)
+lines.extend(f"{name}='{value}'" for name, value in production.items())
+env.write_text('\n'.join(lines) + '\n')
 os.chmod(env, 0o600)
 PY
+# Compose prioritizes the process environment over --env-file: pin both to production.
+export CERTICHAT_MODE=VPS CERTICHAT_PUBLIC_ORIGIN=https://certichat.cloudtechnext.net
+export CERTICHAT_ALLOWED_ORIGINS=https://jgangini.github.io CERTICHAT_TURNSTILE_HOSTNAME=jgangini.github.io
+export CERTICHAT_SECURE_COOKIES=true CERTICHAT_PORT=18741
 compose=(docker compose --project-directory "$PWD" --env-file services/certichat/.env -p certichat -f services/certichat/compose.yml)
 "${compose[@]}" config --quiet
 "${compose[@]}" build api knowledge

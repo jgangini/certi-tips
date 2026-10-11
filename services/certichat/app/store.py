@@ -1,6 +1,7 @@
 """Short PostgreSQL transactions own quotas, idempotency and conservative cost reservations."""
 
 import time
+from datetime import timezone
 from uuid import uuid4
 
 from psycopg.rows import dict_row
@@ -9,15 +10,14 @@ from psycopg_pool import ConnectionPool
 
 from .security import ChatError
 
-QUOTAS = (("minute", 60, 2), ("hour", 3600, 10), ("day", 86400, 20))
-
-
 class Store:
-    def __init__(self, database_url):
+    def __init__(self, database_url, refresh_hours=6, questions=20):
         self.pool = ConnectionPool(database_url, min_size=1, max_size=8, timeout=3, max_waiting=64,
                                    open=False, name="certichat", kwargs={"connect_timeout": 5,
                                    "row_factory": dict_row, "options": "-c statement_timeout=5000 -c lock_timeout=3000"})
         self.last_cleanup = 0.0
+        self.refresh_hours = refresh_hours
+        self.questions = questions
 
     def open(self):
         self.pool.open(wait=True, timeout=5)
@@ -74,18 +74,20 @@ class Store:
         if not allowed:
             raise ChatError("Demasiados intentos de verificación. Espera un momento.", 429, 60)
 
-    @staticmethod
-    def quota_in(connection, token_hash):
-        result = {"retryAfter": 0}
-        for name, seconds, maximum in QUOTAS:
-            row = connection.execute("SELECT count(*) AS n,COALESCE(ceil(extract(epoch FROM "
-                                     "min(created_at)+%s*interval '1 second'-now())),0)::int AS retry "
-                                     "FROM cc_requests WHERE session_hash=%s AND created_at>now()-%s*interval '1 second'",
-                                     (seconds, token_hash, seconds)).fetchone()
-            result[f"{name}Remaining"] = max(0, maximum-row["n"])
-            if row["n"] >= maximum:
-                result["retryAfter"] = max(result["retryAfter"], row["retry"])
-        return result
+    def quota_in(self, connection, token_hash):
+        minute = connection.execute("SELECT count(*) AS n,COALESCE(ceil(extract(epoch FROM "
+                                    "min(created_at)+interval '1 minute'-now())),0)::int AS retry "
+                                    "FROM cc_requests WHERE session_hash=%s AND created_at>now()-interval '1 minute'",
+                                    (token_hash,)).fetchone()
+        window = connection.execute("SELECT hits,expires_at,ceil(extract(epoch FROM expires_at-now()))::int AS retry "
+                                    "FROM cc_rate_limits WHERE bucket=%s AND expires_at>now()",
+                                    (f"chat:{token_hash}",)).fetchone()
+        remaining = max(0, self.questions - window["hits"]) if window else self.questions
+        return {"remaining": remaining, "limit": self.questions, "refreshHours": self.refresh_hours,
+                "resetAt": window["expires_at"].astimezone(timezone.utc).isoformat().replace("+00:00", "Z") if window else None,
+                "minuteRemaining": max(0, 2-minute["n"]),
+                "retryAfter": max(minute["retry"] if minute["n"] >= 2 else 0,
+                                  window["retry"] if window and remaining == 0 else 0)}
 
     def quota(self, token_hash):
         with self.pool.connection() as connection:
@@ -125,6 +127,11 @@ class Store:
                 raise ChatError("Hay consultas en curso. Espera unos segundos.", 429, 10)
             connection.execute("INSERT INTO cc_requests(session_hash,request_id,input_hash,network_hash) VALUES (%s,%s,%s,%s)",
                                (token_hash, request_id, input_hash, network))
+            connection.execute("INSERT INTO cc_rate_limits(bucket,hits,expires_at) VALUES (%s,1,now()+%s*interval '1 hour') "
+                               "ON CONFLICT(bucket) DO UPDATE SET "
+                               "hits=CASE WHEN cc_rate_limits.expires_at<=now() THEN 1 ELSE cc_rate_limits.hits+1 END, "
+                               "expires_at=CASE WHEN cc_rate_limits.expires_at<=now() THEN EXCLUDED.expires_at ELSE cc_rate_limits.expires_at END",
+                               (f"chat:{token_hash}", self.refresh_hours))
         return None
 
     def finish_request(self, token_hash, request_id, result=None, question=None):

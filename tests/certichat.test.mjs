@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import MarkdownIt from "markdown-it";
 import { annotateHeadings, pageDocuments, corpusArtifacts, contentHash } from "../scripts/certichat-corpus.mjs";
-import { plainChatHTML, safeSourceURL, quotaText, restoreChat, isChatPreview } from "../assets/certichat.js";
+import { plainChatHTML, safeSourceURL, quotaText, restoreChat, isChatPreview, answerWithReferences } from "../assets/certichat.js";
 
 test("CertiChat separates local previews from published and local API sessions", () => {
   const api = "https://certichat.cloudtechnext.net";
@@ -23,10 +23,36 @@ test("CertiChat renders untrusted messages as inert text and sources stay inside
   const site = "https://jgangini.github.io/certi-tips/";
   assert.equal(safeSourceURL(`${site}1Z0-1157-26/agents/#conceptos-clave`, site), `${site}1Z0-1157-26/agents/#conceptos-clave`);
   for (const url of ["javascript:alert(1)", "https://attacker.test/certi-tips/", "https://jgangini.github.io/another/", `${site}?secret=1`, "https://user:pass@jgangini.github.io/certi-tips/", `${site}../another/`]) assert.equal(safeSourceURL(url, site), null, url);
-  assert.equal(quotaText({ dayRemaining: 19, hourRemaining: 9, retryAfter: 10.3 }), "19 consultas disponibles / 24 h · 9 / hora. Espera 11 segundos antes de volver a consultar.");
 });
 
-test("CertiChat restores a bounded text-only transcript and safe sources after storage round trips", () => {
+test("CertiChat countdown uses the server renewal time without exposing quota counts", () => {
+  const now = Date.parse("2026-10-11T12:00:00Z");
+  assert.equal(quotaText({ resetAt: "2026-10-11T18:00:00Z", remaining: 19 }, now), "Tus consultas se renovarán en 06:00");
+  assert.equal(quotaText({ resetAt: "2026-10-11T12:01:01Z" }, now), "Tus consultas se renovarán en 00:02");
+  assert.equal(quotaText({ resetAt: "2026-10-12T12:00:00Z" }, now), "Tus consultas se renovarán en 24:00");
+  for (const resetAt of [null, undefined, "bad", "2026-10-11T11:00:00Z", "2026-10-11T12:00:00Z"]) assert.equal(quotaText({ resetAt }, now), "");
+  assert.equal(quotaText(undefined, now), "");
+});
+
+test("CertiChat adds safe section links only when references are explicitly requested", () => {
+  const site = "https://jgangini.github.io/certi-tips/", url = `${site}1Z0-1157-26/agents/#conceptos-clave`;
+  const sources = [{ title: 'Agentes <img src=x> & herramientas', url }, { title: "Externa", url: "https://attacker.test/" }];
+  for (const question of ["Dime dónde puedo profundizar sobre agentes", "¿Dónde puedo leer más?", "Dame las referencias", "Fuentes", "Quiero ampliar este tema", "¿Cuáles son las fuentes?", "¿Puedes pasarme el enlace?"]) {
+    const answer = answerWithReferences("Respuesta", question, sources, site);
+    assert.ok(answer.includes(url), question);
+    const html = plainChatHTML(answer, site);
+    assert.match(html, /<a href="https:\/\/jgangini.github.io\/certi-tips\/1Z0-1157-26\/agents\/#conceptos-clave">/);
+    assert.doesNotMatch(html, /<img|attacker\.test/);
+    assert.match(html, /&lt;img src=x&gt; &amp; herramientas/);
+    const saved = restoreChat({ updatedAt: 100, messages: [{ role: "ai", text: answer }] }, site, 100);
+    assert.equal(plainChatHTML(saved.messages[0].text, site), html);
+  }
+  for (const question of ["¿Qué son los agentes?", "¿Qué son las fuentes de datos?", "Dime qué son las fuentes de datos en un RAG", "Quiero entender las fuentes de datos", "Explica agentes sin referencias", "No incluyas enlaces", "No necesito fuentes"]) assert.equal(answerWithReferences("Respuesta", question, sources, site), "Respuesta", question);
+  assert.equal(answerWithReferences("Respuesta", "Dame referencias", [{ title: "Unsafe", url: "javascript:alert(1)" }], site), "Respuesta");
+  assert.doesNotMatch(plainChatHTML('[x](https://attacker.test/) [x](javascript:alert(1)) <a href="https://attacker.test">x</a>', site), /<a /);
+});
+
+test("CertiChat restores a bounded text-only transcript and discards the old sources panel data", () => {
   const site = "https://jgangini.github.io/certi-tips/", now = 1_800_000_000_000;
   const messages = Array.from({ length: 102 }, (_, index) => ({ role: index % 2 ? "ai" : "user", text: `Mensaje ${index}` }));
   messages.push({ role: "ai", text: "<img src=x onerror=alert(1)>", html: "<script>bad()</script>", files: [{ src: "https://attacker.test/" }] });
@@ -35,19 +61,19 @@ test("CertiChat restores a bounded text-only transcript and safe sources after s
   const snapshot = JSON.parse(JSON.stringify({ updatedAt: now, messages, sources }));
   const restored = restoreChat(snapshot, site, now);
   assert.deepEqual(restored.messages, [...messages.slice(3, 102), { role: "ai", text: "<img src=x onerror=alert(1)>" }]);
-  assert.deepEqual(restored.sources, sources.slice(3, 9).map(({ title, url }) => ({ title, url })));
+  assert.equal(restored.sources, undefined);
   assert.equal(restored.pendingRequest, undefined);
   assert.match(plainChatHTML(restored.messages.at(-1).text), /&lt;img/);
   assert.equal(snapshot.messages[102].html, "<script>bad()</script>", "restoration must not mutate stored input");
   const limits = restoreChat({ updatedAt: now, messages: [{ role: "user", text: "x".repeat(1500) }, { role: "ai", text: "x".repeat(12000) }], sources: [{ title: "x".repeat(200), url: site }] }, site, now);
   assert.equal(limits.messages.length, 2);
-  assert.equal(limits.sources.length, 1);
+  assert.equal(limits.sources, undefined);
 });
 
 test("CertiChat rejects missing, malformed, future and expired stored conversations", () => {
   const site = "https://jgangini.github.io/certi-tips/", now = 1_800_000_000_000;
   const snapshot = { updatedAt: now, messages: [{ role: "user", text: "Consulta" }], sources: [] };
-  const empty = { messages: [], sources: [], pendingRequest: undefined };
+  const empty = { messages: [], pendingRequest: undefined };
   for (const value of [null, undefined, [], "bad", {}, ...[undefined, "recent", String(now), NaN, Infinity, now + 1, now - 86_400_000].map(updatedAt => ({ ...snapshot, updatedAt }))]) {
     assert.deepEqual(restoreChat(value, site, now), empty);
   }
