@@ -40,7 +40,7 @@ Test-ArchitectureCase 'Quiz domain cannot depend on browser storage' @{
     'assets/quiz-core.js' = "import { stored } from './storage.js'; export const result = stored;"
     'assets/storage.js' = 'export const stored = 1;'
 } 'layer_direction'
-# Python plugin v0.2.0 captures absolute imports only; see docs/architecture.md.
+# Python plugin v0.2.0 captures absolute imports only; relative-import edges are not covered by this installed parser.
 Test-ArchitectureCase 'Resolved Python imports can consume domain and security' @{
     'services/certiquiz/app/__init__.py' = ''
     'services/certiquiz/app/game.py' = "def new_room():`n    return 1`n"

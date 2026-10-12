@@ -1,71 +1,55 @@
-# Local Codex Policy for codex-oci-mylearn
+# Local Codex Policy for CertiTips
 
-This file supplements the global `~/.codex/AGENTS.md`.
+This file supplements the global policy with repository-specific rules. Operational setup belongs in the root and service READMEs; experiments and detailed audits belong in ignored output/, not a second documentation tree.
 
-Keep this file repo-specific. Do not duplicate universal rules that already live in the global policy.
+## Source and runtime boundaries
 
-## Project Identity
+- CertiTips publishes Spanish study guides at /certitips/ in jgangini/certitips. Use Node.js 24, the existing Markdown build and shared browser modules. CertiQuiz and CertiChat are independent optional APIs; do not import server code into browser/build code or add a frontend framework.
+- data/catalog.json is the course/page inventory. content/<code>/NN_name/NN_name.md and its img/ contain course text and images; data/<code>/ contains questions, coverage and authoring specifications. assets/icons/ holds global reusable icons, medals and favicons, regardless of which course introduced them. Preserve Lucide's manifest, exact geometry and ISC AND MIT notices. Preserve user-provided originals in data/CDMP-DMF/diagram-sources/ without changing their bytes or inventing a license.
+- Derive numbered module names from modules followed by resources; overview is 00_empieza_aqui. contentDir and route use the course code; page.file locates the Markdown independently of its public slug. Stable course.id, page slugs, question IDs and source IDs preserve progress and evidence. Keep old course aliases and section fragments working.
+- The current content/ and data/ trees are separate, not duplicated documents. A future consolidation under data/<code>/ may preserve CertiQuiz's raw-data contract, but is not implemented or implicitly authorized by an asset cleanup. Keep its Docker/deployment allowlist restricted to catalog and question banks.
+- dist/ is generated and replaced on build. output/, graphify-out/, caches and .private/ are not published sources. Keep transcripts outside this repository. data/certichat-graph.json is the public projection, not another lesson collection; native Cognee stores and credentials remain private.
+- Corpus documents include introductions, anchored sections and explained questions, so their count exceeds the Markdown count. Source-file moves alone do not reduce index size. Reuse an index only when the complete IDs, titles, course IDs and text hashes match; resolve citations from the current validated manifest. Never modify open native stores to change URLs.
 
-CertiTips publishes Spanish study guides and explained practice at `/certitips/` in `jgangini/certitips`. Use Node.js 24 and the existing Markdown build; no backend or browser framework is needed. Keep source transcripts outside this repository.
+## Course editing
 
-Repository checks: `npm run build`, `npm test`, `npm run check`. The checker validates every course's catalog-defined coverage, questions, diagrams, paths and anchors. Rebuild/check even for headings-only edits. `dist/` is generated and replaced on build.
+- Address the learner directly in Spanish. Catalog metadata supplies H1; chapters use H2/H3. Keep examples, exercises with closed details solutions, sources, glossary and practice in the established shared layout. Every technical H2 needs a specific teaching graphic whose mechanism matches the lesson, not a generic row of text cards.
+- Internal links use {{base}} plus the public course code and slug. Module images use img/name.svg or img/name.png beside the Markdown. A heading change changes its anchor: update all references and rebuild/check. Keep image title/description, alt text and caption coherent; the caption explains meaning rather than repeating the title.
+- Practice pages use exactly Práctica and Pon a prueba lo que entiendes. Reuse the CertiQuiz participant entry's 4px red top border, red eyebrow, short action instruction, question/domain counts and right-aligned Entrar button. Do not add bank-size/account disclaimers, origin notices, surrounding introductions or editorial explanations. Keep course-specific exam/case links in completed results.
+- Questions are original, with four stable options, one correct answer, individual explanations and a real section reference. Keep six questions per technical module and two per module per attempt unless the course contract changes explicitly. Practice reviews must retain their exact original completed attempt. Course sampling and study targets are not official exam weightings or pass marks.
+- Data Management Fundamentals (CDMP-DMF) is the DAMA applied course, not an Oracle certification. Its titles and navigation capitalize significant words, leaving articles/prepositions/conjunctions lowercase except at the beginning. Use full official product names in prose, diagrams and questions, without shortening them to AIDP, OAC, EDM or OCI; preserve technical identifiers and URLs exactly.
+- Before changing Oracle capabilities, research both Slack product discussion and current public Oracle documentation, release notes and lifecycle notices. Record date, evidence, scope and status privately: available, Preview, implemented extension or announced. Preview is usable within documented scope; an announcement is not availability. Published lessons cite public sources, use fictional cases and explain actual constraints beside the capability.
+- Consult supplied DAMA material selectively; book/chapter/page traceability stays in .private/, never the public lessons, diagrams, questions or coverage. Keep instructor agendas, duration estimates and internal course-selection policy out of learner content. Governance centers on Oracle AI Data Platform and Oracle Autonomous AI Lakehouse; do not recommend standalone OCI Data Catalog for new designs. Distinguish catalogs, source identities and policies; never imply automatic synchronization or propagated authorization without evidence.
+- Verify each exam edition/language before changing exam numbers or conditions. The October 2026 review confirmed the 40-question/60-minute/65% values publicly for the Japanese 1Z0-1085-26-JPN and 1Z0-1122-26-JPN variants, not independently for every language. Do not promote that historical evidence into a universal verification claim.
 
-Use `npm test` with its in-process Node runner: default test isolation hits `spawn EPERM` in this Windows sandbox. Tests must restore any changed global state. Browser QA uses the isolated CLI session and `scripts/browser-smoke.cjs`, without screenshots.
+## Shared interface components
 
-Quiz reviews must retain their exact original completed practice. The initial architecture delta against the two-wrapper bootstrap is documented in `docs/architecture.md`; future work must baseline the working application.
+- Reuse layout.mjs, existing theme tokens and native dialogs for new course/page controls. Keep confirmation actions Cancelar/Aceptar with the shared question icon; focus the dialog heading initially, preserve keyboard-visible focus and return focus to the trigger. Do not globally remove outlines to hide touch autofocus.
+- CertiChat stays open on source-link navigation and is pinned open on its explorer page. Only completed explorer responses show the red hover border; click or Enter/Space selects their evidence, while links retain normal navigation. Reduced motion omits the camera transition and finite red pulse.
+- Graph red nodes/edges and floating-card links come only from validated current evidence, never keyword/name matching or invented references. All sourced answers expose the accepted guide links. Browser transcript metadata is untrusted and bounded; restoration never sends a paid request. Do not simplify away restoreChat validation to improve a complexity counter.
+- On mobile, hide the footer's Developed by segment and keep the launcher outside visible footer text using the existing responsive layout. Test viewport and keyboard geometry rather than relying on desktop dimensions. Preserve course/quiz/chat storage isolation and memory fallback when storage is blocked.
 
-Sentrux discovers sources through Git. Postflight creates an isolated index/object directory under ignored `output/` so new files participate without changing real staging. Use that full-source gate for completion; a tracked-only MCP pass does not cover newly created sources.
+## Diagram design
 
-- Repo root: `D:\dev\codex-oci-mylearn`
-- Purpose:
-- Technical audience:
-- Primary surfaces:
+- Edit reviewed native SVGs directly and reuse established geometry/patterns. Do not regenerate them with broad generators. Keep nodes, cardinalities, field relationships, connector meanings and direction correct before moving shapes. SVGs must be self-contained, with title/desc and no active content or external dependencies; only the existing safe PNG-embedding build path may embed raster images.
+- Use meaningful symbols: bot=agent, cpu=model, application window=application, workflow=orchestration, wrench=tool. A check represents a completed check, not a promise of truth or authorization. Preserve official service glyphs and readable product labels; never relabel an unrelated service icon. Conceptual illustrations are not deployed topologies.
+- Measure whole artwork plus caption against its container, and visible pictogram geometry against its label. Check centering, inner padding, connector attachment, peer alignment and badge contrast against both fill and background. Collision-free text and successful loading alone do not establish useful composition. Widen/reflow before shrinking text; keep each course's established visual system.
+- For OCI 1200-wide figures, keep text at least 21 units, centered-card drift at most 2, inner padding at least 12, title/description gap 8–16, and icon/label gap 8–24 with axis drift at most 4. Badge borders must contrast at least 3:1 against fill and surrounding gradients. Existing tests and diagram-check.cjs encode these contracts.
 
-## Repo Operating Defaults
+### CDMP-DMF native figures
 
-- Preferred validation commands:
-- Preferred search and inspection tools:
-- Default runtime or environment assumptions:
+- Approved references are modules 00–02 and gov-data-modeling-concepts.svg / gov-data-modeling-principles.svg. Preserve their design while applying it elsewhere. Use viewBox 0 0 1920 1080, canvas #F1EFED, title 56 at (96,99), and red 88×6 underline at (96,128). Body text is at least 25.5 in Segoe UI/Arial. Center complete module artwork at (960,608) with data-layout=module-artwork and data-center=960 608.
+- Keep explanatory surfaces light, dark text and 12–16 corner radii. Strong colors encode data or small accents; they are not a substitute for labels. The user-supplied pyramid retains its original geometry/colors and 10/12 typography at uniform 1.72 scale; do not claim the ordinary text/contrast thresholds for that approved original. Preserve its 80-unit lower margin.
+- Tables have white bodies, #59616E headers/borders, white header text and 1.5-unit rules. Simple headers are 64 high; simple rows 52–56; rows with 48-high tags are 72; icon headers may be 80–96. Use at least 12 horizontal padding, 8 vertical padding for rows and 12 for headers/notes. Measure rendered font bounds for vertical centering, not baselines. Align peer tops/bottoms and related rows; use one shared frame for stages of one mechanism.
+- Tags have one normal-weight #181818 line, white fill, gray 1.5 border, radius 12, height 48 and at least 12 horizontal padding. Keep connector tags about 16 from their line. Ordinary table values use plain text; state text remains explicit, with green #2E7D32 for Vigente and red #C74634 for Suspendido. Decision questions use normal weight.
+- Connectors are solid #59616E, width 3, directional arrowheads and 16-radius bends when needed. Prefer aligned fields and straight routes; separate colliding routes. Header separators are white; stage dividers dashed gray; ordinary cell rules thin gray. Never confuse separators with relationships.
+- Entity-circle reference: white fill, thin gray border, dark bold name and red normal identifier. Do not force circles onto tabular results. Timeline reference: white panel, dark header, continuous horizontal arrow, aligned milestone dots, compact states above and dark dates below; withdrawal is red. Explanatory notes use #F1EFED, gray 1.5 border, radius 12 and centered normal text; the approved two-line variant is 116 high with 42 baseline spacing.
+- Mark revised table cells with data-table-cell=header|row|tag-row|icon-header|note, one data-cell-frame shape and one data-cell-content element/group. Add data-cell-align=center only for intended horizontal centering. A reference-tag rectangle is followed by its label; both are checked. Notes normally use content height +24–32. Use data-cell-exception only for a specific semantic/layout reason, never clipping, poor padding or an unexplained tall row. Wrap a header only when it cannot fit with normal padding. Do not reclassify untouched reference figures automatically.
+- Run diagram-check.cjs on actual rendered SVG DOM, inspect cell counts as well as violations, then check the caption/desc and lesson meaning. Native artwork review and DOM geometry are distinct evidence; screenshots remain prohibited by the global policy.
 
-## Local Validation Policy
+## Validation and architecture
 
-- Required checks beyond global Graphify and Sentrux:
-- Safe shortcuts for docs-only work:
-- Release, deploy, or approval gates:
-
-## Repo-Specific Friction
-
-- Diagram QA must check the meaning of each pictogram, not only text bounds and successful loading. Two visual reviews missed agent icons represented as refresh/check symbols. Keep agents (`bot`) distinct from models (`cpu`), runtimes and loop arrows. Report DOM/geometry validation separately from screenshot-based visual review; screenshots remain prohibited unless explicitly requested as a deliverable.
-
-- Sensitive paths or fragile areas:
-- Credentials, external systems, or approval boundaries:
-- Noisy, slow, or expensive commands to avoid by default:
-
-## Continuous Improvement Triggers
-
-- Promote a repeated friction to this local file after 2 recurrences in the same repo.
-- Promote a repeated manual sequence to a script or skill after 3 recurrences or when it is safety-critical.
-- Promote a rule to the global policy only when it is cross-repo or clearly universal.
-- Review `.codex/improvement-log.md` before large tasks and record only meaningful signal after non-trivial work.
-
-## Future Delegation Hooks
-
-- Candidate explorer roles:
-- Candidate reviewer roles:
-- Candidate repo-specific skills or MCPs:
-
-## Diagram composition checks
-
-Repeated OCI reviews missed faint badges, detached captions and an off-center instance pool despite passing text-overlap checks. For native course SVGs, measure the complete artwork plus caption against its container, and the visible icon geometry against its nearest label. Check badge borders against both their fill and surrounding gradients. Use `scripts/diagram-check.cjs` for center, padding and horizontal/vertical proximity and `tests/diagram-design.test.mjs` for badge contrast; successful loading and collision-free text alone are insufficient.
-
-## Oracle course research and availability
-
-All course practice pages use the title `Práctica` and lead `Pon a prueba lo que entiendes`. The shared start card has the CertiQuiz participant entry's 4px red top border, red eyebrow, brief action instruction, question/domain counts and a right-aligned `Entrar` button. Do not add surrounding text, introductions, bank-size/account disclaimers, question-origin notices or explanatory sections. Keep course-specific exam/case links in completed results, and preserve question, feedback, result, review and storage behavior.
-
-Before selecting or updating an Oracle technology or capability, investigate both Slack product discussions and current public Oracle documentation, release notes and lifecycle announcements. Old documentation alone does not establish suitability for a new design. Record the date, evidence, scope and status for each capability: available, Preview, implemented extension or announced. Preview is a functional capability within its documented scope and must not be excluded merely because it is Preview; an announcement does not establish availability.
-
-Keep Slack evidence and private source extracts under ignored `.private/`, outside published assets and content. Public pages cite public sources and use fictional cases. Consult DAMA by selected chapter/page; do not publish the book or convert it wholesale. The Governance workshop centers on AIDP and Autonomous AI Lakehouse; standalone OCI Data Catalog is excluded from new recommendations. Distinguish the current catalogs and never infer automatic synchronization, inherited product capabilities or propagated source identities without evidence.
-
-Course pages address the learner directly. Keep instructor agendas, presentation-duration estimates and internal editorial coordination (including why Preview counts for course selection) outside published lessons. Describe a feature's actual availability and limits beside that feature, without turning editorial instructions into learning objectives or assessment criteria.
-
-For Data Management Fundamentals, use the conceptual preparation material to explain data-management decisions through Oracle products, without publishing book titles, chapter citations or page references. Keep that traceability in `.private/`. Use full official product names in prose, headings, diagrams, navigation labels and questions; do not abbreviate them to AIDP, OAC, EDM or OCI. Preserve technical identifiers and source URLs exactly. Reflow diagrams for full names instead of shrinking labels below the established readable size.
+- Run npm run build, npm test and npm run check for source changes, including heading-only edits. The checker covers catalog-defined coverage, questions, diagrams, paths and anchors. npm test deliberately uses Node's in-process runner because default isolation hits spawn EPERM in this Windows sandbox; tests must restore changed globals.
+- Use isolated playwright-cli sessions and the existing smoke scripts without screenshots. Select the affected course smoke plus diagram-check.cjs for SVG work; CertiChat has general, explorer, mobile and anchor-navigation checks. Run API/PostgreSQL suites through each service's documented isolated test mode when its contract changes; ordinary tests mock external providers.
+- Pre/postflight must scan the full working source via their isolated Git index/object directories under output/, preserving real staging. A tracked-only MCP pass omits new files. Future tasks baseline the working application; never replace a failed baseline or weaken rules to hide degradation. Preserve intentional tradeoffs and actual validation in improvement-log.md.
+- .sentrux/rules.toml is authoritative. Installed Sentrux 0.5.7 layer order is tests 0 → entry 10 → adapters 20 → domain/security 30; executable fixtures verify it. The Python plugin currently resolves absolute imports only; relative-import edges are not fully covered. The MCP rule result is limited to three checks, so use the CLI for all configured rules. Run scripts/check-architecture-rules.ps1 after tool upgrades or rule edits. Graphify's optional SQL parser is unavailable; isolated PostgreSQL tests validate persistence.

@@ -175,7 +175,7 @@ async (page) => {
   const resetDialog = page.locator('[data-reset-confirm]');
   assert(await resetDialog.evaluate(node => node.matches(':modal')), 'Reset did not open a native confirmation modal');
   assert(await page.locator('#reset-confirm-title').evaluate(node => node === document.activeElement), 'Reset confirmation did not focus its heading');
-  assert(await resetDialog.locator('use').getAttribute('href') === '/certitips/assets/confirmation-question.svg#question', 'Reset confirmation lost the shared question icon');
+  assert(await resetDialog.locator('use').getAttribute('href') === '/certitips/assets/icons/confirmation-question.svg#question', 'Reset confirmation lost the shared question icon');
   await page.keyboard.press('Tab');
   assert(await page.locator('[data-reset-no]').evaluate(node => node === document.activeElement && node.matches(':focus-visible') && getComputedStyle(node).outlineStyle !== 'none'), 'Reset confirmation lost visible keyboard focus');
   await page.locator('[data-reset-no]').click();

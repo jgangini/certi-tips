@@ -102,14 +102,14 @@ test("sharing uses an English Oracle overview and a public PNG icon on every pag
   assert.match(home, /<meta name="description" content="Explore Oracle certification paths with visual study guides in Spanish, explained practice questions, and CertiQuiz team quizzes\."/);
   assert.doesNotMatch(home, /Ruta de certificaciones en Data e IA|Foundation Sprint y rutas/);
   for (const html of [home, layout({ site, course, page: course.modules[0], body: "" }), layout({ site, course, page: { slug: "certiquiz", title: "CertiQuiz" }, body: "" })]) {
-    assert.match(html, /<meta property="og:image" content="https:\/\/example\.test\/certitips\/assets\/favicon\.png">/);
+    assert.match(html, /<meta property="og:image" content="https:\/\/example\.test\/certitips\/assets\/icons\/favicon\.png">/);
     assert.match(html, /<meta property="og:image:type" content="image\/png">/);
     assert.match(html, /<meta property="og:image:width" content="512"><meta property="og:image:height" content="512">/);
     assert.match(html, /<meta property="og:image:alt" content="CertiTips logo">/);
     assert.match(html, /<meta property="og:url" content="https:\/\/example\.test\/certitips\//);
-    assert.match(html, /<link rel="icon" href="\/certitips\/assets\/favicon\.png" type="image\/png" sizes="512x512">/);
+    assert.match(html, /<link rel="icon" href="\/certitips\/assets\/icons\/favicon\.png" type="image\/png" sizes="512x512">/);
   }
-  const icon = readFileSync(new URL("../assets/favicon.png", import.meta.url));
+  const icon = readFileSync(new URL("../assets/icons/favicon.png", import.meta.url));
   assert.equal(icon.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
   assert.equal(icon.readUInt32BE(16), 512);
   assert.equal(icon.readUInt32BE(20), 512);
@@ -253,7 +253,7 @@ test("CertiQuiz renders a branded local invitation QR", () => {
   assert.match(script, /data-invite-qr aria-pressed="false" aria-label="Ampliar código QR de invitación"/);
   assert.doesNotMatch(script, /data-invite-qr-caption|Escanea o selecciona para ampliar/);
   assert.match(script, /aria-hidden="true"/);
-  assert.doesNotMatch(script, /Escanea para unirte|assets\/favicon\.svg/);
+  assert.doesNotMatch(script, /Escanea para unirte|assets\/icons\/favicon\.svg/);
   assert.match(script, /const hostInvitation = `<div class="invite-overview"><div class="invite-code"><strong class="pin">/);
   assert.match(script, /<div class="room-side"><div data-players><\/div><\/div>/);
   assert.match(script, /invitation\.classList\.toggle\('qr-expanded'\)/);
@@ -342,7 +342,7 @@ test("CertiQuiz host lobby keeps facts beside its actions and uses a compact con
   assert.match(script, /<h2 id="confirmation-title" tabindex="-1" autofocus>/);
   assert.doesNotMatch(chatHtml + script, /data-(?:chat-)?confirm-(?:no|yes) autofocus/);
   for (const source of [chatHtml, script]) assert.match(source, /confirmation-question\.svg#question/);
-  const questionIcon = readFileSync(new URL("../assets/confirmation-question.svg", import.meta.url), "utf8");
+  const questionIcon = readFileSync(new URL("../assets/icons/confirmation-question.svg", import.meta.url), "utf8");
   assert.match(questionIcon, /<symbol id="question" viewBox="0 0 16 16" fill="currentColor">/);
   assert.match(questionIcon, /<circle cx="7\.98" cy="10\.95" r="\.76"\/>/);
   assert.doesNotMatch(script, /\(tú\)/);

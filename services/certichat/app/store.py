@@ -10,6 +10,8 @@ from psycopg_pool import ConnectionPool
 
 from .security import ChatError
 
+CHAT_DAILY_MICRO = 5_000_000
+
 class Store:
     def __init__(self, database_url, refresh_hours=6, questions=20):
         self.pool = ConnectionPool(database_url, min_size=1, max_size=8, timeout=3, max_waiting=64,
@@ -176,7 +178,7 @@ class Store:
     def available(self):
         with self.pool.connection() as connection:
             spend = self.spending(connection, "chat")
-            return spend["total"] < 9000000 and spend["purpose"] < 7000000 and spend["day"] < 500000
+            return spend["total"] < 9000000 and spend["purpose"] < 7000000 and spend["day"] < CHAT_DAILY_MICRO
 
     def reserve(self, purpose, micro):
         if purpose not in ("chat", "index") or micro <= 0:
@@ -187,7 +189,7 @@ class Store:
             spend = self.spending(connection, purpose)
             ceiling = 7000000 if purpose == "chat" else 2000000
             if (spend["total"]+micro > 9000000 or spend["purpose"]+micro > ceiling
-                    or (purpose == "chat" and spend["day"]+micro > 500000)):
+                    or (purpose == "chat" and spend["day"]+micro > CHAT_DAILY_MICRO)):
                 raise ChatError("CertiChat alcanzó su presupuesto de uso. Inténtalo más adelante.", 503, 3600)
             connection.execute("INSERT INTO cc_spend(id,purpose,reserved_micro,charged_micro) VALUES (%s,%s,%s,%s)",
                                (reservation, purpose, micro, micro))

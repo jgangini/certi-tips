@@ -299,7 +299,7 @@ async (page) => {
     const confirmation = host.locator('dialog[data-confirm]');
     assert(await confirmation.evaluate(node => node.open && node.matches(':modal')), 'Room exit did not open a native modal');
     assert(await confirmation.locator('#confirmation-title').evaluate(node => node === document.activeElement && getComputedStyle(node).outlineStyle === 'none'), 'Destructive confirmation did not focus its static heading');
-    assert(await confirmation.locator('use').getAttribute('href') === '/certitips/assets/confirmation-question.svg#question', 'Room exit lost the shared question icon');
+    assert(await confirmation.locator('use').getAttribute('href') === '/certitips/assets/icons/confirmation-question.svg#question', 'Room exit lost the shared question icon');
     await host.keyboard.press('Tab');
     assert(await confirmation.locator('[data-confirm-no]').evaluate(node => node === document.activeElement && node.matches(':focus-visible') && getComputedStyle(node).outlineStyle !== 'none'), 'Keyboard navigation lost the visible Cancel focus');
     const confirmationSize = await confirmation.evaluate(node => ({

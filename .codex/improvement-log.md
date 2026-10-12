@@ -4,14 +4,6 @@ Use this file for evidence-backed harness improvements in this repo.
 
 Keep entries short. Record real friction, recurring overhead, or meaningful improvements only.
 
-## Promotion Thresholds
-
-- 2 recurrences in this repo -> local `.codex/AGENTS.md` candidate
-- 3 recurrences or safety-critical repetition -> script or skill candidate
-- Cross-repo or clearly universal pattern -> global `~/.codex/AGENTS.md` candidate
-
-## Entry Template
-
 2026-10-09 — Three manual preflight runs needed an isolated Git index to match postflight's inclusion of new sources. Moved the same sequence into arch-preflight.ps1, including environment restoration and source-count output. Executed preflight and verified the real index hash stays unchanged; baseline and final gate now inspect the same source set without a manual wrapper.
 
 2026-10-09 — Governance again added sources omitted by Sentrux's tracked-only scan (the MCP scan remained at 119 files). Promoted the already repeated isolated-index sequence into arch-postflight.ps1: it scans new files with existing sources, preserves real staging and restores Git environment variables. Tracked-only MCP results are supplementary; the expanded CLI gate is authoritative.
@@ -22,13 +14,10 @@ Keep entries short. Record real friction, recurring overhead, or meaningful impr
 
 2026-09-28 — Node test isolation hit `spawn EPERM` in two independent runs (root and quiz agent). `npm test` now uses Node 24 in-process isolation; tests restore changed globals. Applied to local guidance and test command.
 
-2026-09-28 — The Sentrux bootstrap baseline contains only two wrappers. The initial application adds imports and validation complexity; cycles and god files stayed zero. Split validator responsibilities and document the intentional initial delta without replacing the baseline. Recorded in `docs/architecture.md`.
+2026-09-28 — The Sentrux bootstrap baseline contains only two wrappers. The initial application adds imports and validation complexity; cycles and god files stayed zero. Split validator responsibilities and document the intentional initial delta without replacing the baseline. The initial delta was reviewed as intentional; future tasks baseline the working application.
 
-| Date | Task or Incident | Friction Observed | Evidence | Action Taken or Proposed | Promotion Target | Status |
-| --- | --- | --- | --- | --- | --- | --- |
-| YYYY-MM-DD |  |  |  |  | local AGENTS / script / skill / global AGENTS / none | captured |
 
-2026-10-07 — Sentrux uses git ls-files and silently omitted 24 untracked CertiQuiz files. A tracked-only gate passed while the expanded scan reported coupling/complexity degradation. Used a temporary Git index plus object directory to include new files without touching the real staging area; documented the reviewed service tradeoff in docs/architecture.md. Proposed: pre/postflight should report untracked source coverage before claiming a complete architecture check.
+2026-10-07 — Sentrux uses git ls-files and silently omitted 24 untracked CertiQuiz files. A tracked-only gate passed while the expanded scan reported coupling/complexity degradation. Used a temporary Git index plus object directory to include new files without touching the real staging area; recorded the reviewed service tradeoff (an independent API with HTTP/catalog boundaries and isolated state). Proposed: pre/postflight should report untracked source coverage before claiming a complete architecture check.
 
 2026-10-07 — OCI diagram bounds/overlap checks passed but missed top-aligned single-label cards and excessive title-description spacing in both IAM examples. Distinguished centered messages from container headings, reviewed all 49 OCI figures, and extended diagram-check.cjs with rendered center, padding, proximity and frame-border checks. Browser measured 57 centered cards and 118 label groups; no screenshots were taken. Future diagram reviews should inspect grouping and meaning as well as collisions.
 
@@ -44,3 +33,11 @@ Keep entries short. Record real friction, recurring overhead, or meaningful impr
 2026-10-10 — Extending Sentrux boundaries with a middle wildcard (services/*/app/**) silently passed an intentionally forbidden import. Existing executable rule fixtures caught it before publication. Restored explicit service prefixes and added four CertiChat cases; all fifteen fixtures pass. The MCP checker also reports a three-rule limit, while the CLI checks all eleven active rules. Continue using the full-source CLI gate and executable negative fixtures as authoritative evidence. No baseline or quality threshold was changed.
 
 2026-10-11 — CertiChat's live evaluation used the home page as context, which supplied the catalog and hid the reported /certichat/ retrieval failure. Evaluation now uses the reported page and preserves the exact five-turn topic switch, with semantic coverage/availability checks in addition to valid citations. Browser checks also assert hover does not move the graph and that click animation terminates; no screenshots are used.
+
+2026-10-11 — Intentional architecture tradeoff retained: validated per-answer graph evidence and its 500 KiB storage budget raised the existing restoreChat transcript boundary from 19 to 20 complex functions in the full-source gate. The gate is DEGRADED, not passed; guards, baseline, rules and thresholds were not weakened, and no abstraction was added solely to lower a counter. Latest completed pre-cleanup validation: 106 Node tests, 188 CertiChat tests, build/site check (410 published files, 250 coverage units, 198 questions, 236 diagrams), 29 explorer DOM groups without browser errors; 65 CertiQuiz tests and anchor checks passed earlier in the same change. Full-source postflight: 212 sources, all eleven rules pass, zero cycles/god files, quality 7090→7095, coupling 0.74→0.73, complexity 19→20. Graphify updated 1497 nodes/2595 edges at zero model cost; optional SQL parser unavailable. These are historical completed checks, not acceptance of the documentation cleanup or a new model candidate.
+
+2026-10-11 — Repeated docs reports mixed obsolete SVG counts/styles and hover behavior with current rules. Retired the duplicate docs tree and unused reference archives; consolidated current course, diagram and component contracts in local AGENTS, user operations in READMEs, and detailed experiment reports in ignored output/. Preserved licenses, original supplied SVGs, authoring specifications and the intentional gate tradeoff above. Semantically review live answers even when source-membership checks pass: the nano candidate's five-turn report had valid citations but incorrect topic continuity and certification availability/category claims.
+
+2026-10-11 — Final cleanup/model acceptance: build/check and 106 Node tests passed; 206 CertiChat tests passed against isolated PostgreSQL. GPT-5.4 medium completed all 25 live turns (17 scenarios), with independent semantic review of all answers and 59 references; no source mismatches, median 7.28 s, maximum 21.50 s, ledger cost US$0.287993. One answer added unnecessary MyLearn context without changing its correct sources. Previous assistant prose is no longer reused as evidence because per-turn citation aliases change; current citations produce the clickable links. The development daily budget is US$5; monthly limits and uncertain-cost reservations remain enforced.
+
+The cleaned tree retains 50 course Markdown files and the same 528-document corpus hash; the documents are intros, sections and explained questions, not duplicate Markdown files. Twenty-five shared images moved byte-identically into assets/icons; the active diagram specification and original supplied SVG bytes were preserved. Final full-source postflight: 470 Git-visible files / 200 sources, Graphify 1397 nodes / 2504 edges (AST only; optional SQL parser unavailable), all eleven Sentrux rules pass, zero cycles/god files, quality 7090→7096, coupling 0.74→0.73. The gate remains DEGRADED solely for the documented restoreChat boundary increase from 19 to 20 complex functions; no baseline, guard or threshold was weakened.

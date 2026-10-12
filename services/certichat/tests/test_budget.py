@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 
 from app.security import ChatError
-from app.store import Store
+from app.store import CHAT_DAILY_MICRO, Store
 from test_api import database_url
 
 
@@ -21,7 +21,7 @@ def ledger(database_url):
 def test_parallel_reservations_never_exceed_daily_budget(ledger):
     def reserve(_):
         try:
-            return ledger.reserve("chat", 100000)
+            return ledger.reserve("chat", 1000000)
         except ChatError:
             return None
 
@@ -30,7 +30,23 @@ def test_parallel_reservations_never_exceed_daily_budget(ledger):
     assert sum(value is not None for value in reservations) == 5
     assert ledger.available() is False
     with ledger.pool.connection() as connection:
-        assert connection.execute("SELECT sum(charged_micro) AS n FROM cc_spend").fetchone()["n"] == 500000
+        assert connection.execute("SELECT sum(charged_micro) AS n FROM cc_spend").fetchone()["n"] == CHAT_DAILY_MICRO == 5_000_000
+
+
+def test_daily_limit_matches_availability_and_settled_cost_without_erasing_history(ledger):
+    first = ledger.reserve("chat", 500001)
+    assert ledger.available() is True
+    ledger.reserve("chat", CHAT_DAILY_MICRO - 500001)
+    assert ledger.available() is False
+    with pytest.raises(ChatError):
+        ledger.reserve("chat", 1)
+    ledger.settle(first, 1)
+    assert ledger.available() is True
+    ledger.reserve("chat", 500000)
+    assert ledger.available() is False
+    with ledger.pool.connection() as connection:
+        row = connection.execute("SELECT count(*) AS n,sum(charged_micro) AS charged FROM cc_spend").fetchone()
+        assert row["n"] == 3 and row["charged"] == CHAT_DAILY_MICRO
 
 
 def test_index_cap_is_separate_and_unknown_charges_survive_restart(ledger, database_url):

@@ -89,6 +89,10 @@ def sources_are_published(sources, fragments, published):
                for source in sources)
 
 
+def citation_ids_are_hidden(answer, selected):
+    return not selected or not re.search(r"\b(?:" + "|".join(re.escape(item["id"]) for item in selected) + r")\b", answer)
+
+
 async def evaluate_turn(application, provider, question, expected, history, published, content_version):
     provider.input, provider.output = None, None
     start = time.monotonic()
@@ -111,6 +115,8 @@ async def evaluate_turn(application, provider, question, expected, history, publ
             result.update(error=error.code or ("provider" if "proveedor" in str(error) else "service"),
                           status=error.status, detail=str(error))
     result.update(response_observation(provider), seconds=round(time.monotonic() - start, 2))
+    result["citation_ids_hidden"] = citation_ids_are_hidden(result.get("answer", ""), result["selected"])
+    result["passed"] = result["passed"] and result["citation_ids_hidden"]
     return result, history
 
 
@@ -123,7 +129,31 @@ def certification_coverage(answer, navigation):
     upcoming = [line.split(":", 1)[0] for line in navigation.splitlines() if "guía próximamente" in line]
     checks["upcoming_guides_labeled"] = (not any(title.casefold() in answer.casefold() for title in upcoming)
                                         or bool(re.search(r"próximamente|pendiente|aún no|todavía no", answer, re.IGNORECASE)))
+    # Scenario assertion: an OCI certification list must not include the catalog's Governance offering.
+    governance = next((group for group in navigation.split("\n\n") if group.startswith("Governance\n")), "")
+    outside_scope = [line.split(":", 1)[0] for line in governance.splitlines()[2:] if ":" in line]
+    checks["only_requested_category"] = bool(outside_scope) and not any(
+        title.casefold() in answer.casefold() for title in outside_scope)
     return checks
+
+
+def reference_attribution(answer, sources, published):
+    # Explicit regression fixture for this scenario, not a general semantic entailment claim.
+    describes_matrix = all(re.search(r"\b" + term + r"\b", answer, re.IGNORECASE)
+                           for term in ("matriz", "DAMA", "Oracle"))
+    expected_documents = {"data-governance/oracle-map", "data-governance/oracle-map#matriz-de-decisiones-y-evidencia"}
+    return {"matrix_claim_uses_matrix_source": not describes_matrix or any(
+        published.get(source["id"], {}).get("id") in expected_documents for source in sources)}
+
+
+def followup_reference_coverage(answer, sources, published):
+    # This scenario keeps DAMA and OCI as its subject until turn 5; other relevant sources remain allowed.
+    denies_links = re.search(
+        r"\bno\s+(?:puedo|podemos|aparece[n]?|proporciona[n]?|se\s+(?:puede|proporciona[n]?|muestra[n]?))\b"
+        r"[^.!?\n]{0,100}\b(?:enlaces?|urls?)\b", answer, re.IGNORECASE)
+    return {"followup_keeps_dama_source": any(
+        published.get(source["id"], {}).get("courseId") == "data-governance" for source in sources),
+            "does_not_deny_reference_links": not denies_links}
 
 
 async def evaluate(output_path, case=None):
@@ -164,6 +194,13 @@ async def evaluate(output_path, case=None):
                     if name == "topic_switch_certifications" and turn_index == len(turns) - 1:
                         result["required_topic_coverage"] = certification_coverage(result.get("answer", ""), navigation)
                         result["passed"] = result["passed"] and all(result["required_topic_coverage"].values())
+                    elif name == "topic_switch_certifications":
+                        result["required_source_attribution"] = reference_attribution(
+                            result.get("answer", ""), result.get("sources", []), published)
+                        if 1 <= turn_index <= 3:
+                            result["required_source_attribution"].update(followup_reference_coverage(
+                                result.get("answer", ""), result.get("sources", []), published))
+                        result["passed"] = result["passed"] and all(result["required_source_attribution"].values())
                     report["results"].append(result)
                     output_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
                     print(json.dumps({key: result[key] for key in ("case", "turn", "passed", "seconds", "error")

@@ -84,14 +84,14 @@ test("marked table cells reject excess whitespace, off-center rows and avoidable
 
 test("Governance icons retain reviewed source geometry and contain no active or external content", () => {
   const root = new URL("../", import.meta.url);
-  const manifest = JSON.parse(readFileSync(new URL("assets/icons/governance/manifest.json", root), "utf8"));
+  const manifest = JSON.parse(readFileSync(new URL("assets/icons/lucide-manifest.json", root), "utf8"));
   const geometry = (svg) => [...svg.matchAll(/<(path|circle|ellipse|rect|line|polyline|polygon)\b([^>]*)>/g)].map(([, tag, raw]) => {
     const attrs = attributes(raw);
     return [tag, Object.fromEntries(Object.entries(attrs).filter(([name]) => /^(?:d|points|x|y|x1|x2|y1|y2|width|height|rx|ry|r|cx|cy)$/.test(name)).sort())];
   });
   const sources = new Map();
   for (const icon of manifest.icons) {
-    assert.match(icon.localFile, /^assets\/icons\/governance\/[\w-]+\.svg$/);
+    assert.match(icon.localFile, /^assets\/icons\/[\w-]+\.svg$/);
     assert.match(icon.discoveryUrl, /^https:\/\/www\.svgrepo\.com\//);
     const source = readFileSync(new URL(icon.localFile, root), "utf8").replace(/\r\n/g, "\n");
     assert.equal(createHash("sha256").update(source).digest("hex"), icon.sha256, icon.key);

@@ -4,15 +4,16 @@ Guías visuales en español para preparar certificaciones con conceptos, ejemplo
 
 **Sitio:** https://jgangini.github.io/certitips/
 
-La portada organiza once certificaciones en **Foundation Sprint** (tres certificaciones de nivel 1) y tres especialidades: **AI & Agents**, **Data & AI** y **Architecture**. Las flechas muestran un grupo a la vez, con sus certificaciones en lista; el menú superior permite ir directo a cualquiera. Dentro de cada especialidad, los niveles 2 y 3 van de fundamentos profesionales a aplicaciones más avanzadas. La secuencia es una recomendación editorial de CertiTips, no un prerrequisito oficial. **Oracle AI Data Platform Professional (1Z0-1154-26)** está en Data & AI, nivel 3: su [ruta oficial](https://mylearn.oracle.com/ou/learning-path/become-an-oracle-ai-data-platform-professional/164914) abarca datos gobernados y diseño, pruebas y despliegue de agentes. Essentials no se presenta como certificación. Los nombres visibles omiten el año; los códigos de examen y enlaces oficiales conservan su edición. Las rutas sin guía propia llevan al contenido oficial de Oracle.
+La portada organiza las rutas Oracle en **Foundation**, **AI & Agents**, **Data & AI** y **Architecture**. **Governance** reúne el curso aplicado de DAMA. La secuencia es una recomendación editorial, no un prerrequisito oficial. Las rutas sin guía propia se marcan como próximas y enlazan el contenido oficial de Oracle.
 
 Guías disponibles:
 
 - **Oracle Agentic AI Foundations Associate · 1Z0-1157-26**: orientación, seis módulos técnicos, 53 lecciones fuente y 36 preguntas originales; 12 por intento.
 - **Oracle Cloud Infrastructure AI Foundations Associate · 1Z0-1122-26**: orientación, nueve módulos técnicos, 72 lecciones fuente y 54 preguntas originales; 18 por intento. Incluye fundamentos de IA, ML, DL, IA generativa, Enterprise AI, portafolio, servicios de OCI e IA para bases de datos.
 - **Oracle Cloud Infrastructure Foundations Associate · 1Z0-1085-26**: orientación, siete módulos técnicos, 57 lecciones fuente, 49 diagramas y 42 preguntas originales; 14 por intento. Un caso de tienda conecta arquitectura, IAM, red, cómputo, almacenamiento, seguridad y gobierno.
+- **Data Management Fundamentals · CDMP-DMF**: once áreas de DAMA aplicadas con Oracle Cloud, 66 preguntas originales y 22 por intento. Es un curso de gestión de datos, no una certificación Oracle.
 
-Las tres guías incluyen gráficos por apartado, ejemplos, ejercicios con solución, glosario y ruta al examen. El progreso y los intentos se guardan por curso. Los módulos pedagógicos y el reparto de preguntas propias no reproducen la ponderación del examen oficial.
+Las guías Oracle incluyen gráficos por apartado, ejemplos, ejercicios con solución, glosario y ruta al examen. El progreso y los intentos se guardan por curso. Los módulos pedagógicos y el reparto de preguntas propias no reproducen la ponderación del examen oficial.
 
 ## Desarrollo local
 
@@ -40,8 +41,8 @@ El botón **Search** y `Ctrl+K` buscan certificaciones y apartados de la guía; 
 - En Data Management Fundamentals, los títulos de página, apartados y etiquetas de navegación llevan mayúscula inicial en las palabras significativas: «Gobierno de Datos», «Conceptos Clave» y «Fuentes y Repaso». Artículos, preposiciones y conjunciones quedan en minúscula salvo al inicio. Conservar siglas y nombres oficiales de productos.
 - `data/catalog.json` define `route` y `contentDir` por código; cada página tiene un `file` numerado independiente de su `slug` público. Los `course.id` y `slug` se conservan para progreso, preguntas y procedencia. Cada curso selecciona `questionBank`, `coverage` y `lessonCounts`. Sus archivos `data/<código>/coverage.json` relacionan 250 unidades con secciones reales; los identificadores de lecciones no son copias de Markdown publicadas.
 - `data/<código>/questions.json` contiene el banco independiente de cada curso. Cada pregunta tiene cuatro opciones con ID estable, explicación propia, una respuesta correcta y referencia a una sección real. Mantener seis preguntas por módulo técnico; cada intento selecciona dos por módulo.
-- Los SVG del `img/` de cada módulo son locales, accesibles y ampliables. Mantener `title`, `desc`, texto legible y ninguna dependencia externa. Las ilustraciones vigentes acompañan al Markdown o al SVG que las usa; sus prompts y revisiones están en `docs/illustration-prompts.md`. Son vistas conceptuales, no topologías listas para desplegar. `assets/` contiene únicamente recursos compartidos de interfaz y la animación de portada.
-- Cada H2 de los módulos técnicos debe tener un gráfico didáctico específico. El título opcional de la imagen Markdown es su descripción breve debajo del gráfico. Las soluciones visuales de ejercicios se colocan dentro de `<details>`. Ver [criterios y cobertura visual](docs/visual-coverage.md).
+- Los SVG del `img/` de cada módulo son locales, accesibles y ampliables. Mantener `title`, `desc`, texto legible y ninguna dependencia externa. Las ilustraciones vigentes acompañan al Markdown o al SVG que las usa. Son vistas conceptuales, no topologías listas para desplegar. `assets/` contiene recursos compartidos; `assets/icons/` reúne iconos, medallas, favicon y sus licencias.
+- Cada H2 de los módulos técnicos debe tener un gráfico didáctico específico. El título opcional de la imagen Markdown es su descripción breve debajo del gráfico. Las soluciones visuales de ejercicios se colocan dentro de `<details>`. Las reglas de diseño y composición están en [.codex/AGENTS.md](.codex/AGENTS.md).
 - `videos/certification-path-motion/` contiene el proyecto editable de HyperFrames basado en `hw-pipeline`. La portada reproduce `assets/motion/certification-path.mp4` y conserva un resumen textual accesible si el video no carga. Las cachés, vistas previas y copias de trabajo del editor no se publican.
 
 Comprobar las fuentes oficiales al actualizar versiones, nombres o condiciones del examen. Registrar la fecha de revisión en el catálogo y el checklist. Las explicaciones de CertiTips son independientes del material oficial.
@@ -54,17 +55,26 @@ El menú izquierdo organiza módulos y apartados como ramas desplegables; las se
 
 ## Otra certificación
 
-La portada incluye once rutas y marca cuáles tienen guía propia. Para desarrollar otra, añadir su objeto en `courses`, sus capítulos numerados bajo `contentDir` y `file`, su banco y su matriz de cobertura, y poner su ID en el campo `guide` de la ruta correspondiente dentro de `paths`. Los slugs pueden repetirse entre directorios de cursos. El constructor publica bajo `route` y conserva alias por ID, incluido `/data-governance/` hacia `/CDMP-DMF/`, manteniendo el fragmento de los enlaces de módulo. La búsqueda incluye los temas de todos los cursos; el validador comprueba cada banco, cobertura y enlaces. No duplicar un banco ajeno bajo un título nuevo. Ver [criterios y fuentes de AI Foundations](docs/ai-foundations-sources.md).
+Para desarrollar otra guía, añadir su objeto en `courses`, sus capítulos numerados bajo `contentDir` y `file`, su banco y su matriz de cobertura, y poner su ID en el campo `guide` de la ruta correspondiente dentro de `paths`. Los slugs pueden repetirse entre directorios de cursos. El constructor publica bajo `route` y conserva alias por ID, incluido `/data-governance/` hacia `/CDMP-DMF/`, manteniendo el fragmento de los enlaces de módulo. La búsqueda incluye los temas de todos los cursos; el validador comprueba cada banco, cobertura y enlaces. No duplicar un banco ajeno bajo un título nuevo.
 
-El [inventario del proyecto](docs/project-organization.md) explica qué es fuente, qué se genera, qué se archiva y por qué 50 Markdown producen 528 unidades de recuperación para CertiChat.
+```text
+content/<código>/NN_nombre/    Markdown del módulo e imágenes en img/
+data/<código>/                Preguntas, cobertura y especificaciones de autoría
+data/catalog.json            Inventario de cursos y rutas
+assets/                      Componentes y recursos compartidos
+services/                    APIs independientes de CertiQuiz y CertiChat
+dist/                        Sitio generado; no se edita ni se versiona
+```
+
+Los 50 Markdown actuales producen 528 documentos de recuperación: 50 introducciones, 279 apartados, 198 preguntas explicadas y la portada. Mover o juntar archivos no elimina esas unidades: conservarlas permite citar la sección exacta. Los informes de experimentos y revisión se guardan en `output/`, ignorado por Git; las reglas vigentes y decisiones de arquitectura se conservan en `.codex/`.
 
 ## Validación y publicación
 
-Los scripts de arquitectura son `scripts/arch-preflight.ps1` y `scripts/arch-postflight.ps1`. Requieren Graphify y Sentrux instalados localmente. No se inventan reglas cuando falta `.sentrux/rules.toml`; el gate compara la estructura. En este proyecto nuevo, la comparación inicial es contra los wrappers de bootstrap, no contra una aplicación previa.
+Los scripts de arquitectura son `scripts/arch-preflight.ps1` y `scripts/arch-postflight.ps1`. Requieren Graphify y Sentrux instalados localmente. `.sentrux/rules.toml` define los límites del proyecto; el gate compara la estructura contra el estado previo de la aplicación.
 
 GitHub Actions instala desde el lockfile, construye, ejecuta pruebas y comprueba enlaces, cobertura y preguntas. Solo publica `dist/` después de superar las comprobaciones en `main`. Las pull requests validan sin desplegar.
 
-La diferencia inicial de arquitectura está documentada en [docs/architecture.md](docs/architecture.md). No se reemplaza el baseline para ocultar un resultado DEGRADED. Las pruebas Node se ejecutan en un solo proceso para evitar el bloqueo EPERM de este sandbox Windows; los tests restauran sus cambios globales.
+Los resultados y compensaciones intencionales del gate se conservan en [.codex/improvement-log.md](.codex/improvement-log.md). No se reemplaza el baseline para ocultar un resultado DEGRADED. Las pruebas Node se ejecutan en un solo proceso para evitar el bloqueo EPERM de este sandbox Windows; los tests restauran sus cambios globales.
 
 Para comprobar el navegador, abrir una sesión aislada de `playwright-cli` en el sitio y ejecutar `run-code --filename scripts/browser-smoke.cjs` para Agentic AI y portada. Ejecutar `run-code --filename scripts/ai-foundations-smoke.cjs` para las 13 páginas nuevas en tres anchos, sus 63 gráficos de sección, práctica completa de 18 preguntas, repaso y separación de almacenamiento entre cursos. Ejecutar también `run-code --filename scripts/diagram-check.cjs` para medir recortes y superposiciones de texto en todos los SVG enlazados por ambos cursos. Las mediciones esperan a que carguen las imágenes y aparezca el control de avance. Son comprobaciones DOM y funcionales; no toman capturas de pantalla.
 

@@ -158,7 +158,7 @@ async (page) => {
   await page.locator('[data-chat-confirm]').waitFor({ state: 'visible' });
   assert(await page.locator('#chat-confirm-title').evaluate(element => document.activeElement === element && getComputedStyle(element).outlineStyle === 'none'), 'Confirmation did not focus its static heading');
   assert(await page.locator('[data-chat-confirm-yes]').textContent() === 'Aceptar', 'Chat confirmation does not use Aceptar');
-  assert(await page.locator('[data-chat-confirm] use').getAttribute('href') === '/certitips/assets/confirmation-question.svg#question', 'Chat confirmation lost the shared question icon');
+  assert(await page.locator('[data-chat-confirm] use').getAttribute('href') === '/certitips/assets/icons/confirmation-question.svg#question', 'Chat confirmation lost the shared question icon');
   await page.keyboard.press('Tab');
   assert(await page.locator('[data-chat-confirm-no]').evaluate(element => document.activeElement === element && element.matches(':focus-visible') && getComputedStyle(element).outlineStyle !== 'none'), 'Keyboard navigation lost the visible Cancel focus');
   await page.locator('[data-chat-confirm-no]').click();

@@ -1,7 +1,7 @@
 <svg class="diagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 644 632" role="img" aria-labelledby="title description">
   <title id="title">Aplicación de soporte en Oracle Cloud</title>
   <desc id="description">Una aplicación en OCI Compute se conecta con OCI Generative AI para usar el modelo, Object Storage para recuperar políticas y Autonomous AI Database para consultar pedidos. Las flechas muestran conexiones de la aplicación, no acciones ejecutadas por el modelo.</desc>
-  <!-- Official OCI icons rendered from docs/oci-support.json; spacing and typography adapted for the study guide. -->
+  <!-- Official OCI icons rendered from data/1Z0-1157-26/architecture/oci-support.json; spacing and typography adapted for the study guide. -->
   <defs>
     <style>
       text{font-family:'Segoe UI',Arial,sans-serif;fill:#17243b}

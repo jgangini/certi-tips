@@ -1,6 +1,7 @@
 """No paid calls: reproduce routing, billing uncertainty and untrusted model outputs."""
 
 import asyncio
+from decimal import Decimal, ROUND_CEILING
 from types import SimpleNamespace
 import json
 
@@ -44,22 +45,41 @@ def test_model_price_output_and_encoding_are_enforced():
     assert payload["model"] == MODEL and payload["max_tokens"] == 4096
     assert "tools" not in payload and payload["provider"]["max_price"] == {"prompt": .2, "completion": .8, "request": 0}
     assert payload["provider"]["data_collection"] == "deny" and cost > 4096*.8
-    assert payload["provider"]["sort"] == "throughput"
+    assert payload["provider"]["sort"] == "throughput" and payload["temperature"] == 0
+    assert "reasoning" not in payload
     chat, _ = prepare_request("chat/completions", {"model": CHAT_MODEL, "messages": [{"role": "user", "content": "hola"}]}, "chat")
     assert chat["model"] == CHAT_MODEL and payload["model"] == MODEL
     for purpose, model in (("chat", MODEL), ("index", CHAT_MODEL)):
         with pytest.raises(ChatError, match="Modelo no permitido"):
             prepare_request("chat/completions", {"model": model, "messages": [{"role": "user", "content": "hola"}]}, purpose)
-    assert "sort" not in chat["provider"] and chat["provider"]["max_price"] == payload["provider"]["max_price"]
+    assert chat["model"] == "openai/gpt-5.4" and "temperature" not in chat
+    assert "sort" not in chat["provider"] and chat["provider"]["max_price"] == {"prompt": 3, "completion": 16, "request": 0}
+    assert chat["reasoning"] == {"effort": "medium", "exclude": True}
     payload, cost = prepare_request("embeddings", {"model": "text-embedding-3-small", "input": ["hola"], "encoding_format": "base64"}, "index")
     assert payload["encoding_format"] == "float" and payload["model"] == "openai/text-embedding-3-small" and cost > 0
     assert "sort" not in payload["provider"]
+    assert prepare_request("embeddings", {"model": "text-embedding-3-small", "input": ["hola"]}, "chat") == (payload, cost)
     with pytest.raises(ChatError):
         prepare_request("chat/completions", {"model": "expensive", "messages": []}, "chat")
     with pytest.raises(ChatError):
         prepare_request("embeddings", {"model": "text-embedding-3-small", "input": [1, 2, 3]}, "chat")
     with pytest.raises(ChatError):
         prepare_request("chat/completions", {"model": CHAT_MODEL, "messages": [{"role": "user", "content": "x"*24000}]}, "chat")
+
+
+@pytest.mark.parametrize("requested,maximum", [(None, 4096), (37, 37), (999999, 4096)])
+def test_reasoning_chat_reserves_the_complete_payload_at_enforced_prices(requested, maximum):
+    messages = [{"role": "system", "content": "Usa evidencia."}, {"role": "user", "content": "¿Qué es una región?"}]
+    data = {"model": CHAT_MODEL, "messages": messages, "temperature": 0,
+            "reasoning": {"effort": "high", "exclude": False}, "provider": {"max_price": {"prompt": 0}}}
+    if requested is not None:
+        data["max_tokens"] = requested
+    payload, cost = prepare_request("chat/completions", data, "chat")
+    assert payload["max_tokens"] == maximum and "temperature" not in payload
+    assert payload["reasoning"] == {"effort": "medium", "exclude": True}
+    tokens = len(provider_module.encoded(payload)) + 1024 + 32 * len(messages)
+    assert cost == int((Decimal(tokens) * 3 + Decimal(maximum) * 16).to_integral_value(rounding=ROUND_CEILING))
+    assert cost <= 137536
 
 
 def test_each_attempt_reserved_and_uncertain_cost_is_retained():
@@ -80,6 +100,33 @@ def test_each_attempt_reserved_and_uncertain_cost_is_retained():
     _, ledger = run_provider(handler, operation)
     assert len(calls) == len(ledger.reservations) == 2
     assert ledger.settlements == [(2, 11)]
+
+
+@pytest.mark.parametrize("purpose,model", [("chat", CHAT_MODEL), ("index", MODEL)])
+@pytest.mark.parametrize("cost", [0, None])
+@pytest.mark.parametrize("failure,code", [
+    ({"choices": [{"finish_reason": "error", "error": {"code": 429, "message": "private upstream details"},
+                   "message": {"content": '{"answer":"Truncated'}}]}, "provider_rate_limited"),
+    ({"choices": [{"finish_reason": "error", "message": {"content": ""}}]}, "provider_error"),
+    ({"error": {"code": 503, "message": "private upstream details"}}, "provider_error"),
+])
+def test_http_200_provider_failures_settle_known_cost_and_never_retry(purpose, model, cost, failure, code):
+    calls = []
+
+    def handler(request):
+        calls.append(request)
+        return httpx.Response(200, json={**failure, "usage": {"cost": cost}})
+
+    async def operation(provider):
+        with pytest.raises(ChatError) as caught:
+            await provider.request("chat/completions", {"model": model,
+                "messages": [{"role": "user", "content": "Pregunta de prueba"}]}, purpose)
+        assert caught.value.status == 503 and caught.value.code == code
+        assert "private upstream" not in str(caught.value) and caught.value.retry_after == 0
+
+    _, ledger = run_provider(handler, operation)
+    assert len(calls) == len(ledger.reservations) == 1
+    assert ledger.settlements == ([(1, 0)] if cost == 0 else [])
 
 
 @pytest.mark.parametrize("purpose,deadline", [("index", 300), ("chat", 35)])
@@ -150,6 +197,8 @@ def test_blocked_index_transport_does_not_block_chat_transport():
     {"answer": "Inventado", "citations": ["fake"]},
     {"answer": "<img src=x onerror=alert(1)>", "citations": ["S1"]},
     {"answer": "https://evil.test", "citations": ["S1"]},
+    {"answer": "El fragmento S1 explica el dato.", "citations": ["S1"]},
+    {"answer": "El dato está publicado [S1].", "citations": ["S1"]},
     {"answer": "", "citations": ["S1"]},
     {"supported": True, "answer": "Dato", "citations": ["S1"]},
     {"answer": "Dato", "citations": ["doc"]},
@@ -222,7 +271,7 @@ def test_spanish_fragments_fit_and_links_come_only_from_sources():
         payload = json.loads(request.content)
         evidence = json.loads(payload["messages"][1]["content"])
         assert evidence["fragments"][0]["id"] == "S1"
-        assert payload["max_tokens"] == 800
+        assert payload["max_tokens"] == 4096
         return httpx.Response(200, json={"usage": {"cost": .0001}, "choices": [{"message": {"content": json.dumps(
             {"answer": "Oracle almacena datos.", "citations": ["S1"]})}}]})
 
@@ -257,7 +306,7 @@ def test_simple_and_compound_questions_keep_evidence_after_prefix_and_later_sour
 
     result, ledger = run_provider(handler, lambda provider: provider.answer(question, fragments, []))
     assert [source["id"] for source in result[1]] == cited and result[0] != REFUSAL
-    assert len(ledger.reservations) == 1 and ledger.reservations[0][1] <= 5440
+    assert len(ledger.reservations) == 1 and ledger.reservations[0][1] <= 137536
 
 
 def test_full_unicode_context_remains_bounded_and_skips_oversize_before_later_small_fragment():
@@ -272,12 +321,12 @@ def test_full_unicode_context_remains_bounded_and_skips_oversize_before_later_sm
         assert evidence["fragments"][0]["text"] == fragments[0]["text"]
         assert evidence["history"] == []
         _, cost = prepare_request("chat/completions", payload, "chat")
-        assert cost <= 5440
+        assert cost <= 137536
         return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(
             {"answer": "Dato final relevante.", "citations": ["S2"]})}}]})
 
     result, ledger = run_provider(handler, lambda provider: provider.answer("🙂"*1500, fragments, history))
-    assert result[1][0]["id"] == "doc-7" and ledger.reservations[0][1] <= 5440
+    assert result[1][0]["id"] == "doc-7" and ledger.reservations[0][1] <= 137536
 
 
 def test_compact_citation_ids_map_back_to_exact_sources():
@@ -292,6 +341,40 @@ def test_compact_citation_ids_map_back_to_exact_sources():
 
     result, _ = run_provider(handler, lambda provider: provider.answer("Explica el segundo hecho", fragments, []))
     assert result == ("Hecho publicado 1.", [{key: fragments[1][key] for key in ("id", "title", "url")}])
+
+
+def test_followup_keeps_questions_without_copying_previous_answers_or_reassigned_aliases():
+    fragments = [{"id": "owner", "title": "Propietario", "url": "https://site.test/owner",
+                  "text": "El propietario decide los usos autorizados."},
+                 {"id": "custodian", "title": "Custodio", "url": "https://site.test/custodian",
+                  "text": "El custodio aplica controles técnicos."}]
+    questions = ["¿Qué hace el propietario?", "Dame la referencia de ese tema"]
+    calls = []
+
+    def handler(request):
+        evidence = json.loads(json.loads(request.content)["messages"][1]["content"])
+        calls.append(evidence)
+        if len(calls) == 1:
+            assert evidence["history"] == []
+            citation = "S1"
+        else:
+            assert evidence["history"] == [{"question": questions[0]}]
+            assert evidence["fragments"][0]["title"] == "Custodio"
+            assert evidence["fragments"][1]["title"] == "Propietario"
+            citation = "S2"
+        return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(
+            {"answer": fragments[0]["text"], "citations": [citation]})}}]})
+
+    async def operation(provider):
+        first = await provider.answer(questions[0], fragments, [])
+        # Reproduce a stored answer from the old version, including an alias that now means another source.
+        second = await provider.answer(questions[1], fragments[::-1], [{"question": questions[0],
+            "answer": "El fragmento S1 describe una respuesta anterior no revalidada."}])
+        return first, second
+
+    (first, second), ledger = run_provider(handler, operation)
+    assert first == second == (fragments[0]["text"], [{key: fragments[0][key] for key in ("id", "title", "url")}])
+    assert len(ledger.reservations) == 2
 
 
 def test_no_evidence_never_calls_provider():

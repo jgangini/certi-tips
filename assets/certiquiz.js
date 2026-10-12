@@ -317,7 +317,7 @@ function podium() {
   return `<ol class="podium" aria-label="Podio final">${[2, 1, 3].map(rank => {
     const players = room.leaderboard.filter(player => player.rank === rank);
     if (!players.length) return '';
-    return `<li class="podium-place podium-${rank}"><strong class="podium-name">${players.map(player => `<span>${escape(player.nickname)}</span>`).join('')}</strong><div class="podium-step"><img class="podium-medal" src="${siteBase}assets/certiquiz-medal-${rank}.svg" alt="${rank === 1 ? 'Primer' : rank === 2 ? 'Segundo' : 'Tercer'} puesto${players.length > 1 ? ' compartido' : ''}" width="88" height="88"><strong class="podium-score">${players[0].score}</strong><span>puntos</span></div></li>`;
+    return `<li class="podium-place podium-${rank}"><strong class="podium-name">${players.map(player => `<span>${escape(player.nickname)}</span>`).join('')}</strong><div class="podium-step"><img class="podium-medal" src="${siteBase}assets/icons/certiquiz-medal-${rank}.svg" alt="${rank === 1 ? 'Primer' : rank === 2 ? 'Segundo' : 'Tercer'} puesto${players.length > 1 ? ' compartido' : ''}" width="88" height="88"><strong class="podium-score">${players[0].score}</strong><span>puntos</span></div></li>`;
   }).join('')}</ol>`;
 }
 
@@ -535,7 +535,7 @@ function confirmRoomAction(button, message, label, callback) {
   showError('');
   const dialog = document.createElement('dialog'); dialog.className = 'confirmation'; dialog.dataset.confirm = '';
   dialog.setAttribute('aria-labelledby', 'confirmation-title'); dialog.setAttribute('aria-describedby', 'confirmation-message');
-  dialog.innerHTML = `<div class="confirmation-body"><span class="confirmation-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="currentColor" focusable="false"><use href="${siteBase}assets/confirmation-question.svg#question"/></svg></span><h2 id="confirmation-title" tabindex="-1" autofocus>${button.hasAttribute('data-exit') ? '¿Salir de la sala?' : '¿Finalizar la partida?'}</h2><p id="confirmation-message">${escape(message)}</p><div class="notice error" data-error role="alert" hidden></div></div><div class="confirmation-actions"><button class="button secondary" type="button" data-confirm-no>Cancelar</button><button class="button" type="button" data-confirm-yes>${escape(label)}</button></div>`;
+  dialog.innerHTML = `<div class="confirmation-body"><span class="confirmation-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="currentColor" focusable="false"><use href="${siteBase}assets/icons/confirmation-question.svg#question"/></svg></span><h2 id="confirmation-title" tabindex="-1" autofocus>${button.hasAttribute('data-exit') ? '¿Salir de la sala?' : '¿Finalizar la partida?'}</h2><p id="confirmation-message">${escape(message)}</p><div class="notice error" data-error role="alert" hidden></div></div><div class="confirmation-actions"><button class="button secondary" type="button" data-confirm-no>Cancelar</button><button class="button" type="button" data-confirm-yes>${escape(label)}</button></div>`;
   app.closest('.certiquiz-app').append(dialog);
   const confirm = dialog.querySelector('[data-confirm-yes]');
   const cancel = dialog.querySelector('[data-confirm-no]');

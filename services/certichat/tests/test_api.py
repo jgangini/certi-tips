@@ -327,7 +327,7 @@ def test_fixed_window_starts_on_first_question_and_resets_without_sliding(client
 def test_spent_budget_blocks_public_and_internal_outbound(clients):
     make, app, calls, _, _ = clients
     client = session(make)
-    app.state.store.reserve("chat", 500000)
+    app.state.store.reserve("chat", 5_000_000)
     previous = len(calls)
     assert client.post("/api/chat", json=question()).status_code == 503
     private = TestClient(app, base_url=ORIGIN)
