@@ -1,4 +1,4 @@
-# CertiTips / CertiQuiz / CertiChat architecture contract. See docs/architecture.md.
+# CertiTips / CertiQuiz / CertiChat architecture contract. See .codex/AGENTS.md.
 # Sentrux 0.5.7 rejects imports from larger to smaller order values.
 # Order here follows consumers -> dependencies, verified by check-architecture-rules.ps1.
 [constraints]

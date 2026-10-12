@@ -4,7 +4,7 @@ import { globSync, readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { runInNewContext } from "node:vm";
 
-const content = new URL("../content/", import.meta.url);
+const content = new URL("../data/", import.meta.url);
 const diagrams = new Map(globSync("**/img/*.svg", { cwd: content }).map(file => [file.split(/[\\/]/).at(-1), file.replaceAll("\\", "/")]));
 const readDiagram = (name) => readFileSync(new URL(diagrams.get(name), content), "utf8");
 const attributes = (tag) => Object.fromEntries([...tag.matchAll(/([\w:-]+)\s*=\s*(["'])(.*?)\2/gs)].map(([, key, , value]) => [key, value]));
@@ -200,14 +200,14 @@ test("OpenAI support step numbers explicitly resolve to white, not the global te
 
 test("the worked purchase example consistently uses US dollars", () => {
   const svg = readDiagram("agents-example.svg");
-  const lesson = readFileSync(new URL("../content/1Z0-1157-26/01_agentes_de_ia/01_agentes_de_ia.md", import.meta.url), "utf8");
+  const lesson = readFileSync(new URL("../data/1Z0-1157-26/01_agentes_de_ia/01_agentes_de_ia.md", import.meta.url), "utf8");
   assert.match(svg, /USD\s+144/);
   assert.match(lesson, /USD\s+144/);
   assert.doesNotMatch(`${svg}\n${lesson}`, /S\/\s*\d|\bsoles\b/i);
 });
 
 test("the support case uses one OCI architecture instead of two competing examples", () => {
-  const lesson = readFileSync(new URL("../content/1Z0-1157-26/01_agentes_de_ia/01_agentes_de_ia.md", import.meta.url), "utf8");
+  const lesson = readFileSync(new URL("../data/1Z0-1157-26/01_agentes_de_ia/01_agentes_de_ia.md", import.meta.url), "utf8");
   assert.equal((lesson.match(/img\/oci-support\.svg/g) || []).length, 1);
   assert.doesNotMatch(lesson, /support-agent\.png/);
 });

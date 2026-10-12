@@ -59,11 +59,11 @@ site.courses = [course];
 test("course lessons omit completion promises and governance opens directly with its concepts", () => {
   const catalog = JSON.parse(readFileSync(new URL('../data/catalog.json', import.meta.url), 'utf8'));
   for (const course of catalog.courses) for (const page of [...course.modules, ...course.resources]) {
-    const source = readFileSync(new URL(`../content/${course.contentDir}/${page.file}`, import.meta.url), 'utf8');
+    const source = readFileSync(new URL(`../data/${course.contentDir}/${page.file}`, import.meta.url), 'utf8');
     assert.doesNotMatch(source, /^(?:\*\*)?Al terminar podrás/im, `${course.id}/${page.slug}`);
   }
   const governance = catalog.courses.find(course => course.id === 'data-governance');
-  const source = readFileSync(new URL(`../content/${governance.contentDir}/${governance.modules.find(page => page.slug === 'governance').file}`, import.meta.url), 'utf8');
+  const source = readFileSync(new URL(`../data/${governance.contentDir}/${governance.modules.find(page => page.slug === 'governance').file}`, import.meta.url), 'utf8');
   assert.match(source, /^<span id="conceptos-clave"><\/span>El \*\*gobierno de datos\*\*/);
   assert.doesNotMatch(source, /^## Conceptos Clave|^Operadora Horizonte reúne/m);
 });
@@ -491,7 +491,7 @@ test("retired resources stay unpublished and overview contains only its retained
   const catalog = JSON.parse(readFileSync(new URL("../data/catalog.json", import.meta.url), "utf8"));
   const actualCourse = catalog.courses.find((item) => item.id === "agentic-ai-foundations-2026");
   assert.deepEqual(actualCourse.resources.map((item) => item.slug), ["glossary", "exam-checklist", "practice"]);
-  const overview = readFileSync(new URL(`../content/${actualCourse.contentDir}/${actualCourse.modules[0].file}`, import.meta.url), "utf8");
+  const overview = readFileSync(new URL(`../data/${actualCourse.contentDir}/${actualCourse.modules[0].file}`, import.meta.url), "utf8");
   assert.doesNotMatch(overview, /certification-roadmap/);
   const headings = [...overview.matchAll(/^## (.+)$/gm)].map((match) => match[1]);
   assert.deepEqual(headings, ["Objetivos y examen", "Acceso al Recorrido Oficial"]);
@@ -503,7 +503,7 @@ test("retired resources stay unpublished and overview contains only its retained
   assert.doesNotMatch(html, /overview\/#antes-de-comenzar/);
   const accessSections = new Set();
   for (const course of catalog.courses.filter(course => course.exam)) {
-    const source = readFileSync(new URL(`../content/${course.contentDir}/${course.modules[0].file}`, import.meta.url), 'utf8');
+    const source = readFileSync(new URL(`../data/${course.contentDir}/${course.modules[0].file}`, import.meta.url), 'utf8');
     assert.deepEqual([...source.matchAll(/^## (.+)$/gm)].map(match => match[1]), headings, course.id);
     assert.doesNotMatch(source, /## Antes de comenzar|## Cómo vas a estudiar/);
     assert.match(source, new RegExp(`\\*\\*${course.exam.code}\\*\\*`));
@@ -544,7 +544,7 @@ test("technical sections have captioned local graphics and exercise solutions st
   assert.equal(catalog.courses.find((entry) => entry.id === "data-governance").modules.filter((module) => module.type === "module").length, 11);
   const markdown = new MarkdownIt({ html: true });
   for (const module of modules) {
-    const source = readFileSync(new URL(`../content/${module.contentDir}/${module.file}`, import.meta.url), "utf8");
+    const source = readFileSync(new URL(`../data/${module.contentDir}/${module.file}`, import.meta.url), "utf8");
     const tokens = markdown.parse(source, {});
     const sections = [];
     let section;

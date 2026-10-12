@@ -79,3 +79,78 @@ foreach ($edge in @(
         $edge[1] = 'export const value = 1;'
     } 'boundary'
 }
+
+function Test-ArchitectureCleanup([string]$Wrapper, [bool]$Failure, [bool]$PresetEnvironment) {
+    $caseRoot = Join-Path $tempRoot ('certitips-wrapper-' + [guid]::NewGuid())
+    $location = (Get-Location).Path
+    $exitCode = $global:LASTEXITCODE
+    $PSNativeCommandUseErrorActionPreference = $true
+    $environmentPaths = @('Env:GIT_INDEX_FILE', 'Env:GIT_OBJECT_DIRECTORY', 'Env:GIT_ALTERNATE_OBJECT_DIRECTORIES')
+    $savedEnvironment = @(Get-Item -LiteralPath $environmentPaths -ErrorAction SilentlyContinue)
+    Remove-Item -LiteralPath $environmentPaths -ErrorAction SilentlyContinue
+    try {
+        New-Item -ItemType Directory -Path "$caseRoot/scripts", "$caseRoot/.sentrux" | Out-Null
+        Copy-Item -LiteralPath (Join-Path $PSScriptRoot $Wrapper) -Destination "$caseRoot/scripts/$Wrapper"
+        [IO.File]::WriteAllText("$caseRoot/.sentrux/rules.toml", $rules)
+        [IO.File]::WriteAllText("$caseRoot/.gitignore", "output/`n")
+        [IO.File]::WriteAllText("$caseRoot/source.js", 'export const value = 1;')
+        & git -C $caseRoot init -q
+        & git -C $caseRoot -c core.autocrlf=false add .
+        & git -C $caseRoot -c user.name=Fixture -c user.email=fixture@example.test commit -q --no-gpg-sign -m fixture
+        [IO.File]::WriteAllText("$caseRoot/source.js", 'export const value = 2;')
+        & git -C $caseRoot add source.js
+        [IO.File]::WriteAllText("$caseRoot/source.js", 'export const value = 3;')
+        [IO.File]::WriteAllText("$caseRoot/new.js", 'export const added = true;')
+        $indexHash = (Get-FileHash -LiteralPath "$caseRoot/.git/index").Hash
+        if ($PresetEnvironment) {
+            $env:GIT_INDEX_FILE = "$caseRoot/.git/index"
+            $env:GIT_OBJECT_DIRECTORY = "$caseRoot/.git/objects"
+            $env:GIT_ALTERNATE_OBJECT_DIRECTORIES = "$caseRoot/.git/objects"
+        }
+        $expectedEnvironment = [string](Get-Item -LiteralPath $environmentPaths -ErrorAction SilentlyContinue | Select-Object Name, Value | ConvertTo-Json -Compress)
+        $scratchDirectories = [Collections.Generic.List[string]]::new()
+        # Stub only architecture tools; Git must exercise the wrapper's real isolated index.
+        function graphify { $global:LASTEXITCODE = 0 }
+        function sentrux {
+            $scratchDirectories.Add((Split-Path -Parent $env:GIT_INDEX_FILE))
+            if (-not (Test-Path -LiteralPath $env:GIT_OBJECT_DIRECTORY)) { throw 'Isolated objects directory is missing.' }
+            $files = @(& git ls-files)
+            $content = & git show ':source.js'
+            if ($files -notcontains 'new.js' -or $content -ne 'export const value = 3;') {
+                throw 'Architecture scan did not include the complete working tree.'
+            }
+            $global:LASTEXITCODE = if ($Failure -and $args[0] -eq 'check') { 17 } else { 0 }
+        }
+        $failureMessage = $null
+        try { & "$caseRoot/scripts/$Wrapper" | Out-Null }
+        catch { $failureMessage = $_.Exception.Message }
+        $expectedFailure = if ($Failure) { 'Sentrux check failed.' } else { $null }
+        if ($failureMessage -ne $expectedFailure) {
+            throw "${Wrapper}: unexpected result: $failureMessage"
+        }
+        if (-not $scratchDirectories.Count -or ($scratchDirectories | Where-Object { Test-Path -LiteralPath $_ })) {
+            throw "${Wrapper}: architecture scratch was not created and removed."
+        }
+        if ((Get-Location).Path -ne $location -or (Get-FileHash -LiteralPath "$caseRoot/.git/index").Hash -ne $indexHash) {
+            throw "${Wrapper}: caller location or real Git index changed."
+        }
+        $actualEnvironment = [string](Get-Item -LiteralPath $environmentPaths -ErrorAction SilentlyContinue | Select-Object Name, Value | ConvertTo-Json -Compress)
+        if ($actualEnvironment -cne $expectedEnvironment) {
+            throw "${Wrapper}: Git environment was not restored."
+        }
+        Write-Output "PASS: $Wrapper cleanup (failure=$Failure, preset Git environment=$PresetEnvironment)"
+    } finally {
+        Remove-Item -LiteralPath $environmentPaths -ErrorAction SilentlyContinue
+        foreach ($item in $savedEnvironment) { Set-Item -LiteralPath "Env:$($item.Name)" -Value $item.Value }
+        Set-Location -LiteralPath $location
+        $global:LASTEXITCODE = $exitCode
+        if ([IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($caseRoot)) -ne $tempRoot) { throw 'Unexpected temporary wrapper path.' }
+        if (Test-Path -LiteralPath $caseRoot) { Remove-Item -LiteralPath $caseRoot -Recurse -Force }
+    }
+}
+
+foreach ($wrapper in @('arch-preflight.ps1', 'arch-postflight.ps1')) {
+    foreach ($failure in @($false, $true)) {
+        Test-ArchitectureCleanup $wrapper $failure $failure
+    }
+}

@@ -1,6 +1,7 @@
 $ErrorActionPreference = 'Stop'
 Push-Location (Split-Path -Parent $PSScriptRoot)
 $savedGitEnvironment = @{}
+$scratch = $null
 foreach ($name in @('GIT_INDEX_FILE', 'GIT_OBJECT_DIRECTORY', 'GIT_ALTERNATE_OBJECT_DIRECTORIES')) {
     $savedGitEnvironment[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
 }
@@ -33,4 +34,8 @@ try {
         }
     }
     Pop-Location
+    if ($scratch -and (Test-Path -LiteralPath $scratch)) {
+        if ([IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($scratch)) -ne (Join-Path (Split-Path -Parent $PSScriptRoot) 'output')) { throw 'Unexpected architecture scratch path.' }
+        Remove-Item -LiteralPath $scratch -Recurse -Force
+    }
 }

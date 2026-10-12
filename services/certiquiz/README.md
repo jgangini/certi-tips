@@ -36,7 +36,7 @@ Con `npm run preview`, la aplicación abre en `http://127.0.0.1:4173/certitips/c
 
 La prueba de 500 usa el máximo de preguntas disponible (hasta 30), juega dos rondas de 10 segundos con respuestas en tandas de 64, comprueba el rechazo del participante 501 y finaliza la sala. El modo predeterminado `browser` reproduce la espera y la pausa durante el envío del navegador; mantiene una consulta independiente por participante y también mide la sala de espera y la revelación. Deja un participante sin responder para ejercitar el vencimiento. La prueba de integración separada verifica 500 respuestas aceptadas y puntuadas dentro de 10 segundos. El modo navegador exige p95 de consultas y respuestas de hasta un segundo, cada solicitud por debajo de 10 segundos, p95 entre inicios de consultas de hasta dos segundos y entrega de cada pregunta a todos en dos segundos. Estas pruebas no alteran las salas del usuario.
 
-La carga local del 2026-10-07 aprobó esos umbrales: 13.815 solicitudes sin errores, 12.296 consultas con p95 de 461 ms y máximo de 608 ms, y 998 respuestas con p95 de 649 ms y máximo de 879 ms. Los 500 participantes recibieron las preguntas en un máximo de 1.042 y 1.036 ms; las tandas de respuestas terminaron en 5.592 y 5.539 ms. Se observaron 428 consultas por segundo y un intervalo entre inicios p95 de 1.494 ms; su máximo fue 2.539 ms, incluyendo pausas por envío. Evidencia local: `output/certiquiz-500-browser-mode-load.json`.
+La carga local del 2026-10-07 aprobó esos umbrales: 13.815 solicitudes sin errores, 12.296 consultas con p95 de 461 ms y máximo de 608 ms, y 998 respuestas con p95 de 649 ms y máximo de 879 ms. Los 500 participantes recibieron las preguntas en un máximo de 1.042 y 1.036 ms; las tandas de respuestas terminaron en 5.592 y 5.539 ms. Se observaron 428 consultas por segundo y un intervalo entre inicios p95 de 1.494 ms; su máximo fue 2.539 ms, incluyendo pausas por envío.
 
 El modo `--poll-mode=fixed` conserva la prueba más exigente de una cadencia fija por participante y su umbral de 5 % de cadencias omitidas. Su ensayo de esta revisión falló: 25 respuestas llegaron tarde y el p95 de respuestas fue 1.148 ms. La aprobación corresponde a 500 participantes con el comportamiento del navegador, no a 500 consultas constantes por segundo ni a diez salas completas. La carga se ejecutó contra Docker local; no se ha realizado una prueba de 500 participantes contra la VPS.
 
@@ -47,8 +47,6 @@ El build normal configura la API HTTPS productiva. `CERTIQUIZ_API_ORIGIN` es con
 En producción, `CERTIQUIZ_CATALOG_SOURCE=github` consulta exclusivamente `jgangini/certitips`, rama `main`: `data/catalog.json` y los bancos identificados por `questionBank`. Cada cinco minutos, la siguiente consulta al catálogo puede actualizar una caché compartida por el proceso. El servidor valida el conjunto completo antes de sustituirlo; una descarga fallida o inválida conserva el último conjunto válido. Al iniciar, dispone de los bancos empaquetados como respaldo. Las salas en curso conservan las preguntas con las que se crearon.
 
 Para añadir preguntas basta con publicar los cambios válidos del banco en GitHub. Para añadir una certificación, también debe figurar en el catálogo con su banco. El navegador envía únicamente el identificador del curso y la configuración de la partida: no puede elegir una URL de descarga, respuestas correctas ni puntuaciones. Las descargas tienen límites de tiempo y tamaño y no siguen redirecciones. El modo local `bundled` permite probar los bancos del checkout sin publicarlos.
-
-La rama pública consultada durante esta implementación contiene Agentic AI con 36 preguntas. Los otros dos cursos del checkout local estarán disponibles en el catálogo productivo cuando se publiquen en GitHub.
 
 ## Prevención de abuso
 
@@ -72,16 +70,6 @@ La primera instalación genera las credenciales de base de datos en el VPS. Nunc
 PostgreSQL usa volumen y red interna propios. El rol administrador sólo entra en el contenedor de migración; la API recibe un rol sin superusuario, creación de roles/bases ni permisos DDL. La API ejecuta con UID 10001, filesystem de solo lectura, capacidades eliminadas y límites de CPU, memoria y procesos. No se montan credenciales OCI, SSH ni el socket de Docker.
 
 En actualizaciones se guarda un dump privado antes de migrar. Un fallo de despliegue restaura la aplicación anterior; la base no se revierte automáticamente. Mantener las migraciones compatibles con la imagen anterior y comprobar una restauración en un entorno aislado antes de cambios destructivos. Los respaldos de la VPS requieren una copia externa y una política de retención del operador.
-
-### Verificación de publicación · 2026-10-07
-
-API publicada mediante el registro A `certiquiz.cloudtechnext.net → 187.77.63.10`, TTL 300. HTTPS tiene un certificado válido de Let's Encrypt; HTTP redirige a HTTPS. `/api/health` responde 200 y `/` y `/docs` devuelven 404. CORS permite el origen exacto de Pages con credenciales; un preflight ajeno se rechaza y un POST con origen ajeno devuelve 403. La API continúa vinculada a loopback y PostgreSQL permanece sin puerto público. CloudTechNext conserva su comprobación de salud correcta.
-
-Una prueba real en Chromium 154 desde `https://jgangini.github.io` verificó creación pública sin clave, recarga, dos participantes, puntuación, permisos y cierre de sesión contra la API pública actualizada. Las cookies `__Host-` tienen Secure, HttpOnly, SameSite=None y una partición asociada a `https://jgangini.github.io`; visitar directamente la API no reutiliza esa sesión. Se usaron certificados normales, sin simular respuestas ni tomar screenshots. Esta prueba valida las sesiones en ese navegador; no demuestra compatibilidad con todos los navegadores. El catálogo productivo devuelve las 36 preguntas de Agentic AI publicadas en GitHub.
-
-La ruta pública `/certitips/certiquiz/` todavía devolvía 404 al terminar esta publicación: el módulo está implementado y probado localmente, pero falta publicar su código en GitHub Pages. La autorización recibida en esta fase fue publicar únicamente la API.
-
-La actualización de capacidad del 2026-10-07 también quedó desplegada con respaldo privado: `/api/catalog` confirma el límite de 500, ambos contenedores están saludables y PostgreSQL sigue sin puerto público. La API conserva su enlace a `127.0.0.1:18740`; CloudTechNext mantiene su salud correcta. Se repitió la aceptación HTTPS desde GitHub Pages con dos participantes, puntuación y cookies particionadas. Las pruebas de 500 corresponden al entorno local descrito arriba; la interfaz de Pages sigue pendiente de publicación.
 
 ## Alcance de seguridad
 

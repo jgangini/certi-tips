@@ -86,9 +86,9 @@ async function publishImages(directory, publicPath) {
 }
 
 async function renderPage(course, page) {
-  const contentRoot = await realpath(path.join(root, "content"));
+  const contentRoot = await realpath(path.join(root, "data"));
   const source = await realpath(path.resolve(contentRoot, course.contentDir, page.file));
-  if (!source.startsWith(`${contentRoot}${path.sep}`)) throw new Error("Course source must stay inside content/.");
+  if (!source.startsWith(`${contentRoot}${path.sep}`)) throw new Error("Course source must stay inside data/.");
   const publicPath = `${courseRoute(course)}/${page.slug}`;
   await publishImages(path.dirname(source), publicPath);
   return renderMarkdown(await readFile(source, "utf8"), publicPath);

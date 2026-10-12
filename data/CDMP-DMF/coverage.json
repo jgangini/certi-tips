@@ -11,8 +11,8 @@
       "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/about-autonomous-database-workloads.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/00_empieza_aqui/img/gov-overview-map.svg",
-      "content/CDMP-DMF/00_empieza_aqui/img/gov-overview-contract.svg"
+      "data/CDMP-DMF/00_empieza_aqui/img/gov-overview-map.svg",
+      "data/CDMP-DMF/00_empieza_aqui/img/gov-overview-contract.svg"
     ],
     "questionIds": [],
     "assessment": "Discusión guiada y ejercicio de decisión",
@@ -27,9 +27,9 @@
           "tres-catalogos-y-una-responsabilidad-comun"
         ],
         "diagrams": [
-          "content/CDMP-DMF/12_matriz_dama_oracle/img/gov-map-architecture.svg",
-          "content/CDMP-DMF/12_matriz_dama_oracle/img/gov-map-evidence.svg",
-          "content/CDMP-DMF/12_matriz_dama_oracle/img/gov-map-catalogs.svg"
+          "data/CDMP-DMF/12_matriz_dama_oracle/img/gov-map-architecture.svg",
+          "data/CDMP-DMF/12_matriz_dama_oracle/img/gov-map-evidence.svg",
+          "data/CDMP-DMF/12_matriz_dama_oracle/img/gov-map-catalogs.svg"
         ],
         "publicSources": [
           "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/get-started-oracle-ai-data-platform.html",
@@ -73,8 +73,8 @@
           "lenguaje-de-implementacion"
         ],
         "diagrams": [
-          "content/CDMP-DMF/13_glosario/img/gov-glossary-roles.svg",
-          "content/CDMP-DMF/13_glosario/img/gov-glossary-planes.svg"
+          "data/CDMP-DMF/13_glosario/img/gov-glossary-roles.svg",
+          "data/CDMP-DMF/13_glosario/img/gov-glossary-planes.svg"
         ],
         "publicSources": []
       },
@@ -88,10 +88,10 @@
           "criterios-de-aceptacion-y-cierre"
         ],
         "diagrams": [
-          "content/CDMP-DMF/14_caso_integrador/img/gov-case-assets.svg",
-          "content/CDMP-DMF/14_caso_integrador/img/gov-case-decisions.svg",
-          "content/CDMP-DMF/14_caso_integrador/img/gov-case-solution.svg",
-          "content/CDMP-DMF/14_caso_integrador/img/gov-case-rubric.svg"
+          "data/CDMP-DMF/14_caso_integrador/img/gov-case-assets.svg",
+          "data/CDMP-DMF/14_caso_integrador/img/gov-case-decisions.svg",
+          "data/CDMP-DMF/14_caso_integrador/img/gov-case-solution.svg",
+          "data/CDMP-DMF/14_caso_integrador/img/gov-case-rubric.svg"
         ],
         "publicSources": []
       },
@@ -117,7 +117,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/audit-log.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/01_gobierno/img/gov-governance-concepts.svg"
+      "data/CDMP-DMF/01_gobierno/img/gov-governance-concepts.svg"
     ],
     "questionIds": [
       "gov-governance-01"
@@ -138,7 +138,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/audit-log.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/01_gobierno/img/gov-governance-principles.svg"
+      "data/CDMP-DMF/01_gobierno/img/gov-governance-principles.svg"
     ],
     "questionIds": [
       "gov-governance-02"
@@ -159,7 +159,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/audit-log.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/01_gobierno/img/gov-governance-oracle.svg"
+      "data/CDMP-DMF/01_gobierno/img/gov-governance-oracle.svg"
     ],
     "questionIds": [
       "gov-governance-03",
@@ -181,7 +181,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/audit-log.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/01_gobierno/img/gov-governance-example.svg"
+      "data/CDMP-DMF/01_gobierno/img/gov-governance-example.svg"
     ],
     "questionIds": [],
     "assessment": "Discusión guiada y ejercicio de decisión",
@@ -219,7 +219,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/audit-log.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/01_gobierno/img/gov-governance-exercise.svg"
+      "data/CDMP-DMF/01_gobierno/img/gov-governance-exercise.svg"
     ],
     "questionIds": [
       "gov-governance-05"
@@ -258,7 +258,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/02_arquitectura/img/gov-data-architecture-concepts.svg"
+      "data/CDMP-DMF/02_arquitectura/img/gov-data-architecture-concepts.svg"
     ],
     "questionIds": [
       "gov-data-architecture-01"
@@ -280,7 +280,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/02_arquitectura/img/gov-data-architecture-principles.svg"
+      "data/CDMP-DMF/02_arquitectura/img/gov-data-architecture-principles.svg"
     ],
     "questionIds": [
       "gov-data-architecture-04"
@@ -302,7 +302,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/02_arquitectura/img/gov-data-architecture-oracle.svg"
+      "data/CDMP-DMF/02_arquitectura/img/gov-data-architecture-oracle.svg"
     ],
     "questionIds": [
       "gov-data-architecture-03",
@@ -325,7 +325,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/02_arquitectura/img/gov-data-architecture-example.svg"
+      "data/CDMP-DMF/02_arquitectura/img/gov-data-architecture-example.svg"
     ],
     "questionIds": [
       "gov-data-architecture-02"
@@ -365,7 +365,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/02_arquitectura/img/gov-data-architecture-exercise.svg"
+      "data/CDMP-DMF/02_arquitectura/img/gov-data-architecture-exercise.svg"
     ],
     "questionIds": [
       "gov-data-architecture-05"
@@ -388,7 +388,7 @@
       "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/levels-aggregation.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/03_modelado/img/gov-data-modeling-concepts.svg"
+      "data/CDMP-DMF/03_modelado/img/gov-data-modeling-concepts.svg"
     ],
     "questionIds": [],
     "assessment": "Discusión guiada y ejercicio de decisión",
@@ -409,7 +409,7 @@
       "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/levels-aggregation.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/03_modelado/img/gov-data-modeling-principles.svg"
+      "data/CDMP-DMF/03_modelado/img/gov-data-modeling-principles.svg"
     ],
     "questionIds": [
       "gov-data-modeling-02",
@@ -433,7 +433,7 @@
       "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/levels-aggregation.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/03_modelado/img/gov-data-modeling-oracle.svg"
+      "data/CDMP-DMF/03_modelado/img/gov-data-modeling-oracle.svg"
     ],
     "questionIds": [
       "gov-data-modeling-05",
@@ -457,7 +457,7 @@
       "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/levels-aggregation.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/03_modelado/img/gov-data-modeling-example.svg"
+      "data/CDMP-DMF/03_modelado/img/gov-data-modeling-example.svg"
     ],
     "questionIds": [
       "gov-data-modeling-01"
@@ -499,7 +499,7 @@
       "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acmdg/levels-aggregation.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/03_modelado/img/gov-data-modeling-exercise.svg"
+      "data/CDMP-DMF/03_modelado/img/gov-data-modeling-exercise.svg"
     ],
     "questionIds": [
       "gov-data-modeling-03"
@@ -522,7 +522,7 @@
       "https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/costanalysisoverview.htm"
     ],
     "diagrams": [
-      "content/CDMP-DMF/04_operaciones/img/gov-data-operations-concepts.svg"
+      "data/CDMP-DMF/04_operaciones/img/gov-data-operations-concepts.svg"
     ],
     "questionIds": [
       "gov-data-operations-01",
@@ -546,7 +546,7 @@
       "https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/costanalysisoverview.htm"
     ],
     "diagrams": [
-      "content/CDMP-DMF/04_operaciones/img/gov-data-operations-principles.svg"
+      "data/CDMP-DMF/04_operaciones/img/gov-data-operations-principles.svg"
     ],
     "questionIds": [
       "gov-data-operations-05"
@@ -569,7 +569,7 @@
       "https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/costanalysisoverview.htm"
     ],
     "diagrams": [
-      "content/CDMP-DMF/04_operaciones/img/gov-data-operations-oracle.svg"
+      "data/CDMP-DMF/04_operaciones/img/gov-data-operations-oracle.svg"
     ],
     "questionIds": [
       "gov-data-operations-04",
@@ -593,7 +593,7 @@
       "https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/costanalysisoverview.htm"
     ],
     "diagrams": [
-      "content/CDMP-DMF/04_operaciones/img/gov-data-operations-example.svg"
+      "data/CDMP-DMF/04_operaciones/img/gov-data-operations-example.svg"
     ],
     "questionIds": [
       "gov-data-operations-03"
@@ -635,7 +635,7 @@
       "https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/costanalysisoverview.htm"
     ],
     "diagrams": [
-      "content/CDMP-DMF/04_operaciones/img/gov-data-operations-exercise.svg"
+      "data/CDMP-DMF/04_operaciones/img/gov-data-operations-exercise.svg"
     ],
     "questionIds": [],
     "assessment": "Discusión guiada y ejercicio de decisión",
@@ -656,7 +656,7 @@
       "https://docs.oracle.com/en-us/iaas/data-safe/doc/data-subsetting-overview.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/05_seguridad/img/gov-data-security-concepts.svg"
+      "data/CDMP-DMF/05_seguridad/img/gov-data-security-concepts.svg"
     ],
     "questionIds": [
       "gov-data-security-05"
@@ -679,7 +679,7 @@
       "https://docs.oracle.com/en-us/iaas/data-safe/doc/data-subsetting-overview.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/05_seguridad/img/gov-data-security-principles.svg"
+      "data/CDMP-DMF/05_seguridad/img/gov-data-security-principles.svg"
     ],
     "questionIds": [
       "gov-data-security-02"
@@ -702,7 +702,7 @@
       "https://docs.oracle.com/en-us/iaas/data-safe/doc/data-subsetting-overview.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/05_seguridad/img/gov-data-security-oracle.svg"
+      "data/CDMP-DMF/05_seguridad/img/gov-data-security-oracle.svg"
     ],
     "questionIds": [
       "gov-data-security-03",
@@ -727,7 +727,7 @@
       "https://docs.oracle.com/en-us/iaas/data-safe/doc/data-subsetting-overview.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/05_seguridad/img/gov-data-security-example.svg"
+      "data/CDMP-DMF/05_seguridad/img/gov-data-security-example.svg"
     ],
     "questionIds": [],
     "assessment": "Discusión guiada y ejercicio de decisión",
@@ -767,7 +767,7 @@
       "https://docs.oracle.com/en-us/iaas/data-safe/doc/data-subsetting-overview.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/05_seguridad/img/gov-data-security-exercise.svg"
+      "data/CDMP-DMF/05_seguridad/img/gov-data-security-exercise.svg"
     ],
     "questionIds": [
       "gov-data-security-01"
@@ -790,7 +790,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/06_integracion/img/gov-data-integration-concepts.svg"
+      "data/CDMP-DMF/06_integracion/img/gov-data-integration-concepts.svg"
     ],
     "questionIds": [
       "gov-data-integration-01"
@@ -813,7 +813,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/06_integracion/img/gov-data-integration-principles.svg"
+      "data/CDMP-DMF/06_integracion/img/gov-data-integration-principles.svg"
     ],
     "questionIds": [
       "gov-data-integration-02",
@@ -837,7 +837,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/06_integracion/img/gov-data-integration-oracle.svg"
+      "data/CDMP-DMF/06_integracion/img/gov-data-integration-oracle.svg"
     ],
     "questionIds": [
       "gov-data-integration-05",
@@ -861,7 +861,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/06_integracion/img/gov-data-integration-example.svg"
+      "data/CDMP-DMF/06_integracion/img/gov-data-integration-example.svg"
     ],
     "questionIds": [],
     "assessment": "Discusión guiada y ejercicio de decisión",
@@ -901,7 +901,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/06_integracion/img/gov-data-integration-exercise.svg"
+      "data/CDMP-DMF/06_integracion/img/gov-data-integration-exercise.svg"
     ],
     "questionIds": [
       "gov-data-integration-03"
@@ -922,7 +922,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/07_contenido/img/gov-content-management-concepts.svg"
+      "data/CDMP-DMF/07_contenido/img/gov-content-management-concepts.svg"
     ],
     "questionIds": [
       "gov-content-management-01"
@@ -943,7 +943,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/07_contenido/img/gov-content-management-principles.svg"
+      "data/CDMP-DMF/07_contenido/img/gov-content-management-principles.svg"
     ],
     "questionIds": [
       "gov-content-management-02"
@@ -964,7 +964,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/07_contenido/img/gov-content-management-oracle.svg"
+      "data/CDMP-DMF/07_contenido/img/gov-content-management-oracle.svg"
     ],
     "questionIds": [
       "gov-content-management-03"
@@ -985,7 +985,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/07_contenido/img/gov-content-management-example.svg"
+      "data/CDMP-DMF/07_contenido/img/gov-content-management-example.svg"
     ],
     "questionIds": [
       "gov-content-management-04"
@@ -1025,7 +1025,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/lineage.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/07_contenido/img/gov-content-management-exercise.svg"
+      "data/CDMP-DMF/07_contenido/img/gov-content-management-exercise.svg"
     ],
     "questionIds": [
       "gov-content-management-06"
@@ -1046,7 +1046,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/features-oracle-ai-data-platform.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/08_maestros_y_referencias/img/gov-master-reference-data-concepts.svg"
+      "data/CDMP-DMF/08_maestros_y_referencias/img/gov-master-reference-data-concepts.svg"
     ],
     "questionIds": [
       "gov-master-reference-data-01"
@@ -1067,7 +1067,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/features-oracle-ai-data-platform.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/08_maestros_y_referencias/img/gov-master-reference-data-principles.svg"
+      "data/CDMP-DMF/08_maestros_y_referencias/img/gov-master-reference-data-principles.svg"
     ],
     "questionIds": [
       "gov-master-reference-data-02",
@@ -1089,7 +1089,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/features-oracle-ai-data-platform.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/08_maestros_y_referencias/img/gov-master-reference-data-oracle.svg"
+      "data/CDMP-DMF/08_maestros_y_referencias/img/gov-master-reference-data-oracle.svg"
     ],
     "questionIds": [
       "gov-master-reference-data-04"
@@ -1110,7 +1110,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/features-oracle-ai-data-platform.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/08_maestros_y_referencias/img/gov-master-reference-data-example.svg"
+      "data/CDMP-DMF/08_maestros_y_referencias/img/gov-master-reference-data-example.svg"
     ],
     "questionIds": [
       "gov-master-reference-data-05"
@@ -1148,7 +1148,7 @@
       "https://docs.oracle.com/en/cloud/paas/ai-data-platform/aidug/features-oracle-ai-data-platform.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/08_maestros_y_referencias/img/gov-master-reference-data-exercise.svg"
+      "data/CDMP-DMF/08_maestros_y_referencias/img/gov-master-reference-data-exercise.svg"
     ],
     "questionIds": [
       "gov-master-reference-data-06"
@@ -1169,7 +1169,7 @@
       "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/autonomous-lakehouse.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/09_dw_y_bi/img/gov-data-warehousing-bi-concepts.svg"
+      "data/CDMP-DMF/09_dw_y_bi/img/gov-data-warehousing-bi-concepts.svg"
     ],
     "questionIds": [
       "gov-data-warehousing-bi-01"
@@ -1190,7 +1190,7 @@
       "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/autonomous-lakehouse.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/09_dw_y_bi/img/gov-data-warehousing-bi-principles.svg"
+      "data/CDMP-DMF/09_dw_y_bi/img/gov-data-warehousing-bi-principles.svg"
     ],
     "questionIds": [
       "gov-data-warehousing-bi-02",
@@ -1212,7 +1212,7 @@
       "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/autonomous-lakehouse.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/09_dw_y_bi/img/gov-data-warehousing-bi-oracle.svg"
+      "data/CDMP-DMF/09_dw_y_bi/img/gov-data-warehousing-bi-oracle.svg"
     ],
     "questionIds": [
       "gov-data-warehousing-bi-03"
@@ -1233,7 +1233,7 @@
       "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/autonomous-lakehouse.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/09_dw_y_bi/img/gov-data-warehousing-bi-example.svg"
+      "data/CDMP-DMF/09_dw_y_bi/img/gov-data-warehousing-bi-example.svg"
     ],
     "questionIds": [
       "gov-data-warehousing-bi-04"
@@ -1271,7 +1271,7 @@
       "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/autonomous-lakehouse.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/09_dw_y_bi/img/gov-data-warehousing-bi-exercise.svg"
+      "data/CDMP-DMF/09_dw_y_bi/img/gov-data-warehousing-bi-exercise.svg"
     ],
     "questionIds": [
       "gov-data-warehousing-bi-06"
@@ -1295,7 +1295,7 @@
       "https://docs.oracle.com/en/database/data-integration/data-transforms/using/view-and-manage-annotations.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/10_metadatos/img/gov-metadata-concepts.svg"
+      "data/CDMP-DMF/10_metadatos/img/gov-metadata-concepts.svg"
     ],
     "questionIds": [
       "gov-metadata-01"
@@ -1319,7 +1319,7 @@
       "https://docs.oracle.com/en/database/data-integration/data-transforms/using/view-and-manage-annotations.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/10_metadatos/img/gov-metadata-principles.svg"
+      "data/CDMP-DMF/10_metadatos/img/gov-metadata-principles.svg"
     ],
     "questionIds": [
       "gov-metadata-02"
@@ -1343,7 +1343,7 @@
       "https://docs.oracle.com/en/database/data-integration/data-transforms/using/view-and-manage-annotations.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/10_metadatos/img/gov-metadata-oracle.svg"
+      "data/CDMP-DMF/10_metadatos/img/gov-metadata-oracle.svg"
     ],
     "questionIds": [
       "gov-metadata-03",
@@ -1368,7 +1368,7 @@
       "https://docs.oracle.com/en/database/data-integration/data-transforms/using/view-and-manage-annotations.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/10_metadatos/img/gov-metadata-example.svg"
+      "data/CDMP-DMF/10_metadatos/img/gov-metadata-example.svg"
     ],
     "questionIds": [
       "gov-metadata-05"
@@ -1412,7 +1412,7 @@
       "https://docs.oracle.com/en/database/data-integration/data-transforms/using/view-and-manage-annotations.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/10_metadatos/img/gov-metadata-exercise.svg"
+      "data/CDMP-DMF/10_metadatos/img/gov-metadata-exercise.svg"
     ],
     "questionIds": [
       "gov-metadata-06"
@@ -1434,7 +1434,7 @@
       "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/data-analysis-tool.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/11_calidad/img/gov-data-quality-concepts.svg"
+      "data/CDMP-DMF/11_calidad/img/gov-data-quality-concepts.svg"
     ],
     "questionIds": [
       "gov-data-quality-01"
@@ -1456,7 +1456,7 @@
       "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/data-analysis-tool.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/11_calidad/img/gov-data-quality-principles.svg"
+      "data/CDMP-DMF/11_calidad/img/gov-data-quality-principles.svg"
     ],
     "questionIds": [
       "gov-data-quality-02",
@@ -1479,7 +1479,7 @@
       "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/data-analysis-tool.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/11_calidad/img/gov-data-quality-oracle.svg"
+      "data/CDMP-DMF/11_calidad/img/gov-data-quality-oracle.svg"
     ],
     "questionIds": [
       "gov-data-quality-03"
@@ -1501,7 +1501,7 @@
       "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/data-analysis-tool.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/11_calidad/img/gov-data-quality-example.svg"
+      "data/CDMP-DMF/11_calidad/img/gov-data-quality-example.svg"
     ],
     "questionIds": [
       "gov-data-quality-04"
@@ -1541,7 +1541,7 @@
       "https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/data-analysis-tool.html"
     ],
     "diagrams": [
-      "content/CDMP-DMF/11_calidad/img/gov-data-quality-exercise.svg"
+      "data/CDMP-DMF/11_calidad/img/gov-data-quality-exercise.svg"
     ],
     "questionIds": [
       "gov-data-quality-06"

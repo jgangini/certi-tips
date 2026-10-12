@@ -83,7 +83,7 @@
   "presentation": {
     "viewBox": "0 0 1920 1080",
     "minimumFontSize": 32,
-    "finalSvg": "content/CDMP-DMF/02_arquitectura/img/gov-data-architecture-oracle.svg",
+    "finalSvg": "data/CDMP-DMF/02_arquitectura/img/gov-data-architecture-oracle.svg",
     "scope": "User-supplied layout with Oracle Analytics Cloud and its connector removed. Remaining geometry is uniformly enlarged and centered; rounded gray catalog/lineage/agent tags, reference-green streaming and red input/AI connectors. Label blocks are taller, with wider lineage/agent tags aligned to the left/right edges of Master Catalog, centered text and adjusted catalog connection endpoints; Memory and LLM labels use Oracle Red.",
     "sourceFontSize": 10,
     "sourceScale": 3.2,

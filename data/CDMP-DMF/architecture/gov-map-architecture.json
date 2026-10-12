@@ -30,7 +30,7 @@
   "presentation": {
     "viewBox": "0 0 1920 1080",
     "minimumFontSize": 32,
-    "finalSvg": "content/CDMP-DMF/12_matriz_dama_oracle/img/gov-map-architecture.svg",
+    "finalSvg": "data/CDMP-DMF/12_matriz_dama_oracle/img/gov-map-architecture.svg",
     "glyphPolicy": "Unmodified official plugin glyphs. Oracle Autonomous Database glyph identifies the Autonomous AI Lakehouse workload; no unrelated service substitution.",
     "scope": "Logical teaching architecture, not a network deployment topology. Solid arrows show data access paths; dashed arrow shows the Knowledge Bases dependency. Platform access is a separate control band."
   }

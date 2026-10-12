@@ -61,7 +61,7 @@
   "presentation": {
     "viewBox": "0 0 1920 1080",
     "minimumFontSize": 25.5,
-    "finalSvg": "content/CDMP-DMF/06_integracion/img/gov-data-integration-oracle.svg",
+    "finalSvg": "data/CDMP-DMF/06_integracion/img/gov-data-integration-oracle.svg",
     "scope": "Logical teaching architecture; conceptual decisions and native features are annotations, not separately provisioned products."
   }
 }
