@@ -134,11 +134,6 @@ for (const course of site.courses) {
         next: course.modules[index + 1],
       }),
     );
-    if (publicPath !== course.id) {
-      const destination = `${site.base}${publicPath}/${page.slug}/`;
-      // ponytail: static aliases keep old bookmarks; script preserves fragments, meta refresh covers no-JS.
-      await save(`${course.id}/${page.slug}/index.html`, `<!doctype html><html lang="es"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${destination}"><link rel="canonical" href="${site.origin}${destination}"><script>location.replace(${JSON.stringify(destination)}+location.hash)</script><a href="${destination}">Continuar en la guía</a></html>`);
-    }
   }
   const questions = JSON.parse(await readFile(path.join(root, "data", `${course.questionBank}.json`), "utf8"));
   for (const question of questions) knowledge.push({
@@ -146,14 +141,6 @@ for (const course of site.courses) {
     url: `${site.origin}${site.base}${publicPath}/practice/`, courseId: course.id,
     text: `${course.title}\n${question.question}\n${question.options.map(option => `${option.id === question.correctOption ? "Respuesta correcta" : "Opción incorrecta"}: ${option.text}\nExplicación: ${option.explanation}`).join("\n")}`,
   });
-  const redirect = `${site.base}${publicPath}/overview/`;
-  // ponytail: keep the former workshop URL working without a second learning mode.
-  await save(`${course.id}/talk/index.html`, `<!doctype html><html lang="es"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${redirect}"><title>CertiTips</title><link rel="canonical" href="${site.origin}${redirect}"><a href="${redirect}">Continuar en la guía</a></html>`);
-  await save(
-    `${publicPath}/index.html`,
-    `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${redirect}"><title>${escapeHtml(course.title)}</title><link rel="canonical" href="${site.origin}${redirect}"></head><body><a href="${redirect}">Abrir la guía</a></body></html>`,
-  );
-  if (publicPath !== course.id) await save(`${course.id}/index.html`, `<!doctype html><html lang="es"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${redirect}"><link rel="canonical" href="${site.origin}${redirect}"><a href="${redirect}">Abrir la guía</a></html>`);
 }
 knowledge.push({ id: "home", title: "CertiTips · Rutas de aprendizaje", url: `${site.origin}${site.base}`, courseId: "site", text: site.paths.map(group => `${group.title}\n${group.description}\n${group.items.map(item => `${item.title}: ${item.description}${item.guide ? "" : " (guía próximamente)"}`).join("\n")}`).join("\n\n") });
 const { corpus, manifest } = corpusArtifacts(knowledge, `${site.origin}${site.base}assets/certichat/corpus.json`);

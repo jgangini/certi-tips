@@ -1,6 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { globSync, readFileSync } from 'node:fs';
 import { validateSite } from '../scripts/check-site.mjs';
+import { courseRoute } from '../scripts/layout.mjs';
+
+test('publishes only current pages without course aliases or redirects', () => {
+  const catalog = JSON.parse(readFileSync(new URL('../data/catalog.json', import.meta.url), 'utf8'));
+  const dist = new URL('../dist/', import.meta.url);
+  const pages = globSync('**/*.html', { cwd: dist }).map(file => file.replaceAll('\\', '/'));
+  const expected = ['index.html', '404.html', 'certichat/index.html', 'certiquiz/index.html',
+    ...catalog.courses.flatMap(course => [...course.modules, ...course.resources].map(page => `${courseRoute(course)}/${page.slug}/index.html`))];
+  assert.deepEqual(pages.sort(), expected.sort());
+  for (const file of pages) assert.doesNotMatch(readFileSync(new URL(file, dist), 'utf8'), /http-equiv=["']refresh["']/i, file);
+});
 
 function fixture() {
   const slugs = ['overview', 'agents', 'langchain', 'mcp', 'openai', 'oci-enterprise', 'oracle-database'];

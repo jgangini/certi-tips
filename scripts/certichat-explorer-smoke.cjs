@@ -4,7 +4,7 @@ async page => {
   const assert = (condition, message) => { if (!condition) throw new Error(message); };
   const base = new URL('/certitips/', page.url()), context = await page.context().browser().newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
   const tab = await context.newPage(), requests = [], calls = [], errors = [], checks = [], geometry = [];
-  let snapshot, graphOverride, reply = {}, releaseReply, pendingReply;
+  let snapshot, graphOverride, reply = {}, releaseReply, pendingReply, releaseGraph, pendingGraph;
   const quota = { remaining: 20, limit: 20, refreshHours: 6, resetAt: null, minuteRemaining: 2, retryAfter: 0 };
   const session = { mode: 'LOCAL', authenticated: true, verificationRequired: false, available: true, quota };
   tab.on('request', request => requests.push(request.url()));
@@ -20,6 +20,7 @@ async page => {
       return route.fulfill({ status: response.status || 200, json: response.status ? { detail: 'simulated failure' } : { answer: response.answer, graphTrace: response.trace, sources: response.trace?.sources || [], quota, contentVersion: 'different-manifest-version' } });
     }
     if (url.pathname.endsWith('/assets/certichat/graph.json')) {
+      if (pendingGraph) await pendingGraph;
       if (graphOverride === 'error') return route.fulfill({ status: 503, body: '{}' });
       if (graphOverride) return route.fulfill({ json: graphOverride });
       const response = await route.fetch();
@@ -66,8 +67,23 @@ async page => {
   }, expected);
   try {
     const start = Date.now();
+    pendingGraph = new Promise(resolve => releaseGraph = resolve);
     await tab.goto(`${base.href}certichat/`);
+    const loading = tab.getByRole('status', { name: 'Cargando el mapa de conocimiento', exact: true });
+    await loading.waitFor();
+    const spinner = loading.locator('.certichat-spinner');
+    assert(!(await loading.innerText()).trim() && await spinner.getAttribute('aria-hidden') === 'true', 'Graph loader displays text or duplicates its accessible label');
+    assert(await spinner.evaluate(element => {
+      const circle = element.getBoundingClientRect(), panel = element.closest('[data-knowledge-graph]'), frame = panel.getBoundingClientRect(), heading = panel.querySelector('header').getBoundingClientRect();
+      return Math.abs(circle.width - 32) <= 1 && Math.abs(circle.height - 32) <= 1 && Math.abs(circle.left + circle.right - frame.left - frame.right) <= 2 && Math.abs(circle.top + circle.bottom - heading.bottom - frame.bottom) <= 2 && getComputedStyle(element).animationName === 'none';
+    }), 'Graph loader is not centered in the remaining panel or ignores reduced motion');
+    await tab.emulateMedia({ reducedMotion: 'no-preference' });
+    assert(await spinner.evaluate(element => getComputedStyle(element).animationName !== 'none'), 'Graph loader does not rotate');
+    await tab.emulateMedia({ reducedMotion: 'reduce' });
+    releaseGraph(); pendingGraph = undefined;
     await ready();
+    assert(await loading.isHidden() && await tab.locator('[data-graph-trace]').isHidden() && !(await tab.locator('[data-graph-trace]').textContent()).trim(), 'Graph startup leaves a loader or idle instructions visible');
+    checks.push('centered accessible graph spinner rotates, respects reduced motion, and yields to graph without idle text');
     const loadMs = Date.now() - start, initial = await state();
     assert(snapshot.nodes.length >= 4000 && snapshot.edges.length >= 10000, 'Smoke requires the real published graph, not a reduced fixture');
     assert(initial.nodes === snapshot.nodes.length && initial.edges === snapshot.edges.length, 'Network omitted public graph nodes or edges');
@@ -364,6 +380,7 @@ async page => {
     graphOverride = 'error';
     await tab.reload();
     await tab.locator('[data-graph-status]').filter({ hasText: 'No se pudo cargar la instantánea' }).waitFor();
+    assert(await tab.locator('[data-graph-status] .certichat-spinner').count() === 0 && await tab.locator('[data-graph-status]').getAttribute('aria-label') === null, 'Failed graph keeps the loading spinner or stale accessible name');
     assert(await tab.locator('[data-graph-workspace]').isHidden(), 'Unavailable graph exposes broken controls');
     checks.push('inert labels, isolated concept and snapshot failure');
     assert(!requests.some(url => new URL(url).origin !== base.origin), 'QA attempted a private or external API');
@@ -372,5 +389,5 @@ async page => {
   } catch (error) {
     const chat = await tab.evaluate(() => { const element = document.querySelector('deep-chat'), input = element?.shadowRoot?.querySelector('[role="textbox"]'); return { messages: element?.getMessages(), bubbles: [...element.shadowRoot.querySelectorAll('.ai-message')].map(node => ({ className: node.className, text: node.textContent })), saved: JSON.parse(localStorage.getItem(`certichat:${document.querySelector('[data-certichat]').dataset.siteRoot}`)), activeIds: [...document.querySelectorAll('[data-concept]')].map(node => node.dataset.concept), valid: element?.validateInput('Prueba'), text: input?.innerText, editable: input?.contentEditable, clearDisabled: document.querySelector('[data-chat-clear]')?.disabled, status: document.querySelector('[data-chat-status]')?.textContent }; }).catch(() => null);
     throw new Error(`${error.message}; passed=${JSON.stringify(checks)}; state=${JSON.stringify(await state().catch(() => null))}; calls=${JSON.stringify(calls.map(call => ({ path: call.path, question: call.body?.message })))}; chat=${JSON.stringify(chat)}; pageErrors=${JSON.stringify(errors)}`);
-  } finally { releaseReply?.(); await context.close(); }
+  } finally { releaseReply?.(); releaseGraph?.(); await context.close(); }
 }

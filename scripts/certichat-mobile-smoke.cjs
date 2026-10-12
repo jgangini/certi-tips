@@ -153,6 +153,7 @@ async (page) => {
         await input.press('Enter');
         const loading = tab.locator('deep-chat .deep-chat-loading-message-dots-container');
         await loading.waitFor({ state: 'visible' });
+        assert(await tab.locator('[data-chat-status]').isHidden(), 'Pending reply shows a loading banner above the conversation');
         const dots = await loading.evaluate(bubble => {
           const b = bubble.getBoundingClientRect(), dot = bubble.querySelector('.loading-message-dots'), d = dot.getBoundingClientRect();
           const points = [d, ...['::before', '::after'].map(pseudo => {
@@ -167,7 +168,7 @@ async (page) => {
         releaseReply();
         await tab.waitForFunction(() => document.querySelector('deep-chat').getMessages().at(-1)?.text === 'Respuesta simulada para comprobar el envío.');
         await fits(width, 844);
-        checks.push('synthetic visualViewport resize, scroll and restoration; mocked Enter submission; three loading dots centered and contained');
+        checks.push('synthetic visualViewport resize, scroll and restoration; mocked Enter submission; three loading dots centered and contained without a loading banner');
       }
       await tab.getByRole('button', { name: 'Cerrar CertiChat', exact: true }).click();
       assert(await tab.locator('#certichat-panel').isHidden() && await launcher.isVisible(), `${width}: close does not restore launcher`);

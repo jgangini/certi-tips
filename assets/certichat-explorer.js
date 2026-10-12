@@ -93,7 +93,7 @@ if (root?.dataset.knowledgeGraph) {
     for (const edge of trace?.edges || []) activeRelations.append(element("li", `${graph.byId.get(edge.source).label} → ${edge.label || "relacionado con"} → ${graph.byId.get(edge.target).label}`));
     activeFit.disabled = !trace?.nodes.length;
     const messages = {
-      idle: "Haz una consulta para ver qué conceptos se recuperan.",
+      idle: "",
       loading: "",
       error: "La consulta no se completó. No hay información que resaltar.",
       ready: "Esta respuesta no incluye conceptos recuperados que se puedan mostrar en el mapa.",
@@ -125,6 +125,7 @@ if (root?.dataset.knowledgeGraph) {
       root.querySelector("[data-graph-fit]").addEventListener("click", () => network.fit());
       activeFit.addEventListener("click", () => network.fit(true));
     } catch {
+      status.classList.remove("is-loading"); status.removeAttribute("aria-label");
       status.textContent = "No se pudo cargar la instantánea del mapa. Actualiza la página para volver a intentarlo.";
       status.hidden = false; workspace.hidden = true;
     }

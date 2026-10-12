@@ -93,7 +93,7 @@ async (page) => {
   assert(await page.evaluate(key => localStorage.getItem(key), otherQuiz) === 'other-course-sentinel', 'Quiz state crossed courses');
   assert(await page.evaluate(key => JSON.parse(localStorage.getItem(key)).agents, otherProgress), 'Progress crossed courses');
   assert(await page.locator('[data-progress-label]').textContent() === '1 de 10', 'Reset deleted reading progress');
-  await page.goto(`${base}oci-ai-foundations-2026/machine-learning/#conceptos-clave`);
+  await page.goto(`${route}machine-learning/#conceptos-clave`);
   await page.waitForURL(`${route}machine-learning/#conceptos-clave`);
   await page.locator('[data-search-open]').click();
   await page.locator('#search-query').fill('machine learning');

@@ -47,7 +47,7 @@ Los IDs de cursos, preguntas y fuentes son estables: permiten conservar progreso
 4. Asociar el ID del curso al campo `guide` de su entrada en `paths`. Una ruta sin guía conserva el estado de próximamente.
 5. Ejecutar las comprobaciones y revisar la navegación, la práctica y los diagramas en los tamaños afectados antes de publicar.
 
-Los slugs pueden repetirse entre cursos. Cuando el ID histórico y la ruta pública difieren, el constructor conserva redirecciones con el fragmento de sección. Esas páginas pequeñas de compatibilidad no son versiones del curso.
+Los slugs pueden repetirse entre cursos. Solo se publican las rutas actuales por código y módulo; la entrada de cada curso es `/<código>/overview/`. No se generan redirecciones ni carpetas con los IDs históricos. Los IDs internos se conservan para mantener el progreso, las preguntas y las fuentes de CertiChat.
 
 ## Validar y publicar
 

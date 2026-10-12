@@ -9,6 +9,7 @@ async (page) => {
   let quota = { remaining: 20, limit: 20, refreshHours: 6, resetAt: null, minuteRemaining: 2, retryAfter: 0 };
   let authenticated = true, available = true, sessionError = true, rateLimited = false, loseResponse = false, failOnce = 0;
   let mode = 'VPS';
+  let pendingSession, releaseSession;
   const waitForReply = async (text, canSubmit = true) => page.waitForFunction(({ expected, canSubmit }) => {
     const chat = document.querySelector('deep-chat'), last = chat?.getMessages().at(-1);
     return last?.role === 'ai' && last.text.includes(expected) && chat.validateInput('Siguiente consulta') === canSubmit;
@@ -37,6 +38,7 @@ async (page) => {
       responses.set(requestId, response);
       return route.fulfill({ headers, json: response });
     }
+    if (path === '/api/session' && pendingSession) await pendingSession;
     if (path === '/api/session' && sessionError) return route.abort('failed');
     if (path === '/api/session' && request.method() === 'POST') authenticated = true;
     return route.fulfill({ headers, json: { mode, authenticated, verificationRequired: !authenticated, quota, available } });
@@ -67,12 +69,28 @@ async (page) => {
   assert(calls.some(call => call.path === '/api/session' && call.method === 'POST' && Object.keys(call.body).length === 0), 'LOCAL did not create its development session');
   assert(!requests.some(url => url.includes('challenges.cloudflare.com')), 'LOCAL loaded public Turnstile');
   mode = 'VPS'; authenticated = true; sessionError = true;
+  pendingSession = new Promise(resolve => { releaseSession = resolve; });
   calls.length = 0;
   requests.length = 0;
   await page.goto(base);
   assert(!requests.some(url => /deep-chat\.js|turnstile|certichat\.cloudtechnext/.test(url)), 'Chat network loaded before opening');
   await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
+  const connecting = page.getByRole('status', { name: 'Conectando con el asistente', exact: true });
+  await connecting.waitFor();
+  assert(await page.locator('[data-chat-status]').isHidden() && await page.locator('[data-chat-messages]').isHidden(), 'Connection shows text or messages beside the initial spinner');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  const spinner = page.locator('.certichat-spinner');
+  const initial = await spinner.evaluate(element => {
+    const s = element.getBoundingClientRect(), w = element.parentElement.getBoundingClientRect(), p = element.closest('.certichat-panel').getBoundingClientRect();
+    return { centered: Math.abs(s.left + s.right - w.left - w.right) <= 2 && Math.abs(s.top + s.bottom - w.top - w.bottom) <= 2, fills: w.height > p.height / 2 && Math.abs(w.bottom - p.bottom) <= 2, animation: getComputedStyle(element).animationName, diameter: element.offsetWidth };
+  });
+  assert(initial.centered && initial.fills && initial.diameter === 32 && initial.animation === 'certichat-spin', 'Initial spinner is not centered, sized or animated');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  assert(await spinner.evaluate(element => getComputedStyle(element).animationName) === 'none', 'Connection spinner ignores reduced motion');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  releaseSession(); pendingSession = undefined;
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).waitFor();
+  assert(await connecting.isHidden(), 'Connection failure leaves its spinner visible');
   await page.waitForFunction(() => document.querySelector('[data-chat-status]').textContent.includes('Sin conexión'));
   assert(await page.locator('[data-chat-status]').isHidden(), 'Opening offline shows an error banner');
   assert(await page.locator('[data-chat-retry]').isVisible(), 'Offline status does not show Retry');
@@ -82,8 +100,12 @@ async (page) => {
   await waitForReply('Sin conexión');
   assert(!calls.some(item => item.path === '/api/chat'), 'Offline Enter attempted a paid request');
   sessionError = false;
+  pendingSession = new Promise(resolve => { releaseSession = resolve; });
   await page.getByRole('button', { name: 'Reintentar conexión' }).click();
+  await connecting.waitFor();
+  releaseSession(); pendingSession = undefined;
   await waitForReady();
+  assert(await connecting.isHidden(), 'Successful reconnection leaves its spinner visible');
   assert(await quotaNotice.isHidden(), 'Reconnecting starts the renewal window without a question');
   assert(await page.locator('[data-chat-open]').isHidden(), 'Launcher remains visible while chat is open');
   assert(await page.locator('[data-chat-retry]').isHidden(), 'Retry appears without an error');
@@ -233,17 +255,17 @@ async (page) => {
     const retried = calls.filter(item => item.body?.message === question);
     assert(retried.length === 2 && retried[0].body.requestId !== retried[1].body.requestId, `Definitive ${code} failure traps the same question`);
   }
-  for (const width of [1280, 390, 320]) {
-    await page.setViewportSize({ width, height: 740 });
+  for (const [width, height] of [[1280, 1080], [1280, 600], [390, 740], [320, 740]]) {
+    await page.setViewportSize({ width, height });
     if (width <= 800) await page.waitForFunction(() => {
       const box = document.querySelector('#certichat-panel').getBoundingClientRect();
       return Math.abs(box.width - visualViewport.width) < 1 && Math.abs(box.height - visualViewport.height) < 1;
     });
-    const geometry = await page.locator('#certichat-panel').evaluate(element => { const box = element.getBoundingClientRect(), style = getComputedStyle(element); return { left: box.left, right: box.right, top: box.top, bottom: box.bottom, viewport: innerWidth, height: innerHeight, footer: document.querySelector('.site-footer').getBoundingClientRect().top, border: style.borderTopWidth, radius: style.borderRadius, overflow: getComputedStyle(document.body).overflow }; });
+    const geometry = await page.locator('#certichat-panel').evaluate(element => { const box = element.getBoundingClientRect(), style = getComputedStyle(element); return { left: box.left, right: box.right, top: box.top, bottom: box.bottom, viewport: innerWidth, height: innerHeight, header: document.querySelector('.site-header').getBoundingClientRect().bottom, footer: document.querySelector('.site-footer').getBoundingClientRect().top, border: style.borderTopWidth, radius: style.borderRadius, overflow: getComputedStyle(document.body).overflow }; });
     if (width <= 800) {
       assert(Math.abs(geometry.left) < 1 && Math.abs(geometry.top) < 1 && Math.abs(geometry.right - geometry.viewport) < 1 && Math.abs(geometry.bottom - geometry.height) < 1, `Mobile panel is not fullscreen at ${width}`);
       assert(geometry.border === '0px' && geometry.radius === '0px' && geometry.overflow === 'hidden', `Mobile panel keeps borders or background scrolling at ${width}`);
-    } else assert(geometry.left >= 0 && geometry.right <= width && geometry.top >= 0 && geometry.bottom < geometry.footer, `Desktop panel escapes viewport/footer at ${width}`);
+    } else assert(geometry.left >= 0 && geometry.right <= width && Math.abs(geometry.top - geometry.header - 24) < 1 && Math.abs(geometry.footer - geometry.bottom - 16) < 1, `Desktop panel does not fill the space between header and footer at ${width}×${height}`);
   }
   await page.getByRole('button', { name: 'Cerrar CertiChat', exact: true }).press('Escape');
   assert(await page.locator('#certichat-panel').isHidden(), 'Escape did not close');
@@ -287,7 +309,7 @@ async (page) => {
   assert(calls.filter(item => item.path === '/api/chat').length === beforeUnavailable, 'Missing Turnstile sends an unverified request');
   await page.evaluate(() => {
     document.querySelector('[data-certichat]').dataset.siteKey = 'test-site-key';
-    window.turnstile = { render: (element, options) => { if (options.action !== 'certichat_session') throw new Error('Wrong Turnstile action'); queueMicrotask(() => options.callback('test-single-use-token')); return 'test-widget'; }, remove() {} };
+    window.turnstile = { render: (element, options) => { if (options.action !== 'certichat_session') throw new Error('Wrong Turnstile action'); if (element.closest('[hidden]')) throw new Error('Turnstile rendered in a hidden container'); queueMicrotask(() => options.callback('test-single-use-token')); return 'test-widget'; }, remove() {} };
   });
   await page.getByRole('button', { name: 'Reintentar conexión' }).click();
   await waitForReady();

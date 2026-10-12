@@ -69,6 +69,13 @@ if (root) {
   window.visualViewport?.addEventListener("scroll", fitMobileViewport);
   mobileChat.addEventListener("change", fitMobileViewport);
   const status = root.querySelector("[data-chat-status]"), verification = root.querySelector("[data-chat-verification]");
+  const messages = root.querySelector("[data-chat-messages]"), connecting = document.createElement("div");
+  connecting.className = "certichat-connecting";
+  connecting.hidden = true;
+  connecting.setAttribute("role", "status");
+  connecting.setAttribute("aria-label", "Conectando con el asistente");
+  connecting.innerHTML = '<span class="certichat-spinner" aria-hidden="true"></span>';
+  panel.append(connecting);
   const clear = root.querySelector("[data-chat-clear]"), retry = root.querySelector("[data-chat-retry]");
   const confirmation = root.querySelector("[data-chat-confirm]"), confirmClear = confirmation.querySelector("[data-chat-confirm-yes]"), cancelClear = confirmation.querySelector("[data-chat-confirm-no]");
   const storageKey = `certichat:${root.dataset.siteRoot}`;
@@ -257,7 +264,7 @@ if (root) {
             setStatus(answer, true);
             publishTrace(root.dataset.siteRoot, "error");
           } else {
-            setStatus("Consultando las guías…");
+            setStatus("");
             const message = body.messages?.at(-1)?.text?.trim() || "";
             // A transport retry reuses the UUID; the server deduplicates any paid generation.
             if (pendingRequest?.message !== message) pendingRequest = { requestId: crypto.randomUUID(), message, pageUrl: document.querySelector('link[rel="canonical"]')?.href || root.dataset.siteRoot };
@@ -283,7 +290,7 @@ if (root) {
         await signals.onResponse({ text: answer });
         persist();
       } };
-      root.querySelector("[data-chat-messages]").append(chat);
+      messages.append(chat);
     }
     // ponytail: real queries use the published origin; a loopback API remains available for local tests.
     if (preview) {
@@ -307,10 +314,11 @@ if (root) {
   async function connect() {
     verified = false; available = false; clear.disabled = true;
     retry.disabled = true;
-    setStatus("Conectando con el asistente…");
+    setStatus("");
+    connecting.hidden = false; messages.hidden = true;
     try { await initialize(); }
     catch { setStatus("Sin conexión. Vuelve a intentarlo.", true); }
-    finally { retry.disabled = false; }
+    finally { connecting.hidden = true; messages.hidden = false; retry.disabled = false; }
   }
   function closePanel() {
     if (dock) return;

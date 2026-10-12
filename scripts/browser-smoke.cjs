@@ -224,8 +224,7 @@ async (page) => {
   await page.locator('[data-start]').click();
   assert((await page.locator('.quiz-meta').textContent()).includes('1 de 12'), 'New attempt did not reset question counter');
   checks.push('reset confirmation/cancellation, cleared saved test, retained course progress, intro-only instructions');
-  await page.goto(`${base}${courseId}/talk/`);
-  await page.waitForURL(`${base}${course}/overview/`);
+  await page.goto(`${base}${course}/overview/`);
   assert(await page.locator('[data-talk-mode], a[href$="/talk/"]').count() === 0, 'Separate talk mode remains');
   await page.goto(base);
   const homeText = await page.locator('body').innerText();

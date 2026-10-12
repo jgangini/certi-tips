@@ -38,11 +38,15 @@ test("the explorer is a standalone site page and offers an honest missing-snapsh
   assert.doesNotMatch(html, /<aside class="sidebar"|data-mark-complete=/);
   assert.match(body, /data-knowledge-graph=""/);
   assert.match(body, /instantánea del grafo todavía no está publicada/);
+  assert.doesNotMatch(body, /certichat-spinner|is-loading|Haz una consulta/);
   assert.doesNotMatch(body, /id="consulta"|data-explorer-chat(?=[\s=>])|chat-explorer-flow|chat-graph-inspector|Cómo se prepara una respuesta|Explorar conceptos y relaciones/);
   assert.match(body, /<canvas data-graph-canvas tabindex="0"[^>]+role="img"[^>]+aria-label="[^"]+"/);
   assert.doesNotMatch(body, /chat-graph-help|chat-graph-legend/);
   assert.match(body, /data-graph-active aria-label="Conceptos recuperados para esta consulta"/);
-  assert.match(certichatExplorerBody(site.base, true), /data-knowledge-graph="\/certitips\/assets\/certichat\/graph.json"/);
+  const loading = certichatExplorerBody(site.base, true);
+  assert.match(loading, /data-knowledge-graph="\/certitips\/assets\/certichat\/graph.json"/);
+  assert.match(loading, /role="status" aria-label="Cargando el mapa de conocimiento"><span class="certichat-spinner" aria-hidden="true"><\/span>/);
+  assert.match(loading, /data-graph-trace role="status" hidden><\/p>/);
 });
 
 test("the published graph is a faithful static copy of the exported snapshot", () => {

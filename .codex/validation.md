@@ -104,4 +104,4 @@ if ($LASTEXITCODE -ne 0) { throw 'CertiQuiz rollout self-check failed.' }
 
 ## Archivos generados
 
-`dist/` contiene solo el último build y las redirecciones de compatibilidad previstas por el catálogo. `output/` es desechable: conservar la evidencia de la validación final y retirar allí copias de build, reportes anteriores, fixtures y experimentos al cerrar el trabajo. Comprobar los destinos resueltos y que ningún proceso los utiliza antes de borrar. Las fuentes, originales del usuario, credenciales y respaldos operativos tienen sus ubicaciones propias y no se limpian como resultados temporales.
+`dist/` contiene solo el último build con las rutas actuales por código y módulo, sin redirecciones ni alias históricos. `output/` es desechable: conservar la evidencia de la validación final y retirar allí copias de build, reportes anteriores, fixtures y experimentos al cerrar el trabajo. Comprobar los destinos resueltos y que ningún proceso los utiliza antes de borrar. Las fuentes, originales del usuario, credenciales y respaldos operativos tienen sus ubicaciones propias y no se limpian como resultados temporales.
