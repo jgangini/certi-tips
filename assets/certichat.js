@@ -59,6 +59,27 @@ if (root) {
     root.querySelector("[data-chat-close]").disabled = true;
   }
   const mobileChat = matchMedia("(max-width: 800px)");
+  const homePath = document.body.dataset.page === "home" ? document.querySelector(".path-carousel") : null;
+  function positionHomeLauncher() {
+    if (!homePath || !panel.hidden) return;
+    if (mobileChat.matches) { launcher.style.removeProperty("right"); launcher.style.removeProperty("top"); return; }
+    const card = homePath.querySelector(".path-section.is-active") || homePath;
+    const box = card.getBoundingClientRect(), top = root.getBoundingClientRect().top;
+    launcher.style.right = `${Math.max(0, innerWidth - box.right - 20)}px`;
+    launcher.style.top = `${Math.min(0, box.bottom + 20 - top)}px`;
+  }
+  if (homePath) {
+    let frame;
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; positionHomeLauncher(); }); };
+    addEventListener("scroll", schedule, { passive: true });
+    addEventListener("resize", schedule);
+    mobileChat.addEventListener("change", schedule);
+    const observer = new ResizeObserver(schedule);
+    observer.observe(homePath);
+    const footer = document.querySelector(".site-footer");
+    if (footer) observer.observe(footer);
+    schedule();
+  }
   function fitMobileViewport() {
     const viewport = window.visualViewport;
     // ponytail: track the keyboard viewport, while preserving deliberate pinch zoom.
@@ -324,16 +345,41 @@ if (root) {
     catch { setStatus("Sin conexión. Vuelve a intentarlo.", true); }
     finally { connecting.hidden = true; messages.hidden = false; retry.disabled = false; }
   }
-  function closePanel() {
-    if (dock) return;
-    try { sessionStorage.removeItem(`${storageKey}:open`); sessionStorage.removeItem(`${storageKey}:reference`); } catch { /* Storage is optional. */ }
-    panel.hidden = true; launcher.hidden = false; launcher.setAttribute("aria-expanded", "false"); launcher.focus();
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  let panelAnimation, closing = false;
+  function animatePanel(button, fold) {
+    if (dock || reducedMotion.matches || !panel.animate) return;
+    const box = panel.getBoundingClientRect();
+    if (!box.width || !box.height) return;
+    // ponytail: fold the real panel briefly; a separate overlay is only needed if scaled content becomes distracting.
+    const small = { transform: `translate(${button.right - box.right}px, ${button.bottom - box.bottom}px) scale(${button.width / box.width}, ${button.height / box.height})`, opacity: 0, borderRadius: getComputedStyle(launcher).borderRadius };
+    const full = { transform: "none", opacity: 1, borderRadius: getComputedStyle(panel).borderRadius };
+    return panel.animate(fold ? [full, small] : [small, full], { duration: 320, easing: "cubic-bezier(.22, 1, .36, 1)", fill: fold ? "forwards" : "none" });
   }
-  launcher.addEventListener("click", async () => {
-    if (!panel.hidden) return closePanel();
+  function closePanel(animate = true) {
+    if (dock || panel.hidden || closing) return;
+    try { sessionStorage.removeItem(`${storageKey}:open`); sessionStorage.removeItem(`${storageKey}:reference`); } catch { /* Storage is optional. */ }
+    panelAnimation?.cancel();
+    const finish = () => {
+      panel.hidden = true; launcher.hidden = false; launcher.style.removeProperty("visibility");
+      launcher.setAttribute("aria-expanded", "false"); launcher.focus();
+      panelAnimation?.cancel(); panelAnimation = undefined; closing = false;
+      positionHomeLauncher();
+    };
+    if (!animate || reducedMotion.matches || !panel.animate) return finish();
+    launcher.hidden = false; launcher.style.visibility = "hidden";
+    panelAnimation = animatePanel(launcher.getBoundingClientRect(), true);
+    if (!panelAnimation) return finish();
+    closing = true;
+    panelAnimation.finished.then(finish, finish);
+  }
+  launcher.addEventListener("click", async event => {
+    if (!panel.hidden) return closePanel(event.isTrusted);
+    const button = launcher.getBoundingClientRect();
     panel.hidden = false; launcher.hidden = true; launcher.setAttribute("aria-expanded", "true");
     try { sessionStorage.setItem(`${storageKey}:open`, "true"); } catch { /* The panel also works when session storage is blocked. */ }
     fitMobileViewport();
+    if (event.isTrusted) panelAnimation = animatePanel(button, false);
     if (!dock) root.querySelector("[data-chat-close]").focus();
     if (!opening) { opening = connect(); await opening; opening = undefined; }
   });
@@ -348,10 +394,10 @@ if (root) {
     try {
       const open = sessionStorage.getItem(`${storageKey}:open`) === "true";
       if (open && panel.hidden) launcher.click();
-      if (!open && !panel.hidden) closePanel();
+      if (!open && !panel.hidden) closePanel(false);
     } catch { /* Keep the restored panel state if storage is unavailable. */ }
   });
-  root.querySelector("[data-chat-close]").addEventListener("click", closePanel);
+  root.querySelector("[data-chat-close]").addEventListener("click", () => closePanel());
   if (dock) {
     const map = root.querySelector('a[aria-label="Ver el grafo de CertiChat"]');
     map.dataset.chatMap = "";

@@ -95,6 +95,11 @@ async (page) => {
   await mcpBranch.locator('summary').focus();
   await page.keyboard.press('Enter');
   assert(await mcpBranch.evaluate(branch => branch.open), 'Keyboard did not expand the module tree');
+  assert(await mcpBranch.evaluate(branch => {
+    const number = branch.previousElementSibling.querySelector('.nav-number').getBoundingClientRect();
+    const line = branch.querySelector('.nav-sections').getBoundingClientRect();
+    return Math.abs((number.left + number.right) / 2 - line.left) <= 1;
+  }), 'Section guide is not aligned with the module number');
   await mcpBranch.locator('a[href$="#conceptos-clave"]').click();
   await page.waitForURL(`${base}${course}/mcp/#conceptos-clave`);
   assert(await menu.getAttribute('aria-expanded') === 'false', 'Section navigation did not close mobile menu');
@@ -124,9 +129,11 @@ async (page) => {
       await button.locator('img').evaluate(image => image.decode());
       await button.click();
       assert(await page.locator('#diagram-viewer').evaluate(dialog => dialog.open), `Diagram did not open: ${slug}`);
+      assert(await page.locator('#diagram-viewer').evaluate(dialog => dialog.getAnimations().length > 0), 'Diagram did not animate from its thumbnail');
       await page.keyboard.press('Tab');
       assert(await page.evaluate(() => document.querySelector('#diagram-viewer').contains(document.activeElement)), 'Focus escaped modal');
       await page.keyboard.press('Escape');
+      await page.waitForFunction(() => !document.querySelector('#diagram-viewer').open);
       assert(await button.evaluate(element => document.activeElement === element), 'Diagram did not restore focus');
     }
   }

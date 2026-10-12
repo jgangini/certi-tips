@@ -108,6 +108,8 @@ async (page) => {
       }
       await launcher.click();
       await ready();
+      const graphLink = tab.locator('.certichat-actions > a');
+      assert(width <= 800 ? await graphLink.isHidden() : await graphLink.isVisible(), `${width}: graph link visibility does not match the mobile layout`);
       const before = await fits(width, 844);
       await tab.locator('deep-chat #messages').evaluate(element => { element.scrollTop = 0; });
       await settle();

@@ -265,12 +265,14 @@ async (page) => {
     } else assert(geometry.left >= 0 && geometry.right <= width && Math.abs(geometry.top - geometry.header - 24) < 1 && Math.abs(geometry.footer - geometry.bottom - 16) < 1, `Desktop panel does not fill the space between header and footer at ${width}×${height}`);
   }
   await page.getByRole('button', { name: 'Cerrar CertiChat', exact: true }).press('Escape');
+  await page.locator('#certichat-panel').waitFor({ state: 'hidden' });
   assert(await page.locator('#certichat-panel').isHidden(), 'Escape did not close');
   assert(await page.locator('[data-chat-open]').isVisible(), 'Closing the panel did not restore the launcher');
   assert(await page.locator('body').evaluate(element => getComputedStyle(element).overflow) !== 'hidden', 'Closing mobile chat did not restore page scrolling');
   assert(await page.getByRole('button', { name: 'CertiChat', exact: true }).evaluate(element => document.activeElement === element), 'Focus not restored');
   await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
   await page.getByRole('button', { name: 'Cerrar CertiChat', exact: true }).click();
+  await page.locator('#certichat-panel').waitFor({ state: 'hidden' });
   assert(await page.locator('#certichat-panel').isHidden() && await page.locator('[data-chat-open]').isVisible(), 'Close button did not hide the panel and restore launcher');
   authenticated = false;
   available = false;

@@ -41,6 +41,7 @@ async (page) => {
       await button.click();
       assert(await page.locator('#diagram-viewer').evaluate(dialog => dialog.open), 'Diagram did not open');
       await page.keyboard.press('Escape');
+      await page.waitForFunction(() => !document.querySelector('#diagram-viewer').open);
       assert(await button.evaluate(element => document.activeElement === element), 'Diagram focus not restored');
       diagrams++;
     }

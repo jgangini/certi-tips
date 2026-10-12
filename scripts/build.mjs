@@ -40,15 +40,17 @@ md.renderer.rules.image = (tokens, index, _options, env) => {
   const src = escapeHtml(imageUrl);
   const alt = escapeHtml(token.content);
   const caption = escapeHtml(token.attrGet("title") || token.content);
+  env.gallery.push({ src: imageUrl, alt: token.content, caption: token.attrGet("title") || token.content, module: env.pageTitle });
   const size = imageSizes.get(imageUrl);
   if (!size?.every(value => Number.isFinite(value) && value > 0)) throw new Error(`Missing image dimensions: ${src}`);
   return `<button class="diagram" type="button" data-diagram="${src}" aria-label="Ampliar: ${alt}"><img src="${src}" alt="${alt}" width="${size[0]}" height="${size[1]}" loading="lazy"><span>${caption} <span aria-hidden="true">↗</span></span></button>`;
 };
 
-function renderMarkdown(source, publicPath) {
+function renderMarkdown(source, publicPath, pageTitle) {
   const tokens = md.parse(source.replaceAll("{{base}}", site.base), {});
   const toc = annotateHeadings(tokens);
-  return { html: md.renderer.render(tokens, md.options, { publicPath }), toc, tokens };
+  const env = { publicPath, pageTitle, gallery: [] };
+  return { html: md.renderer.render(tokens, md.options, env), toc, tokens, gallery: env.gallery };
 }
 
 async function save(relative, html) {
@@ -91,7 +93,7 @@ async function renderPage(course, page) {
   if (!source.startsWith(`${contentRoot}${path.sep}`)) throw new Error("Course source must stay inside data/.");
   const publicPath = `${courseRoute(course)}/${page.slug}`;
   await publishImages(path.dirname(source), publicPath);
-  return renderMarkdown(await readFile(source, "utf8"), publicPath);
+  return renderMarkdown(await readFile(source, "utf8"), publicPath, page.title);
 }
 
 try {
@@ -117,6 +119,7 @@ for (const course of site.courses) {
     page.slug,
     await renderPage(course, page),
   ])));
+  await save(`${publicPath}/gallery.json`, JSON.stringify(pages.flatMap(page => rendered.get(page.slug).gallery)));
   const tocByPage = new Map([...rendered].map(([slug, { toc }]) => [slug, toc]));
   for (const page of pages) {
     const { html, tokens } = rendered.get(page.slug);

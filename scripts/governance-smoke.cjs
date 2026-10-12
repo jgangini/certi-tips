@@ -107,11 +107,33 @@ async (page) => {
         await page.keyboard.press('Tab');
         assert(await page.evaluate(() => document.querySelector('#diagram-viewer').contains(document.activeElement)), 'Focus escaped the diagram dialog');
         await page.keyboard.press('Escape');
+        await page.waitForFunction(() => !document.querySelector('#diagram-viewer').open);
         assert(await button.evaluate(element => document.activeElement === element), 'Diagram did not restore keyboard focus');
         diagrams++;
       }
     }
     await page.goto(`${route}governance/`);
+    const diagram = page.locator('[data-diagram]').first();
+    await diagram.scrollIntoViewIfNeeded();
+    await diagram.click();
+    const viewer = page.locator('#diagram-viewer');
+    assert(await viewer.evaluate(element => getComputedStyle(element, '::backdrop').backdropFilter.includes('blur(')), 'Diagram backdrop has no glass blur');
+    await viewer.locator('[data-diagram-present]').click();
+    await page.waitForFunction(() => document.querySelector('#diagram-viewer').classList.contains('is-presenting') && document.querySelector('.diagram-slide-count').textContent.includes('/'));
+    const galleryLength = await page.evaluate(async () => (await (await fetch('/certitips/CDMP-DMF/gallery.json')).json()).length);
+    assert(await viewer.locator('.diagram-presentation-nav button').count() === galleryLength && galleryLength > 5, 'Presentation does not contain every course diagram');
+    const firstCount = await viewer.locator('.diagram-slide-count').textContent();
+    await page.keyboard.press('ArrowRight');
+    await page.waitForFunction(previous => document.querySelector('.diagram-slide-count').textContent !== previous, firstCount);
+    const secondCount = await viewer.locator('.diagram-slide-count').textContent();
+    await viewer.locator('.dialog-content img').click();
+    await page.waitForFunction(previous => document.querySelector('.diagram-slide-count').textContent !== previous, secondCount);
+    await viewer.locator('.diagram-presentation-nav button').last().click();
+    await page.waitForFunction(total => document.querySelector('.diagram-slide-count').textContent === `${total}/${total}`, galleryLength);
+    await page.waitForFunction(() => !document.querySelector('.diagram-slide-count').classList.contains('is-visible'));
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !document.querySelector('#diagram-viewer').open);
+    assert(await diagram.evaluate(element => document.activeElement === element), 'Presentation did not restore focus to the opener');
     const lightBackground = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
     await page.locator('[data-theme-toggle]').click();
     assert(await page.locator('[data-theme-toggle]').getAttribute('aria-pressed') === 'true', 'Dark theme did not activate');

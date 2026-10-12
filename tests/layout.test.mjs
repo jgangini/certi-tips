@@ -6,10 +6,10 @@ import MarkdownIt from "markdown-it";
 import { layout, sidebar, homeBody, certiquizBody, courseRoute } from "../scripts/layout.mjs";
 
 test("the image viewer refreshes its description when switching diagrams", () => {
-  const caption = { textContent: "" }, description = { textContent: "" }, enlarged = {};
+  const caption = { textContent: "" }, description = { textContent: "" }, enlarged = { addEventListener() {} };
   const close = { focus() {}, addEventListener() {} };
   const dialog = {
-    querySelector: selector => ({ img: enlarged, button: close, "[data-close-diagram]": close, "#diagram-description": description })[selector],
+    querySelector: selector => ({ "img": enlarged, ".dialog-content img": enlarged, "[data-diagram-present]": close, ".diagram-presentation-nav": {}, ".diagram-slide-count": {}, button: close, "[data-close-diagram]": close, "#diagram-description": description })[selector],
     showModal() {}, addEventListener() {},
   };
   const buttons = [

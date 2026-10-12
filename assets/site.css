@@ -888,7 +888,7 @@ progress::-webkit-progress-value {
   margin-top: 3px;
 }
 .nav-sections {
-  margin: 5px 0 12px 27px;
+  margin: 5px 0 12px 18px;
   border-left: 1px solid var(--line);
   padding-left: 9px;
 }
@@ -1313,6 +1313,7 @@ dialog::backdrop {
 }
 .dialog-toolbar p {
   margin: 0;
+  flex: 1;
   font-weight: 600;
   font-size: 0.88rem;
 }
@@ -1324,6 +1325,8 @@ dialog::backdrop {
   padding: 7px 12px;
   font-size: 0.8rem;
 }
+.dialog-toolbar [data-diagram-present] { display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 7px; }
+.dialog-toolbar [data-diagram-present][hidden] { display: none; }
 .dialog-toolbar kbd {
   font-size: 0.65rem;
   background: var(--paper);
@@ -1339,10 +1342,45 @@ dialog::backdrop {
   width: 100%;
   min-width: 960px;
 }
+#diagram-viewer::backdrop { background: #16212b66; backdrop-filter: blur(12px) saturate(.85); -webkit-backdrop-filter: blur(12px) saturate(.85); animation: diagram-backdrop-in 300ms ease-out both; }
+#diagram-viewer.is-closing::backdrop { animation: diagram-backdrop-out 300ms ease-in both; }
+@keyframes diagram-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes diagram-backdrop-out { from { opacity: 1; } to { opacity: 0; } }
+.diagram-presentation-nav, .diagram-slide-count { display: none; }
+#diagram-viewer[open].is-presenting {
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  display: grid;
+  grid-template-columns: 156px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+#diagram-viewer.is-presenting .dialog-toolbar { grid-column: 1 / -1; }
+#diagram-viewer.is-presenting .diagram-presentation-nav { display: flex; flex-direction: column; gap: 8px; grid-column: 1; grid-row: 2 / 4; overflow: auto; padding: 12px; border-right: 1px solid var(--line); background: var(--white); }
+.diagram-presentation-nav button { flex: none; width: 100%; padding: 5px; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); color: var(--ink); text-align: left; cursor: pointer; }
+.diagram-presentation-nav button[aria-current="true"] { border: 2px solid var(--accent); }
+.diagram-presentation-nav img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: contain; }
+.diagram-presentation-nav span { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: .7rem; }
+#diagram-viewer.is-presenting .dialog-content { grid-column: 2; grid-row: 2; display: grid; place-items: center; min-height: 0; max-height: none; padding: 12px; cursor: pointer; }
+#diagram-viewer.is-presenting .dialog-content img { width: 100%; height: 100%; min-width: 0; object-fit: contain; }
+#diagram-viewer.is-presenting #diagram-description { grid-column: 2; grid-row: 3; max-height: 96px; overflow: auto; }
+#diagram-viewer.is-presenting .diagram-slide-count { display: block; position: absolute; right: 22px; bottom: 22px; padding: 5px 10px; border-radius: 6px; background: #16212bcb; color: #fff; font-size: .8rem; opacity: 0; visibility: hidden; transition: opacity 250ms, visibility 250ms; pointer-events: none; }
+#diagram-viewer.is-presenting .diagram-slide-count.is-visible { opacity: 1; visibility: visible; }
+@media (max-width: 700px) { #diagram-viewer[open].is-presenting { grid-template-columns: 82px minmax(0, 1fr); } #diagram-viewer.is-presenting .diagram-presentation-nav { padding: 5px; } .diagram-presentation-nav span { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  #diagram-viewer::backdrop { animation: none; }
+  .diagram-slide-count { transition: none !important; }
+}
 #diagram-viewer[open][aria-describedby] {
   display: flex;
   flex-direction: column;
 }
+#diagram-viewer[open][aria-describedby].is-presenting { display: grid; }
 #diagram-viewer[aria-describedby] .dialog-toolbar {
   flex-shrink: 0;
 }
