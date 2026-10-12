@@ -51,6 +51,7 @@ async page => {
     await tab.locator('#certichat-panel').waitFor({ state: 'visible' });
     await tab.waitForFunction(() => document.querySelector('deep-chat')?.validateInput('Prueba') && !document.querySelector('[data-chat-clear]').disabled);
   };
+  const alignedFooter = () => tab.waitForFunction(() => Math.abs(document.querySelector('.chat-graph-footer').getBoundingClientRect().top - document.querySelector('deep-chat').shadowRoot.querySelector('#input').getBoundingClientRect().top) <= 1);
   const send = async (question, trace, status = 0) => {
     await openChat();
     reply = { answer: `Respuesta: ${question}.`, trace, status };
@@ -106,6 +107,22 @@ async page => {
       assert(await tab.getByRole('button', { name, exact: true }).count() === 1, 'Map control accessible name is ambiguous');
     }
     await openChat();
+    await alignedFooter();
+    assert(await tab.locator('.chat-graph-evidence').evaluate(element => element.getBoundingClientRect().height) === 0, 'Idle evidence leaves an empty row above graph metadata');
+    const composer = tab.getByRole('textbox', { name: 'Escribe tu consulta', exact: true });
+    await composer.fill('Primera línea\nSegunda línea\nTercera línea');
+    await alignedFooter();
+    assert(await tab.locator('.chat-graph-footer').evaluate(element => element.getBoundingClientRect().height) > 46, 'Graph footer does not follow the multiline composer');
+    await composer.fill(''); await alignedFooter();
+    const governance = tab.locator('.path-nav .path-group').filter({ hasText: 'Governance' });
+    await governance.locator('summary').click();
+    assert(await governance.locator('.path-group-panel a').first().evaluate(link => {
+      const menu = link.getBoundingClientRect(), chat = document.querySelector('#certichat-panel').getBoundingClientRect();
+      const left = Math.max(menu.left, chat.left), right = Math.min(menu.right, chat.right), top = Math.max(menu.top, chat.top), bottom = Math.min(menu.bottom, chat.bottom);
+      return right > left && bottom > top && link.contains(document.elementFromPoint((left + right) / 2, (top + bottom) / 2));
+    }), 'Governance menu is covered by the overlapping chat panel');
+    await governance.locator('summary').click();
+    checks.push('graph footer aligns with empty and multiline composer; Governance menu receives pointer above chat');
     assert(await tab.locator('[data-chat-close]').isDisabled(), 'Explorer permits closing its persistent chat');
     assert(await tab.locator('[data-chat-open]').isHidden(), 'Auto-opened chat leaves a redundant launcher');
     await tab.getByRole('textbox', { name: 'Escribe tu consulta', exact: true }).press('Escape');
@@ -336,7 +353,7 @@ async page => {
           const svg = button.querySelector('svg'), bounds = svg.getBBox(), s = getComputedStyle(button);
           return { ...box(button), svg: box(svg), hasDrawing: bounds.width > 0 && bounds.height > 0, backgroundImage: s.backgroundImage, opacity: s.opacity, disabled: button.disabled };
         });
-        return { width: innerWidth, page: document.documentElement.scrollWidth, map: box(map), chat: box(chat), canvas: box(map.querySelector('canvas')), mapHeading: box(map.querySelector('header')), chatHeading: box(chat.querySelector('header')), mapStyle: style(map), chatStyle: style(chat), bodyOverflow: getComputedStyle(document.body).overflow, network: box(network), toolbar: box(toolbar), controls };
+        return { width: innerWidth, page: document.documentElement.scrollWidth, map: box(map), chat: box(chat), canvas: box(map.querySelector('canvas')), mapHeading: box(map.querySelector('header')), chatHeading: box(chat.querySelector('header')), mapFooter: box(map.querySelector('.chat-graph-footer')), composer: box(chat.querySelector('deep-chat').shadowRoot.querySelector('#input')), meta: box(map.querySelector('[data-graph-meta]')), mapStyle: style(map), chatStyle: style(chat), bodyOverflow: getComputedStyle(document.body).overflow, network: box(network), toolbar: box(toolbar), controls };
       });
       assert(measured.page <= width + 1 && measured.canvas.left >= -1 && measured.canvas.right <= width + 1 && measured.canvas.height >= 200, `Map overflows or collapses at ${width}: ${JSON.stringify(measured)}`);
       assert(measured.mapStyle.border === '4px' && measured.chatStyle.border === '4px' && measured.mapStyle.color === measured.chatStyle.color, `Map and chat lost their matching red top borders at ${width}`);
@@ -344,6 +361,7 @@ async page => {
       assert(Math.abs(measured.canvas.top - measured.mapHeading.bottom) <= 1, `Unwanted gap remains between Cognee header and graph at ${width}`);
       if (width >= 1024) {
         assert(measured.map.right <= measured.chat.left && Math.abs(measured.map.top - measured.chat.top) <= 1 && Math.abs(measured.map.height - measured.chat.height) <= 1, `Desktop panels are not aligned side by side at ${width}`);
+        assert(Math.abs(measured.mapFooter.top - measured.composer.top) <= 1 && measured.meta.top >= measured.mapFooter.top && measured.meta.bottom <= measured.mapFooter.bottom, `Graph metadata and composer separators diverge or metadata is clipped at ${width}`);
       } else {
         assert(measured.map.bottom <= measured.chat.top && Math.abs(measured.map.left - measured.chat.left) <= 1 && Math.abs(measured.map.width - measured.chat.width) <= 1, `Mobile panels do not stack with matching widths at ${width}`);
         assert(measured.chatStyle.position !== 'fixed' && measured.bodyOverflow !== 'hidden', `Mobile explorer still uses a fullscreen overlay at ${width}`);

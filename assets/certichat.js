@@ -208,7 +208,7 @@ if (root) {
       chat.messageStyles = { default: { shared: { bubble: { maxWidth: "92%", fontSize: "14px", lineHeight: "1.5" } }, ai: { bubble: { backgroundColor: "var(--hover)", color: "var(--ink)" } }, user: { bubble: { backgroundColor: "var(--accent)", color: "var(--on-red)" } } } };
       chat.messageStyles.loading = { message: { styles: { bubble: { display: "flex", alignItems: "center", justifyContent: "center", width: "56px", height: "36px", padding: "0", boxSizing: "border-box" } } } };
       chat.remarkable = { html: false, applyHTML: false };
-      chat.auxiliaryStyle = "* { overflow-wrap: anywhere; } #chat-view { grid-template-rows: minmax(0, 1fr) auto auto; } #certichat-quota { color: var(--muted); text-align: center; font-size: 12px; line-height: 1.4; padding: 8px 12px; } #certichat-quota[hidden] { display: none; } a { color: var(--blue); text-decoration: underline; } a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; } @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }";
+      chat.auxiliaryStyle = "* { overflow-wrap: anywhere; } #messages { scrollbar-color: var(--scrollbar) transparent; scrollbar-width: thin; } #chat-view { grid-template-rows: minmax(0, 1fr) auto auto; } #certichat-quota { color: var(--muted); text-align: center; font-size: 12px; line-height: 1.4; padding: 8px 12px; } #certichat-quota[hidden] { display: none; } a { color: var(--blue); text-decoration: underline; } a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; } @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }";
       if (dock) chat.auxiliaryStyle += `${responseSelector}:not(.streamed-message) { border: 1px solid transparent; cursor: pointer; } ${responseSelector}:not(.streamed-message):hover { border-color: var(--red); } ${responseSelector}:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }`;
       chat.introMessage = { text: "Hola. Resuelve tus dudas sobre las guías y prácticas del sitio." };
       chat.history = saved.messages.map(({ role, text }) => ({ role, text }));
@@ -234,6 +234,10 @@ if (root) {
         input?.setAttribute("enterkeyhint", "send");
         chat.shadowRoot.querySelector('.input-button.inside-end')?.setAttribute("aria-label", "Enviar consulta");
         if (dock) {
+          new ResizeObserver(([entry]) => {
+            const height = entry.target.getBoundingClientRect().height;
+            if (height) dock.parentElement.style.setProperty("--chat-composer-height", `${height}px`);
+          }).observe(chat.shadowRoot.querySelector("#input"), { box: "border-box" });
           chat.shadowRoot.addEventListener("click", focusResponse);
           chat.shadowRoot.addEventListener("keydown", focusResponse);
           chat.shadowRoot.querySelectorAll(responseSelector).forEach(bubble => { bubble.tabIndex = 0; });
@@ -322,22 +326,31 @@ if (root) {
   }
   function closePanel() {
     if (dock) return;
-    try { sessionStorage.removeItem(`${storageKey}:reference`); } catch { /* Storage is optional. */ }
+    try { sessionStorage.removeItem(`${storageKey}:open`); sessionStorage.removeItem(`${storageKey}:reference`); } catch { /* Storage is optional. */ }
     panel.hidden = true; launcher.hidden = false; launcher.setAttribute("aria-expanded", "false"); launcher.focus();
   }
   launcher.addEventListener("click", async () => {
     if (!panel.hidden) return closePanel();
     panel.hidden = false; launcher.hidden = true; launcher.setAttribute("aria-expanded", "true");
+    try { sessionStorage.setItem(`${storageKey}:open`, "true"); } catch { /* The panel also works when session storage is blocked. */ }
     fitMobileViewport();
     if (!dock) root.querySelector("[data-chat-close]").focus();
     if (!opening) { opening = connect(); await opening; opening = undefined; }
   });
-  let followedReference = false;
+  let wasOpen = false;
   try {
-    followedReference = sessionStorage.getItem(`${storageKey}:reference`) === location.href;
+    wasOpen = sessionStorage.getItem(`${storageKey}:open`) === "true" || sessionStorage.getItem(`${storageKey}:reference`) === location.href;
     sessionStorage.removeItem(`${storageKey}:reference`);
   } catch { /* Browsers may disable session storage. */ }
-  if (dock || location.hash === "#certichat" || followedReference) launcher.click();
+  if (dock || location.hash === "#certichat" || wasOpen) launcher.click();
+  window.addEventListener("pageshow", event => {
+    if (!event.persisted || dock) return;
+    try {
+      const open = sessionStorage.getItem(`${storageKey}:open`) === "true";
+      if (open && panel.hidden) launcher.click();
+      if (!open && !panel.hidden) closePanel();
+    } catch { /* Keep the restored panel state if storage is unavailable. */ }
+  });
   root.querySelector("[data-chat-close]").addEventListener("click", closePanel);
   if (dock) {
     const map = root.querySelector('a[aria-label="Ver el grafo de CertiChat"]');

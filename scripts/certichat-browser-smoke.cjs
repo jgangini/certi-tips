@@ -2,6 +2,7 @@
 // Isolated local browser, mocked API in either build mode; no screenshots or paid calls.
 async (page) => {
   const base = new URL('/certitips/', page.url()).href;
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
   const assert = (condition, message) => { if (!condition) throw new Error(message); };
   const calls = [], requests = [], errors = [], responses = new Map();
   const answer = '<img src="https://evil.invalid/leak" onerror="alert(1)">\n![imagen](https://evil.invalid/) [enlace](javascript:alert(1))\nLos agentes utilizan herramientas y consultan las guías para resolver una tarea. Revisa las fuentes de esta respuesta para ampliar los conceptos y practicar con los ejemplos publicados en el sitio.';
@@ -63,11 +64,11 @@ async (page) => {
   });
   mode = 'LOCAL'; authenticated = false; sessionError = false;
   await page.goto(base);
-  await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
   await waitForReady();
   assert(await quotaNotice.isHidden(), 'Renewal countdown appears before the first question');
   assert(calls.some(call => call.path === '/api/session' && call.method === 'POST' && Object.keys(call.body).length === 0), 'LOCAL did not create its development session');
   assert(!requests.some(url => url.includes('challenges.cloudflare.com')), 'LOCAL loaded public Turnstile');
+  await page.getByRole('button', { name: 'Cerrar CertiChat', exact: true }).click();
   mode = 'VPS'; authenticated = true; sessionError = true;
   pendingSession = new Promise(resolve => { releaseSession = resolve; });
   calls.length = 0;
@@ -167,7 +168,6 @@ async (page) => {
   const chatCalls = calls.filter(item => item.path === '/api/chat').length;
   for (const destination of [null, `${base}1Z0-1157-26/agents/`, base]) {
     if (destination) await page.goto(destination); else await page.reload();
-    await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
     await waitForReady();
     assert(await page.locator('deep-chat').evaluate(element => JSON.stringify(element.getMessages())) === transcript, 'Navigation or reload lost the transcript');
     assert(await guideLink.count() === 1 && await guideLink.getAttribute('href') === guideURL, 'Navigation or reload lost the persisted guide link or anchor');
@@ -194,7 +194,6 @@ async (page) => {
   assert(calls.some(item => item.path === '/api/conversation' && item.method === 'DELETE'), 'No server conversation deletion');
   assert(await quotaNotice.isHidden() && quota.remaining === 18 && quota.resetAt === firstReset, 'Clear reset quota or displayed the countdown before exhaustion');
   await page.reload();
-  await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
   await waitForReady();
   assert(await page.locator('deep-chat').evaluate(element => element.getMessages().length) === 0, 'Cleared history returned after reload');
   assert(await page.locator('[data-chat-sources]').count() === 0 && await guideLink.count() === 0, 'Cleared reference links returned after reload');
@@ -213,7 +212,6 @@ async (page) => {
   await waitForReply('Sin conexión. Vuelve a intentarlo.');
   const beforeRecovery = calls.filter(item => item.path === '/api/chat').length;
   await page.reload();
-  await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
   await waitForReady();
   assert(calls.filter(item => item.path === '/api/chat').length === beforeRecovery, 'Pending request was automatically resent after reload');
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).fill('Consulta con conexión interrumpida');
@@ -232,7 +230,6 @@ async (page) => {
     return text.length > 2 && text.length < expected.length / 2 && expected.startsWith(text) && !chat.validateInput('Otra consulta');
   }, answer);
   await page.reload();
-  await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
   await waitForReady();
   assert(calls.filter(item => item.body?.message === interruptedQuestion).length === 1, 'Reload during streaming automatically resubmitted the question');
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).fill(interruptedQuestion);
@@ -297,6 +294,7 @@ async (page) => {
   assert(calls.filter(item => item.path === '/api/chat').length === beforeUnavailable, 'Unavailable service sends a verified request');
   available = true;
   authenticated = false;
+  await page.getByRole('button', { name: 'Cerrar CertiChat', exact: true }).click();
   await page.goto(base);
   await page.locator('[data-certichat]').evaluate(element => { element.dataset.siteKey = ''; });
   await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
@@ -317,6 +315,7 @@ async (page) => {
   await page.evaluate(() => { document.documentElement.dataset.theme = 'dark'; });
   const darkColors = await page.locator('deep-chat').evaluate(element => ({ background: getComputedStyle(element).backgroundColor, text: getComputedStyle(element).color }));
   assert(darkColors.background === 'rgb(14, 17, 23)' && darkColors.text === 'rgb(250, 250, 250)', 'Deep Chat does not follow dark theme');
+  await page.getByRole('button', { name: 'Cerrar CertiChat', exact: true }).click();
   await page.goto(`${base}1Z0-1157-26/agents/`);
   await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
   await page.locator('[data-mark-complete]').waitFor({ state: 'visible' });

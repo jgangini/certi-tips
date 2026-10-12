@@ -20,7 +20,9 @@
 .chat-graph-card p { margin: 4px 0 0; color: var(--muted); }
 .chat-graph-card a { display: block; margin-top: 5px; color: var(--red); }
 .chat-graph-card[hidden] { display: none; }
-.chat-graph-footer { flex-shrink: 0; max-height: 140px; padding: 8px 16px; border-top: 1px solid var(--line); overflow: auto; overscroll-behavior: contain; }
+.chat-graph-evidence { flex-shrink: 0; max-height: 140px; padding: 0 16px; overflow: auto; overscroll-behavior: contain; }
+.chat-graph-evidence:has(.chat-graph-trace:not([hidden]), .chat-graph-active:not(:empty)) { border-top: 1px solid var(--line); }
+.chat-graph-footer { flex-shrink: 0; min-height: var(--chat-composer-height, 46px); display: flex; align-items: center; padding: 4px 16px; border-top: 1px solid var(--line); }
 .chat-graph-meta { color: var(--muted); font-size: 12px; line-height: 1.5; margin: 0; }
 .chat-graph-trace { font-size: 13px; margin: 6px 0; }
 .chat-graph-active { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 8px 0; }

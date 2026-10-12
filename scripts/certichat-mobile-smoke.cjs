@@ -211,12 +211,75 @@ async (page) => {
     assert(await referenceTab.evaluate(() => sessionStorage.getItem(`certichat:${document.querySelector('[data-certichat]').dataset.siteRoot}:reference`) === null), 'Reference marker was not consumed');
     await reference.click();
     assert(await referenceTab.locator('#certichat-panel').isVisible(), 'Following the current anchor closes the chat');
+    for (const theme of ['light', 'dark']) {
+      await referenceTab.evaluate(value => { document.documentElement.dataset.theme = value; }, theme);
+      const scrollbars = await referenceTab.evaluate(() => [document.querySelector('.sidebar nav'), document.querySelector('deep-chat').shadowRoot.querySelector('#messages')].map(element => {
+        const style = getComputedStyle(element); return { width: style.scrollbarWidth, color: style.scrollbarColor };
+      }));
+      assert(scrollbars[0].width === 'thin' && JSON.stringify(scrollbars[0]) === JSON.stringify(scrollbars[1]), `Chat scrollbar differs from the sidebar in ${theme} theme`);
+    }
+    phase = 'open conversation across ordinary navigation';
+    await referenceTab.locator('.path-nav').getByText('Governance', { exact: true }).click();
+    const menuOverlap = await referenceTab.locator('.path-nav').getByRole('link', { name: 'Data Management Fundamentals', exact: true }).evaluate(link => {
+      const a = link.getBoundingClientRect(), b = document.querySelector('#certichat-panel').getBoundingClientRect();
+      const left = Math.max(a.left, b.left), right = Math.min(a.right, b.right), top = Math.max(a.top, b.top), bottom = Math.min(a.bottom, b.bottom);
+      return { intersects: left < right && top < bottom, onTop: link.contains(document.elementFromPoint((left + right) / 2, (top + bottom) / 2)) };
+    });
+    assert(menuOverlap.intersects && menuOverlap.onTop, 'Governance link is covered by the floating chat');
+    await referenceTab.locator('.path-nav').getByText('Governance', { exact: true }).click();
+    const courseURL = new URL('1Z0-1122-26/overview/', publicBase).href;
+    for (const destination of [courseURL, publicBase.href, null]) {
+      if (destination === courseURL) {
+        await referenceTab.locator('.path-nav').getByText('Foundation', { exact: true }).click();
+        await Promise.all([referenceTab.waitForURL(destination), referenceTab.locator('.path-nav').getByRole('link', { name: 'OCI AI Foundations Associate', exact: true }).click()]);
+      } else if (destination) {
+        await Promise.all([referenceTab.waitForURL(destination), referenceTab.getByRole('link', { name: 'CertiTips, inicio', exact: true }).click()]);
+      } else await referenceTab.reload();
+      await referenceTab.getByRole('textbox', { name: 'Escribe tu consulta' }).waitFor();
+      assert(await referenceTab.locator('#certichat-panel').isVisible() && await referenceTab.locator('[data-chat-open]').isHidden(), `Navigation does not preserve open chat: ${destination || 'reload'}`);
+      assert(await referenceTab.locator('deep-chat').evaluate(element => JSON.stringify(element.getMessages())) === transcript, `Navigation changes conversation history: ${destination || 'reload'}`);
+    }
+    for (const direction of ['goBack', 'goForward']) {
+      await referenceTab[direction]();
+      await referenceTab.getByRole('textbox', { name: 'Escribe tu consulta' }).waitFor();
+      assert(await referenceTab.locator('#certichat-panel').isVisible() && await referenceTab.locator('deep-chat').evaluate(element => JSON.stringify(element.getMessages())) === transcript, `${direction} does not preserve the open conversation`);
+    }
     await referenceTab.getByRole('button', { name: 'Cerrar CertiChat', exact: true }).click();
     assert(await referenceTab.locator('#certichat-panel').isHidden(), 'Manual close stopped working after reference navigation');
     await referenceTab.reload();
     assert(await referenceTab.locator('#certichat-panel').isHidden(), 'A stale reference marker reopens manually closed chat');
+    await referenceTab.locator('.path-nav').getByText('Foundation', { exact: true }).click();
+    await Promise.all([referenceTab.waitForURL(courseURL), referenceTab.locator('.path-nav').getByRole('link', { name: 'OCI AI Foundations Associate', exact: true }).click()]);
+    await referenceTab.locator('.certichat-connecting').waitFor({ state: 'attached' });
+    assert(await referenceTab.locator('#certichat-panel').isHidden() && await referenceTab.locator('[data-chat-open]').isVisible(), 'Ordinary navigation reopens manually closed chat');
+    for (const open of [true, false]) {
+      await referenceTab.evaluate(value => {
+        const key = `certichat:${document.querySelector('[data-certichat]').dataset.siteRoot}:open`;
+        if (value) sessionStorage.setItem(key, 'true'); else sessionStorage.removeItem(key);
+        window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+      }, open);
+      if (open) await referenceTab.getByRole('textbox', { name: 'Escribe tu consulta' }).waitFor();
+      assert(await referenceTab.locator('#certichat-panel').isVisible() === open, 'Restored page ignores the current open/closed preference');
+    }
     assert(requests.filter(request => request.path === '/api/chat').length === 1, 'Reference navigation submitted an extra chat query');
-    checks.push('real document and anchor navigation through local response mapping preserves open chat and history; manual close stays closed');
+    checks.push('reference, course-menu, home, reload, back and forward preserve open chat and history; manual close stays closed on another page; simulated bfcache restores current preference', 'chat scrollbar matches sidebar in both themes');
+    phase = 'blocked browser storage';
+    diagnosticTab = tab;
+    await tab.addInitScript(() => {
+      for (const name of ['localStorage', 'sessionStorage']) Object.defineProperty(window, name, { configurable: true, get() { throw new DOMException('Storage blocked for this test', 'SecurityError'); } });
+    });
+    await tab.goto(base.href);
+    await tab.getByRole('button', { name: 'CertiChat', exact: true }).click();
+    await ready();
+    await tab.getByRole('textbox', { name: 'Escribe tu consulta' }).fill('Consulta sin almacenamiento');
+    await tab.getByRole('textbox', { name: 'Escribe tu consulta' }).press('Enter');
+    await tab.waitForFunction(() => document.querySelector('deep-chat').getMessages().at(-1)?.text === 'Respuesta simulada para comprobar el envío.');
+    await tab.getByRole('button', { name: 'Cerrar CertiChat', exact: true }).click();
+    await tab.getByRole('button', { name: 'CertiChat', exact: true }).click();
+    await ready();
+    assert(await tab.locator('deep-chat').evaluate(element => element.getMessages().at(-1)?.text) === 'Respuesta simulada para comprobar el envío.', 'Blocked storage breaks the current conversation');
+    assert(requests.filter(request => request.path === '/api/chat').length === 2, 'Blocked storage caused an extra submission');
+    checks.push('blocked localStorage/sessionStorage allow opening, mocked submission, closing and reopening without errors');
     assert(errors.length === 0, `Page errors: ${errors.join('; ')}`);
     return { checks, mockRequests: requests.length, errors, screenshots: false, realIOSKeyboardTested: false };
   } catch (error) {
