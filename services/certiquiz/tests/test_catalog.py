@@ -93,7 +93,7 @@ def test_single_refresh_serves_cached_value_to_concurrent_clients(tmp_path, monk
     assert calls == ["catalog.json", "questions.json"]
 
 
-@pytest.mark.parametrize("bank", ["../../.env", "https://evil.test/data", "questions?token=x", "//127.0.0.1", "questions.json"])
+@pytest.mark.parametrize("bank", ["../../.env", "https://evil.test/data", "questions?token=x", "//127.0.0.1", "questions.json", "CDMP-DMF/../questions", "CDMP-DMF\\questions", "CDMP-DMF/%2e%2e", "a/b/questions"])
 def test_untrusted_bank_cannot_select_another_path_or_url(bank):
     document = copy.deepcopy(DOCUMENT)
     document["courses"][0]["questionBank"] = bank
@@ -109,6 +109,30 @@ def test_legacy_bank_is_supported_only_for_the_original_course():
     document["courses"][0]["id"] = "another-course"
     with pytest.raises(ValueError):
         catalog.parse_catalog(document, lambda _name: pytest.fail("Unconfigured bank was fetched"))
+
+
+def test_course_directory_bank_loads_and_downloads_without_changing_course_identity(tmp_path, monkeypatch):
+    document = copy.deepcopy(DOCUMENT)
+    document["courses"][0]["questionBank"] = "CDMP-DMF/questions"
+    (tmp_path / "catalog.json").write_text(json.dumps(document), encoding="utf-8")
+    (tmp_path / "CDMP-DMF").mkdir()
+    (tmp_path / "CDMP-DMF/questions.json").write_text(json.dumps(QUESTIONS), encoding="utf-8")
+    assert catalog.load_catalog(tmp_path)["practice"]["questions"][0]["id"] == "q1"
+
+    class Response(io.BytesIO):
+        headers = {}
+
+        def geturl(self):
+            return catalog.SOURCE + "CDMP-DMF/questions.json"
+
+    class Opener:
+        def open(self, request, timeout):
+            assert request.full_url == catalog.SOURCE + "CDMP-DMF/questions.json"
+            return Response(json.dumps(QUESTIONS).encode())
+
+    monkeypatch.setattr(catalog, "build_opener", lambda *_args: Opener())
+    raw = catalog.download("CDMP-DMF/questions.json", catalog.BANK_BYTES, catalog.monotonic() + 10)
+    assert json.loads(raw) == QUESTIONS
 
 
 def test_bundled_mode_never_fetches_and_rejects_unknown_sources(tmp_path, monkeypatch):

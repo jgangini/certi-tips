@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 import { courseRoute } from './layout.mjs';
 
 const diagramNames = ['agent-loop', 'guardrails', 'langchain-flow', 'mcp-architecture', 'openai-stack', 'handoffs', 'oci-runtime', 'vector-search', 'database-capabilities'];
-const diagramFile = /^assets\/diagrams\/.+\.svg$/i;
+const diagramFile = /^[^/]+\/[^/]+\/img\/[^/]+\.svg$/i;
 const textFile = /\.(?:html|css|m?js|json|svg|md|txt)$/i;
 const present = value => typeof value === 'string' && value.trim().length > 0;
 const decode = value => value.replace(/&(?:amp|quot|apos|lt|gt|#\d+|#x[\da-f]+);/gi, entity => {
@@ -60,7 +60,7 @@ function validateLocalReference(context, file, value, asset, url) {
     return;
   }
   if (fragment && !ids.get(target)?.has(fragment)) error(file, `missing anchor #${fragment} in ${target} (from ${value})`);
-  if (asset && target.startsWith('assets/diagrams/')) usedDiagrams.add(target);
+  if (asset && diagramFile.test(target)) usedDiagrams.add(target);
 }
 
 function validateHtmlLinks(context, file, tag, attributes) {
@@ -112,7 +112,8 @@ function validateSvgElement(file, tag, attributes, error) {
 
 function validateDiagrams(context) {
   const { files, parsed, usedDiagrams, error } = context;
-  const diagrams = new Set([...diagramNames.map(name => `assets/diagrams/${name}.svg`), ...[...files.keys()].filter(file => diagramFile.test(file))]);
+  const diagrams = [...files.keys()].filter(file => diagramFile.test(file));
+  for (const name of diagramNames) if (!diagrams.some(file => path.posix.basename(file) === `${name}.svg`)) error(`${name}.svg`, 'required diagram is missing');
   for (const file of diagrams) {
     const source = files.get(file);
     if (source === undefined) { error(file, 'required diagram is missing'); continue; }

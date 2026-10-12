@@ -11,7 +11,8 @@ from pathlib import Path
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
-from .corpus import DATASET, SITE, public_url, read_json, snapshot_path, supported_fragments, validate_manifest
+from .corpus import (DATASET, SITE, public_url, read_json, same_indexed_content,
+                     snapshot_path, supported_fragments, validate_manifest)
 from .graph import graph_trace, node_documents, public_graph, read_graph
 
 
@@ -109,6 +110,9 @@ async def lifespan(app: FastAPI):
     snapshot = snapshot_path(root, version)
     if read_json(snapshot / "ready.json")["version"] != version:
         raise RuntimeError("Snapshot is not ready")
+    app.state.manifest = read_json(snapshot / "manifest.json")
+    if app.state.manifest["contentHash"] != version:
+        raise RuntimeError("Snapshot manifest does not match its stores")
     app.state.sources = read_json(snapshot / "sources.json")
     app.state.version, app.state.snapshot = version, snapshot
     configure_cognee(snapshot, token)
@@ -196,11 +200,13 @@ async def retrieve(body: Retrieval, authorization: str = Header(default="")):
     # Re-read after search so removals published during retrieval are excluded too.
     latest = validate_manifest(read_json(latest_path))
     # The published root describes site navigation; both it and the current page obey source/freshness limits.
+    current = {doc["id"]: doc for doc in latest["documents"]}
     page_context = [{"kind": "segment", "document_name": name}
-                    for name, source in app.state.sources.items() if source["url"] in (SITE, body.pageUrl)]
+                    for name, source in app.state.sources.items()
+                    if source["id"] in current and current[source["id"]]["url"] in (SITE, body.pageUrl)]
     fragments = supported_fragments(page_context + evidence, app.state.sources, latest)
-    # ponytail: suppress old graph relationships during reindex; highlighting resumes after snapshot promotion.
-    trace_evidence = evidence if fragments and latest["contentHash"] == app.state.version else []
+    # Keep the physical graph version; relocated URLs are safe only while its full indexed content still matches.
+    trace_evidence = evidence if fragments and same_indexed_content(app.state.manifest, latest) else []
     return {"version": latest["contentHash"], "fragments": fragments,
             "graphTrace": graph_trace(trace_evidence, projection, fragments,
                                       getattr(app.state, "node_documents", {}))}

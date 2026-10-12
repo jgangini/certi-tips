@@ -9,8 +9,8 @@ function fixture() {
   for (const slug of [...slugs, 'practice']) files.set(`course/${slug}/index.html`, '<main id="conceptos-clave"><a href="#conceptos-clave">Section</a></main>');
   const diagrams = ['agent-loop', 'guardrails', 'langchain-flow', 'mcp-architecture', 'openai-stack', 'handoffs', 'oci-runtime', 'vector-search', 'database-capabilities'];
   for (const diagram of diagrams) {
-    files.set(`assets/diagrams/${diagram}.svg`, '<svg xmlns="http://www.w3.org/2000/svg"><title>Concept</title><desc>An explanation.</desc><defs><marker id="arrow"/></defs><path marker-end="url(#arrow)"/></svg>');
-    files.set('index.html', `${files.get('index.html')}<img src="/certitips/assets/diagrams/${diagram}.svg" alt="Concept">`);
+    files.set(`course/agents/img/${diagram}.svg`, '<svg xmlns="http://www.w3.org/2000/svg"><title>Concept</title><desc>An explanation.</desc><defs><marker id="arrow"/></defs><path marker-end="url(#arrow)"/></svg>');
+    files.set('index.html', `${files.get('index.html')}<img src="/certitips/course/agents/img/${diagram}.svg" alt="Concept">`);
   }
   const questions = slugs.slice(1).flatMap(domain => Array.from({ length: 6 }, (_, i) => ({ id: `${domain}-${i + 1}`, domain, question: 'Which choice works?', options: ['a', 'b', 'c', 'd'].map(id => ({ id, text: `Choice ${id}`, explanation: `Reason ${id}` })), correctOption: 'b', reference: { module: domain, anchor: 'conceptos-clave', label: 'Review this concept' } })));
   files.set('assets/questions.json', JSON.stringify(questions));
@@ -115,8 +115,8 @@ test('rejects copied transcripts, local source paths and box-drawing schematics'
 
 test('requires diagram use, accessible descriptions and self-contained SVG content', () => {
   const input = fixture();
-  input.files.set('assets/diagrams/agent-loop.svg', '<svg><title>Loop</title><script>alert(1)</script><use href="https://remote.test/icon.svg"/></svg>');
-  input.files.set('index.html', input.files.get('index.html').replace('<img src="/certitips/assets/diagrams/guardrails.svg" alt="Concept">', ''));
+  input.files.set('course/agents/img/agent-loop.svg', '<svg><title>Loop</title><script>alert(1)</script><use href="https://remote.test/icon.svg"/></svg>');
+  input.files.set('index.html', input.files.get('index.html').replace('<img src="/certitips/course/agents/img/guardrails.svg" alt="Concept">', ''));
   const issues = validateSite(input);
   includesIssue(issues, /agent-loop\.svg: missing nonempty SVG desc/);
   includesIssue(issues, /<script> is not allowed/);
@@ -142,7 +142,7 @@ test('requires a complete bank with unique questions and four explained choices'
 
 test('SVG illustrations allow inline PNG only and still reject active or external content', () => {
   const input = fixture();
-  const file = 'assets/diagrams/oci-runtime.svg';
+  const file = 'course/agents/img/oci-runtime.svg';
   const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aXioAAAAASUVORK5CYII=';
   const diagram = image => `<svg><title>Runtime</title><desc>Illustrated runtime.</desc>${image}</svg>`;
   input.files.set(file, diagram(`<image href="${png}"/>`));
@@ -157,7 +157,7 @@ test('SVG illustrations allow inline PNG only and still reject active or externa
 
 test('validates newly added diagrams as well as the required originals', () => {
   const input = fixture();
-  const file = 'assets/diagrams/new-concept.svg';
+  const file = 'course/agents/img/new-concept.svg';
   input.files.set('index.html', `${input.files.get('index.html')}<img src="/certitips/${file}" alt="New concept">`);
   input.files.set(file, '<svg><title>New concept</title><desc>A useful explanation.</desc></svg>');
   assert.deepEqual(validateSite(input), []);

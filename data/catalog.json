@@ -134,64 +134,68 @@
   "courses": [
     {
       "id": "agentic-ai-foundations-2026",
+      "route": "1Z0-1157-26",
+      "contentDir": "1Z0-1157-26",
       "title": "Oracle Agentic AI Foundations",
       "edition": "Associate",
       "description": "De entender un agente a elegir cómo construirlo, conectarlo y operarlo. Una ruta visual con ejemplos, ejercicios y práctica explicada.",
       "exam": { "code": "1Z0-1157-26", "questions": 40, "minutes": 60, "passingPercent": 65, "verified": "2026-09-28", "source": "https://blogs.oracle.com/oracleuniversity/oracle-agentic-ai-foundations-training-certification-now-available" },
       "modules": [
-        { "slug": "overview", "title": "Tu punto de partida", "short": "Empieza aquí", "description": "Conoce la guía y accede al recorrido oficial de Oracle MyLearn.", "minutes": 8, "type": "orientation" },
-        { "slug": "agents", "title": "Cómo funciona un agente", "short": "Agentes de IA", "description": "Modelo, herramientas y ciclo de ejecución: las piezas que convierten una respuesta en una acción.", "minutes": 18, "type": "module" },
-        { "slug": "langchain", "title": "Construir con LangChain", "short": "LangChain", "description": "Entiende las cadenas y lo que ocurre entre una decisión del modelo y la ejecución de una herramienta.", "minutes": 18, "type": "module" },
-        { "slug": "mcp", "title": "Conectar herramientas con MCP", "short": "Model Context Protocol", "description": "Un protocolo común para descubrir herramientas, acceder a recursos y conectar aplicaciones.", "minutes": 18, "type": "module" },
-        { "slug": "openai", "title": "El OpenAI Agent Stack", "short": "Responses API y Agents SDK", "description": "Elige el nivel de control adecuado y coordina herramientas, agentes especializados y guardrails.", "minutes": 20, "type": "module" },
-        { "slug": "oci-enterprise", "title": "Agentes en OCI Enterprise AI", "short": "OCI Enterprise AI", "description": "Pasa del prototipo al runtime: ejecución, sesiones, permisos, observabilidad y despliegue.", "minutes": 18, "type": "module" },
-        { "slug": "oracle-database", "title": "Agentes cerca de tus datos", "short": "Oracle AI Database", "description": "Relaciona búsqueda vectorial, Select AI Agent, Private Agent Factory y el servidor MCP de Autonomous.", "minutes": 20, "type": "module" }
+        { "slug": "overview", "file": "00_empieza_aqui/00_empieza_aqui.md", "title": "Tu punto de partida", "short": "Empieza aquí", "description": "Conoce la guía y accede al recorrido oficial de Oracle MyLearn.", "minutes": 8, "type": "orientation" },
+        { "slug": "agents", "file": "01_agentes_de_ia/01_agentes_de_ia.md", "title": "Cómo funciona un agente", "short": "Agentes de IA", "description": "Modelo, herramientas y ciclo de ejecución: las piezas que convierten una respuesta en una acción.", "minutes": 18, "type": "module" },
+        { "slug": "langchain", "file": "02_langchain/02_langchain.md", "title": "Construir con LangChain", "short": "LangChain", "description": "Entiende las cadenas y lo que ocurre entre una decisión del modelo y la ejecución de una herramienta.", "minutes": 18, "type": "module" },
+        { "slug": "mcp", "file": "03_model_context_protocol/03_model_context_protocol.md", "title": "Conectar herramientas con MCP", "short": "Model Context Protocol", "description": "Un protocolo común para descubrir herramientas, acceder a recursos y conectar aplicaciones.", "minutes": 18, "type": "module" },
+        { "slug": "openai", "file": "04_responses_api_y_agents_sdk/04_responses_api_y_agents_sdk.md", "title": "El OpenAI Agent Stack", "short": "Responses API y Agents SDK", "description": "Elige el nivel de control adecuado y coordina herramientas, agentes especializados y guardrails.", "minutes": 20, "type": "module" },
+        { "slug": "oci-enterprise", "file": "05_oci_enterprise_ai/05_oci_enterprise_ai.md", "title": "Agentes en OCI Enterprise AI", "short": "OCI Enterprise AI", "description": "Pasa del prototipo al runtime: ejecución, sesiones, permisos, observabilidad y despliegue.", "minutes": 18, "type": "module" },
+        { "slug": "oracle-database", "file": "06_oracle_ai_database/06_oracle_ai_database.md", "title": "Agentes cerca de tus datos", "short": "Oracle AI Database", "description": "Relaciona búsqueda vectorial, Select AI Agent, Private Agent Factory y el servidor MCP de Autonomous.", "minutes": 20, "type": "module" }
       ],
       "resources": [
-        { "slug": "glossary", "title": "Habla el idioma de los agentes", "short": "Glosario", "description": "Términos técnicos en inglés, explicados en español y con sus diferencias importantes." },
-        { "slug": "exam-checklist", "title": "El siguiente paso: tu certificación", "short": "Ruta al examen oficial", "description": "Comprueba tu preparación y sigue los enlaces oficiales para completar la ruta de Oracle." },
-        { "slug": "practice", "title": "Práctica", "short": "Práctica", "description": "Pon a prueba lo que entiendes" }
+        { "slug": "glossary", "file": "07_glosario/07_glosario.md", "title": "Habla el idioma de los agentes", "short": "Glosario", "description": "Términos técnicos en inglés, explicados en español y con sus diferencias importantes." },
+        { "slug": "exam-checklist", "file": "08_ruta_al_examen_oficial/08_ruta_al_examen_oficial.md", "title": "El siguiente paso: tu certificación", "short": "Ruta al examen oficial", "description": "Comprueba tu preparación y sigue los enlaces oficiales para completar la ruta de Oracle." },
+        { "slug": "practice", "file": "09_practica/09_practica.md", "title": "Práctica", "short": "Práctica", "description": "Pon a prueba lo que entiendes" }
       ],
-      "questionBank": "questions",
-      "coverage": "coverage",
+      "questionBank": "1Z0-1157-26/questions",
+      "coverage": "1Z0-1157-26/coverage",
       "lessonCounts": [1, 7, 8, 8, 11, 9, 9]
     },
     {
       "id": "oci-ai-foundations-2026",
+      "route": "1Z0-1122-26",
       "title": "Oracle Cloud Infrastructure AI Foundations",
       "edition": "Associate",
       "description": "De los fundamentos de IA a los servicios de OCI: ejemplos, gráficos, ejercicios y práctica explicada en español.",
-      "contentDir": "oci-ai-foundations-2026",
-      "questionBank": "questions-ai-foundations",
-      "coverage": "coverage-ai-foundations",
+      "contentDir": "1Z0-1122-26",
+      "questionBank": "1Z0-1122-26/questions",
+      "coverage": "1Z0-1122-26/coverage",
       "lessonCounts": [1, 6, 10, 6, 8, 12, 8, 6, 9, 6],
       "exam": { "code": "1Z0-1122-26", "minutes": 60, "verified": "2026-10-06", "source": "https://mylearn.oracle.com/ou/learning-path/become-an-oci-ai-foundations-associate-2026/163544" },
       "modules": [
-        { "slug": "overview", "title": "Tu punto de partida", "short": "Empieza aquí", "description": "Conoce la guía y accede al recorrido oficial de Oracle MyLearn.", "minutes": 8, "type": "orientation" },
-        { "slug": "ai-basics", "title": "Entender la inteligencia artificial", "short": "Fundamentos de IA", "description": "Relaciona tareas, datos y resultados; distingue IA, ML, deep learning e IA generativa.", "minutes": 18, "type": "module" },
-        { "slug": "machine-learning", "title": "Aprender de los datos", "short": "Machine Learning", "description": "Elige regresión, clasificación, clustering o aprendizaje por refuerzo y evalúa sin fuga de datos.", "minutes": 25, "type": "module" },
-        { "slug": "deep-learning", "title": "Redes que aprenden representaciones", "short": "Deep Learning", "description": "Sigue una neurona y compara MLP, CNN, RNN y LSTM según la estructura de los datos.", "minutes": 22, "type": "module" },
-        { "slug": "generative-ai", "title": "De tokens a respuestas útiles", "short": "IA generativa y LLM", "description": "Comprende transformers, prompting, RAG y fine-tuning sin confundir generación con veracidad.", "minutes": 25, "type": "module" },
-        { "slug": "enterprise-ai", "title": "Del modelo al agente empresarial", "short": "OCI Enterprise AI", "description": "Conecta modelos, recuperación, herramientas, memoria y controles en un caso de soporte.", "minutes": 28, "type": "module" },
-        { "slug": "ai-portfolio", "title": "Elegir dónde construir en OCI", "short": "Portafolio de IA", "description": "Distingue APIs preentrenadas, OCI Data Science e infraestructura GPU y aplica IA responsable.", "minutes": 24, "type": "module" },
-        { "slug": "oci-generative-ai", "title": "Usar modelos con tus datos en OCI", "short": "OCI Generative AI", "description": "Relaciona Playground, clusters dedicados, endpoints, AI Vector Search y Select AI.", "minutes": 24, "type": "module" },
-        { "slug": "ai-services", "title": "Resolver tareas con los servicios de IA", "short": "Servicios de IA", "description": "Selecciona Language, Speech, Vision o Document Understanding según entrada y salida.", "minutes": 25, "type": "module" },
-        { "slug": "database-ai", "title": "Agentes y búsqueda cerca de los datos", "short": "IA para bases de datos", "description": "Conecta vectores, Private Agent Factory, Select AI Agent y MCP de Autonomous AI Database.", "minutes": 24, "type": "module" }
+        { "slug": "overview", "file": "00_empieza_aqui/00_empieza_aqui.md", "title": "Tu punto de partida", "short": "Empieza aquí", "description": "Conoce la guía y accede al recorrido oficial de Oracle MyLearn.", "minutes": 8, "type": "orientation" },
+        { "slug": "ai-basics", "file": "01_fundamentos_de_ia/01_fundamentos_de_ia.md", "title": "Entender la inteligencia artificial", "short": "Fundamentos de IA", "description": "Relaciona tareas, datos y resultados; distingue IA, ML, deep learning e IA generativa.", "minutes": 18, "type": "module" },
+        { "slug": "machine-learning", "file": "02_machine_learning/02_machine_learning.md", "title": "Aprender de los datos", "short": "Machine Learning", "description": "Elige regresión, clasificación, clustering o aprendizaje por refuerzo y evalúa sin fuga de datos.", "minutes": 25, "type": "module" },
+        { "slug": "deep-learning", "file": "03_deep_learning/03_deep_learning.md", "title": "Redes que aprenden representaciones", "short": "Deep Learning", "description": "Sigue una neurona y compara MLP, CNN, RNN y LSTM según la estructura de los datos.", "minutes": 22, "type": "module" },
+        { "slug": "generative-ai", "file": "04_ia_generativa_y_llm/04_ia_generativa_y_llm.md", "title": "De tokens a respuestas útiles", "short": "IA generativa y LLM", "description": "Comprende transformers, prompting, RAG y fine-tuning sin confundir generación con veracidad.", "minutes": 25, "type": "module" },
+        { "slug": "enterprise-ai", "file": "05_oci_enterprise_ai/05_oci_enterprise_ai.md", "title": "Del modelo al agente empresarial", "short": "OCI Enterprise AI", "description": "Conecta modelos, recuperación, herramientas, memoria y controles en un caso de soporte.", "minutes": 28, "type": "module" },
+        { "slug": "ai-portfolio", "file": "06_portafolio_de_ia/06_portafolio_de_ia.md", "title": "Elegir dónde construir en OCI", "short": "Portafolio de IA", "description": "Distingue APIs preentrenadas, OCI Data Science e infraestructura GPU y aplica IA responsable.", "minutes": 24, "type": "module" },
+        { "slug": "oci-generative-ai", "file": "07_oci_generative_ai/07_oci_generative_ai.md", "title": "Usar modelos con tus datos en OCI", "short": "OCI Generative AI", "description": "Relaciona Playground, clusters dedicados, endpoints, AI Vector Search y Select AI.", "minutes": 24, "type": "module" },
+        { "slug": "ai-services", "file": "08_servicios_de_ia/08_servicios_de_ia.md", "title": "Resolver tareas con los servicios de IA", "short": "Servicios de IA", "description": "Selecciona Language, Speech, Vision o Document Understanding según entrada y salida.", "minutes": 25, "type": "module" },
+        { "slug": "database-ai", "file": "09_ia_para_bases_de_datos/09_ia_para_bases_de_datos.md", "title": "Agentes y búsqueda cerca de los datos", "short": "IA para bases de datos", "description": "Conecta vectores, Private Agent Factory, Select AI Agent y MCP de Autonomous AI Database.", "minutes": 24, "type": "module" }
       ],
       "resources": [
-        { "slug": "glossary", "title": "Habla el idioma de la IA", "short": "Glosario", "description": "Conceptos en inglés con definiciones en español y diferencias que debes dominar." },
-        { "slug": "exam-checklist", "title": "El siguiente paso: tu certificación", "short": "Ruta al examen oficial", "description": "Repasa los objetivos, comprueba tu preparación y continúa en Oracle MyLearn." },
-        { "slug": "practice", "title": "Práctica", "short": "Práctica", "description": "Pon a prueba lo que entiendes" }
+        { "slug": "glossary", "file": "10_glosario/10_glosario.md", "title": "Habla el idioma de la IA", "short": "Glosario", "description": "Conceptos en inglés con definiciones en español y diferencias que debes dominar." },
+        { "slug": "exam-checklist", "file": "11_ruta_al_examen_oficial/11_ruta_al_examen_oficial.md", "title": "El siguiente paso: tu certificación", "short": "Ruta al examen oficial", "description": "Repasa los objetivos, comprueba tu preparación y continúa en Oracle MyLearn." },
+        { "slug": "practice", "file": "12_practica/12_practica.md", "title": "Práctica", "short": "Práctica", "description": "Pon a prueba lo que entiendes" }
       ]
     },
     {
       "id": "oci-foundations-2026",
+      "route": "1Z0-1085-26",
       "title": "Oracle Cloud Infrastructure Foundations",
       "edition": "Associate",
       "description": "Diseña tu primera solución en OCI: arquitectura, IAM, redes, cómputo, datos, seguridad y costos con ejemplos y gráficos en español.",
-      "contentDir": "oci-foundations-2026",
-      "questionBank": "questions-oci-foundations",
-      "coverage": "coverage-oci-foundations",
+      "contentDir": "1Z0-1085-26",
+      "questionBank": "1Z0-1085-26/questions",
+      "coverage": "1Z0-1085-26/coverage",
       "lessonCounts": [
         2,
         3,
@@ -209,7 +213,7 @@
       },
       "modules": [
         {
-          "slug": "overview",
+          "slug": "overview", "file": "00_empieza_aqui/00_empieza_aqui.md",
           "title": "Tu punto de partida",
           "short": "Empieza aquí",
           "description": "Conoce la guía y accede al recorrido oficial de Oracle MyLearn.",
@@ -217,7 +221,7 @@
           "type": "orientation"
         },
         {
-          "slug": "oci-architecture",
+          "slug": "oci-architecture", "file": "01_arquitectura_de_oci/01_arquitectura_de_oci.md",
           "title": "Elegir dónde vive tu aplicación",
           "short": "Arquitectura de OCI",
           "description": "Distingue región, AD y FD; elige ubicación y reconoce qué fallo tolera tu diseño.",
@@ -225,7 +229,7 @@
           "type": "module"
         },
         {
-          "slug": "iam",
+          "slug": "iam", "file": "02_identidad_y_acceso/02_identidad_y_acceso.md",
           "title": "Dar a cada identidad el acceso necesario",
           "short": "Identidad y acceso",
           "description": "Organiza usuarios, grupos y recursos; interpreta políticas y permisos de aplicaciones.",
@@ -233,7 +237,7 @@
           "type": "module"
         },
         {
-          "slug": "networking",
+          "slug": "networking", "file": "03_redes_y_balanceo/03_redes_y_balanceo.md",
           "title": "Conectar sin exponer de más",
           "short": "Redes y balanceo",
           "description": "Sigue una petición por la VCN y distingue rutas, gateways, reglas y balanceadores.",
@@ -241,7 +245,7 @@
           "type": "module"
         },
         {
-          "slug": "compute",
+          "slug": "compute", "file": "04_computo/04_computo.md",
           "title": "Ejecutar y escalar tu aplicación",
           "short": "Cómputo",
           "description": "Relaciona imágenes, shapes y pools; compara VMs, contenedores y funciones.",
@@ -249,7 +253,7 @@
           "type": "module"
         },
         {
-          "slug": "storage",
+          "slug": "storage", "file": "05_almacenamiento/05_almacenamiento.md",
           "title": "Guardar datos según cómo los usas",
           "short": "Almacenamiento",
           "description": "Elige objetos, bloques o archivos; comprende niveles, acceso, persistencia y recuperación.",
@@ -257,7 +261,7 @@
           "type": "module"
         },
         {
-          "slug": "security",
+          "slug": "security", "file": "06_seguridad/06_seguridad.md",
           "title": "Proteger, detectar y responder",
           "short": "Seguridad",
           "description": "Combina responsabilidades, Security Zones, Cloud Guard, WAF y gestión de claves.",
@@ -265,7 +269,7 @@
           "type": "module"
         },
         {
-          "slug": "governance",
+          "slug": "governance", "file": "07_gobierno_y_costos/07_gobierno_y_costos.md",
           "title": "Entender y controlar el consumo",
           "short": "Gobierno y costos",
           "description": "Relaciona precios, etiquetas, presupuestos, cuotas, análisis y recomendaciones.",
@@ -275,19 +279,19 @@
       ],
       "resources": [
         {
-          "slug": "glossary",
+          "slug": "glossary", "file": "08_glosario/08_glosario.md",
           "title": "Habla el idioma de OCI",
           "short": "Glosario",
           "description": "Términos en inglés, definiciones en español y diferencias que debes reconocer."
         },
         {
-          "slug": "exam-checklist",
+          "slug": "exam-checklist", "file": "09_ruta_al_examen_oficial/09_ruta_al_examen_oficial.md",
           "title": "El siguiente paso: tu certificación",
           "short": "Ruta al examen oficial",
           "description": "Comprueba tu preparación, resuelve el caso integrador y continúa en Oracle MyLearn."
         },
         {
-          "slug": "practice",
+          "slug": "practice", "file": "10_practica/10_practica.md",
           "title": "Práctica",
           "short": "Práctica",
           "description": "Pon a prueba lo que entiendes"
@@ -296,13 +300,14 @@
     },
     {
       "id": "data-governance",
+      "route": "CDMP-DMF",
       "title": "Data Management Fundamentals",
       "sidebarLabel": "CDMP-DMF",
       "edition": "2026",
       "description": "Fundamentos de gestión de datos con DAMA, aplicados a Oracle Cloud mediante Oracle AI Data Platform y Oracle Autonomous AI Lakehouse.",
-      "contentDir": "data-governance",
-      "questionBank": "questions-governance",
-      "coverage": "coverage-governance",
+      "contentDir": "CDMP-DMF",
+      "questionBank": "CDMP-DMF/questions",
+      "coverage": "CDMP-DMF/coverage",
       "lessonCounts": [
         1,
         7,
@@ -319,7 +324,7 @@
       ],
       "modules": [
         {
-          "slug": "overview",
+          "slug": "overview", "file": "00_empieza_aqui/00_empieza_aqui.md",
           "title": "Tu Punto de Partida",
           "short": "Empieza Aquí",
           "description": "Conoce el enfoque DAMA y el caso que une las once áreas.",
@@ -327,7 +332,7 @@
           "type": "orientation"
         },
         {
-          "slug": "governance",
+          "slug": "governance", "file": "01_gobierno/01_gobierno.md",
           "title": "Gobierno de Datos",
           "short": "Gobierno",
           "description": "Define autoridad, responsabilidades, políticas y evidencia para el uso de los datos.",
@@ -335,7 +340,7 @@
           "type": "module"
         },
         {
-          "slug": "data-architecture",
+          "slug": "data-architecture", "file": "02_arquitectura/02_arquitectura.md",
           "title": "Arquitectura de Datos",
           "short": "Arquitectura",
           "description": "Relaciona capacidades y flujos con las decisiones de negocio y la arquitectura de datos.",
@@ -343,7 +348,7 @@
           "type": "module"
         },
         {
-          "slug": "data-modeling",
+          "slug": "data-modeling", "file": "03_modelado/03_modelado.md",
           "title": "Modelado y Diseño de Datos",
           "short": "Modelado",
           "description": "Representa entidades, relaciones, vigencia y significado sin confundir esquema con semántica.",
@@ -351,7 +356,7 @@
           "type": "module"
         },
         {
-          "slug": "data-operations",
+          "slug": "data-operations", "file": "04_operaciones/04_operaciones.md",
           "title": "Almacenamiento y Operaciones",
           "short": "Operaciones",
           "description": "Define retención, recuperación, observabilidad y atribución del consumo.",
@@ -359,7 +364,7 @@
           "type": "module"
         },
         {
-          "slug": "data-security",
+          "slug": "data-security", "file": "05_seguridad/05_seguridad.md",
           "title": "Seguridad de Datos",
           "short": "Seguridad",
           "description": "Conecta finalidades, PII, identidades y protección con evidencia de acceso efectivo.",
@@ -367,7 +372,7 @@
           "type": "module"
         },
         {
-          "slug": "data-integration",
+          "slug": "data-integration", "file": "06_integracion/06_integracion.md",
           "title": "Integración e Interoperabilidad",
           "short": "Integración",
           "description": "Elige ingestión, CDC y federación con contratos, frescura y tratamiento de fallos.",
@@ -375,7 +380,7 @@
           "type": "module"
         },
         {
-          "slug": "content-management",
+          "slug": "content-management", "file": "07_contenido/07_contenido.md",
           "title": "Documentos y Contenido",
           "short": "Contenido",
           "description": "Gestiona aprobación, vigencia y recuperación de documentos para atención asistida por IA.",
@@ -383,7 +388,7 @@
           "type": "module"
         },
         {
-          "slug": "master-reference-data",
+          "slug": "master-reference-data", "file": "08_maestros_y_referencias/08_maestros_y_referencias.md",
           "title": "Datos Maestros y de Referencia",
           "short": "Maestros y Referencias",
           "description": "Resuelve identidades, valores controlados, conflictos y reglas de supervivencia.",
@@ -391,7 +396,7 @@
           "type": "module"
         },
         {
-          "slug": "data-warehousing-bi",
+          "slug": "data-warehousing-bi", "file": "09_dw_y_bi/09_dw_y_bi.md",
           "title": "Data Warehousing y BI",
           "short": "DW y BI",
           "description": "Publica indicadores con grano, semántica y consumo analítico gobernado.",
@@ -399,7 +404,7 @@
           "type": "module"
         },
         {
-          "slug": "metadata",
+          "slug": "metadata", "file": "10_metadatos/10_metadatos.md",
           "title": "Metadatos",
           "short": "Metadatos",
           "description": "Distingue catálogos, glosario, linaje e impacto de cambios.",
@@ -407,7 +412,7 @@
           "type": "module"
         },
         {
-          "slug": "data-quality",
+          "slug": "data-quality", "file": "11_calidad/11_calidad.md",
           "title": "Calidad de Datos",
           "short": "Calidad",
           "description": "Mide aptitud para el uso, prioriza reglas y resuelve incidencias con responsables.",
@@ -417,25 +422,25 @@
       ],
       "resources": [
         {
-          "slug": "oracle-map",
+          "slug": "oracle-map", "file": "12_matriz_dama_oracle/12_matriz_dama_oracle.md",
           "title": "De DAMA a las Capacidades Oracle",
           "short": "Matriz DAMA → Oracle",
           "description": "Arquitectura, responsables, aplicaciones y evidencia de cada capacidad."
         },
         {
-          "slug": "glossary",
+          "slug": "glossary", "file": "13_glosario/13_glosario.md",
           "title": "Habla el Idioma del Gobierno de Datos",
           "short": "Glosario",
           "description": "Conceptos de negocio y tecnología, con sus diferencias importantes."
         },
         {
-          "slug": "case-study",
+          "slug": "case-study", "file": "14_caso_integrador/14_caso_integrador.md",
           "title": "El Caso de Operadora Horizonte",
           "short": "Caso Integrador",
           "description": "Defiende un producto de datos gobernado y evalúa tu propuesta con una rúbrica."
         },
         {
-          "slug": "practice",
+          "slug": "practice", "file": "15_practica/15_practica.md",
           "title": "Práctica",
           "short": "Práctica",
           "description": "Pon a prueba lo que entiendes"

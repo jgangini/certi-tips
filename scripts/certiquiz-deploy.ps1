@@ -21,7 +21,7 @@ function Invoke-Checked([scriptblock]$Action) {
 
 $catalog = Get-Content -LiteralPath (Join-Path $repo 'data/catalog.json') -Raw | ConvertFrom-Json
 $banks = @($catalog.courses | ForEach-Object {
-    if ($_.questionBank -notmatch '^[a-z0-9-]+$') { throw 'Invalid question bank filename.' }
+    if ($_.questionBank -cnotmatch '^(?:[A-Za-z0-9][A-Za-z0-9-]{0,63}/)?[a-z0-9][a-z0-9-]{0,99}$') { throw 'Invalid question bank filename.' }
     "data/$($_.questionBank).json"
 } | Select-Object -Unique)
 # Explicit source roots and exclusions keep production credentials and unrelated work out of the release.

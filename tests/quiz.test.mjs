@@ -5,13 +5,13 @@ import vm from 'node:vm';
 import { advance, confirmAnswer, domains, newAttempt, restoreAttempt, results, reviewAttempt, shuffle } from '../assets/quiz-core.js';
 import { getStorage, readStored, writeStored } from '../assets/storage.js';
 
-const bank = JSON.parse(readFileSync(new URL('../data/questions.json', import.meta.url), 'utf8'));
+const bank = JSON.parse(readFileSync(new URL('../data/1Z0-1157-26/questions.json', import.meta.url), 'utf8'));
 const questionFor = id => bank.find(question => question.id === id);
 const wrongOption = question => question.options.find(option => option.id !== question.correctOption).id;
 const attempt = () => newAttempt(bank, () => 0.25);
 
 const catalog = JSON.parse(readFileSync(new URL('../data/catalog.json', import.meta.url), 'utf8'));
-for (const { id: courseId, questionBank: bankFile, modules } of catalog.courses.filter(course => course.questionBank !== 'questions')) test(`${courseId} selects balanced questions and restores review without mixing course banks`, () => {
+for (const { id: courseId, questionBank: bankFile, modules } of catalog.courses.filter(course => course.id !== 'agentic-ai-foundations-2026')) test(`${courseId} selects balanced questions and restores review without mixing course banks`, () => {
   const aiBank = JSON.parse(readFileSync(new URL(`../data/${bankFile}.json`, import.meta.url), 'utf8'));
   const areas = modules.filter(module => module.type === 'module').map(module => module.slug);
   const count = areas.length * 2;

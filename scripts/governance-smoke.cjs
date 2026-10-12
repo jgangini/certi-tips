@@ -4,7 +4,7 @@
 async (page) => {
   const origin = await page.evaluate(() => location.origin);
   const base = `${origin}/certitips/`;
-  const route = `${base}data-governance/`;
+  const route = `${base}CDMP-DMF/`;
   const modules = ['governance', 'data-architecture', 'data-modeling', 'data-operations', 'data-security', 'data-integration', 'content-management', 'master-reference-data', 'data-warehousing-bi', 'metadata', 'data-quality'];
   const slugs = ['overview', ...modules, 'oracle-map', 'glossary', 'case-study', 'practice'];
   const widths = [1299, 390, 320];
@@ -30,9 +30,9 @@ async (page) => {
     await page.goto(base);
     const labels = await page.locator('.path-nav .path-group > summary').allTextContents();
     assert(labels.join('|') === 'Foundation|AI & Agents|Data & AI|Architecture|Governance', 'Expected five ordered navigation groups');
-    const courseLink = '.path-group-panel a[href="/certitips/data-governance/overview/"]';
+    const courseLink = '.path-group-panel a[href="/certitips/CDMP-DMF/overview/"]';
     assert(await page.locator(`.path-nav ${courseLink}`).count() === 1 && await page.locator(`.path-nav-mobile ${courseLink}`).count() === 1, 'Governance must have desktop and mobile routes');
-    const indexed = await page.locator('[data-search-kind="topic"] a').evaluateAll(links => links.map(link => link.href).filter(url => url.includes('/data-governance/')));
+    const indexed = await page.locator('[data-search-kind="topic"] a').evaluateAll(links => links.map(link => link.href).filter(url => url.includes('/CDMP-DMF/')));
     assert(indexed.length === slugs.length && slugs.every(slug => indexed.includes(`${route}${slug}/`)), 'Search must index all sixteen Governance pages');
     for (const width of [1100, 1201, 1299]) {
       await page.setViewportSize({ width, height: 900 });
@@ -53,9 +53,9 @@ async (page) => {
     await page.waitForURL(`${route}overview/`);
     await page.keyboard.press('Control+k');
     await page.locator('#search-query').fill('Governance');
-    assert(await page.locator('[data-search-kind="certification"]:visible a[href="/certitips/data-governance/overview/"]').count() === 1, 'Search cannot find the Governance course');
+    assert(await page.locator('[data-search-kind="certification"]:visible a[href="/certitips/CDMP-DMF/overview/"]').count() === 1, 'Search cannot find the Governance course');
     await page.locator('#search-query').fill('metadatos');
-    const metadata = page.locator('[data-search-kind="topic"]:visible a[href="/certitips/data-governance/metadata/"]');
+    const metadata = page.locator('[data-search-kind="topic"]:visible a[href="/certitips/CDMP-DMF/metadata/"]');
     assert(await metadata.count() === 1, 'Search cannot find the metadata module');
     await metadata.click();
     await page.waitForURL(`${route}metadata/`);
@@ -67,7 +67,7 @@ async (page) => {
         assert(await page.locator('h1').count() === 1, `Heading count: ${slug}`);
         assert(await page.locator('body').getAttribute('data-course-has-exam') === 'false', `Workshop is marked as an exam: ${slug}`);
         assert(await page.locator('[data-progress]').getAttribute('max') === '12', 'Expected orientation and eleven modules');
-        assert(await page.locator('a[href*="/data-governance/exam-checklist/"]').count() === 0, `Broken exam route: ${slug}`);
+        assert(await page.locator('a[href*="/CDMP-DMF/exam-checklist/"]').count() === 0, `Broken exam route: ${slug}`);
         assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `Page overflow at ${width}px: ${slug}`);
         if (width === 320) scrollableTables += await page.locator('.table-scroll').evaluateAll(tables => tables.filter(table => {
           if (table.scrollWidth <= table.clientWidth + 1) return false;
@@ -98,7 +98,7 @@ async (page) => {
       for (const summary of await page.locator('.prose details:not([open]) > summary').all()) {
         await summary.focus(); await page.keyboard.press('Enter');
       }
-      assert(await page.locator('[data-diagram]').count() === 7, `Expected seven section diagrams: ${slug}`);
+      assert(await page.locator('[data-diagram]').count() === 5, `Expected five section diagrams: ${slug}`);
       for (const button of await page.locator('[data-diagram]').all()) {
         await button.scrollIntoViewIfNeeded();
         await button.locator('img').evaluate(image => image.decode());
@@ -139,7 +139,7 @@ async (page) => {
       await page.locator('#question-form button').click();
       assert(await page.locator('.feedback li').count() === 4, 'Missing option explanations');
       assert(await page.locator('input[name="answer"]:disabled').count() === 4, 'Confirmed answer is not locked');
-      assert((await page.locator('.review-link').getAttribute('href')).startsWith('/certitips/data-governance/'), 'Feedback links to another course');
+      assert((await page.locator('.review-link').getAttribute('href')).startsWith('/certitips/CDMP-DMF/'), 'Feedback links to another course');
       return text;
     };
     for (let index = 0; index < 22; index++) {

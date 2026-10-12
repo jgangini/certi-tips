@@ -10,7 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt \
 
 COPY --chown=10001:10001 services/certiquiz/app /app/app
 COPY --chown=10001:10001 services/certiquiz/schema.sql services/certiquiz/migrate.py /app/
-COPY --chown=10001:10001 data/catalog.json data/questions*.json /app/data/
+COPY --chown=10001:10001 data/ /app/data/
 
 USER 10001:10001
 EXPOSE 8000

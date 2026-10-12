@@ -155,7 +155,8 @@ async (page) => {
   assert(await page.locator('[data-practice-intro]:not([hidden])').count() === 0, 'Practice landing must not have surrounding text');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
   assert(await page.locator('[data-practice-intro]:not([hidden])').count() === 0, 'Instructions repeat during questions');
-  const bank = await page.evaluate(async base => (await fetch(`${base}assets/questions.json`)).json(), base);
+  const bankUrl = await page.evaluate(() => `${document.body.dataset.base}assets/${document.body.dataset.questionBank}.json`);
+  const bank = await page.evaluate(async url => (await fetch(url)).json(), bankUrl);
   const answerCurrent = async (wrong) => {
     const text = await page.locator('.quiz-question').textContent();
     const question = bank.find(item => item.question === text);
@@ -199,12 +200,12 @@ async (page) => {
       const questionText = await page.locator('.quiz-question').textContent();
       let resumeBank;
       const bankPaused = new Promise(resolve => { resumeBank = resolve; });
-      await page.route('**/assets/questions.json', async route => { await bankPaused; await route.continue(); });
+      await page.route(`**${bankUrl}`, async route => { await bankPaused; await route.continue(); });
       await page.reload({ waitUntil: 'domcontentloaded' });
       assert(await page.locator('[data-practice-intro]:not([hidden])').count() === 0, 'Slow reload flashes practice instructions');
       resumeBank();
       await page.locator('.feedback').waitFor();
-      await page.unroute('**/assets/questions.json');
+      await page.unroute(`**${bankUrl}`);
       assert(await page.locator('.quiz-question').textContent() === questionText, 'Question changed after reload');
       assert(await page.locator('input[name=answer]:disabled').count() === 4, 'Locked response lost after reload');
       assert(await page.locator('[data-practice-intro]:not([hidden])').count() === 0, 'Reload repeated practice instructions');

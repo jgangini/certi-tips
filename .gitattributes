@@ -1,1 +1,1 @@
-data/diagram-sources/*.svg -text
+data/*/diagram-sources/*.svg -text

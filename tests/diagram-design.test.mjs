@@ -1,11 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readdirSync, readFileSync } from "node:fs";
+import { globSync, readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { runInNewContext } from "node:vm";
 
-const diagrams = new URL("../assets/diagrams/", import.meta.url);
-const readDiagram = (name) => readFileSync(new URL(name, diagrams), "utf8");
+const content = new URL("../content/", import.meta.url);
+const diagrams = new Map(globSync("**/img/*.svg", { cwd: content }).map(file => [file.split(/[\\/]/).at(-1), file.replaceAll("\\", "/")]));
+const readDiagram = (name) => readFileSync(new URL(diagrams.get(name), content), "utf8");
 const attributes = (tag) => Object.fromEntries([...tag.matchAll(/([\w:-]+)\s*=\s*(["'])(.*?)\2/gs)].map(([, key, , value]) => [key, value]));
 const declaration = (style, property) => [...(style || "").matchAll(/([\w-]+)\s*:\s*([^;]+)/g)].filter(([, name]) => name === property).at(-1)?.[2].trim();
 
@@ -98,7 +99,7 @@ test("Governance icons retain reviewed source geometry and contain no active or 
     sources.set(icon.key, geometry(source));
   }
   let count = 0;
-  for (const name of readdirSync(diagrams).filter(name => /^gov-.*\.svg$/.test(name))) {
+  for (const name of [...diagrams.keys()].filter(name => /^gov-.*\.svg$/.test(name))) {
     for (const [, key, body] of readDiagram(name).matchAll(/<g\b[^>]*data-svgrepo-icon="([^"]+)"[^>]*>([\s\S]*?)<\/g>/g)) {
       assert.ok(sources.has(key), `${name}: undocumented icon ${key}`);
       assert.deepEqual(geometry(body), sources.get(key), `${name}: altered ${key} geometry`);
@@ -118,7 +119,7 @@ test("OCI icon badges have a visible border against both their fill and surround
   const contrast = (a, b) => (Math.max(luminance(a), luminance(b)) + 0.05) / (Math.min(luminance(a), luminance(b)) + 0.05);
   assert.equal(contrast("#000", "#fff"), 21);
   let count = 0;
-  for (const name of readdirSync(diagrams).filter(name => /^ocif-.*\.svg$/.test(name))) {
+  for (const name of [...diagrams.keys()].filter(name => /^ocif-.*\.svg$/.test(name))) {
     const source = readDiagram(name);
     const backgrounds = [...source.matchAll(/stop-color="([^"]+)"/g)].map(([, color]) => color);
     for (const [, body] of source.matchAll(/<g data-artwork="true" data-badge="true">([\s\S]*?)<\/g>/g)) {
@@ -180,7 +181,7 @@ test("each arrow-bearing connector is a single continuous SVG subpath", () => {
   assert.deepEqual(connectors(sample), ["M0 0m1 1", "M0 0L1 1", "M1 1m2 2"]);
   const issues = [];
   let count = 0;
-  for (const name of readdirSync(diagrams).filter((name) => name.endsWith(".svg"))) {
+  for (const name of [...diagrams.keys()].filter((name) => name.endsWith(".svg"))) {
     for (const path of connectors(readDiagram(name))) {
       count++;
       if ((path.match(/[Mm]/g) || []).length !== 1) issues.push(`${name}: ${path}`);
@@ -199,15 +200,15 @@ test("OpenAI support step numbers explicitly resolve to white, not the global te
 
 test("the worked purchase example consistently uses US dollars", () => {
   const svg = readDiagram("agents-example.svg");
-  const lesson = readFileSync(new URL("../content/agents.md", import.meta.url), "utf8");
+  const lesson = readFileSync(new URL("../content/1Z0-1157-26/01_agentes_de_ia/01_agentes_de_ia.md", import.meta.url), "utf8");
   assert.match(svg, /USD\s+144/);
   assert.match(lesson, /USD\s+144/);
   assert.doesNotMatch(`${svg}\n${lesson}`, /S\/\s*\d|\bsoles\b/i);
 });
 
 test("the support case uses one OCI architecture instead of two competing examples", () => {
-  const lesson = readFileSync(new URL("../content/agents.md", import.meta.url), "utf8");
-  assert.equal((lesson.match(/assets\/diagrams\/oci-support\.svg/g) || []).length, 1);
+  const lesson = readFileSync(new URL("../content/1Z0-1157-26/01_agentes_de_ia/01_agentes_de_ia.md", import.meta.url), "utf8");
+  assert.equal((lesson.match(/img\/oci-support\.svg/g) || []).length, 1);
   assert.doesNotMatch(lesson, /support-agent\.png/);
 });
 

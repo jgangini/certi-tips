@@ -59,10 +59,11 @@ site.courses = [course];
 test("course lessons omit completion promises and governance opens directly with its concepts", () => {
   const catalog = JSON.parse(readFileSync(new URL('../data/catalog.json', import.meta.url), 'utf8'));
   for (const course of catalog.courses) for (const page of [...course.modules, ...course.resources]) {
-    const source = readFileSync(new URL(`../content/${course.contentDir ? `${course.contentDir}/` : ''}${page.slug}.md`, import.meta.url), 'utf8');
+    const source = readFileSync(new URL(`../content/${course.contentDir}/${page.file}`, import.meta.url), 'utf8');
     assert.doesNotMatch(source, /^(?:\*\*)?Al terminar podrás/im, `${course.id}/${page.slug}`);
   }
-  const source = readFileSync(new URL('../content/data-governance/governance.md', import.meta.url), 'utf8');
+  const governance = catalog.courses.find(course => course.id === 'data-governance');
+  const source = readFileSync(new URL(`../content/${governance.contentDir}/${governance.modules.find(page => page.slug === 'governance').file}`, import.meta.url), 'utf8');
   assert.match(source, /^<span id="conceptos-clave"><\/span>El \*\*gobierno de datos\*\*/);
   assert.doesNotMatch(source, /^## Conceptos Clave|^Operadora Horizonte reúne/m);
 });
@@ -490,7 +491,7 @@ test("retired resources stay unpublished and overview contains only its retained
   const catalog = JSON.parse(readFileSync(new URL("../data/catalog.json", import.meta.url), "utf8"));
   const actualCourse = catalog.courses.find((item) => item.id === "agentic-ai-foundations-2026");
   assert.deepEqual(actualCourse.resources.map((item) => item.slug), ["glossary", "exam-checklist", "practice"]);
-  const overview = readFileSync(new URL("../content/overview.md", import.meta.url), "utf8");
+  const overview = readFileSync(new URL(`../content/${actualCourse.contentDir}/${actualCourse.modules[0].file}`, import.meta.url), "utf8");
   assert.doesNotMatch(overview, /certification-roadmap/);
   const headings = [...overview.matchAll(/^## (.+)$/gm)].map((match) => match[1]);
   assert.deepEqual(headings, ["Objetivos y examen", "Acceso al Recorrido Oficial"]);
@@ -502,7 +503,7 @@ test("retired resources stay unpublished and overview contains only its retained
   assert.doesNotMatch(html, /overview\/#antes-de-comenzar/);
   const accessSections = new Set();
   for (const course of catalog.courses.filter(course => course.exam)) {
-    const source = readFileSync(new URL(`../content/${course.contentDir ? `${course.contentDir}/` : ''}overview.md`, import.meta.url), 'utf8');
+    const source = readFileSync(new URL(`../content/${course.contentDir}/${course.modules[0].file}`, import.meta.url), 'utf8');
     assert.deepEqual([...source.matchAll(/^## (.+)$/gm)].map(match => match[1]), headings, course.id);
     assert.doesNotMatch(source, /## Antes de comenzar|## Cómo vas a estudiar/);
     assert.match(source, new RegExp(`\\*\\*${course.exam.code}\\*\\*`));
@@ -538,12 +539,12 @@ test("hero animation follows the catalog's Foundation Sprint order and levels", 
 
 test("technical sections have captioned local graphics and exercise solutions stay hidden", () => {
   const catalog = JSON.parse(readFileSync(new URL("../data/catalog.json", import.meta.url), "utf8"));
-  const modules = catalog.courses.flatMap((entry) => entry.modules.filter((module) => module.type === "module").map((module) => ({ ...module, contentDir: entry.contentDir || "" })));
+  const modules = catalog.courses.flatMap((entry) => entry.modules.filter((module) => module.type === "module").map((module) => ({ ...module, contentDir: entry.contentDir, courseId: entry.id })));
   assert.ok(modules.length > 0);
   assert.equal(catalog.courses.find((entry) => entry.id === "data-governance").modules.filter((module) => module.type === "module").length, 11);
   const markdown = new MarkdownIt({ html: true });
   for (const module of modules) {
-    const source = readFileSync(new URL(`../content/${module.contentDir}/${module.slug}.md`, import.meta.url), "utf8");
+    const source = readFileSync(new URL(`../content/${module.contentDir}/${module.file}`, import.meta.url), "utf8");
     const tokens = markdown.parse(source, {});
     const sections = [];
     let section;
@@ -564,12 +565,12 @@ test("technical sections have captioned local graphics and exercise solutions st
     for (const { title, images } of sections) {
       const label = `${module.slug} / ${title}`;
       // These errors sections retain their explanatory lists after their graphics were removed.
-      assert.ok(images.length || (module.contentDir === "data-governance" && title === "Errores Frecuentes"), `${label} needs an explanatory graphic`);
+      assert.ok(images.length || (module.courseId === "data-governance" && title === "Errores Frecuentes"), `${label} needs an explanatory graphic`);
       for (const { image, hidden } of images) {
-        assert.match(decodeURIComponent(image.attrGet("src")), /^\{\{base\}\}assets\/(?:diagrams|illustrations)\/.+\.(?:svg|png|jpe?g|webp)$/i, `${label} needs a local image`);
+        assert.match(decodeURIComponent(image.attrGet("src")), /^img\/[a-z0-9-]+\.(?:svg|png)$/i, `${label} needs a local image`);
         const caption = (image.attrGet("title") || image.content).trim();
         // Governance captions walk through a task or decision and explain how to use the diagram.
-        const captionLimit = module.contentDir === "data-governance" ? 800 : 140;
+        const captionLimit = module.courseId === "data-governance" ? 800 : 140;
         assert.ok(caption && caption.length <= captionLimit && !/ampliar diagrama/i.test(caption), `${label} needs a descriptive caption within its length limit`);
         if (/^Ejercicio\b/i.test(title)) assert.ok(hidden, `${label} must keep its solution graphic inside details`);
       }

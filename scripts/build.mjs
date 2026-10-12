@@ -32,26 +32,66 @@ const md = new MarkdownIt({ html: true, linkify: true });
 md.renderer.rules.table_open = () => '<div class="table-scroll" role="region" aria-label="Tabla de referencia" tabindex="0"><table>\n';
 md.renderer.rules.table_close = () => "</table></div>\n";
 
-md.renderer.rules.image = (tokens, index) => {
+md.renderer.rules.image = (tokens, index, _options, env) => {
   const token = tokens[index];
-  const src = escapeHtml(token.attrGet("src"));
+  const reference = token.attrGet("src");
+  if (!/^img\/[a-z0-9-]+\.(?:svg|png)$/.test(reference)) throw new Error(`Invalid module image: ${reference}`);
+  const imageUrl = `${site.base}${env.publicPath}/${reference}`;
+  const src = escapeHtml(imageUrl);
   const alt = escapeHtml(token.content);
   const caption = escapeHtml(token.attrGet("title") || token.content);
-  const size = imageSizes.get(token.attrGet("src"));
+  const size = imageSizes.get(imageUrl);
   if (!size?.every(value => Number.isFinite(value) && value > 0)) throw new Error(`Missing image dimensions: ${src}`);
   return `<button class="diagram" type="button" data-diagram="${src}" aria-label="Ampliar: ${alt}"><img src="${src}" alt="${alt}" width="${size[0]}" height="${size[1]}" loading="lazy"><span>${caption} <span aria-hidden="true">↗</span></span></button>`;
 };
 
-function renderMarkdown(source) {
+function renderMarkdown(source, publicPath) {
   const tokens = md.parse(source.replaceAll("{{base}}", site.base), {});
   const toc = annotateHeadings(tokens);
-  return { html: md.renderer.render(tokens, md.options, {}), toc, tokens };
+  return { html: md.renderer.render(tokens, md.options, { publicPath }), toc, tokens };
 }
 
 async function save(relative, html) {
   const destination = path.join(output, relative);
   await mkdir(path.dirname(destination), { recursive: true });
   await writeFile(destination, html);
+}
+
+async function publishImages(directory, publicPath) {
+  if (!existsSync(path.join(directory, "img"))) return;
+  const images = await realpath(path.join(directory, "img"));
+  if (!images.startsWith(`${directory}${path.sep}`)) throw new Error("Module images must stay inside their source directory.");
+  const files = await readdir(images, { withFileTypes: true });
+  if (files.some(file => !file.isFile() || !/^[a-z0-9-]+\.(?:svg|png)$/.test(file.name))) throw new Error(`Invalid module image directory: ${images}`);
+  for (const { name } of files) {
+    let contents = await readFile(path.join(images, name));
+    let size;
+    if (name.endsWith(".svg")) {
+      contents = contents.toString("utf8");
+      const viewBox = contents.match(/\bviewBox="([^"]+)"/)?.[1].trim().split(/[\s,]+/).map(Number);
+      if (viewBox?.length === 4) size = viewBox.slice(2);
+      // SVGs loaded through <img> cannot fetch siblings; embed only module-local PNG files.
+      for (const [reference, png] of contents.matchAll(/href="([a-z0-9-]+\.png)"/g)) {
+        if (!files.some(file => file.name === png)) throw new Error(`Missing module illustration: ${png}`);
+        contents = contents.replace(reference, `href="data:image/png;base64,${(await readFile(path.join(images, png))).toString("base64")}"`);
+      }
+    } else {
+      if (contents.length < 24 || contents.toString("hex", 0, 8) !== "89504e470d0a1a0a" || contents.toString("ascii", 12, 16) !== "IHDR") throw new Error(`Invalid PNG: ${name}`);
+      size = [contents.readUInt32BE(16), contents.readUInt32BE(20)];
+    }
+    if (!size?.every(value => Number.isFinite(value) && value > 0)) throw new Error(`Missing image dimensions: ${name}`);
+    imageSizes.set(`${site.base}${publicPath}/img/${name}`, size);
+    await save(`${publicPath}/img/${name}`, contents);
+  }
+}
+
+async function renderPage(course, page) {
+  const contentRoot = await realpath(path.join(root, "content"));
+  const source = await realpath(path.resolve(contentRoot, course.contentDir, page.file));
+  if (!source.startsWith(`${contentRoot}${path.sep}`)) throw new Error("Course source must stay inside content/.");
+  const publicPath = `${courseRoute(course)}/${page.slug}`;
+  await publishImages(path.dirname(source), publicPath);
+  return renderMarkdown(await readFile(source, "utf8"), publicPath);
 }
 
 try {
@@ -69,35 +109,13 @@ await cp(path.join(root, "assets"), path.join(output, "assets"), {
 await cp(path.join(root, "node_modules", "qrcode-generator", "qrcode.js"), path.join(output, "assets", "qrcode-generator.js"));
 await cp(path.join(root, "node_modules", "deep-chat", "dist", "deepChat.js"), path.join(output, "assets", "deep-chat.js"));
 await cp(path.join(root, "node_modules", "deep-chat", "LICENSE"), path.join(output, "assets", "deep-chat.LICENSE.txt"));
-// SVGs loaded through <img> cannot fetch sibling images; embed local PNG illustrations at build time.
-const diagramDirectory = path.join(output, "assets/diagrams");
-for (const file of await readdir(diagramDirectory)) {
-  if (!file.endsWith(".svg")) continue;
-  const destination = path.join(diagramDirectory, file);
-  const source = await readFile(destination, "utf8");
-  // Reserve the SVG's native ratio before lazy loading, so document anchors do not shift.
-  const viewBox = source.match(/\bviewBox="([^"]+)"/)?.[1].trim().split(/[\s,]+/).map(Number);
-  if (viewBox?.length === 4) imageSizes.set(`${site.base}assets/diagrams/${file}`, viewBox.slice(2));
-  let embedded = source;
-  for (const [reference, name] of source.matchAll(/href="\.\.\/illustrations\/([a-z0-9-]+\.png)"/g)) {
-    const png = await readFile(path.join(root, "assets/illustrations", name));
-    embedded = embedded.replace(reference, `href="data:image/png;base64,${png.toString("base64")}"`);
-  }
-  if (embedded !== source) await writeFile(destination, embedded);
-}
-for (const file of await readdir(path.join(root, "assets/illustrations"))) {
-  if (!file.endsWith(".png")) continue;
-  const png = await readFile(path.join(root, "assets/illustrations", file));
-  if (png.length < 24 || png.toString("hex", 0, 8) !== "89504e470d0a1a0a" || png.toString("ascii", 12, 16) !== "IHDR") throw new Error(`Invalid PNG: ${file}`);
-  imageSizes.set(`${site.base}assets/illustrations/${file}`, [png.readUInt32BE(16), png.readUInt32BE(20)]);
-}
 for (const course of site.courses) {
-  await cp(path.join(root, "data", `${course.questionBank}.json`), path.join(output, "assets", `${course.questionBank}.json`));
+  await save(`assets/${course.questionBank}.json`, await readFile(path.join(root, "data", `${course.questionBank}.json`)));
   const publicPath = courseRoute(course);
   const pages = [...course.modules, ...course.resources];
   const rendered = new Map(await Promise.all(pages.map(async (page) => [
     page.slug,
-    renderMarkdown(await readFile(path.join(root, "content", course.contentDir || "", `${page.slug}.md`), "utf8")),
+    await renderPage(course, page),
   ])));
   const tocByPage = new Map([...rendered].map(([slug, { toc }]) => [slug, toc]));
   for (const page of pages) {

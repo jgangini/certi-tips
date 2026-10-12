@@ -1,18 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, globSync, existsSync } from 'node:fs';
 
 const read = file => readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
 const course = JSON.parse(read('data/catalog.json')).courses.find(course => course.id === 'data-governance');
-const bank = JSON.parse(read('data/questions-governance.json'));
-const coverage = JSON.parse(read('data/coverage-governance.json'));
+const bank = JSON.parse(read(`data/${course.questionBank}.json`));
+const coverage = JSON.parse(read(`data/${course.coverage}.json`));
+const pages = [...course.modules, ...course.resources];
+const readPage = slug => read(`content/${course.contentDir}/${pages.find(page => page.slug === slug).file}`);
+const diagrams = new Map(globSync(`content/${course.contentDir}/**/img/*.svg`).map(file => [file.split(/[\\/]/).at(-1), file]));
 const anchor = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 test('Governance graphics use readable widescreen slides with accessible descriptions', () => {
-  const names = readdirSync(new URL('../assets/diagrams/', import.meta.url)).filter(name => name.startsWith('gov-') && name.endsWith('.svg'));
+  const names = [...diagrams.keys()];
   assert.equal(names.length, 66);
   for (const name of names) {
-    const svg = read(`assets/diagrams/${name}`);
+    const svg = read(diagrams.get(name).replaceAll('\\', '/'));
     assert.match(svg, /viewBox="0 0 1920 1080"/, name);
     assert.match(svg, /<rect x="0" y="0" width="1920" height="1080"[^>]*fill="#F1EFED"/, `${name}: reference canvas background`);
     assert.match(svg, /<title\b[^>]*>[^<]+<\/title>/, name);
@@ -20,7 +23,7 @@ test('Governance graphics use readable widescreen slides with accessible descrip
     assert.doesNotMatch(svg, /<linearGradient|<radialGradient/, name);
     // The supplied pyramid retains native 10/12px type at a uniform 1.72 scale.
     if (name === 'gov-overview-map.svg') {
-      const supplied = read('data/diagram-sources/dama.svg');
+      const supplied = read('data/CDMP-DMF/diagram-sources/dama.svg');
       assert.match(svg, /data-source-viewbox="0 0 1154\.55 841\.89"/);
       assert.match(svg, /transform="translate\(960 1000\) scale\(1\.72\) translate\(-530\.886 -566\.32\)"/);
       const normalize = value => value.replace(/\s+/g, ' ').trim();
@@ -59,7 +62,7 @@ test('Governance evidence maps eleven areas, original diagrams and all assessmen
   assert.equal(course.exam, undefined);
   const used = new Set();
   for (const entry of coverage) {
-    const source = read(`content/data-governance/${entry.module}.md`);
+    const source = readPage(entry.module);
     assert.ok([...source.matchAll(/^## (.+)$/gm)].some(match => anchor(match[1]) === entry.anchor) || source.includes(`id="${entry.anchor}"`), entry.anchor);
     assert.equal(entry.source, 'original-editorial');
     assert.ok(entry.objective && entry.publicSources.length);
@@ -80,7 +83,7 @@ test('Governance evidence maps eleven areas, original diagrams and all assessmen
   }
   assert.equal(used.size, 66, 'Every question must trace to a covered learning unit');
   for (const page of [...course.modules, ...course.resources]) {
-    const source = read(`content/data-governance/${page.slug}.md`);
+    const source = readPage(page.slug);
     assert.doesNotMatch(source, /oracle\.enterprise\.slack\.com|[A-Z]:\\Desktop|DAMA-DMBOK|capítulo\s+\d|página impresa\s+\d/i);
     if (course.modules.slice(3).some(module => module.slug === page.slug)) {
       assert.doesNotMatch(source, /Fuentes y Repaso|gov-[\w-]+-(?:errors|recap)\.svg/, `${page.slug}: removed sections and graphics`);
@@ -97,14 +100,14 @@ test('Governance evidence maps eleven areas, original diagrams and all assessmen
         assert.doesNotMatch(section, /!\[/);
         continue;
       }
-      assert.match(section, /!\[[^\]]+\]\(\{\{base\}\}assets\/diagrams\/gov-[\w-]+\.svg "[^"]+"\)/, `${page.slug}: section must have an explained original graphic`);
+      assert.match(section, /!\[[^\]]+\]\(img\/gov-[\w-]+\.svg "[^"]+"\)/, `${page.slug}: section must have an explained original graphic`);
     }
   }
 });
 
 test('Governance teaches documented Oracle workflows and preserves catalog and lineage scope', () => {
-  const metadata = read('content/data-governance/metadata.md');
-  const map = read('content/data-governance/oracle-map.md');
+  const metadata = readPage('metadata');
+  const map = readPage('oracle-map');
   assert.match(metadata, /ai-data-platform\/aidug\/lineage\.html/);
   assert.match(metadata, /última captura/);
   assert.match(map, /Master Catalog/);
@@ -117,10 +120,10 @@ test('Governance teaches documented Oracle workflows and preserves catalog and l
   assert.match(map, /survivorship|Survivorship/);
   const published = [JSON.stringify(course), JSON.stringify(bank)];
   for (const page of [...course.modules, ...course.resources]) {
-    published.push(read(`content/data-governance/${page.slug}.md`));
+    published.push(readPage(page.slug));
   }
-  for (const name of readdirSync(new URL('../assets/diagrams/', import.meta.url)).filter(name => /^gov-.*\.svg$/.test(name))) {
-    published.push(read(`assets/diagrams/${name}`).replace(/<[^>]+>/g, ' '));
+  for (const file of diagrams.values()) {
+    published.push(read(file.replaceAll('\\', '/')).replace(/<[^>]+>/g, ' '));
   }
   // Documentation URLs can contain release labels; learner-facing copy teaches their use.
   for (const text of published) {
@@ -132,12 +135,12 @@ test('Governance uses full product names in lessons, questions, catalog and diag
   const legacy = /\b(?:AIDP|OAC|EDM|OCI|ALH|ADW|IAM|Vault)\b|DAMA-DMBOK|Base conceptual:/;
   const prose = text => text.replace(/\]\([^)]*\)/g, ']').replace(/`[^`]*`/g, '');
   for (const page of [...course.modules, ...course.resources]) {
-    assert.doesNotMatch(prose(read(`content/data-governance/${page.slug}.md`)), legacy, page.slug);
+    assert.doesNotMatch(prose(readPage(page.slug)), legacy, page.slug);
   }
   assert.doesNotMatch(JSON.stringify(course), legacy);
   assert.doesNotMatch(JSON.stringify(bank), legacy);
-  for (const name of readdirSync(new URL('../assets/diagrams/', import.meta.url)).filter(name => name.startsWith('gov-') && name.endsWith('.svg'))) {
-    const labels = read(`assets/diagrams/${name}`).replace(/<[^>]+>/g, ' ');
+  for (const [name, file] of diagrams) {
+    const labels = read(file.replaceAll('\\', '/')).replace(/<[^>]+>/g, ' ');
     // The user requested AIDP only in this diagram's compact detail rows.
     const fullNames = name === 'gov-governance-oracle.svg' ? labels.replace(/\bAIDP\b/g, 'Oracle AI Data Platform') : labels;
     assert.doesNotMatch(fullNames, legacy, name);

@@ -4,7 +4,7 @@ Fecha: 9 de octubre de 2026. Curso: `oci-foundations-2026`, examen `1Z0-1085-26`
 
 ## Alcance y trazabilidad
 
-57 lecciones aportadas: 2 de orientación, 3 de introducción OCI, 11 de IAM, 8 de red, 9 de cómputo, 9 de almacenamiento, 8 de seguridad y 7 de gobierno. `data/coverage-oci-foundations.json` enlaza cada lección con una sección real. Las demostraciones se sintetizan como decisiones y comprobaciones; no se presentan como laboratorios que el lector haya ejecutado. La guía no publica transcripciones ni rutas personales.
+57 lecciones aportadas: 2 de orientación, 3 de introducción OCI, 11 de IAM, 8 de red, 9 de cómputo, 9 de almacenamiento, 8 de seguridad y 7 de gobierno. `data/1Z0-1085-26/coverage.json` enlaza cada lección con una sección real. Las demostraciones se sintetizan como decisiones y comprobaciones; no se presentan como laboratorios que el lector haya ejecutado. La guía no publica transcripciones ni rutas personales.
 
 La secuencia de siete módulos técnicos comparte estructura con Agentic AI y AI Foundations: objetivos, tres bloques de enseñanza, ejemplo, errores, ejercicio con solución y repaso. Son 49 diagramas SVG originales y 42 preguntas originales, seis por módulo. Cada intento selecciona 14. La organización y meta de estudio no representan ponderaciones ni nota oficial.
 

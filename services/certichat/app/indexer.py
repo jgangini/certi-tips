@@ -6,7 +6,8 @@ import os
 from pathlib import Path
 
 from .corpus import (CORPUS_URL, DATASET, MANIFEST_URL, atomic_json, download,
-                     read_json, segments, snapshot_path, supported_fragments, validate_corpus, validate_manifest)
+                     read_json, same_indexed_content, segments, snapshot_path,
+                     supported_fragments, validate_corpus, validate_manifest)
 from .knowledge import close_cognee, configure_cognee, retrieve_evidence
 
 
@@ -18,13 +19,32 @@ async def refresh(root: Path) -> dict:
     return manifest
 
 
+def reusable_snapshot(root: Path, manifest: dict) -> str | None:
+    versions = [manifest["contentHash"]]
+    # Prefer a prepared compatible candidate over the active graph; neither store is opened or moved.
+    versions += [read_json(root / name)["version"] for name in ("candidate.json", "active.json")
+                 if (root / name).exists()]
+    for version in dict.fromkeys(versions):
+        snapshot = snapshot_path(root, version)
+        if not (snapshot / "ready.json").exists() or not (snapshot / "manifest.json").exists():
+            continue
+        indexed = read_json(snapshot / "manifest.json")
+        ready = read_json(snapshot / "ready.json")
+        if (indexed["contentHash"] == version and type(ready.get("documents")) is int
+                and ready == {"version": version, "documents": len(indexed["documents"])}
+                and same_indexed_content(indexed, manifest)):
+            return version
+    return None
+
+
 async def build(root: Path) -> None:
     manifest = await refresh(root)
-    version = manifest["contentHash"]
-    snapshot = snapshot_path(root, version)
-    if (snapshot / "ready.json").exists():
+    version = reusable_snapshot(root, manifest)
+    if version:
         atomic_json(root / "candidate.json", {"version": version})
         return
+    version = manifest["contentHash"]
+    snapshot = snapshot_path(root, version)
     documents = validate_corpus(await download(CORPUS_URL, 32_000_000), manifest)
     snapshot.mkdir(parents=True, exist_ok=True)
     sources = segments(documents)

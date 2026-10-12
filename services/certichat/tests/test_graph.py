@@ -125,7 +125,7 @@ def test_standalone_node_sources_use_exact_contains_and_selected_fragments(monke
              ("unselected", NODES[0], "contains", {})]
     documents = node_documents(entities + chunks, edges)
     graph = public_graph(entities + chunks, edges, "a"*64)
-    fragments = [{"id": "selected", "title": "DAMA: Tu punto de partida", "url": SITE + "data-governance/overview/"},
+    fragments = [{"id": "selected", "title": "DAMA: Tu punto de partida", "url": SITE + "CDMP-DMF/overview/"},
                  {"id": "wrong", "title": "DAMA", "url": SITE + "wrong/"}]
     evidence = [{"kind": "graph_node", "artifact_id": node} for node in NODES[:2]]
     trace = graph_trace(evidence, graph, fragments, documents)

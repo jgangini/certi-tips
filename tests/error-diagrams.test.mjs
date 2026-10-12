@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { globSync, readFileSync } from 'node:fs';
 
 test('all frequent-error diagrams share typography, headings and paired-card geometry', () => {
   const diagrams = [
@@ -9,7 +9,8 @@ test('all frequent-error diagrams share typography, headings and paired-card geo
   ];
   let sharedStyle, sharedHeadings;
   for (const [name, count] of diagrams) {
-    const svg = readFileSync(new URL(`../assets/diagrams/${name}.svg`, import.meta.url), 'utf8');
+    const [file] = globSync(`**/img/${name}.svg`, { cwd: new URL('../content/', import.meta.url) });
+    const svg = readFileSync(new URL(`../content/${file.replaceAll('\\', '/')}`, import.meta.url), 'utf8');
     const style = svg.match(/<style>([\s\S]*?)<\/style>/)?.[1];
     const headings = svg.match(/<g class="column-headings">([\s\S]*?)<\/g>/)?.[1];
     assert.ok(style && headings, `${name}: missing comparison style or headings`);

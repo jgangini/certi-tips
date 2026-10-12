@@ -18,6 +18,7 @@ def test_lifespan_keeps_both_stores_warm_until_shutdown(tmp_path, monkeypatch, v
     snapshot.mkdir(parents=True)
     atomic_json(tmp_path / "active.json", {"version": version})
     atomic_json(snapshot / "ready.json", {"version": version})
+    atomic_json(snapshot / "manifest.json", {"contentHash": version, "documents": []})
     atomic_json(snapshot / "sources.json", {})
     monkeypatch.setenv("CERTICHAT_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("CERTICHAT_CHAT_INTERNAL_TOKEN", "t" * 32)
@@ -110,7 +111,7 @@ def test_retrieval_uses_latest_manifest_after_search_while_health_keeps_snapshot
                "documents": [initial["documents"][0], {**initial["documents"][1], "hash": digest("Nuevo contenido")}]}
     atomic_json(tmp_path / "latest.json", initial)
     state = SimpleNamespace(root=tmp_path, token="test-token", snapshot=tmp_path, version="a"*64,
-                            sources=sources, lock=asyncio.Lock())
+                            sources=sources, manifest=initial, lock=asyncio.Lock())
     monkeypatch.setattr(knowledge.app, "state", state)
 
     async def evidence(_message, _context):
@@ -134,7 +135,7 @@ def test_current_page_precedes_graph_results_with_existing_source_limit(tmp_path
                               {"hash": digest(doc["text"])} for doc in documents]}
     atomic_json(tmp_path / "latest.json", manifest)
     monkeypatch.setattr(knowledge.app, "state", SimpleNamespace(
-        root=tmp_path, token="test-token", snapshot=tmp_path, version="a"*64, sources=sources, lock=asyncio.Lock()))
+        root=tmp_path, token="test-token", snapshot=tmp_path, version="a"*64, sources=sources, manifest=manifest, lock=asyncio.Lock()))
 
     async def evidence(_message, _context):
         names = list(sources)
@@ -160,7 +161,7 @@ def test_chat_page_includes_published_navigation_only_while_its_hash_matches(tmp
         manifest["documents"][0]["hash"] = digest("Nueva oferta publicada")
     atomic_json(tmp_path / "latest.json", manifest)
     monkeypatch.setattr(knowledge.app, "state", SimpleNamespace(
-        root=tmp_path, token="test-token", snapshot=tmp_path, version="a"*64, sources=sources, lock=asyncio.Lock()))
+        root=tmp_path, token="test-token", snapshot=tmp_path, version="a"*64, sources=sources, manifest=manifest, lock=asyncio.Lock()))
 
     async def evidence(message, context):
         assert message == context == "¿Qué puedo estudiar aquí?"
@@ -180,7 +181,7 @@ def test_compound_evidence_preserves_retrieved_order_and_late_source(tmp_path, m
                     "url": SITE + f"oci{i}/", "text": "OCI Enterprise AI usa proyectos y herramientas. " * 35}
                    for i in range(6)],
                  {"id": "governance", "title": "Tu punto de partida", "courseId": "data-governance",
-                  "url": SITE + "data-governance/overview/", "text":
+                  "url": SITE + "CDMP-DMF/overview/", "text":
                   "DAMA es un marco de gestión de datos. El taller aplica sus principios con Oracle Cloud."}]
     sources = segments(documents)
     manifest = {"schemaVersion": 1, "contentHash": "a"*64, "corpusUrl": CORPUS_URL,
@@ -188,7 +189,7 @@ def test_compound_evidence_preserves_retrieved_order_and_late_source(tmp_path, m
                               {"hash": digest(doc["text"])} for doc in documents]}
     atomic_json(tmp_path / "latest.json", manifest)
     monkeypatch.setattr(knowledge.app, "state", SimpleNamespace(
-        root=tmp_path, token="test-token", snapshot=tmp_path, version="a"*64, sources=sources, lock=asyncio.Lock()))
+        root=tmp_path, token="test-token", snapshot=tmp_path, version="a"*64, sources=sources, manifest=manifest, lock=asyncio.Lock()))
 
     async def evidence(_message, _context):
         return [{"kind": "segment", "document_name": name} for name in sources]
@@ -197,7 +198,7 @@ def test_compound_evidence_preserves_retrieved_order_and_late_source(tmp_path, m
     result = asyncio.run(knowledge.retrieve(
         knowledge.Retrieval(message=question, pageUrl=SITE), "Bearer test-token"))
     assert result["fragments"][0]["url"] == SITE
-    assert result["fragments"][-1]["url"] == SITE + "data-governance/overview/"
+    assert result["fragments"][-1]["url"] == SITE + "CDMP-DMF/overview/"
     assert len(result["fragments"]) == 8
     assert "DAMA está en Governance" in result["fragments"][0]["text"]
 
@@ -209,7 +210,7 @@ def test_followup_retrieval_uses_only_current_version_questions(tmp_path, monkey
                                "url": SITE + "guide/", "hash": digest("Contenido")}]}
     atomic_json(tmp_path / "latest.json", manifest)
     monkeypatch.setattr(knowledge.app, "state", SimpleNamespace(
-        root=tmp_path, token="test-token", snapshot=tmp_path, version="a"*64, sources={}, lock=asyncio.Lock()))
+        root=tmp_path, token="test-token", snapshot=tmp_path, version="a"*64, sources={}, manifest=manifest, lock=asyncio.Lock()))
     queries = []
 
     async def evidence(message, context):
@@ -321,7 +322,7 @@ def test_native_search_timeout_cancels_slow_lane_and_keeps_completed_evidence(mo
 
 
 @pytest.mark.parametrize("current,active_version", [(True, "b"*64), (False, "a"*64), (True, "a"*64)])
-def test_trace_waits_for_current_snapshot_even_when_published_navigation_survives(tmp_path, monkeypatch, current, active_version):
+def test_trace_requires_same_indexed_content_even_when_published_navigation_survives(tmp_path, monkeypatch, current, active_version):
     node = "00000000-0000-0000-0000-000000000001"
     doc = {"id": "guide", "title": "Guía", "courseId": "course", "url": SITE + "guide/", "text": "Información publicada."}
     home = {"id": "home", "title": "Rutas", "courseId": "site", "url": SITE, "text": "Oferta publicada."}
@@ -331,10 +332,12 @@ def test_trace_waits_for_current_snapshot_even_when_published_navigation_survive
                               {"hash": digest(doc["text"] if current else "Nuevo contenido")},
                               {key: value for key, value in home.items() if key != "text"} | {"hash": digest(home["text"])}]}
     atomic_json(tmp_path / "latest.json", manifest)
+    indexed = {**manifest, "contentHash": active_version,
+               "documents": [{**manifest["documents"][0], "hash": digest(doc["text"])}, manifest["documents"][1]]}
     projection = {"version": active_version, "nodes": [{"id": node}], "edges": []}
     monkeypatch.setattr(knowledge.app, "state", SimpleNamespace(
         root=tmp_path, token="test-token", snapshot=tmp_path, version=active_version, sources=sources,
-        lock=asyncio.Lock(), public_graph=projection, node_documents={node: {next(iter(sources))}}))
+        manifest=indexed, lock=asyncio.Lock(), public_graph=projection, node_documents={node: {next(iter(sources))}}))
     calls = []
 
     async def evidence(message, _context):
@@ -346,6 +349,38 @@ def test_trace_waits_for_current_snapshot_even_when_published_navigation_survive
     result = asyncio.run(knowledge.retrieve(knowledge.Retrieval(message="Consulta"), "Bearer test-token"))
     assert calls == ["Consulta"] and result["version"] == "b"*64
     assert any(fragment["url"] == SITE for fragment in result["fragments"])
-    highlight = current and active_version == result["version"]
+    highlight = current
     assert result["graphTrace"] == {"version": active_version, "nodes": [node] if highlight else [], "edges": [], "truncated": False,
                                     **({"sources": [{"nodeId": node, "title": doc["title"], "url": doc["url"]}]} if highlight else {})}
+
+
+def test_relocated_page_keeps_context_and_graph_identity_with_current_links(tmp_path, monkeypatch):
+    node = "00000000-0000-0000-0000-000000000001"
+    doc = {"id": "guide", "title": "Guía", "courseId": "course", "url": SITE + "old/#concept",
+           "text": "Información que permanece igual."}
+    sources = segments([doc])
+    indexed = {"schemaVersion": 1, "contentHash": "a" * 64, "corpusUrl": CORPUS_URL,
+               "documents": [{key: value for key, value in doc.items() if key != "text"} | {"hash": digest(doc["text"])}]}
+    current_url = SITE + "new/#concept"
+    current = {**indexed, "contentHash": "b" * 64,
+               "documents": [{**indexed["documents"][0], "url": current_url}]}
+    atomic_json(tmp_path / "latest.json", current)
+    projection = {"version": indexed["contentHash"], "nodes": [{"id": node}], "edges": []}
+    monkeypatch.setattr(knowledge.app, "state", SimpleNamespace(
+        root=tmp_path, token="test-token", snapshot=tmp_path, version=indexed["contentHash"], sources=sources,
+        manifest=indexed, lock=asyncio.Lock(), public_graph=projection,
+        node_documents={node: {next(iter(sources))}}))
+
+    async def evidence(*_args):
+        # No retrieved segment: the new page hint itself must locate the unchanged indexed text.
+        return [{"kind": "graph_node", "artifact_id": node}]
+
+    monkeypatch.setattr(knowledge, "retrieve_evidence", evidence)
+    result = asyncio.run(knowledge.retrieve(
+        knowledge.Retrieval(message="Explica este concepto", pageUrl=current_url), "Bearer test-token"))
+    assert result["version"] == current["contentHash"]
+    assert result["fragments"] == [{"id": next(iter(sources)).removesuffix(".txt"), "title": doc["title"],
+                                    "url": current_url, "text": doc["text"]}]
+    assert result["graphTrace"] == {"version": indexed["contentHash"], "nodes": [node], "edges": [], "truncated": False,
+                                    "sources": [{"nodeId": node, "title": doc["title"], "url": current_url}]}
+    assert knowledge.app.state.sources == sources and next(iter(sources.values()))["url"] == doc["url"]

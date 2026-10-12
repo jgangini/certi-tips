@@ -2,7 +2,7 @@
 
 Original educational images generated with the built-in `image_gen` tool, not the CLI. They complement the editable SVG diagrams. They depict conceptual solution responsibilities, not deployable OCI network topologies or official service icons. No screenshot is used as evidence of the site.
 
-Final assets are stored in `assets/illustrations/`. Review edits used the same built-in tool: the central human operator was replaced by an automated orchestration console in support-agent and grounded-answer, to distinguish software from human approval. In grounded-answer the direct agent-to-database bypass was removed and the model connector was made bidirectional. The chapter captions explain that these are component relationships, not strict execution sequences.
+Current assets live in each module's `content/1Z0-1157-26/NN_name/img/` directory. Superseded `grounded-answer.png` and `support-agent.png` are retained in `docs/archive/illustrations/` and are not published or indexed. The current grounded-answer image has no version suffix in its module. Review edits used the same built-in tool: the central human operator was replaced by an automated orchestration console in support-agent and grounded-answer, to distinguish software from human approval. In grounded-answer the direct agent-to-database bypass was removed and the model connector was made bidirectional. The chapter captions explain that these are component relationships, not strict execution sequences.
 
 ## support-agent.png
 

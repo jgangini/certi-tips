@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from app.corpus import (CORPUS_URL, SITE, digest, public_url, segments,
+from app.corpus import (CORPUS_URL, SITE, digest, public_url, same_indexed_content, segments,
                         snapshot_path, supported_fragments, validate_corpus, validate_manifest)
 
 
@@ -48,12 +48,40 @@ def test_provenance_never_returns_changed_deleted_or_unmapped_sources():
     assert len(found) == 2 and found[0]["url"] == doc["url"]
     assert "".join(f["text"] for f in found) == doc["text"]
     manifest["documents"][0]["url"] = SITE + "moved/"
+    moved = supported_fragments(evidence, sources, manifest)
+    assert [fragment["id"] for fragment in moved] == [fragment["id"] for fragment in found]
+    assert all(fragment["url"] == SITE + "moved/" for fragment in moved)
+    assert "".join(fragment["text"] for fragment in moved) == doc["text"]
+    assert all(source["url"] == doc["url"] for source in sources.values())
+    manifest["documents"][0]["url"] = "https://evil.example/extract"
     assert not supported_fragments(evidence, sources, manifest)
-    manifest["documents"][0]["url"] = doc["url"]
+    manifest["documents"][0]["url"] = SITE + "moved/"
     manifest["documents"][0]["hash"] = "0" * 64
     assert not supported_fragments(evidence, sources, manifest)
     manifest["documents"] = []
     assert not supported_fragments(evidence, sources, manifest)
+
+
+@pytest.mark.parametrize("change", ["url", "id", "title", "courseId", "hash", "added", "removed"])
+def test_index_compatibility_ignores_only_url_relocation(change):
+    _, _, indexed = fixture()
+    current = deepcopy(indexed)
+    current["contentHash"] = "d" * 64
+    if change == "added":
+        current["documents"].append({**current["documents"][0], "id": "extra"})
+    elif change == "removed":
+        current["documents"] = []
+    else:
+        current["documents"][0][change] = SITE + "moved/" if change == "url" else "changed"
+    assert same_indexed_content(indexed, current) is (change == "url")
+
+
+@pytest.mark.parametrize("field", ["id", "title", "courseId", "hash"])
+def test_relocation_never_preserves_sources_with_changed_identity_or_content(field):
+    doc, _, current = fixture()
+    sources = segments([doc])
+    current["documents"][0].update(url=SITE + "moved/", **{field: "changed"})
+    assert not supported_fragments([{"kind": "segment", "document_name": name} for name in sources], sources, current)
 
 
 def test_snapshot_paths_cannot_traverse():

@@ -4,7 +4,7 @@ Revisión: 9 de octubre de 2026. Curso: Oracle Cloud Infrastructure AI Foundatio
 
 ## Cobertura del material aportado
 
-La carpeta fuente contiene 72 lecciones Markdown, un archivo de práctica y un temario. Las transcripciones permanecen fuera del repositorio. `data/coverage-ai-foundations.json` relaciona cada nombre de lección con un módulo y un encabezado publicados. Se han sintetizado en español, sin copiar las transcripciones ni distribuir el banco oficial.
+La carpeta fuente contiene 72 lecciones Markdown, un archivo de práctica y un temario. Las transcripciones permanecen fuera del repositorio. `data/1Z0-1122-26/coverage.json` relaciona cada nombre de lección con un módulo y un encabezado publicados. Se han sintetizado en español, sin copiar las transcripciones ni distribuir el banco oficial.
 
 | Grupo fuente | Lecciones | Módulo CertiTips |
 | --- | ---: | --- |

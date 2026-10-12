@@ -121,6 +121,14 @@ def segments(documents: list[dict]) -> dict[str, dict]:
     return result
 
 
+def same_indexed_content(indexed: dict, current: dict) -> bool:
+    # URLs locate published evidence; Cognee ingests only text under names derived from document IDs.
+    keys = ("id", "title", "courseId", "hash")
+    return bool(indexed["documents"]) and sorted(
+        tuple(doc[key] for key in keys) for doc in indexed["documents"]
+    ) == sorted(tuple(doc[key] for key in keys) for doc in current["documents"])
+
+
 def supported_fragments(evidence: list[dict], sources: dict, latest: dict) -> list[dict]:
     current = {doc["id"]: doc for doc in latest["documents"]}
     candidates, seen = [], set()
@@ -132,11 +140,12 @@ def supported_fragments(evidence: list[dict], sources: dict, latest: dict) -> li
         if item.get("kind") != "segment" or not source or name in seen:
             continue
         metadata = current.get(source["id"])
-        if not metadata or any(metadata.get(key) != source.get(key) for key in ("hash", "url", "title", "courseId")):
+        if (not metadata or not public_url(metadata.get("url"))
+                or any(metadata.get(key) != source.get(key) for key in ("hash", "title", "courseId"))):
             continue
         seen.add(name)
         candidates.append({"id": name.removesuffix(".txt"), "title": source["title"],
-                           "url": source["url"], "text": source["text"]})
+                           "url": metadata["url"], "text": source["text"]})
     selected, size = [], 0
     for candidate in candidates:
         length = len(candidate["text"].encode("utf-8"))

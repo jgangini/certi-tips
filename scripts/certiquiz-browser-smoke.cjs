@@ -249,7 +249,7 @@ async (page) => {
     await accentFocus(host, host.getByLabel('Número de preguntas', { exact: true }), 'Dark host form');
     checks.push('Keyboard role selection, one form, inline PIN error, no key, default ten seconds, limit500 and standard accent focus');
 
-    const bankResponse = await host.request.get('http://127.0.0.1:4173/certitips/assets/questions.json');
+    const bankResponse = await host.request.get('http://127.0.0.1:4173/certitips/assets/1Z0-1157-26/questions.json');
     assert(bankResponse.ok(), 'Start/rebuild the CertiTips preview on port 4173 before running this check');
     const bank = await bankResponse.json();
     await host.getByLabel('Número de preguntas', { exact: true }).fill('999');

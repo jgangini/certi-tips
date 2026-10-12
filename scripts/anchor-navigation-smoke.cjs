@@ -15,7 +15,7 @@ async page => {
     if (![base.origin, publicBase.origin].includes(url.origin)) return request.abort('blockedbyclient');
     if (url.pathname.startsWith('/api/')) return request.fulfill({ json: { mode: 'LOCAL', authenticated: true, verificationRequired: false, available: true, quota: { remaining: 20, limit: 20, refreshHours: 6, resetAt: null, minuteRemaining: 2, retryAfter: 0 } } });
     if (url.pathname.endsWith('/assets/certichat/graph.json')) return request.fulfill({ json: graph });
-    if (/\/assets\/(diagrams|illustrations)\//.test(url.pathname) && waitForImages) await waitForImages;
+    if (url.pathname.includes('/img/') && waitForImages) await waitForImages;
     const response = await request.fetch({ url: `${base.origin}${url.pathname}${url.search}` });
     if (!request.request().isNavigationRequest()) return request.fulfill({ response });
     return request.fulfill({ response, body: (await response.text()).replace(/data-api="[^"]+"/, `data-api="${publicBase.origin}"`) });

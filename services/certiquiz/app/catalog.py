@@ -16,6 +16,7 @@ BANK_BYTES = 2 * 1024 * 1024
 REFRESH_BYTES = 8 * 1024 * 1024
 REFRESH_SECONDS = 300
 NAME = re.compile(r"[a-z0-9][a-z0-9-]{0,99}\Z")
+BANK = re.compile(r"(?:[A-Za-z0-9][A-Za-z0-9-]{0,63}/)?[a-z0-9][a-z0-9-]{0,99}\Z")
 QUESTION_ID = re.compile(r"[A-Za-z0-9_-]+\Z")
 logger = logging.getLogger(__name__)
 
@@ -72,7 +73,7 @@ def parse_catalog(document, read_bank):
         if bank is None:
             continue
         bank = text(bank, 100)
-        if not NAME.fullmatch(identity) or identity in courses or not NAME.fullmatch(bank):
+        if not NAME.fullmatch(identity) or identity in courses or not BANK.fullmatch(bank):
             raise ValueError("El catálogo contiene un identificador o banco no válido.")
         if bank not in banks:
             banks[bank] = validate_questions(read_bank(f"{bank}.json"))
@@ -98,7 +99,7 @@ class NoRedirect(HTTPRedirectHandler):
 
 
 def download(filename, limit, deadline):
-    if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,99}\.json", filename):
+    if not filename.endswith(".json") or not BANK.fullmatch(filename[:-5]):
         raise ValueError("Archivo remoto no permitido.")
     remaining = deadline - monotonic()
     if remaining <= 0:

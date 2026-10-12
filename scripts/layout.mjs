@@ -7,7 +7,7 @@ export const escapeHtml = (text) =>
       ],
   );
 
-export const courseRoute = (course) => course.exam?.code || course.id;
+export const courseRoute = (course) => course.route || course.exam?.code || course.id;
 const guideRoute = (site, guide) => courseRoute(site.courses?.find((course) => course.id === guide) || { id: guide });
 
 export function sidebar(site, course, active, tocByPage = new Map()) {

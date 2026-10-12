@@ -117,7 +117,7 @@ async page => {
     const makeTrace = edge => ({ version: snapshot.version, nodes: [edge.source, edge.target], edges: [edge], truncated: false });
     const trace1 = makeTrace(first), trace2 = makeTrace(second), empty = { version: snapshot.version, nodes: [], edges: [], truncated: false };
     const siteRoot = await tab.locator('[data-certichat]').getAttribute('data-site-root');
-    trace1.sources = [{ nodeId: first.source, title: 'Guía de la primera consulta · Concepto', url: `${siteRoot}data-governance/overview/` }];
+    trace1.sources = [{ nodeId: first.source, title: 'Guía de la primera consulta · Concepto', url: `${siteRoot}CDMP-DMF/overview/` }];
     await send('Consulta uno', trace1);
     await answered('Respuesta: Consulta uno.');
     await active(trace1.nodes, trace1.edges);
@@ -348,7 +348,7 @@ async page => {
 
     graphOverride = { version: snapshot.version, generatedAt: new Date().toISOString(), nodes: [{ id: first.source, label: '<img src="https://evil.invalid/x" onerror="alert(1)">', type: 'Entity' }], edges: [] };
     await tab.reload(); await ready();
-    await send('Consulta de etiqueta', { version: snapshot.version, nodes: [first.source], edges: [], sources: [{ nodeId: first.source, title: '<img src="https://evil.invalid/x" onerror="alert(1)">', url: `${siteRoot}data-governance/overview/` }, { nodeId: first.source, title: 'Unsafe URL', url: 'javascript:alert(1)' }], truncated: false });
+    await send('Consulta de etiqueta', { version: snapshot.version, nodes: [first.source], edges: [], sources: [{ nodeId: first.source, title: '<img src="https://evil.invalid/x" onerror="alert(1)">', url: `${siteRoot}CDMP-DMF/overview/` }, { nodeId: first.source, title: 'Unsafe URL', url: 'javascript:alert(1)' }], truncated: false });
     await answered('Respuesta: Consulta de etiqueta.');
     await tab.waitForFunction(() => Number(document.querySelector('canvas[data-graph-canvas]').dataset.activeNodeCount) === 1);
     const labelButton = tab.locator('[data-graph-active] button[data-concept]');
