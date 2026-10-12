@@ -65,8 +65,10 @@ if (root) {
     if (mobileChat.matches) { launcher.style.removeProperty("right"); launcher.style.removeProperty("top"); return; }
     const card = homePath.querySelector(".path-section.is-active") || homePath;
     const box = card.getBoundingClientRect(), top = root.getBoundingClientRect().top;
-    launcher.style.right = `${Math.max(0, innerWidth - box.right - 20)}px`;
-    launcher.style.top = `${Math.min(0, box.bottom + 20 - top)}px`;
+    const beside = box.right + launcher.offsetWidth + 40 <= innerWidth;
+    launcher.style.right = beside ? "0px" : `${Math.max(0, innerWidth - box.right - 20)}px`;
+    const targetTop = (beside ? box.bottom - launcher.offsetHeight : box.bottom + 20) - top;
+    launcher.style.top = `${Math.max(Math.min(0, 88 - top), Math.min(0, targetTop))}px`;
   }
   if (homePath) {
     let frame;
@@ -380,7 +382,7 @@ if (root) {
     try { sessionStorage.setItem(`${storageKey}:open`, "true"); } catch { /* The panel also works when session storage is blocked. */ }
     fitMobileViewport();
     if (event.isTrusted) panelAnimation = animatePanel(button, false);
-    if (!dock) root.querySelector("[data-chat-close]").focus();
+    if (!dock && event.isTrusted) root.querySelector("[data-chat-close]").focus();
     if (!opening) { opening = connect(); await opening; opening = undefined; }
   });
   let wasOpen = false;

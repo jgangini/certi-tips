@@ -72,20 +72,22 @@ document
   });
 showProgress();
 
-const completionButton = document.querySelector("[data-mark-complete]");
-const completionTrigger = document.querySelector("[data-completion-trigger]");
-if (completionButton && completionTrigger) {
-  const showCompletionAtEnd = () => {
-    const readableBottom = innerHeight - (footer?.getBoundingClientRect().height || 0) - 16;
-    completionButton.hidden = completionTrigger.getBoundingClientRect().top > readableBottom;
-  };
-  addEventListener("scroll", showCompletionAtEnd, { passive: true });
-  addEventListener("resize", showCompletionAtEnd);
-  showCompletionAtEnd();
-}
-
 const toggle = document.querySelector(".menu-toggle");
 const navigation = document.querySelector(".sidebar");
+const courseNavMedia = matchMedia("(max-width: 800px)");
+function syncCourseMenu() {
+  if (!toggle || !navigation) return;
+  const mobile = courseNavMedia.matches;
+  const compact = document.body.classList.contains("is-compact-nav");
+  toggle.setAttribute("aria-expanded", String(mobile ? navigation.classList.contains("is-open") : !compact));
+  toggle.setAttribute("aria-label", mobile ? "Contenido del curso" : compact ? "Expandir menú del curso" : "Contraer menú del curso");
+  toggle.title = mobile ? "Contenido del curso" : compact ? "Mostrar menú completo" : "Mostrar solo números";
+}
+if (toggle && navigation) {
+  try { document.body.classList.toggle("is-compact-nav", sessionStorage.getItem("certitips:course-nav:compact") === "true"); } catch { /* Use the expanded course menu. */ }
+  syncCourseMenu();
+  courseNavMedia.addEventListener("change", () => { navigation.classList.remove("is-open"); syncCourseMenu(); });
+}
 const pathMenu = document.querySelector(".path-nav-mobile");
 const themeToggle = document.querySelector("[data-theme-toggle]");
 function syncTheme() {
@@ -201,11 +203,16 @@ pathMenu?.addEventListener("click", (event) => {
 });
 function closeMenu() {
   navigation?.classList.remove("is-open");
-  toggle?.setAttribute("aria-expanded", "false");
+  syncCourseMenu();
 }
 toggle?.addEventListener("click", () => {
-  const open = navigation.classList.toggle("is-open");
-  toggle.setAttribute("aria-expanded", String(open));
+  if (courseNavMedia.matches) navigation.classList.toggle("is-open");
+  else {
+    const compact = !document.body.classList.contains("is-compact-nav");
+    document.body.classList.toggle("is-compact-nav", compact);
+    try { sessionStorage.setItem("certitips:course-nav:compact", String(compact)); } catch { /* Keep the current page usable without storage. */ }
+  }
+  syncCourseMenu();
 });
 navigation?.addEventListener("click", (event) => {
   if (event.target.closest("a") && navigation.classList.contains("is-open")) {
@@ -294,13 +301,24 @@ let viewerAnimation;
 const reduceViewerMotion = typeof matchMedia === "function" ? matchMedia("(prefers-reduced-motion: reduce)") : { matches: false };
 const present = dialog.querySelector("[data-diagram-present]");
 const filmstrip = dialog.querySelector(".diagram-presentation-nav");
+const menu = dialog.querySelector("[data-diagram-menu]");
 const slideCount = dialog.querySelector(".diagram-slide-count");
 let galleryPromise, gallery = [], slideIndex = 0, slideToken = 0, countTimer;
+const moduleLinkForImage = src => [...document.querySelectorAll(".sidebar .nav-link")].find(link => new URL(src, location.href).pathname.startsWith(`${link.pathname}img/`));
+const moduleCaptionForImage = (src, fallback) => moduleLinkForImage(src)?.textContent.trim().replace(/\s+/g, " ") || fallback;
+const diagramIdForImage = src => `diagram-${new URL(src, location.href).pathname.split("/").pop()}`;
+function setPresentationMenu(open) {
+  filmstrip.classList.toggle("is-open", open);
+  filmstrip.inert = !open;
+  menu.setAttribute("aria-expanded", String(open));
+  menu.setAttribute("aria-label", open ? "Ocultar imágenes" : "Mostrar imágenes");
+}
+menu.addEventListener("click", () => setPresentationMenu(!filmstrip.classList.contains("is-open")));
 function restoreDiagram() {
   const image = opener.querySelector("img"), enlarged = dialog.querySelector(".dialog-content img");
   enlarged.src = image.src;
   enlarged.alt = image.alt;
-  document.querySelector("#diagram-caption").textContent = image.alt;
+  document.querySelector("#diagram-caption").textContent = moduleCaptionForImage(image.getAttribute("src"), image.alt);
   const description = dialog.querySelector("#diagram-description");
   if (description) description.textContent = opener.querySelector("span").firstChild.textContent.trim();
 }
@@ -309,10 +327,11 @@ function leavePresentation() {
   slideToken++;
   clearTimeout(countTimer);
   slideCount.classList.remove("is-visible");
+  setPresentationMenu(false);
   dialog.classList.remove("is-presenting");
+  dialog.querySelector(".dialog-content").setAttribute("aria-label", "Diagrama ampliado; desplázate para ver el contenido");
   present.setAttribute("aria-pressed", "false");
   present.setAttribute("aria-label", "Activar modo presentación");
-  restoreDiagram();
 }
 async function showSlide(index) {
   if (!gallery.length) return;
@@ -326,11 +345,12 @@ async function showSlide(index) {
   const image = dialog.querySelector(".dialog-content img");
   image.src = item.src;
   image.alt = item.alt;
-  document.querySelector("#diagram-caption").textContent = item.alt;
+  document.querySelector("#diagram-caption").textContent = moduleCaptionForImage(item.src, item.module);
   const description = dialog.querySelector("#diagram-description");
   if (description) description.textContent = item.caption;
   filmstrip.querySelectorAll("button").forEach((button, position) => button.setAttribute("aria-current", String(position === index)));
-  filmstrip.querySelector('[aria-current="true"]')?.scrollIntoView({ block: "nearest" });
+  const selected = filmstrip.querySelector('[aria-current="true"]');
+  if (selected) filmstrip.scrollTop = selected.offsetTop - filmstrip.offsetTop - (filmstrip.clientHeight - selected.clientHeight) / 2;
   if (!reduceViewerMotion.matches && image.animate) image.animate([{ opacity: 0, transform: "translateX(18px)" }, { opacity: 1, transform: "none" }], { duration: 260, easing: "ease-out" });
   slideCount.textContent = `${index + 1}/${gallery.length}`;
   slideCount.classList.add("is-visible");
@@ -357,18 +377,35 @@ present.addEventListener("click", async () => {
     return;
   }
   if (!dialog.open || dialog.classList.contains("is-presenting")) return;
-  filmstrip.replaceChildren(...gallery.map((item, index) => {
-    const button = document.createElement("button"), image = document.createElement("img"), label = document.createElement("span");
+  const groups = [];
+  let group, module;
+  gallery.forEach((item, index) => {
+    if (item.module !== module) {
+      module = item.module;
+      group = document.createElement("section");
+      group.className = "diagram-presentation-group";
+      const heading = document.createElement("h3");
+      const link = moduleLinkForImage(item.src);
+      if (link) heading.append(link.querySelector(".nav-number").cloneNode(true), " ", link.querySelector(".nav-title").textContent.trim());
+      else heading.textContent = module;
+      heading.title = heading.textContent.trim().replace(/\s+/g, " ");
+      group.append(heading);
+      groups.push(group);
+    }
+    const button = document.createElement("button"), image = document.createElement("img");
     button.type = "button";
-    button.setAttribute("aria-label", `${item.module}: ${item.alt}`);
+    button.dataset.slideNumber = String(index + 1);
+    button.setAttribute("aria-label", `Imagen ${index + 1} de ${gallery.length}: ${item.module}: ${item.alt}`);
     image.src = item.src; image.alt = ""; image.loading = "lazy";
-    label.textContent = item.module;
-    button.append(image, label);
+    button.append(image);
     button.addEventListener("click", () => showSlide(index));
-    return button;
-  }));
+    group.append(button);
+  });
+  filmstrip.replaceChildren(...groups);
+  setPresentationMenu(false);
   viewerAnimation?.cancel();
   dialog.classList.add("is-presenting");
+  dialog.querySelector(".dialog-content").setAttribute("aria-label", "Diagrama en presentación; haz clic para avanzar");
   present.setAttribute("aria-pressed", "true");
   present.setAttribute("aria-label", "Salir del modo presentación");
   const current = gallery.findIndex(item => new URL(item.src, location.href).href === dialog.querySelector(".dialog-content img").src);
@@ -376,6 +413,7 @@ present.addEventListener("click", async () => {
 });
 dialog.querySelector(".dialog-content img").addEventListener("click", () => {
   if (dialog.classList.contains("is-presenting")) showSlide(slideIndex + 1);
+  else if (!present.hidden) present.click();
 });
 dialog.addEventListener("keydown", event => {
   if (!dialog.classList.contains("is-presenting") || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
@@ -396,8 +434,23 @@ function animateViewer(closing = false) {
 }
 function closeViewer() {
   if (!dialog.open || dialog.classList.contains("is-closing")) return;
-  const finish = () => { leavePresentation(); dialog.close(); dialog.classList.remove("is-closing"); viewerAnimation?.cancel(); viewerAnimation = undefined; };
-  const animation = animateViewer(true);
+  if (dialog.classList.contains("is-presenting")) return leavePresentation();
+  const src = dialog.querySelector(".dialog-content img").src;
+  const target = [...document.querySelectorAll("[data-diagram]")].find(button => new URL(button.dataset.diagram, location.href).href === src);
+  const page = target ? null : moduleLinkForImage(src);
+  if (target) opener = target;
+  const finish = () => {
+    dialog.close();
+    dialog.classList.remove("is-closing");
+    viewerAnimation?.cancel();
+    viewerAnimation = undefined;
+    if (target) {
+      target.scrollIntoView({ block: "center" });
+      target.focus({ preventScroll: true });
+    } else if (page) location.assign(`${page.href}#${diagramIdForImage(src)}`);
+    else opener?.focus();
+  };
+  const animation = target ? animateViewer(true) : undefined;
   if (!animation) return finish();
   dialog.classList.add("is-closing");
   animation.finished.then(finish, finish);
@@ -418,4 +471,3 @@ dialog.addEventListener("click", (event) => {
   if (event.target === dialog) closeViewer();
 });
 dialog.addEventListener("cancel", event => { event.preventDefault(); closeViewer(); });
-dialog.addEventListener("close", () => opener?.focus());

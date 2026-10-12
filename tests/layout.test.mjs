@@ -9,20 +9,20 @@ test("the image viewer refreshes its description when switching diagrams", () =>
   const caption = { textContent: "" }, description = { textContent: "" }, enlarged = { addEventListener() {} };
   const close = { focus() {}, addEventListener() {} };
   const dialog = {
-    querySelector: selector => ({ "img": enlarged, ".dialog-content img": enlarged, "[data-diagram-present]": close, ".diagram-presentation-nav": {}, ".diagram-slide-count": {}, button: close, "[data-close-diagram]": close, "#diagram-description": description })[selector],
+    querySelector: selector => ({ "img": enlarged, ".dialog-content img": enlarged, "[data-diagram-present]": close, "[data-diagram-menu]": close, ".diagram-presentation-nav": {}, ".diagram-slide-count": {}, button: close, "[data-close-diagram]": close, "#diagram-description": description })[selector],
     showModal() {}, addEventListener() {},
   };
   const buttons = [
     { src: "pyramid.svg", alt: "Pirámide Dorada de Peter Aiken", description: "Las once áreas de gestión de datos." },
     { src: "contract.svg", alt: "Contrato del Producto de Datos", description: "Negocio acuerda; ingeniería aplica controles." },
   ].map(image => ({
-    image,
-    querySelector: selector => selector === "img" ? image : { firstChild: { textContent: `${image.description} ` }, textContent: `${image.description} ↗` },
+    image: { ...image, getAttribute: name => name === 'src' ? image.src : null },
+    querySelector(selector) { return selector === "img" ? this.image : { firstChild: { textContent: `${image.description} ` }, textContent: `${image.description} ↗` }; },
     addEventListener(type, callback) { this.click = callback; },
   }));
   const document = {
     querySelector: selector => selector === "#diagram-viewer" ? dialog : caption,
-    querySelectorAll: () => buttons,
+    querySelectorAll: selector => selector === '.sidebar .nav-link' ? [] : buttons,
   };
   const script = readFileSync(new URL("../assets/site.js", import.meta.url), "utf8");
   vm.runInNewContext(script.slice(script.indexOf('const dialog = document.querySelector("#diagram-viewer");')), { document });
@@ -431,22 +431,25 @@ test("mobile path navigation uses a menu icon and a responsive panel below the h
   assert.match(css, /\.path-nav-mobile \.path-group summary:is\(:hover, :focus-visible\)\s*\{\s*background: var\(--selected-surface\);\s*color: var\(--selected-ink\);/);
 });
 
-test("mobile course navigation keeps the grid icon next to the certification menu", () => {
+test("course menu follows certification groups and precedes search", () => {
   const html = layout({ site, course, page: course.modules[0], body: "" });
   const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
   const courseMenu = html.indexOf('class="menu-toggle"');
   const pathMenu = html.indexOf('class="path-nav-mobile"');
-  assert.ok(courseMenu > 0 && courseMenu < pathMenu);
+  const search = html.indexOf('class="search-toggle"');
+  assert.ok(pathMenu > 0 && pathMenu < courseMenu && courseMenu < search);
+  assert.doesNotMatch(html, /sidebar-compact-toggle|data-course-nav-compact/);
   assert.match(html, /<button class="menu-toggle" type="button" aria-expanded="false" aria-controls="course-navigation" aria-label="Contenido del curso"><svg viewBox="0 0 21 21" width="21" height="21"[^>]*><rect x="2\.5" y="2\.5" width="6" height="6" rx="1"\/><rect x="12\.5" y="2\.5" width="6" height="6" rx="1"\/><rect x="2\.5" y="12\.5" width="6" height="6" rx="1"\/><rect x="12\.5" y="12\.5" width="6" height="6" rx="1"\/><\/svg><span class="visually-hidden">Contenido del curso<\/span><\/button>/);
   assert.doesNotMatch(html, /aria-controls="course-navigation">Menú<\/button>/);
   assert.match(css, /\.menu-toggle \{[\s\S]*?width: 44px;[\s\S]*?height: 44px;/);
-  assert.match(css, /\.menu-toggle:is\(:hover, \[aria-expanded="true"\]\)\s*\{\s*background: var\(--selected-surface\);\s*color: var\(--selected-ink\);/);
-  assert.match(css, /@media \(max-width: 800px\) \{[\s\S]*?\.menu-toggle \{\s*display: inline-flex;\s*margin-left: auto;\s*\}[\s\S]*?\.path-nav-mobile \{\s*margin-left: 0;\s*\}/);
+  assert.match(css, /\.course-page \.menu-toggle \{ display: inline-flex; \}/);
+  assert.match(css, /\.menu-toggle:hover\s*\{\s*background: var\(--selected-surface\);\s*color: var\(--selected-ink\);/);
 });
 
 test("mobile home groups header controls and hides the suggested certification flow", () => {
   const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
-  assert.match(css, /@media \(max-width: 800px\) \{[\s\S]*?\.home-page \.path-nav-mobile \{\s*margin-left: auto;\s*\}[\s\S]*?\.hero-flow \{\s*display: none;\s*\}/);
+  assert.match(css, /\.path-nav-mobile \{[\s\S]*?margin-left: auto;/);
+  assert.match(css, /@media \(max-width: 800px\) \{[\s\S]*?\.hero-flow \{ display: none; \}/);
 });
 
 test("desktop path navigation opens the category reached by a pointing device", () => {
@@ -480,7 +483,7 @@ test("sidebar has native module and resource disclosures with only the active br
   assert.doesNotMatch(html, /sidebar-source|Abrir ruta oficial de Oracle/);
   assert.doesNotMatch(html, /TU RUTA DE APRENDIZAJE/);
   assert.match(html, /<span class="exam-code">EXAM-1<\/span><strong>Curso de prueba 2026<\/strong>/);
-  assert.match(html, /<nav aria-label="Contenido de la guía" tabindex="0">/);
+  assert.match(html, /<nav id="course-section-list" aria-label="Contenido de la guía" tabindex="0">/);
   assert.match(html, /data-completion="agents"/);
   assert.match(html, /<a class="nav-link"[^>]*data-completion="agents"/);
   assert.doesNotMatch(html, /completion-dot/);
@@ -612,7 +615,7 @@ test("layout moves the contents into the sidebar while preserving reading and si
   assert.match(html, /id="diagram-viewer"/);
   assert.match(html, /data-mark-complete="agents"/);
   assert.doesNotMatch(html, /MÓDULO 01 \/ 06|LECTURA ·/);
-  assert.match(html, /<article class="prose">[^]*<\/article><div data-completion-trigger aria-hidden="true"><\/div><button[^>]+data-mark-complete="agents"[^>]+hidden>/);
+  assert.match(html, /<article class="prose">[^]*<\/article><button[^>]+data-mark-complete="agents"[^>]+aria-pressed="false">/);
   assert.match(html, /<summary>Foundation Sprint<\/summary>/);
   assert.doesNotMatch(html, /Ver grupo completo/);
   assert.match(html, /href="\/certitips\/EXAM-1\/overview\/"><span class="path-title">Course<\/span><\/a>/);
@@ -624,17 +627,17 @@ test("layout moves the contents into the sidebar while preserving reading and si
   assert.doesNotMatch(html, /<a[^>]+>La guía<\/a>|>Practicar <span/);
 });
 
-test("lesson completion floats above the next-page navigation", () => {
+test("lesson completion follows the article before next-page navigation", () => {
   const html = layout({ site, course, page: course.modules[1], body: "" });
   const buttonAt = html.indexOf('data-mark-complete="agents"');
   assert.ok(buttonAt >= 0 && html.indexOf('<nav class="page-navigation"') > buttonAt);
   const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
   const rule = css.match(/\.complete-button\s*\{([^}]*)\}/)?.[1];
-  assert.match(rule, /position:\s*sticky;/);
+  assert.doesNotMatch(rule, /position:\s*(?:sticky|fixed|absolute);/);
   assert.match(rule, /margin:\s*24px 0 0 auto;/);
   assert.match(rule, /border:\s*1px solid var\(--selected-surface\);\s*background:\s*var\(--selected-surface\);/);
   assert.doesNotMatch(css, /\.complete-button\[aria-pressed="true"\]/);
-  assert.match(css, /\.course-main\.lesson-main\s*\{\s*padding-bottom:\s*40px;/);
+  assert.match(css, /\.course-main\.lesson-main\s*\{\s*padding-bottom:\s*16px;/);
 });
 
 test("lesson navigation uses compact unframed arrow controls", () => {

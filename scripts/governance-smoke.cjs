@@ -118,22 +118,98 @@ async (page) => {
     await diagram.click();
     const viewer = page.locator('#diagram-viewer');
     assert(await viewer.evaluate(element => getComputedStyle(element, '::backdrop').backdropFilter.includes('blur(')), 'Diagram backdrop has no glass blur');
-    await viewer.locator('[data-diagram-present]').click();
+    assert(await viewer.evaluate(element => {
+      const image = element.querySelector('.dialog-content img'), link = [...document.querySelectorAll('.sidebar .nav-link')].find(link => image.src.includes(`${link.pathname}img/`));
+      return !element.querySelector('.dialog-brand') &&
+        element.querySelector('#diagram-caption').textContent === link?.textContent.trim().replace(/\s+/g, ' ') &&
+        getComputedStyle(element.querySelector('#diagram-caption')).color === 'rgb(199, 70, 52)';
+    }), 'Diagram toolbar does not show the numbered module title without the logo');
+    await viewer.locator('.dialog-content img').click();
     await page.waitForFunction(() => document.querySelector('#diagram-viewer').classList.contains('is-presenting') && document.querySelector('.diagram-slide-count').textContent.includes('/'));
-    const galleryLength = await page.evaluate(async () => (await (await fetch('/certitips/CDMP-DMF/gallery.json')).json()).length);
-    assert(await viewer.locator('.diagram-presentation-nav button').count() === galleryLength && galleryLength > 5, 'Presentation does not contain every course diagram');
+    const gallery = await page.evaluate(async () => (await (await fetch('/certitips/CDMP-DMF/gallery.json')).json()));
+    const galleryLength = gallery.length;
+    const rail = viewer.locator('.diagram-presentation-nav');
+    assert(await rail.locator('button').count() === galleryLength && galleryLength > 5, 'Presentation does not contain every course diagram');
+    assert(await rail.locator('.diagram-presentation-group h3').count() > 5 && await rail.locator('button span').count() === 0, 'Presentation thumbnails are not grouped image-only controls');
+    assert(await rail.locator('button').evaluateAll(buttons => buttons.every((button, index) => {
+      const tag = getComputedStyle(button, '::after'), count = getComputedStyle(document.querySelector('.diagram-slide-count'));
+      return button.dataset.slideNumber === String(index + 1) && tag.position === 'absolute' && tag.backgroundColor === count.backgroundColor && tag.color === count.color;
+    })), 'Presentation thumbnails have no numbered corner tags matching the slide counter');
+    assert(await rail.evaluate(element => {
+      const style = getComputedStyle(element), sidebar = document.querySelector('.sidebar');
+      return style.backgroundColor === getComputedStyle(sidebar).backgroundColor && Number.parseFloat(style.width) >= 180 &&
+        [...element.querySelectorAll('.diagram-presentation-group')].every(group => {
+          const source = group.querySelector('img').getAttribute('src');
+          const number = [...sidebar.querySelectorAll('.nav-link')].find(link => source.startsWith(`${link.pathname}img/`))?.querySelector('.nav-number')?.textContent;
+          const heading = group.querySelector('h3');
+          return number && heading.querySelector('.nav-number')?.textContent === number && getComputedStyle(heading).color === 'rgb(199, 70, 52)';
+        });
+    }), 'Presentation filmstrip does not match course navigation background, width or numbered red groups');
+    assert(await page.evaluate(() => {
+      const viewer = document.querySelector('#diagram-viewer'), toolbar = viewer.querySelector('.dialog-toolbar');
+      const present = toolbar.querySelector('[data-diagram-present]').getBoundingClientRect(), close = toolbar.querySelector('[data-close-diagram]').getBoundingClientRect();
+      const content = viewer.querySelector('.dialog-content'), box = content.getBoundingClientRect(), frame = viewer.getBoundingClientRect();
+      const description = viewer.querySelector('#diagram-description').getBoundingClientRect();
+      const badge = viewer.querySelector('.diagram-slide-count').getBoundingClientRect();
+      const image = content.querySelector('img').getBoundingClientRect();
+      return present.right <= close.left && close.left - present.right <= 12 &&
+        Math.abs(box.left - frame.left) <= 1 && Math.abs(box.right - frame.right) <= 1 && Math.abs(box.bottom - description.top) <= 1 && Math.abs(description.bottom - frame.bottom) <= 1 &&
+        Math.abs(image.width - box.width) <= 1 && Math.abs(image.height - box.height) <= 1 && getComputedStyle(content).overflowX === 'hidden' &&
+        Math.abs(badge.right - close.right) <= 1 && Math.abs(badge.width - close.width) <= 2 && Math.abs(badge.height - close.height) <= 2 && description.height > 20 && getComputedStyle(viewer.querySelector('#diagram-description')).visibility === 'visible';
+    }), 'Presentation toolbar or image does not use the full viewer');
+    const menuButton = viewer.locator('[data-diagram-menu]');
+    assert(await menuButton.isVisible() && await menuButton.getAttribute('aria-expanded') === 'false' && await rail.evaluate(element => element.inert && getComputedStyle(element).opacity === '0'), 'Presentation filmstrip does not start hidden');
+    await page.mouse.move(8, 100);
+    assert(await rail.evaluate(element => getComputedStyle(element).opacity === '0'), 'Left-edge hover opened the filmstrip');
+    await menuButton.click();
+    await page.waitForFunction(() => Number(getComputedStyle(document.querySelector('.diagram-presentation-nav')).opacity) > .95);
+    assert(await menuButton.getAttribute('aria-expanded') === 'true' && await rail.evaluate(element => !element.inert), 'Presentation menu button did not open the filmstrip');
+    assert(await rail.evaluate(element => getComputedStyle(element).scrollbarColor.includes('89, 97, 110')), 'Filmstrip scrollbar differs from course navigation');
     const firstCount = await viewer.locator('.diagram-slide-count').textContent();
+    const firstDescription = await viewer.locator('#diagram-description').textContent();
     await page.keyboard.press('ArrowRight');
     await page.waitForFunction(previous => document.querySelector('.diagram-slide-count').textContent !== previous, firstCount);
+    assert((await viewer.locator('#diagram-description').textContent()) !== firstDescription, 'Presentation did not update the visible image description');
     const secondCount = await viewer.locator('.diagram-slide-count').textContent();
     await viewer.locator('.dialog-content img').click();
     await page.waitForFunction(previous => document.querySelector('.diagram-slide-count').textContent !== previous, secondCount);
-    await viewer.locator('.diagram-presentation-nav button').last().click();
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.querySelector('#diagram-viewer').scrollWidth <= innerWidth), 'Slide transition created horizontal page overflow');
+    await page.setViewportSize({ width: 1671, height: 1000 });
+    assert(await page.evaluate(() => Math.abs(document.querySelector('.site-header .theme-toggle').getBoundingClientRect().right -
+      document.querySelector('.certichat-launcher').getBoundingClientRect().right) <= 1), 'Header controls do not align with the CertiChat right margin');
+    await rail.locator('button:has(img[src$="gov-data-architecture-oracle.svg"])').click();
+    assert(await viewer.evaluate(element => {
+      const content = element.querySelector('.dialog-content'), image = content.querySelector('img'), description = element.querySelector('#diagram-description');
+      return content.scrollHeight <= content.clientHeight + 1 &&
+        image.getBoundingClientRect().bottom <= content.getBoundingClientRect().bottom + 1 &&
+        Math.abs(content.getBoundingClientRect().bottom - description.getBoundingClientRect().top) <= 1;
+    }), 'Presentation image is clipped behind its description at wide viewport');
+    await page.setViewportSize({ width: 1299, height: 900 });
+    await rail.locator('button').last().click();
     await page.waitForFunction(total => document.querySelector('.diagram-slide-count').textContent === `${total}/${total}`, galleryLength);
+    await menuButton.click();
+    assert(await menuButton.getAttribute('aria-expanded') === 'false' && await rail.evaluate(element => element.inert), 'Presentation menu button did not close the filmstrip');
     await page.waitForFunction(() => !document.querySelector('.diagram-slide-count').classList.contains('is-visible'));
     await page.keyboard.press('Escape');
-    await page.waitForFunction(() => !document.querySelector('#diagram-viewer').open);
-    assert(await diagram.evaluate(element => document.activeElement === element), 'Presentation did not restore focus to the opener');
+    await page.waitForFunction(() => document.querySelector('#diagram-viewer').open && !document.querySelector('#diagram-viewer').classList.contains('is-presenting'));
+    assert(await viewer.locator('.dialog-content img').evaluate((image, src) => image.getAttribute('src') === src, gallery.at(-1).src), 'First Escape did not retain the selected image in standard view');
+    const destination = await page.evaluate(src => {
+      const link = [...document.querySelectorAll('.sidebar .nav-link')].find(link => src.startsWith(`${link.pathname}img/`));
+      return `${link.href}#diagram-${src.split('/').pop()}`;
+    }, gallery.at(-1).src);
+    await page.keyboard.press('Escape');
+    await page.waitForURL(destination);
+    await page.waitForFunction(src => {
+      const target = [...document.querySelectorAll('[data-diagram]')].find(button => button.dataset.diagram === src);
+      const rect = target?.getBoundingClientRect();
+      return rect && rect.bottom > 0 && rect.top < innerHeight;
+    }, gallery.at(-1).src);
+    assert(await page.evaluate(src => {
+      const target = [...document.querySelectorAll('[data-diagram]')].find(button => button.dataset.diagram === src);
+      const rect = target?.getBoundingClientRect();
+      return rect && rect.bottom > 0 && rect.top < innerHeight;
+    }, gallery.at(-1).src), 'Second Escape did not locate the selected image in its source page');
+    await page.goto(`${route}governance/`);
     const lightBackground = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
     await page.locator('[data-theme-toggle]').click();
     assert(await page.locator('[data-theme-toggle]').getAttribute('aria-pressed') === 'true', 'Dark theme did not activate');

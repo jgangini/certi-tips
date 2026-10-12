@@ -56,6 +56,9 @@ async (page) => {
   assert(await publishedChat.getAttribute('href') === 'https://jgangini.github.io/certitips/#certichat', 'Preview does not link to the published chat');
   assert(!requests.some(url => /turnstile|certichat\.cloudtechnext/.test(url)), 'Preview attempted a production connection');
   assert(await page.locator('[data-chat-retry]').isHidden(), 'Preview offers a retry that cannot work');
+  await page.goto(`${base}CDMP-DMF/data-integration/`);
+  await page.waitForFunction(() => !document.querySelector('#certichat-panel').hidden);
+  assert(await page.locator('[data-chat-close]').evaluate(button => !button.matches(':focus-visible')), 'Restored CertiChat keeps an unwanted blue focus outline');
   // Simulate a build configured with CERTICHAT_API_ORIGIN pointing to the local test API.
   await page.route(`${base}**`, async route => {
     if (!route.request().isNavigationRequest()) return route.fallback();

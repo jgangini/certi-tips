@@ -66,6 +66,95 @@ async (page) => {
     }
     checks.push(`${width}px: 11 pages, no overflow, full-width table rows, fixed footer without content overlap`);
   }
+  for (const width of [1098, 1101, 1200]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto(`${base}CDMP-DMF/overview/`);
+    assert(await page.evaluate(() => {
+      document.body.classList.remove('is-compact-nav');
+      const box = selector => document.querySelector(selector).getBoundingClientRect();
+      const article = box('.prose'), pager = box('.page-navigation');
+      const groups = box('.path-nav-mobile > summary'), menu = box('.menu-toggle'), search = box('.search-toggle');
+      const theme = box('.theme-toggle'), chat = box('.certichat-launcher');
+      return Math.abs(theme.right - article.right) <= 1 && Math.abs(chat.right - article.right) <= 1 &&
+        Math.abs(pager.right - article.right) <= 1 &&
+        groups.right < menu.left && menu.right < search.left && search.right < theme.left &&
+        menu.left - groups.right <= 14 && search.left - menu.right <= 14 && theme.left - search.right <= 14 &&
+        document.documentElement.scrollWidth <= innerWidth + 1;
+    }), `Course header controls or CertiChat miss the article edge at ${width}px`);
+  }
+  checks.push('intermediate course widths: header controls and CertiChat align with the article edge');
+  for (const [width, compact, labelVisible] of [
+    [1556, false, true], [1556, true, true], [1314, false, false],
+    [1314, true, true], [1200, true, true], [1171, true, true], [1170, true, false]
+  ]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto(`${base}CDMP-DMF/overview/`);
+    await page.evaluate(compact => document.body.classList.toggle('is-compact-nav', compact), compact);
+    await page.waitForFunction(expected => Math.abs(document.querySelector('.course-main').getBoundingClientRect().left - expected) < 1,
+      compact ? 64 : 272);
+    assert(await page.evaluate(labelVisible => {
+      const box = selector => document.querySelector(selector).getBoundingClientRect();
+      const launcher = box('.certichat-launcher'), article = box('.prose');
+      const visible = getComputedStyle(document.querySelector('.certichat-launcher > span')).clipPath === 'none';
+      const nav = box('.menu-toggle');
+      const search = box('.search-toggle'), theme = box('.theme-toggle');
+      return visible === labelVisible && (!visible || launcher.left - article.right >= 20) &&
+        search.left - nav.right >= 11 && search.left - nav.right <= 13 &&
+        theme.left - search.right >= 11 && theme.left - search.right <= 13;
+    }, labelVisible), `CertiChat label or header spacing is wrong at ${width}px (${compact ? 'compact' : 'expanded'})`);
+  }
+  checks.push('CertiChat keeps its label until it nears content in each course sidebar state');
+  for (const [width, compact] of [[1142, false], [1050, true], [802, false], [800, false], [779, false], [481, false], [480, false], [464, false], [320, false]]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto(`${base}CDMP-DMF/overview/`);
+    await page.evaluate(compact => document.body.classList.toggle('is-compact-nav', compact), compact);
+    if (compact) await page.waitForFunction(() => Math.abs(document.querySelector('.course-main').getBoundingClientRect().left - 64) < 1);
+    await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+    assert(await page.evaluate(() => {
+      const box = selector => document.querySelector(selector).getBoundingClientRect();
+      const nav = box('.page-navigation'), next = box('.page-navigation a:last-child');
+      const chat = box('.certichat-launcher'), footer = box('.site-footer');
+      const before = next.top - nav.top, after = chat.top - next.bottom;
+      const lowerGap = innerWidth <= 800 ? 30 : before;
+      return after >= 20 && Math.abs(lowerGap - after) <= 2 && chat.bottom < footer.top &&
+        (innerWidth > 800 || Math.abs(lowerGap - (footer.top - chat.bottom)) <= 1) &&
+        document.documentElement.scrollHeight - scrollY <= innerHeight + 1;
+    }), `CertiChat must follow the next-page link with balanced lower spacing at ${width}px`);
+  }
+  checks.push('at narrow widths, scrolling to the end places CertiChat below the next-page link');
+  for (const width of [802, 800, 779, 481, 480, 464]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto(`${base}CDMP-DMF/overview/`);
+    assert(await page.evaluate(() => {
+      const box = selector => document.querySelector(selector).getBoundingClientRect();
+      const size = innerWidth <= 480 ? 31 : 44;
+      const selectors = ['.path-nav-mobile > summary', '.menu-toggle', '.search-toggle', '.theme-toggle'];
+      const controls = selectors.map(box), chat = box('.certichat-launcher'), pager = box('.page-navigation');
+      const iconsFit = innerWidth > 480 || [...selectors.map(selector => `${selector} svg`), '.certichat-launcher > svg']
+        .map(box).every(icon => Math.abs(icon.width - 17) <= 1 && Math.abs(icon.height - 17) <= 1);
+      return controls.every((control, index) => Math.abs(control.width - (innerWidth > 800 && index === 2 ? 184 : size)) <= 1 && Math.abs(control.height - size) <= 1) &&
+        controls.every((control, index) => !index || controls[index - 1].right < control.left) &&
+        iconsFit &&
+        Math.abs(chat.width - (innerWidth > 800 ? 48 : size)) <= 1 &&
+        Math.abs(chat.height - (innerWidth > 800 ? 48 : size)) <= 1 &&
+        Math.abs(controls.at(-1).right - pager.right) <= 1 && Math.abs(chat.right - pager.right) <= 1 &&
+        document.documentElement.scrollWidth <= innerWidth + 1;
+    }), `Header or CertiChat changes size too early or loses its square at ${width}px`);
+  }
+  checks.push('header and CertiChat stay square across the tablet-to-mobile breakpoint');
+  for (const width of [464, 320]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto(`${base}${course}/overview/`);
+    assert(await page.evaluate(() => {
+      const box = selector => document.querySelector(selector).getBoundingClientRect();
+      const logo = box('.brand img'), pager = box('.page-navigation'), chat = box('[data-chat-open]');
+      const controls = ['.path-nav-mobile > summary', '.menu-toggle', '.search-toggle', '.theme-toggle'].map(box);
+      return controls.every(control => control.width <= logo.width + 1) && chat.width <= logo.width + 1 &&
+        Math.abs(controls.at(-1).right - pager.right) <= 1 && Math.abs(chat.right - pager.right) <= 1 &&
+        controls.every((control, index) => !index || controls[index - 1].right < control.left) &&
+        document.documentElement.scrollWidth <= innerWidth + 1;
+    }), `Mobile header or CertiChat exceeds the logo or misses the content edge at ${width}px`);
+  }
   await page.goto(`${base}${course}/agents/`);
   const menu = page.getByRole('button', { name: 'Contenido del curso', exact: true });
   await menu.click();
@@ -77,7 +166,7 @@ async (page) => {
     const progress = sidebar.querySelector('.course-progress');
     const before = [heading.getBoundingClientRect().top, progress.getBoundingClientRect().top];
     nav.scrollTop = nav.scrollHeight;
-    return { tagFirst: heading.firstElementChild.classList.contains('exam-code'), title: heading.querySelector('strong').textContent,
+    return { tagFirst: heading.querySelector('.exam-code').nextElementSibling.matches('strong'), title: heading.querySelector('strong').textContent,
       navScrollable: nav.scrollHeight > nav.clientHeight && nav.scrollTop > 0, sidebarFixed: sidebar.scrollTop === 0,
       headingFixed: before[0] === heading.getBoundingClientRect().top && before[1] === progress.getBoundingClientRect().top };
   });
@@ -117,6 +206,40 @@ async (page) => {
   await page.waitForURL(`${base}${course}/overview/`);
   checks.push('left module tree and nested certification group dropdowns, keyboard and mobile');
   await page.setViewportSize({ width: 1280, height: 900 });
+  const compactToggle = page.locator('.menu-toggle');
+  await compactToggle.click();
+  await page.waitForFunction(() => Math.abs(document.querySelector('.sidebar').getBoundingClientRect().width - 64) < 1 &&
+    Math.abs(document.querySelector('.course-main').getBoundingClientRect().left - 64) < 1);
+  assert(await compactToggle.getAttribute('aria-expanded') === 'false' && await page.evaluate(() => {
+    const sidebar = document.querySelector('.sidebar'), main = document.querySelector('.course-main');
+    const toggle = document.querySelector('.menu-toggle').getBoundingClientRect();
+    const search = document.querySelector('.search-toggle').getBoundingClientRect();
+    const motion = getComputedStyle(sidebar);
+    return document.body.classList.contains('is-compact-nav') && Math.abs(sidebar.getBoundingClientRect().width - 64) < 1 &&
+      Math.abs(main.getBoundingClientRect().left - 64) < 1 && getComputedStyle(sidebar.querySelector('.nav-title')).clipPath === 'inset(50%)' &&
+      getComputedStyle(sidebar.querySelector('.nav-tree:last-child')).display === 'none' &&
+      !sidebar.querySelector('.sidebar-compact-toggle') && toggle.right < search.left &&
+      (matchMedia('(prefers-reduced-motion: reduce)').matches || motion.transitionProperty.includes('width') && parseFloat(motion.transitionDuration) > 0);
+  }), 'Compact course navigation did not leave a numbered rail or expand reading space');
+  await page.locator('.sidebar a.nav-link[href$="/agents/"]').click();
+  await page.waitForURL(`${base}${course}/agents/`);
+  assert(await page.locator('body').evaluate(body => body.classList.contains('is-compact-nav')), 'Compact course navigation did not persist between lessons');
+  await page.locator('.menu-toggle').click();
+  assert(await page.locator('.menu-toggle').getAttribute('aria-expanded') === 'true', 'Course navigation did not expand again');
+  for (const width of [1280, 1024]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.waitForFunction(expected => Math.abs(document.querySelector('.sidebar').getBoundingClientRect().width - expected) < 1,
+      width <= 1100 ? 240 : 272);
+    assert(await page.evaluate(() => {
+      const box = selector => document.querySelector(selector).getBoundingClientRect();
+      const groups = box(innerWidth <= 1200 ? '.path-nav-mobile > summary' : '.path-nav');
+      const toggle = box('.menu-toggle'), search = box('.search-toggle');
+      return groups.right < toggle.left && toggle.right < search.left &&
+        Math.abs(search.left - toggle.right - 12) <= 1 &&
+        !document.querySelector('.sidebar-compact-toggle');
+    }), `Course toggle misses its header position at ${width}px`);
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
   let visualCount = 0;
   for (const slug of slugs.slice(0, 7)) {
     await page.goto(`${base}${course}/${slug}/`);
@@ -140,10 +263,13 @@ async (page) => {
   checks.push(`all ${visualCount} diagrams and solution images, modal keyboard containment and focus return`);
   await page.goto(`${base}${course}/langchain/`);
   assert(await page.locator('.page-heading .eyebrow').count() === 0, 'Lesson heading repeats the module or reading time');
-  assert(await page.locator('[data-mark-complete]').isHidden(), 'Completion button appears before the article ends');
+  assert(await page.locator('[data-mark-complete]').evaluate(button => {
+    const article = button.previousElementSibling.getBoundingClientRect();
+    const box = button.getBoundingClientRect();
+    return getComputedStyle(button).position === 'static' && box.top >= article.bottom + 20;
+  }), 'Completion button must follow the article in document flow');
   await page.locator('.prose img').evaluateAll(images => Promise.all(images.map(image => { image.loading = 'eager'; return image.decode(); })));
   await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
-  await page.waitForFunction(() => !document.querySelector('[data-mark-complete]').hidden);
   await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
   const completionPosition = await page.evaluate(() => {
     const button = document.querySelector('[data-mark-complete]').getBoundingClientRect();
@@ -151,11 +277,11 @@ async (page) => {
     const pager = document.querySelector('.page-navigation').getBoundingClientRect();
     return { aboveFooter: button.bottom < footer.top, abovePager: button.bottom + 16 <= pager.top, alignedWithPager: Math.abs(button.right - pager.right) < 1, footerGap: footer.top - pager.bottom };
   });
-  assert(completionPosition.aboveFooter && completionPosition.abovePager && completionPosition.alignedWithPager && completionPosition.footerGap >= 24 && completionPosition.footerGap <= 64, 'Completion button must float above the next-page link with a compact footer gap');
+  assert(completionPosition.aboveFooter && completionPosition.abovePager && completionPosition.alignedWithPager && completionPosition.footerGap >= 14 && completionPosition.footerGap <= 18, 'Completion button must float above the next-page link with the pager aligned to CertiChat');
   await page.locator('[data-mark-complete]').click();
   await page.reload();
   assert(await page.locator('[data-mark-complete]').getAttribute('aria-pressed') === 'true', 'Progress did not persist');
-  checks.push('lesson completion appears only at article end, clears pager/footer and survives reload');
+  checks.push('lesson completion follows article, clears pager/footer and survives reload');
   await page.goto(`${base}${course}/practice/`);
   await page.evaluate(key => { localStorage.removeItem(key); localStorage.removeItem(`${key}:last-practice`); }, quizKey);
   await page.reload();
@@ -241,6 +367,24 @@ async (page) => {
   const platform = page.locator('#ai-data-layer #ai-data-platform-professional');
   assert(await platform.locator('.certification-level').textContent() === 'Nivel 3', 'AI Data Platform Professional belongs in Data & AI at level 3');
   assert((await platform.textContent()).includes('1Z0-1154-26'), 'AI Data Platform exam code is missing');
+  for (const width of [1671, 1551, 1335]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+    await page.waitForFunction(() => {
+      const card = document.querySelector('.path-section.is-active').getBoundingClientRect(), launcher = document.querySelector('[data-chat-open]').getBoundingClientRect();
+      return card.bottom < innerHeight - 60 && launcher.top > 0;
+    });
+    const placement = await page.evaluate(() => {
+      const card = document.querySelector('.path-section.is-active').getBoundingClientRect(), launcher = document.querySelector('[data-chat-open]').getBoundingClientRect();
+      const footer = document.querySelector('.site-footer').getBoundingClientRect();
+      return { beside: launcher.left - card.right, rightInset: innerWidth - launcher.right, bottom: launcher.bottom - card.bottom, below: launcher.top - card.bottom, footer: footer.top - launcher.bottom,
+        launcherWidth: launcher.width, textClip: getComputedStyle(document.querySelector('[data-chat-open] > span')).clipPath };
+    });
+    assert(width === 1671 ? placement.beside >= 20 && Math.abs(placement.rightInset - 20) <= 1 && Math.abs(placement.bottom) <= 1 && placement.textClip === 'none'
+      : width === 1551 ? placement.beside >= 20 && placement.launcherWidth === 48 && placement.textClip === 'inset(50%)'
+      : placement.below >= 16 && placement.below <= 24 && placement.footer >= 12 && placement.launcherWidth === 48,
+    `Incorrect home CertiChat placement at ${width}px`);
+  }
   await page.setViewportSize({ width: 1280, height: 900 });
   const desktopHero = await page.evaluate(() => ({ copy: document.querySelector('.hero-copy').getBoundingClientRect().toJSON(), flow: document.querySelector('.hero-flow').getBoundingClientRect().toJSON() }));
   assert(desktopHero.copy.right < desktopHero.flow.left && desktopHero.flow.width > 350, 'Hero is not split into two readable columns');
@@ -293,6 +437,14 @@ async (page) => {
   await page.locator('[data-group-prev]').click();
   assert(await page.locator('#foundation-sprint').isVisible(), 'Group carousel did not return');
   assert(await page.locator('#foundation-sprint > .group-carousel-controls').count() === 1, 'Controls did not return to Foundation Sprint');
+  await page.setViewportSize({ width: 1671, height: 900 });
+  await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+  assert(await page.evaluate(() => {
+    const gap = document.querySelector('.site-footer').getBoundingClientRect().top -
+      document.querySelector('#foundation-sprint').getBoundingClientRect().bottom;
+    return gap >= 16 && gap <= 48;
+  }), 'Home leaves excessive empty space below Foundation');
+  await page.setViewportSize({ width: 1280, height: 900 });
   const headerGroup = page.locator('.path-nav .path-group').first();
   const nextHeaderGroup = page.locator('.path-nav .path-group').nth(1);
   await headerGroup.hover();

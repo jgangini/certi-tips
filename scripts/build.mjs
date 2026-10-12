@@ -43,7 +43,7 @@ md.renderer.rules.image = (tokens, index, _options, env) => {
   env.gallery.push({ src: imageUrl, alt: token.content, caption: token.attrGet("title") || token.content, module: env.pageTitle });
   const size = imageSizes.get(imageUrl);
   if (!size?.every(value => Number.isFinite(value) && value > 0)) throw new Error(`Missing image dimensions: ${src}`);
-  return `<button class="diagram" type="button" data-diagram="${src}" aria-label="Ampliar: ${alt}"><img src="${src}" alt="${alt}" width="${size[0]}" height="${size[1]}" loading="lazy"><span>${caption} <span aria-hidden="true">↗</span></span></button>`;
+  return `<button class="diagram" id="diagram-${reference.slice(4)}" type="button" data-diagram="${src}" aria-label="Ampliar: ${alt}"><img src="${src}" alt="${alt}" width="${size[0]}" height="${size[1]}" loading="lazy"><span>${caption} <span aria-hidden="true">↗</span></span></button>`;
 };
 
 function renderMarkdown(source, publicPath, pageTitle) {
