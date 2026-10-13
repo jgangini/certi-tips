@@ -48,6 +48,23 @@ En producción, `CERTIQUIZ_CATALOG_SOURCE=github` consulta exclusivamente `jgang
 
 Para añadir preguntas basta con publicar los cambios válidos del banco en GitHub. Para añadir una certificación, también debe figurar en el catálogo con su banco. El navegador envía únicamente el identificador del curso y la configuración de la partida: no puede elegir una URL de descarga, respuestas correctas ni puntuaciones. Las descargas tienen límites de tiempo y tamaño y no siguen redirecciones. El modo local `bundled` permite probar los bancos del checkout sin publicarlos.
 
+### Contrato y validación de bancos
+
+La única fuente editable es `data/<código>/questions.json`, registrada en `data/catalog.json` mediante `questionBank: "<código>/questions"` (sin extensión). No mantener otra colección para CertiQuiz ni copiar bancos manualmente a la VPS. Un curso nuevo registrado aparece en `/api/catalog` después del refresco; no requiere cambiar el selector ni desplegar código. Añadir un JSON sin registrarlo no lo publica. La copia incluida en Docker es un respaldo generado durante el despliegue.
+
+Antes de publicar, ejecutar desde la raíz con Python 3.12 y Node.js 24:
+
+```sh
+npm run check:certiquiz
+npm run build
+npm test
+npm run check
+```
+
+`check:certiquiz` ejecuta `python services/certiquiz/check-catalog.py`; también acepta otro directorio de datos como argumento. Reutiliza `app/catalog.py`, el mismo validador de la API, sin instalar paquetes, acceder a GitHub ni conectar a PostgreSQL. Comprueba rutas, IDs únicos, textos, alternativas, respuesta correcta y límites: 32 cursos, 1.000 preguntas por banco, 256 KiB de catálogo, 2 MiB por banco y 8 MiB por conjunto. Informa el banco incompatible y termina con código distinto de cero. `npm run check` completa las reglas educativas del sitio: cuatro alternativas, explicación de la correcta, dominios y referencias válidas. Los distractores pueden tener `explanation: ""` cuando la fuente solo proporciona una justificación general. La distribución por dominio se comprueba contra `questionCounts` del curso, o seis por dominio cuando no se declara; no afecta al muestreo aleatorio de CertiQuiz.
+
+GitHub Actions ejecuta este chequeo antes de publicar Pages y Docker lo ejecuta al construir la imagen, antes de reemplazar la API. El refresco productivo sigue consultando `main`, por lo que un push directo puede estar disponible antes de que termine CI: validar localmente y en el PR antes de integrar. La API rechaza el conjunto completo si un banco falla y conserva su catálogo anterior; las salas creadas mantienen sus preguntas. Esta protección no equivale a validar la fidelidad de una traducción: debe revisarse contra su fuente.
+
 ## Prevención de abuso
 
 La creación aplica límites persistentes y atómicos en PostgreSQL: 2 intentos por minuto y 10 por hora por IP, 6 por hora por sesión de anfitrión y 60 por hora para todo el servicio. Admite una sala activa por anfitrión, tres por IP y diez en total. Borrar cookies no elude los límites de IP o capacidad. Una sala de espera sin participantes expira a los 15 minutos, aunque el anfitrión siga consultándola. Las partidas tienen un máximo de ocho horas.

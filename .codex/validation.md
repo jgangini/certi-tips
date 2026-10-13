@@ -20,6 +20,7 @@ El preflight guarda la referencia de arquitectura antes del primer cambio. El po
 | --- | --- |
 | `scripts/build.mjs` | `npm run build`: reemplaza `dist/` con páginas, imágenes y corpus obtenidos del catálogo. |
 | `scripts/check-site.mjs` | `npm run check`: valida el sitio construido, enlaces, anclas, cobertura, preguntas y SVG. |
+| `services/certiquiz/check-catalog.py` | `npm run check:certiquiz`: valida catálogo y bancos fuente con el contrato real de la API, incluidos límites de tamaño. Requiere Python 3.12, sin paquetes ni red; obligatorio antes de publicar bancos/catálogo. Alternativa en contenedor: `docker run --rm --network none -v "${PWD}:/source:ro" -w /source certiquiz-api:local python services/certiquiz/check-catalog.py`. |
 | `scripts/serve.mjs` | `npm run preview`: sirve `dist/` en loopback; requiere build previo. |
 | `scripts/layout.mjs`, `certichat-corpus.mjs`, `certichat-explorer.mjs` | Módulos importados por el constructor y las pruebas; no son comandos independientes. |
 | `scripts/check-architecture-rules.ps1` | Ejecutar tras modificar reglas, wrappers o actualizar Sentrux; comprueba límites de arquitectura y la limpieza/restauración de los wrappers tanto con éxito como con fallo. |
@@ -38,7 +39,7 @@ El preflight guarda la referencia de arquitectura antes del primer cambio. El po
 | `certichat.test.mjs` | Corpus, sanitización, enlaces y restauración de conversaciones. |
 | `certichat-trace.test.mjs`, `certichat-explorer.test.mjs`, `certichat-network.test.mjs` | Evidencia, procedencia, grafo, cámara y límites del almacenamiento. |
 
-GitHub Pages ejecuta build, pruebas Node y check. Su resultado no incluye navegador, PostgreSQL, pruebas de carga ni modelos reales.
+GitHub Pages ejecuta el validador de bancos de CertiQuiz, build, pruebas Node y check. Docker también valida los bancos al construir CertiQuiz. Su resultado no incluye navegador, PostgreSQL, pruebas de carga ni modelos reales.
 
 ## Navegador
 

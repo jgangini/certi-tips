@@ -5,33 +5,47 @@ import vm from "node:vm";
 import MarkdownIt from "markdown-it";
 import { layout, sidebar, homeBody, certiquizBody, courseRoute } from "../scripts/layout.mjs";
 
-test("the image viewer refreshes its description when switching diagrams", () => {
-  const caption = { textContent: "" }, description = { textContent: "" }, enlarged = { addEventListener() {} };
+test("the image viewer refreshes its group, source heading and description when switching diagrams", () => {
+  const caption = { textContent: "" }, group = { textContent: "" }, description = { textContent: "" }, enlarged = { addEventListener() {} };
   const close = { focus() {}, addEventListener() {} };
   const dialog = {
     querySelector: selector => ({ "img": enlarged, ".dialog-content img": enlarged, "[data-diagram-present]": close, "[data-diagram-menu]": close, ".diagram-presentation-nav": {}, ".diagram-slide-count": {}, button: close, "[data-close-diagram]": close, "#diagram-description": description })[selector],
     showModal() {}, addEventListener() {},
   };
   const buttons = [
-    { src: "pyramid.svg", alt: "Pirámide Dorada de Peter Aiken", description: "Las once áreas de gestión de datos." },
-    { src: "contract.svg", alt: "Contrato del Producto de Datos", description: "Negocio acuerda; ingeniería aplica controles." },
+    { src: "https://example.test/course/overview/img/pyramid.svg", alt: "Pirámide Dorada de Peter Aiken", description: "Las once áreas de gestión de datos." },
+    { src: "https://example.test/course/governance/img/contract.svg", alt: "Contrato del Producto de Datos", heading: "El Caso de Operadora Horizonte", description: "Negocio acuerda; ingeniería aplica controles." },
   ].map(image => ({
+    dataset: { diagramHeading: image.heading },
     image: { ...image, getAttribute: name => name === 'src' ? image.src : null },
     querySelector(selector) { return selector === "img" ? this.image : { firstChild: { textContent: `${image.description} ` }, textContent: `${image.description} ↗` }; },
     addEventListener(type, callback) { this.click = callback; },
   }));
+  const links = [
+    { pathname: "/course/overview/", number: "00", title: "Empieza Aquí" },
+    { pathname: "/course/governance/", number: "01", title: "Gobierno" },
+  ].map(link => ({ ...link, querySelector: selector => ({ textContent: selector === ".nav-number" ? link.number : link.title }) }));
   const document = {
-    querySelector: selector => selector === "#diagram-viewer" ? dialog : caption,
-    querySelectorAll: selector => selector === '.sidebar .nav-link' ? [] : buttons,
+    querySelector: selector => selector === "#diagram-viewer" ? dialog : selector === "#diagram-group" ? group : caption,
+    querySelectorAll: selector => selector === '.sidebar .nav-link' ? links : buttons,
   };
   const script = readFileSync(new URL("../assets/site.js", import.meta.url), "utf8");
-  vm.runInNewContext(script.slice(script.indexOf('const dialog = document.querySelector("#diagram-viewer");')), { document });
-  for (const button of buttons) {
+  vm.runInNewContext(script.slice(script.indexOf('const dialog = document.querySelector("#diagram-viewer");')), { document, URL, location: { href: "https://example.test/course/overview/" } });
+  for (const [index, button] of buttons.entries()) {
     button.click();
     assert.equal(enlarged.src, button.image.src);
-    assert.equal(caption.textContent, button.image.alt);
+    assert.equal(caption.textContent, button.dataset.diagramHeading || button.image.alt);
+    assert.equal(group.textContent, `${links[index].number} ${links[index].title}`);
     assert.equal(description.textContent, button.image.description);
   }
+});
+
+test("the gallery keeps the nearest source heading and falls back to the image title before a heading", () => {
+  const gallery = JSON.parse(readFileSync(new URL("../dist/CDMP-DMF/gallery.json", import.meta.url), "utf8"));
+  assert.equal(gallery.find(item => item.src.endsWith("gov-overview-map.svg")).heading, "Pirámide Dorada de Peter Aiken");
+  assert.equal(gallery.find(item => item.src.endsWith("gov-overview-contract.svg")).heading, "El Caso de Operadora Horizonte");
+  const overview = readFileSync(new URL("../dist/CDMP-DMF/overview/index.html", import.meta.url), "utf8");
+  assert.match(overview, /data-diagram-heading="El Caso de Operadora Horizonte"/);
 });
 
 const site = {
@@ -56,6 +70,18 @@ const course = {
 };
 site.courses = [course];
 
+test("all practice pages keep an accessible title without the redundant page heading", () => {
+  const catalog = JSON.parse(readFileSync(new URL('../data/catalog.json', import.meta.url), 'utf8'));
+  const practiceCourses = catalog.courses.filter(entry => entry.resources.some(page => page.slug === 'practice'));
+  assert.deepEqual(practiceCourses.map(entry => entry.route).sort(), ['1Z0-1085-26', '1Z0-1122-26', '1Z0-1157-26']);
+  for (const entry of practiceCourses) {
+    const practice = entry.resources.find(page => page.slug === 'practice');
+    const html = layout({ site: { ...site, courses: catalog.courses }, course: entry, page: practice, body: '<div id="quiz"></div>' });
+    assert.match(html, /<main id="main"[^>]*><h1 class="visually-hidden">Práctica<\/h1><article class="prose"><div id="quiz"><\/div><\/article>/, entry.id);
+    assert.doesNotMatch(html, /<div class="page-heading/, entry.id);
+  }
+});
+
 test("course lessons omit completion promises and governance opens directly with its concepts", () => {
   const catalog = JSON.parse(readFileSync(new URL('../data/catalog.json', import.meta.url), 'utf8'));
   for (const course of catalog.courses) for (const page of [...course.modules, ...course.resources]) {
@@ -68,8 +94,8 @@ test("course lessons omit completion promises and governance opens directly with
   assert.doesNotMatch(source, /^## Conceptos Clave|^Operadora Horizonte reúne/m);
 });
 
-test("an applied course has its own route, navigation and practice without an exam or official path", () => {
-  const workshop = { ...course, id: "data-governance", title: "Gobierno de datos", sidebarLabel: "DAMA", exam: undefined, resources: [{ slug: "case-study", short: "Caso integrador" }, { slug: "practice", short: "Práctica" }] };
+test("an applied course without practice continues to its case study", () => {
+  const workshop = { ...course, id: "data-governance", title: "Gobierno de datos", sidebarLabel: "DAMA", exam: undefined, resources: [{ slug: "case-study", short: "Caso integrador" }] };
   const catalog = { ...site, courses: [...site.courses, workshop], paths: [...site.paths, { id: "governance", label: "Governance", title: "Governance", items: [{ id: workshop.id, guide: workshop.id, title: workshop.title, description: "Taller DAMA" }] }] };
   assert.equal(courseRoute(course), "EXAM-1");
   assert.equal(courseRoute(workshop), "data-governance");
@@ -80,7 +106,8 @@ test("an applied course has its own route, navigation and practice without an ex
   assert.match(html, /<summary>Governance<\/summary>/);
   assert.match(html, /<small>Curso · Governance<\/small>/);
   assert.match(html, /href="\/certitips\/data-governance\/case-study\/"/);
-  assert.match(html, /href="\/certitips\/data-governance\/practice\/"/);
+  assert.doesNotMatch(html, /href="\/certitips\/data-governance\/practice\/"/);
+  assert.match(html, /<nav class="page-navigation"[^]*<small>SIGUIENTE<\/small>[^]*Caso integrador/);
   assert.match(html, /3 cursos disponibles\./);
   const navigation = sidebar(catalog, workshop, "agents", new Map([["agents", [{ id: "conceptos-clave", title: "Conceptos clave" }]]]));
   assert.match(navigation, /<span class="exam-code">DAMA<\/span>/);
@@ -205,7 +232,7 @@ test("CertiQuiz host setup labels the room step and aligns its submit control", 
   assert.match(css, /@media \(max-width: 720px\) \{ \.certiquiz-app \.host-entry \.setup-actions \.button \{ width: 100%; \} \}/);
 });
 test("CertiQuiz shares site navigation and theme without a course sidebar", () => {
-  const html = layout({ site, course, page: { slug: 'certiquiz', title: 'CertiQuiz', description: 'Practica en equipo.' }, body: certiquizBody('https://api.example.test') });
+  const html = layout({ site: { ...site, certichat: { enabled: true, apiOrigin: 'https://chat.example.test' } }, course, page: { slug: 'certiquiz', title: 'CertiQuiz', description: 'Practica en equipo.' }, body: certiquizBody('https://api.example.test') });
   assert.match(html, /<title>CertiQuiz · CertiTips<\/title>/);
   assert.match(html, /rel="canonical" href="https:\/\/example\.test\/certitips\/certiquiz\/"/);
   assert.match(html, /class="home-page certiquiz-page"/);
@@ -216,6 +243,7 @@ test("CertiQuiz shares site navigation and theme without a course sidebar", () =
   assert.match(html, /src="\/certitips\/assets\/qrcode-generator\.js"/);
   assert.match(html, /src="\/certitips\/assets\/certiquiz\.js"/);
   assert.match(html, /href="\/certitips\/assets\/certiquiz\.css"/);
+  assert.doesNotMatch(html, /data-certichat|assets\/certichat\.(?:js|css)/);
   assert.match(html, /data-api-origin="https:\/\/api\.example\.test"/);
   assert.match(html, /<div id="app" aria-busy="true"><section class="loading loading-full"><h1><svg[^>]*viewBox="0 0 1920 1920"[^>]*><g[^]*?<\/svg><span>Preparando la partida<\/span><\/h1><p role="status">Conectando con la sala de práctica\.<\/p><\/section>/);
   const certiquizCss = readFileSync(new URL("../assets/certiquiz.css", import.meta.url), "utf8");
@@ -260,7 +288,6 @@ test("CertiQuiz renders a branded local invitation QR", () => {
   assert.match(script, /button\.setAttribute\('aria-pressed', String\(expanded\)\)/);
   assert.match(css, /\.certiquiz-app \.room-grid\s*\{[^}]*align-items:\s*stretch;/);
   assert.match(css, /\.certiquiz-app \.room-side\s*\{[^}]*position:\s*absolute;[^}]*grid-column:\s*2;[^}]*inset:\s*0;[^}]*display:\s*flex;/);
-  assert.match(css, /@media \(max-width: 720px\)[^\r\n]*\.certiquiz-app \.room-side\s*\{ position: relative; grid-column: 1; grid-row: auto; min-height: 320px;/);
   assert.doesNotMatch(script, /data-simulate-players|roster-simulation|simulatedRoster/);
   assert.doesNotMatch(script, /avatar-name|positionAvatarLabel|data-expand-side|overlapsWithClearance|labelFits/);
   assert.match(css, /\.certiquiz-app \.invite-overview\s*\{\s*width:\s*100%;/);
@@ -297,9 +324,9 @@ test("CertiQuiz host lobby keeps facts beside its actions and uses a compact con
   assert.match(script, /dialog\.dataset\.lobbyExpired = ''/);
   assert.match(script, /El tiempo de espera de 15 minutos de la sala expiró/);
   assert.match(script, /className = 'confirmation confirmation-expired'/);
-  assert.match(script, /viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"[^]*M12 13V9M21 6L19 4M10 2H14/);
+  assert.doesNotMatch(script, /confirmation-icon/);
   assert.match(script, /data-return-to-entry>Aceptar<\/button>/);
-  assert.match(script, /const playerFooter = `<div class="lobby-footer">\$\{facts\}<div class="actions game-actions"><button class="button secondary" type="button" data-exit>Salir/);
+  assert.match(script, /const playerFooter = `<div class="lobby-footer player-lobby-footer">\$\{facts\}<div class="actions game-actions"><button class="button secondary" type="button" data-exit>Salir/);
   assert.doesNotMatch(script, /class="text-button room-exit"/);
   assert.match(script, /error\.tone = 'warning'/);
   assert.match(script, /room\.status !== 'lobby' && !document\.querySelector\('\[data-confirm\]\[open\]'\)/);
@@ -333,18 +360,16 @@ test("CertiQuiz host lobby keeps facts beside its actions and uses a compact con
   assert.match(css, /\.certiquiz-app \.player-avatar\s*\{[^}]*opacity:\s*0;[^}]*animation:\s*certiquiz-absorb/);
   assert.match(sharedCss, /:is\(\.certiquiz-app, \.certichat\) \.warning\s*\{[^}]*color:\s*var\(--warning\);[^}]*background:\s*var\(--warning-bg\);/);
   assert.match(sharedCss, /:is\(\.certiquiz-app, \.certichat, #quiz\) \.confirmation\s*\{[^}]*width: min\(400px, calc\(100vw - 32px\)\);/);
-  assert.match(sharedCss, /:is\(\.certiquiz-app, \.certichat, #quiz\) \.confirmation-icon\s*\{[^}]*width: 76px;[^}]*height: 76px;/);
+  assert.doesNotMatch(sharedCss, /\.confirmation-icon/);
   assert.match(css, /\.certiquiz-app \.confirmation-expired \.confirmation-actions \.button\s*\{\s*grid-column: 2;/);
   assert.match(sharedCss, /:is\(\.certiquiz-app, \.certichat, #quiz\) \.confirmation-actions \.button\s*\{[^}]*min-height: 52px;/);
-  const chatHtml = layout({ site: { ...site, certichat: { enabled: true, apiOrigin: "https://example.test" } }, course, page: course.modules[0], body: "" });
+  const chatHtml = layout({ site: { ...site, certichat: { enabled: true, apiOrigin: "https://example.test" }, certiquizApi: 'https://quiz.example.test' }, course, page: course.modules[0], body: "" });
+  assert.match(chatHtml, /data-quiz-api="https:\/\/quiz\.example\.test"/);
   assert.match(chatHtml, /<h2 id="chat-confirm-title" tabindex="-1" autofocus>/);
   assert.match(chatHtml, /data-chat-confirm-yes>Aceptar<\/button>/);
   assert.match(script, /<h2 id="confirmation-title" tabindex="-1" autofocus>/);
   assert.doesNotMatch(chatHtml + script, /data-(?:chat-)?confirm-(?:no|yes) autofocus/);
-  for (const source of [chatHtml, script]) assert.match(source, /confirmation-question\.svg#question/);
-  const questionIcon = readFileSync(new URL("../assets/icons/confirmation-question.svg", import.meta.url), "utf8");
-  assert.match(questionIcon, /<symbol id="question" viewBox="0 0 16 16" fill="currentColor">/);
-  assert.match(questionIcon, /<circle cx="7\.98" cy="10\.95" r="\.76"\/>/);
+  for (const source of [chatHtml, script]) assert.doesNotMatch(source, /confirmation-icon|confirmation-question\.svg/);
   assert.doesNotMatch(script, /\(tú\)/);
   assert.match(css, /\.certiquiz-app \.leaderboard \.is-me\s*\{[^}]*background:\s*var\(--chrome-bg\);/);
   assert.match(script, /send\.disabled = locked \|\| busy; send\.textContent = 'Enviar';/);

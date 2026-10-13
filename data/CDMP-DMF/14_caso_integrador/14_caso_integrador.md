@@ -82,4 +82,4 @@ Asigna de cero a dos puntos a cada criterio: cero si falta, uno si se menciona y
 
 Una meta pedagógica es **ocho de diez puntos**, sin omitir protección ni responsabilidad. No es un umbral oficial de certificación. Repite la explicación con un cambio: un cliente revoca marketing mientras conserva un contrato vigente. Debes poder mostrar qué uso cambia, qué operación continúa y qué evidencia demostraría ambas decisiones.
 
-Completa la [práctica de 22 preguntas]({{base}}CDMP-DMF/practice/) y vuelve a las secciones enlazadas desde los errores. El cierre del taller es la capacidad de defender y revisar una propuesta, no la memorización de una lista de productos.
+Vuelve a las secciones del curso cuando algún criterio de la rúbrica quede sin justificar. El cierre del taller es la capacidad de defender y revisar una propuesta, no la memorización de una lista de productos.

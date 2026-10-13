@@ -6,13 +6,11 @@ async (page) => {
   const base = `${origin}/certitips/`;
   const route = `${base}CDMP-DMF/`;
   const modules = ['governance', 'data-architecture', 'data-modeling', 'data-operations', 'data-security', 'data-integration', 'content-management', 'master-reference-data', 'data-warehousing-bi', 'metadata', 'data-quality'];
-  const slugs = ['overview', ...modules, 'oracle-map', 'glossary', 'case-study', 'practice'];
+  const slugs = ['overview', ...modules, 'oracle-map', 'glossary', 'case-study'];
   const widths = [1299, 390, 320];
-  const quizKey = 'certitips:quiz:v1:data-governance';
   const progressKey = 'certitips:progress:v1:data-governance';
-  const otherQuiz = 'certitips:quiz:v1:agentic-ai-foundations-2026';
   const otherProgress = 'certitips:progress:v1:agentic-ai-foundations-2026';
-  const keys = [quizKey, progressKey, otherQuiz, otherProgress, 'certitips:theme'];
+  const keys = [progressKey, otherProgress, 'certitips:theme'];
   const previousStorage = await page.evaluate(keys => keys.map(key => [key, localStorage.getItem(key)]), keys);
   const assert = (condition, message) => { if (!condition) throw new Error(message); };
   const errors = [];
@@ -21,19 +19,18 @@ async (page) => {
   let diagrams = 0;
   let scrollableTables = 0;
   try {
-    await page.evaluate(({ quizKey, progressKey, otherQuiz, otherProgress }) => {
-      localStorage.removeItem(quizKey); localStorage.removeItem(progressKey);
-      localStorage.setItem(otherQuiz, 'other-course-sentinel');
+    await page.evaluate(({ progressKey, otherProgress }) => {
+      localStorage.removeItem(progressKey);
       localStorage.setItem(otherProgress, JSON.stringify(['agents']));
       localStorage.setItem('certitips:theme', 'light');
-    }, { quizKey, progressKey, otherQuiz, otherProgress });
+    }, { progressKey, otherProgress });
     await page.goto(base);
     const labels = await page.locator('.path-nav .path-group > summary').allTextContents();
     assert(labels.join('|') === 'Foundation|AI & Agents|Data & AI|Architecture|Governance', 'Expected five ordered navigation groups');
     const courseLink = '.path-group-panel a[href="/certitips/CDMP-DMF/overview/"]';
     assert(await page.locator(`.path-nav ${courseLink}`).count() === 1 && await page.locator(`.path-nav-mobile ${courseLink}`).count() === 1, 'Governance must have desktop and mobile routes');
     const indexed = await page.locator('[data-search-kind="topic"] a').evaluateAll(links => links.map(link => link.href).filter(url => url.includes('/CDMP-DMF/')));
-    assert(indexed.length === slugs.length && slugs.every(slug => indexed.includes(`${route}${slug}/`)), 'Search must index all sixteen Governance pages');
+    assert(indexed.length === slugs.length && slugs.every(slug => indexed.includes(`${route}${slug}/`)), 'Search must index all fifteen Governance pages');
     for (const width of [1100, 1201, 1299]) {
       await page.setViewportSize({ width, height: 900 });
       assert(await page.locator('.path-nav').isVisible() === (width > 1200), `Wrong desktop navigation at ${width}px`);
@@ -120,10 +117,12 @@ async (page) => {
     assert(await viewer.evaluate(element => getComputedStyle(element, '::backdrop').backdropFilter.includes('blur(')), 'Diagram backdrop has no glass blur');
     assert(await viewer.evaluate(element => {
       const image = element.querySelector('.dialog-content img'), link = [...document.querySelectorAll('.sidebar .nav-link')].find(link => image.src.includes(`${link.pathname}img/`));
+      const source = [...document.querySelectorAll('[data-diagram]')].find(button => button.querySelector('img').src === image.src);
       return !element.querySelector('.dialog-brand') &&
-        element.querySelector('#diagram-caption').textContent === link?.textContent.trim().replace(/\s+/g, ' ') &&
-        getComputedStyle(element.querySelector('#diagram-caption')).color === 'rgb(199, 70, 52)';
-    }), 'Diagram toolbar does not show the numbered module title without the logo');
+        element.querySelector('#diagram-group').textContent === `${link.querySelector('.nav-number').textContent.trim()} ${link.querySelector('.nav-title').textContent.trim()}` &&
+        element.querySelector('#diagram-caption').textContent === source.dataset.diagramHeading &&
+        getComputedStyle(element.querySelector('#diagram-group')).color === 'rgb(199, 70, 52)';
+    }), 'Diagram toolbar does not show the numbered red group above the source heading');
     await viewer.locator('.dialog-content img').click();
     await page.waitForFunction(() => document.querySelector('#diagram-viewer').classList.contains('is-presenting') && document.querySelector('.diagram-slide-count').textContent.includes('/'));
     const gallery = await page.evaluate(async () => (await (await fetch('/certitips/CDMP-DMF/gallery.json')).json()));
@@ -133,8 +132,10 @@ async (page) => {
     assert(await rail.locator('.diagram-presentation-group h3').count() > 5 && await rail.locator('button span').count() === 0, 'Presentation thumbnails are not grouped image-only controls');
     assert(await rail.locator('button').evaluateAll(buttons => buttons.every((button, index) => {
       const tag = getComputedStyle(button, '::after'), count = getComputedStyle(document.querySelector('.diagram-slide-count'));
-      return button.dataset.slideNumber === String(index + 1) && tag.position === 'absolute' && tag.backgroundColor === count.backgroundColor && tag.color === count.color;
-    })), 'Presentation thumbnails have no numbered corner tags matching the slide counter');
+      return button.dataset.slideNumber === String(index + 1) && tag.position === 'absolute' &&
+        tag.width === '20px' && tag.height === '20px' && tag.backgroundColor === 'rgb(17, 17, 17)' && tag.color === 'rgb(255, 255, 255)' &&
+        tag.backgroundColor === count.backgroundColor && tag.color === count.color;
+    })), 'Presentation number tags must be small black blocks with white text');
     assert(await rail.evaluate(element => {
       const style = getComputedStyle(element), sidebar = document.querySelector('.sidebar');
       return style.backgroundColor === getComputedStyle(sidebar).backgroundColor && Number.parseFloat(style.width) >= 180 &&
@@ -159,11 +160,20 @@ async (page) => {
     }), 'Presentation toolbar or image does not use the full viewer');
     const menuButton = viewer.locator('[data-diagram-menu]');
     assert(await menuButton.isVisible() && await menuButton.getAttribute('aria-expanded') === 'false' && await rail.evaluate(element => element.inert && getComputedStyle(element).opacity === '0'), 'Presentation filmstrip does not start hidden');
+    assert(await page.evaluate(() => {
+      const source = document.querySelector('.site-header .menu-toggle'), target = document.querySelector('#diagram-viewer [data-diagram-menu]');
+      const sourceStyle = getComputedStyle(source), targetStyle = getComputedStyle(target), box = target.getBoundingClientRect();
+      const projector = document.querySelector('#diagram-viewer [data-diagram-present]').getBoundingClientRect(), icon = target.querySelector('svg').getBoundingClientRect();
+      return source.querySelector('svg').outerHTML === target.querySelector('svg').outerHTML &&
+        box.width === projector.width && box.height === projector.height && icon.width === 18 && icon.height === 18 &&
+        sourceStyle.borderRadius === targetStyle.borderRadius && sourceStyle.borderColor === targetStyle.borderColor &&
+        sourceStyle.backgroundColor === targetStyle.backgroundColor;
+    }), 'Presentation menu does not match the projector size or course menu icon');
     await page.mouse.move(8, 100);
     assert(await rail.evaluate(element => getComputedStyle(element).opacity === '0'), 'Left-edge hover opened the filmstrip');
     await menuButton.click();
     await page.waitForFunction(() => Number(getComputedStyle(document.querySelector('.diagram-presentation-nav')).opacity) > .95);
-    assert(await menuButton.getAttribute('aria-expanded') === 'true' && await rail.evaluate(element => !element.inert), 'Presentation menu button did not open the filmstrip');
+    assert(await menuButton.getAttribute('aria-expanded') === 'true' && await menuButton.getAttribute('aria-label') === 'Ocultar imágenes' && await rail.evaluate(element => !element.inert), 'Presentation menu button did not open the filmstrip');
     assert(await rail.evaluate(element => getComputedStyle(element).scrollbarColor.includes('89, 97, 110')), 'Filmstrip scrollbar differs from course navigation');
     const firstCount = await viewer.locator('.diagram-slide-count').textContent();
     const firstDescription = await viewer.locator('#diagram-description').textContent();
@@ -171,8 +181,15 @@ async (page) => {
     await page.waitForFunction(previous => document.querySelector('.diagram-slide-count').textContent !== previous, firstCount);
     assert((await viewer.locator('#diagram-description').textContent()) !== firstDescription, 'Presentation did not update the visible image description');
     const secondCount = await viewer.locator('.diagram-slide-count').textContent();
+    const secondSrc = await viewer.locator('.dialog-content img').getAttribute('src');
+    await viewer.locator('.dialog-content img').click();
+    assert(await menuButton.getAttribute('aria-expanded') === 'false' && await rail.evaluate(element => element.inert) &&
+      await viewer.locator('.diagram-slide-count').textContent() === secondCount && await viewer.locator('.dialog-content img').getAttribute('src') === secondSrc,
+      'First image click must hide the filmstrip without changing slides');
     await viewer.locator('.dialog-content img').click();
     await page.waitForFunction(previous => document.querySelector('.diagram-slide-count').textContent !== previous, secondCount);
+    await menuButton.click();
+    await page.waitForFunction(() => Number(getComputedStyle(document.querySelector('.diagram-presentation-nav')).opacity) > .95);
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.querySelector('#diagram-viewer').scrollWidth <= innerWidth), 'Slide transition created horizontal page overflow');
     await page.setViewportSize({ width: 1671, height: 1000 });
     assert(await page.evaluate(() => Math.abs(document.querySelector('.site-header .theme-toggle').getBoundingClientRect().right -
@@ -222,54 +239,11 @@ async (page) => {
     await page.locator('[data-mark-complete]').click();
     await page.reload();
     assert(await page.locator('[data-progress-label]').textContent() === '1 de 12', 'Reading progress did not persist');
-    await page.goto(`${route}practice/`);
-    const bank = await page.evaluate(async () => (await fetch(`${document.body.dataset.base}assets/${document.body.dataset.questionBank}.json`)).json());
-    assert(bank.length === 66, 'Expected 66 Governance questions');
-    await page.locator('[data-start]').click();
-    const selected = await page.evaluate(key => JSON.parse(localStorage.getItem(key)), quizKey);
-    assert(selected.ids.length === 22, 'Expected 22 questions per attempt');
-    for (const domain of modules) assert(selected.ids.filter(id => bank.find(question => question.id === id).domain === domain).length === 2, `Unbalanced domain: ${domain}`);
-    const answer = async wrong => {
-      const text = await page.locator('.quiz-question').textContent();
-      const question = bank.find(item => item.question === text);
-      assert(question, 'Question from another bank');
-      await page.locator(`input[value="${wrong ? question.options.find(option => option.id !== question.correctOption).id : question.correctOption}"]`).check();
-      await page.locator('#question-form button').click();
-      assert(await page.locator('.feedback li').count() === 4, 'Missing option explanations');
-      assert(await page.locator('input[name="answer"]:disabled').count() === 4, 'Confirmed answer is not locked');
-      assert((await page.locator('.review-link').getAttribute('href')).startsWith('/certitips/CDMP-DMF/'), 'Feedback links to another course');
-      return text;
-    };
-    for (let index = 0; index < 22; index++) {
-      const text = await answer(index % 4 === 0);
-      if (index === 4) {
-        await page.reload(); await page.locator('.feedback').waitFor();
-        assert(await page.locator('.quiz-question').textContent() === text, 'Reload changed the question');
-        assert(await page.locator('input[name="answer"]:disabled').count() === 4, 'Reload unlocked the response');
-      }
-      await page.locator('[data-next]').click();
-    }
-    assert((await page.locator('.score-number').textContent()).replace(/\s/g, '') === '16/22', 'Wrong practice score');
-    assert(await page.locator('.domain-results li').count() === 11, 'Expected eleven result areas');
-    const completed = await page.evaluate(key => localStorage.getItem(key), quizKey);
-    await page.reload(); await page.locator('[data-review]').click();
-    for (let index = 0; index < 6; index++) { await answer(false); await page.locator('[data-next]').click(); }
-    await page.reload();
-    assert((await page.locator('.score-number').textContent()).replace(/\s/g, '') === '6/6', 'Wrong review score');
-    assert((await page.locator('#quiz').textContent()).includes('se mantiene en 16/22'), 'Review overwrote the original score');
-    assert(await page.evaluate(key => JSON.stringify(JSON.parse(localStorage.getItem(key)).original), quizKey) === completed, 'Review changed its original practice snapshot');
-    assert(await page.locator('#quiz a[href$="/case-study/"]').count() === 1, 'Completed practice must continue to the case study');
-    assert(!/examen|práctica oficial/.test(await page.locator('#quiz').textContent()), 'Workshop offers an exam follow-up');
-    await page.locator('#quiz a[href$="/case-study/"]').click();
-    await page.waitForURL(`${route}case-study/`);
-    await page.goto(`${route}practice/`);
-    await page.locator('[data-reset]').click();
-    assert(await page.locator('[data-start]').isVisible(), 'Reset did not return to practice intro');
-    assert(await page.locator('[data-progress-label]').textContent() === '1 de 12', 'Reset deleted reading progress');
-    assert(await page.evaluate(key => localStorage.getItem(key), otherQuiz) === 'other-course-sentinel', 'Quiz storage crossed courses');
+    assert(await page.locator('a[href$="/CDMP-DMF/practice/"]').count() === 0, 'Governance still links to its retired practice');
+    assert((await page.request.get(`${route}practice/`)).status() === 404, 'Governance practice route is still published');
     assert(await page.evaluate(key => localStorage.getItem(key), otherProgress) === '["agents"]', 'Reading progress crossed courses');
     assert(!errors.length, errors.join('; '));
-    return { pages: slugs.length, widths, headerWidths: [1100, 1201, 1299], diagrams, scrollableTables, practice: '16/22', review: '6/6', isolatedCourseStorage: true, pageErrors: errors.length, screenshots: 0 };
+    return { pages: slugs.length, widths, headerWidths: [1100, 1201, 1299], diagrams, scrollableTables, isolatedCourseStorage: true, pageErrors: errors.length, screenshots: 0 };
   } finally {
     await page.evaluate(entries => entries.forEach(([key, value]) => value === null ? localStorage.removeItem(key) : localStorage.setItem(key, value)), previousStorage);
     page.off('pageerror', onError);

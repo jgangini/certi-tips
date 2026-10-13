@@ -183,10 +183,12 @@ async (page) => {
   await page.locator('[data-chat-confirm]').waitFor({ state: 'visible' });
   assert(await page.locator('#chat-confirm-title').evaluate(element => document.activeElement === element && getComputedStyle(element).outlineStyle === 'none'), 'Confirmation did not focus its static heading');
   assert(await page.locator('[data-chat-confirm-yes]').textContent() === 'Aceptar', 'Chat confirmation does not use Aceptar');
-  assert(await page.locator('[data-chat-confirm] use').getAttribute('href') === '/certitips/assets/icons/confirmation-question.svg#question', 'Chat confirmation lost the shared question icon');
+  assert(await page.locator('[data-chat-confirm] .confirmation-body svg').count() === 0, 'Chat confirmation still shows an icon');
   await page.keyboard.press('Tab');
   assert(await page.locator('[data-chat-confirm-no]').evaluate(element => document.activeElement === element && element.matches(':focus-visible') && getComputedStyle(element).outlineStyle !== 'none'), 'Keyboard navigation lost the visible Cancel focus');
   await page.locator('[data-chat-confirm-no]').click();
+  const chatClosing = await page.locator('[data-chat-confirm]').evaluate(node => new Promise(resolve => requestAnimationFrame(() => resolve(!CSS.supports('transition-behavior', 'allow-discrete') || (!node.open && node.getAnimations().some(animation => animation.playState === 'running'))))));
+  assert(chatClosing, 'Chat confirmation does not animate when cancelled');
   assert(calls.filter(item => item.method === 'DELETE').length === deletes, 'Cancel deleted server history');
   assert(await page.locator('deep-chat').evaluate(element => JSON.stringify(element.getMessages())) === transcript, 'Cancel erased the transcript');
   assert(await page.locator('[data-chat-clear]').evaluate(element => document.activeElement === element), 'Cancel did not restore focus to Clear');

@@ -66,9 +66,11 @@ async (page) => {
     const text = await page.locator('.quiz-question').textContent();
     const question = bank.find(item => item.question === text);
     assert(question, 'Question from another bank');
+    assert(await page.locator('#question-form button[type="submit"]').isDisabled(), 'Next must wait for a selected answer');
     await page.locator(`input[value="${wrong ? question.options.find(option => option.id !== question.correctOption).id : question.correctOption}"]`).check();
-    await page.locator('#question-form button').click();
-    assert(await page.locator('.feedback li').count() === 4, 'Explanations missing');
+    assert(await page.locator('#question-form button[type="submit"]').isEnabled(), 'Selection did not enable Next');
+    await page.locator('#question-form button[type="submit"]').click();
+    assert(await page.locator('.feedback h2').textContent() === 'Explicación' && await page.locator('.feedback p').count() === 1, 'Explanation missing');
     assert(await page.locator('input:disabled').count() === 4, 'Confirmed answer is not locked');
     return text;
   };
@@ -83,13 +85,21 @@ async (page) => {
   }
   assert((await page.locator('.score-number').textContent()).replace(/\s/g, '') === '12/18', 'Wrong score');
   assert(await page.locator('.domain-results li').count() === 9, 'Expected nine study areas');
-  await page.locator('[data-review]').click();
-  for (let index = 0; index < 6; index++) {
-    await answer(false); await page.locator('[data-next]').click();
-  }
-  assert((await page.locator('.score-number').textContent()).replace(/\s/g, '') === '6/6', 'Wrong review score');
-  assert((await page.locator('#quiz').textContent()).includes('se mantiene en 12/18'), 'Review overwrote original score');
+  assert(await page.locator('[data-review], [data-restart], .quiz-results caption, .quiz-summary a').count() === 0, 'Summary retained removed actions or links');
+  const completedAttempt = await page.evaluate(key => localStorage.getItem(key), quizKey);
+  await page.locator('[data-question-index="0"]').click();
+  assert(await page.locator('.quiz-option.is-wrong input:checked').count() === 1 && await page.locator('.quiz-option.is-correct').count() === 1, 'Wrong answer review did not show selected and correct options');
+  assert(await page.locator('input:disabled').count() === 4 && await page.locator('.feedback').isVisible(), 'Result review must be read-only with its explanation');
+  await page.locator('[data-next]').click();
+  assert(await page.locator('.quiz-option.is-correct input:checked').count() === 1, 'Correct answer review lost the selected answer');
+  assert(await page.locator('.quiz-review-status').count() === 0 && await page.locator('.quiz-next-controls [data-results]').textContent() === 'Resumen', 'Result detail retained its redundant status or lacks the summary action');
+  await page.locator('.quiz-next-controls [data-results]').click();
+  assert((await page.locator('.score-number').textContent()).replace(/\s/g, '') === '12/18', 'Browsing results changed the score');
+  assert(await page.evaluate(key => localStorage.getItem(key), quizKey) === completedAttempt, 'Browsing results altered the stored attempt');
   await page.locator('[data-reset]').click();
+  assert(await page.locator('[data-reset-confirm]').evaluate(node => node.matches(':modal')), 'Completed practice reset needs confirmation');
+  await page.locator('[data-reset-yes]').click();
+  await page.locator('[data-reset-confirm]').waitFor({ state: 'detached' });
   assert(await page.locator('[data-start]').isVisible(), 'Reset did not return to intro');
   assert(await page.evaluate(key => localStorage.getItem(key), otherQuiz) === 'other-course-sentinel', 'Quiz state crossed courses');
   assert(await page.evaluate(key => JSON.parse(localStorage.getItem(key)).agents, otherProgress), 'Progress crossed courses');
@@ -104,5 +114,5 @@ async (page) => {
   page.off('pageerror', onError);
   assert(!errors.length, errors.join('; '));
   await page.goto(`${route}overview/`);
-  return { pages: pages.length, widths: [1280, 390, 320], diagrams, practice: '12/18', review: '6/6', isolatedCourseStorage: true, pageErrors: errors.length, screenshots: 0 };
+  return { pages: pages.length, widths: [1280, 390, 320], diagrams, practice: '12/18', readOnlyAnswerReview: true, isolatedCourseStorage: true, pageErrors: errors.length, screenshots: 0 };
 }

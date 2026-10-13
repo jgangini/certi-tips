@@ -7,13 +7,19 @@ async (page) => {
   const courseId = 'agentic-ai-foundations-2026';
   const quizKey = `certitips:quiz:v1:${courseId}`;
   const progressKey = `certitips:progress:v1:${courseId}`;
-  await page.evaluate(keys => keys.forEach(key => localStorage.removeItem(key)), [quizKey, `${quizKey}:last-practice`, progressKey]);
+  const practiceCourse = course;
+  const practiceQuizKey = quizKey;
+  const practiceProgressKey = progressKey;
+  await page.evaluate(keys => keys.forEach(key => localStorage.removeItem(key)), [quizKey, `${quizKey}:last-practice`, progressKey, practiceQuizKey, `${practiceQuizKey}:last-practice`, practiceProgressKey]);
+  await page.evaluate(() => sessionStorage.removeItem('certitips:course-nav:compact'));
+  await page.evaluate(() => document.querySelector('[data-chat-close]')?.click());
+  await page.locator('#certichat-panel').waitFor({ state: 'hidden' });
   const assert = (condition, message) => { if (!condition) throw new Error(message); };
   const checks = [];
   const errors = [];
   const pageError = error => errors.push(error.message);
   page.on('pageerror', pageError);
-  const slugs = ['overview', 'agents', 'langchain', 'mcp', 'openai', 'oci-enterprise', 'oracle-database', 'glossary', 'exam-checklist', 'practice'];
+  const slugs = ['overview', 'agents', 'langchain', 'mcp', 'openai', 'oci-enterprise', 'oracle-database', 'glossary', 'exam-checklist'];
   for (const width of [1280, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
     for (const slug of ['', ...slugs]) {
@@ -49,8 +55,7 @@ async (page) => {
       }
       assert(await page.locator('main .contents').count() === 0, 'Duplicate in-page contents remains');
       assert(await page.locator('.nav-overview').count() === 0, 'Redundant Ver recurso link remains in the sidebar');
-      if (slug === 'practice') assert(await page.locator('.nav-direct[aria-current="page"][href$="/practice/"]').count() === 1, 'Practice entry is not direct and active');
-      else if (slug) assert(await page.locator(`.nav-branch[data-nav-page="${slug}"][open]`).count() === 1, `Active tree branch closed: ${slug}`);
+      if (slug) assert(await page.locator(`.nav-branch[data-nav-page="${slug}"][open]`).count() === 1, `Active tree branch closed: ${slug}`);
       await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
       if (await page.locator('[data-mark-complete]').count()) await page.locator('[data-mark-complete]').waitFor({ state: 'visible' });
       await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
@@ -64,7 +69,7 @@ async (page) => {
       assert(layout.clear, `Footer covers the end of main: ${width}/${slug}`);
       assert(layout.tables, `Table columns leave a blank right strip: ${width}/${slug}`);
     }
-    checks.push(`${width}px: 11 pages, no overflow, full-width table rows, fixed footer without content overlap`);
+    checks.push(`${width}px: 10 pages, no overflow, full-width table rows, fixed footer without content overlap`);
   }
   for (const width of [1098, 1101, 1200]) {
     await page.setViewportSize({ width, height: 1000 });
@@ -96,7 +101,8 @@ async (page) => {
       const box = selector => document.querySelector(selector).getBoundingClientRect();
       const launcher = box('.certichat-launcher'), article = box('.prose');
       const visible = getComputedStyle(document.querySelector('.certichat-launcher > span')).clipPath === 'none';
-      const nav = box('.menu-toggle');
+      const nav = box(document.body.classList.contains('is-compact-nav')
+        ? (innerWidth <= 1200 ? '.path-nav-mobile > summary' : '.path-nav') : '.menu-toggle');
       const search = box('.search-toggle'), theme = box('.theme-toggle');
       return visible === labelVisible && (!visible || launcher.left - article.right >= 20) &&
         search.left - nav.right >= 11 && search.left - nav.right <= 13 &&
@@ -208,21 +214,42 @@ async (page) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   const compactToggle = page.locator('.menu-toggle');
   await compactToggle.click();
-  await page.waitForFunction(() => Math.abs(document.querySelector('.sidebar').getBoundingClientRect().width - 64) < 1 &&
-    Math.abs(document.querySelector('.course-main').getBoundingClientRect().left - 64) < 1);
+  await page.waitForFunction(() => {
+    const sidebar = document.querySelector('.sidebar').getBoundingClientRect();
+    const toggleElement = document.querySelector('.menu-toggle');
+    const toggle = toggleElement.getBoundingClientRect();
+    const firstLink = document.querySelector('.sidebar .nav-link').getBoundingClientRect();
+    return Math.abs(sidebar.width - 64) < 1 && Math.abs(document.querySelector('.course-main').getBoundingClientRect().left - 64) < 1 &&
+      Math.abs(toggle.left - firstLink.left) <= 1 && Math.abs(toggle.width - firstLink.width) <= 1 &&
+      Math.abs(firstLink.top - toggle.bottom - 8) <= 1;
+  });
   assert(await compactToggle.getAttribute('aria-expanded') === 'false' && await page.evaluate(() => {
     const sidebar = document.querySelector('.sidebar'), main = document.querySelector('.course-main');
-    const toggle = document.querySelector('.menu-toggle').getBoundingClientRect();
+    const toggleElement = document.querySelector('.menu-toggle');
+    const toggle = toggleElement.getBoundingClientRect();
+    const firstLink = sidebar.querySelector('.nav-link').getBoundingClientRect();
     const search = document.querySelector('.search-toggle').getBoundingClientRect();
     const motion = getComputedStyle(sidebar);
-    return document.body.classList.contains('is-compact-nav') && Math.abs(sidebar.getBoundingClientRect().width - 64) < 1 &&
+    return document.body.classList.contains('is-compact-nav') && toggleElement.parentElement === sidebar && document.activeElement === toggleElement &&
+      Math.abs(sidebar.getBoundingClientRect().width - 64) < 1 &&
       Math.abs(main.getBoundingClientRect().left - 64) < 1 && getComputedStyle(sidebar.querySelector('.nav-title')).clipPath === 'inset(50%)' &&
       getComputedStyle(sidebar.querySelector('.nav-tree:last-child')).display === 'none' &&
-      !sidebar.querySelector('.sidebar-compact-toggle') && toggle.right < search.left &&
+      !sidebar.querySelector('.sidebar-compact-toggle') &&
+      Math.abs(toggle.left - firstLink.left) <= 1 && Math.abs(toggle.width - firstLink.width) <= 1 &&
+      toggle.top >= sidebar.getBoundingClientRect().top && Math.abs(firstLink.top - toggle.bottom - 8) <= 1 && toggle.right < search.left &&
       (matchMedia('(prefers-reduced-motion: reduce)').matches || motion.transitionProperty.includes('width') && parseFloat(motion.transitionDuration) > 0);
   }), 'Compact course navigation did not leave a numbered rail or expand reading space');
+  await page.addInitScript(() => {
+    const observer = new MutationObserver(() => {
+      if (!document.querySelector('.sidebar')) return;
+      window.__courseNavCompactAtParse = document.body.classList.contains('is-compact-nav');
+      observer.disconnect();
+    });
+    observer.observe(document, { childList: true, subtree: true });
+  });
   await page.locator('.sidebar a.nav-link[href$="/agents/"]').click();
   await page.waitForURL(`${base}${course}/agents/`);
+  assert(await page.evaluate(() => window.__courseNavCompactAtParse === true), 'Compact course navigation expanded before the next lesson rendered');
   assert(await page.locator('body').evaluate(body => body.classList.contains('is-compact-nav')), 'Compact course navigation did not persist between lessons');
   await page.locator('.menu-toggle').click();
   assert(await page.locator('.menu-toggle').getAttribute('aria-expanded') === 'true', 'Course navigation did not expand again');
@@ -236,6 +263,7 @@ async (page) => {
       const toggle = box('.menu-toggle'), search = box('.search-toggle');
       return groups.right < toggle.left && toggle.right < search.left &&
         Math.abs(search.left - toggle.right - 12) <= 1 &&
+        document.querySelector('.menu-toggle').parentElement === document.querySelector('.site-header') &&
         !document.querySelector('.sidebar-compact-toggle');
     }), `Course toggle misses its header position at ${width}px`);
   }
@@ -282,36 +310,116 @@ async (page) => {
   await page.reload();
   assert(await page.locator('[data-mark-complete]').getAttribute('aria-pressed') === 'true', 'Progress did not persist');
   checks.push('lesson completion follows article, clears pager/footer and survives reload');
-  await page.goto(`${base}${course}/practice/`);
-  await page.evaluate(key => { localStorage.removeItem(key); localStorage.removeItem(`${key}:last-practice`); }, quizKey);
+  assert(await page.locator('a[href$="/1Z0-1157-26/practice/"]').count() > 0, 'Agentic course is missing its practice entry');
+  assert((await page.request.get(`${base}${course}/practice/`)).status() === 200, 'Agentic practice route is missing');
+  await page.goto(`${base}${practiceCourse}/practice/`);
+  await page.evaluate(({ quizKey, progressKey }) => {
+    localStorage.removeItem(quizKey);
+    localStorage.removeItem(`${quizKey}:last-practice`);
+    localStorage.setItem(progressKey, JSON.stringify(['overview']));
+  }, { quizKey: practiceQuizKey, progressKey: practiceProgressKey });
   await page.reload();
+  assert(await page.locator('.nav-direct[aria-current="page"][href$="/practice/"]').count() === 1, 'Practice entry is not direct and active');
+  const intro = await page.locator('.quiz-intro').evaluate(node => {
+    const heading = node.querySelector('.quiz-heading'), title = heading.querySelector('h2'), eyebrow = heading.querySelector('.eyebrow');
+    const action = node.querySelector('.quiz-start-action');
+    return { heading: !!document.querySelector('main .page-heading'), gap: title.getBoundingClientRect().top - eyebrow.getBoundingClientRect().bottom,
+      titleSize: getComputedStyle(title).fontSize, label: eyebrow.textContent, labelColor: getComputedStyle(eyebrow).color,
+      start: node.querySelector('[data-start]').textContent,
+      divider: getComputedStyle(action).borderTopStyle === 'solid' && parseFloat(getComputedStyle(action).borderTopWidth) === 1,
+      actionGap: node.querySelector('[data-start]').getBoundingClientRect().top - action.getBoundingClientRect().top };
+  });
+  assert(!intro.heading && intro.gap >= 0 && intro.gap <= 8 && intro.titleSize === '24px' && intro.label === 'PRÁCTICA' && intro.labelColor === 'rgb(199, 70, 52)' && intro.start === 'Comenzar' && intro.divider && intro.actionGap >= 16, `Practice intro does not match its compact heading and separated action: ${JSON.stringify(intro)}`);
   assert(await page.locator('[data-practice-intro]:not([hidden])').count() === 0, 'Practice landing must not have surrounding text');
-  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await page.getByRole('button', { name: 'Comenzar', exact: true }).click();
   assert(await page.locator('[data-practice-intro]:not([hidden])').count() === 0, 'Instructions repeat during questions');
+  for (const width of [1280, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.waitForFunction(() => document.documentElement.scrollWidth <= innerWidth + 1);
+    assert(await page.waitForFunction(() => {
+      const options = [...document.querySelectorAll('.quiz-option')];
+      const reset = document.querySelector('.quiz-reset');
+      const finish = document.querySelector('[data-finish]');
+      const previous = document.querySelector('[data-previous]');
+      const next = document.querySelector('#question-form button[type="submit"]');
+      const actions = document.querySelector('.quiz-next-action');
+      const progress = document.querySelector('.quiz-meter');
+      const question = document.querySelector('.quiz-question');
+      const shell = document.querySelector('.quiz-shell');
+      const bounds = shell.getBoundingClientRect();
+      const style = getComputedStyle(shell);
+      return options.length === 4 && options.every((option, index) => index === 0 || option.getBoundingClientRect().top >= options[index - 1].getBoundingClientRect().bottom)
+        && document.documentElement.scrollWidth <= innerWidth + 1
+        && !document.querySelector('.quiz-meta .tag')
+        && reset?.getAttribute('aria-label') === 'Reiniciar' && reset.title === 'Reiniciar' && Boolean(reset.querySelector('svg'))
+        && reset.getBoundingClientRect().width >= 44
+        && finish?.getAttribute('aria-label') === 'Finalizar la práctica' && Boolean(finish.querySelector('svg'))
+        && finish.getBoundingClientRect().width >= 44 && finish.getBoundingClientRect().height >= 44
+        && finish.getBoundingClientRect().left >= reset.getBoundingClientRect().right
+        && previous?.disabled && previous.textContent === 'Anterior' && previous.type === 'button'
+        && next.disabled
+        && getComputedStyle(actions).borderTopStyle === 'solid' && parseFloat(getComputedStyle(actions).borderTopWidth) === 1
+        && Math.abs(previous.getBoundingClientRect().left - bounds.left - parseFloat(style.paddingLeft)) < 2
+        && Math.abs(next.getBoundingClientRect().right - bounds.right + parseFloat(style.paddingRight)) < 2
+        && Math.abs(previous.getBoundingClientRect().top - next.getBoundingClientRect().top) < 2
+        && progress?.tagName === 'PROGRESS' && progress.value === 0
+        && getComputedStyle(question, '::before').content.includes('1.')
+        && !document.querySelector('.timer');
+    }).then(handle => handle.jsonValue()), `Practice question layout, progress or reset control failed at ${width}px`);
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
   const bankUrl = await page.evaluate(() => `${document.body.dataset.base}assets/${document.body.dataset.questionBank}.json`);
   const bank = await page.evaluate(async url => (await fetch(url)).json(), bankUrl);
   const answerCurrent = async (wrong) => {
     const text = await page.locator('.quiz-question').textContent();
     const question = bank.find(item => item.question === text);
     assert(Boolean(question), 'Question not found in published bank');
+    assert(await page.locator('#question-form button[type="submit"]').isDisabled(), 'Siguiente is enabled before an answer is selected');
     const selected = wrong ? question.options.find(item => item.id !== question.correctOption).id : question.correctOption;
     await page.locator(`input[name=answer][value=${selected}]`).check();
-    await page.getByRole('button', { name: 'Comprobar respuesta', exact: true }).click();
-    assert(await page.locator('.feedback li').count() === 4, 'Expected explanations for all four alternatives');
+    assert(await page.locator('#question-form button[type="submit"]').isEnabled(), 'Selecting an answer did not enable Siguiente');
+    assert(await page.locator('#question-form button[type="submit"]').evaluate(button => {
+      const box = button.getBoundingClientRect();
+      const shell = document.querySelector('.quiz-shell');
+      return button.textContent === 'Siguiente' && Math.abs(box.right - (shell.getBoundingClientRect().right - parseFloat(getComputedStyle(shell).paddingRight))) < 2;
+    }), 'Unanswered question action is not Siguiente on the right');
+    await page.locator('#question-form button[type="submit"]').click();
+    assert(await page.locator('.quiz-question').textContent() === text, 'The first Siguiente advanced without showing the current explanation');
+    assert(await page.locator('.feedback h2').textContent() === 'Explicación', 'Practice feedback needs the concise explanation heading');
+    assert(await page.locator('.feedback p').textContent() === question.options.find(item => item.id === question.correctOption).explanation, 'Practice feedback differs from the correct answer explanation');
+    assert(await page.locator('.feedback a, .feedback ol, .option-status, .quiz-notice').count() === 0, 'Practice feedback retained its link, option list, visible status or footer notice');
+    assert(await page.locator('[data-next]').evaluate(button => {
+      const feedback = document.querySelector('.feedback').getBoundingClientRect();
+      const next = button.getBoundingClientRect();
+      const shell = document.querySelector('.quiz-shell').getBoundingClientRect();
+      return button.textContent === 'Siguiente' && !button.closest('.feedback') && next.top >= feedback.bottom && Math.abs(next.right - (shell.right - parseFloat(getComputedStyle(document.querySelector('.quiz-shell')).paddingRight))) < 2;
+    }), 'Next action is not aligned at the right outside the explanation');
     assert(await page.locator('input[name=answer]:disabled').count() === 4, 'Confirmed answers must be locked');
     assert(await page.locator('#feedback-title').evaluate(element => document.activeElement === element), 'Feedback did not receive keyboard focus');
     return question;
   };
   await answerCurrent(false);
-  const savedProgress = await page.evaluate(key => localStorage.getItem(key), progressKey);
+  assert(await page.evaluate(() => {
+    const correct = document.querySelector('.quiz-option.is-correct');
+    const progress = document.querySelector('.quiz-meter');
+    return correct && getComputedStyle(correct).borderColor === getComputedStyle(correct.querySelector('.option-letter')).backgroundColor
+      && progress.value === 1 && document.querySelectorAll('.quiz-option input:disabled').length === 4;
+  }), 'Confirmed practice answer lost its correct styling or progress');
+  const savedProgress = await page.evaluate(key => localStorage.getItem(key), practiceProgressKey);
   await page.locator('[data-reset]').click();
   const resetDialog = page.locator('[data-reset-confirm]');
   assert(await resetDialog.evaluate(node => node.matches(':modal')), 'Reset did not open a native confirmation modal');
+  assert(await page.locator('#reset-confirm-title').textContent() === '¿Reiniciar la práctica?', 'Reset confirmation has the wrong question');
   assert(await page.locator('#reset-confirm-title').evaluate(node => node === document.activeElement), 'Reset confirmation did not focus its heading');
-  assert(await resetDialog.locator('use').getAttribute('href') === '/certitips/assets/icons/confirmation-question.svg#question', 'Reset confirmation lost the shared question icon');
+  assert(await resetDialog.locator('.confirmation-body svg').count() === 0, 'Reset confirmation still shows an icon');
   await page.keyboard.press('Tab');
   assert(await page.locator('[data-reset-no]').evaluate(node => node === document.activeElement && node.matches(':focus-visible') && getComputedStyle(node).outlineStyle !== 'none'), 'Reset confirmation lost visible keyboard focus');
   await page.locator('[data-reset-no]').click();
+  const resetClosing = await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => {
+    const dialog = document.querySelector('[data-reset-confirm]');
+    resolve(!CSS.supports('transition-behavior', 'allow-discrete') || Boolean(dialog && !dialog.open && dialog.getAnimations().some(animation => animation.playState === 'running')));
+  })));
+  assert(resetClosing, 'Reset confirmation is removed before its close transition finishes');
   await resetDialog.waitFor({ state: 'detached' });
   assert(await page.locator('.feedback').count() === 1, 'Cancelled reset discarded the response');
   await page.locator('[data-reset]').click();
@@ -320,11 +428,152 @@ async (page) => {
   assert(await page.locator('.feedback').count() === 1, 'Escape discarded the response');
   await page.locator('[data-reset]').click();
   await page.locator('[data-reset-yes]').click();
+  const acceptedClosing = await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => {
+    const dialog = document.querySelector('[data-reset-confirm]');
+    resolve(!CSS.supports('transition-behavior', 'allow-discrete') || Boolean(dialog && !dialog.open && dialog.getAnimations().some(animation => animation.playState === 'running')));
+  })));
+  assert(acceptedClosing, 'Accepted reset removes its confirmation before the close transition finishes');
   await resetDialog.waitFor({ state: 'detached' });
   assert(await page.locator('[data-start]').isVisible(), 'Reset did not return to start');
   assert(await page.locator('[data-practice-intro]:not([hidden])').count() === 0, 'Reset must not restore surrounding text');
-  assert(await page.evaluate(key => localStorage.getItem(key), quizKey) === null, 'Reset did not clear saved test');
-  assert(await page.evaluate(key => localStorage.getItem(key), progressKey) === savedProgress, 'Reset erased course progress');
+  assert(await page.evaluate(key => localStorage.getItem(key), practiceQuizKey) === null, 'Reset did not clear saved test');
+  assert(await page.evaluate(key => localStorage.getItem(key), practiceProgressKey) === savedProgress, 'Reset erased course progress');
+  await page.locator('[data-start]').click();
+  const partialCorrect = await answerCurrent(false);
+  await page.locator('[data-next]').click();
+  const partialWrong = await answerCurrent(true);
+  await page.locator('[data-next]').click();
+  const unansweredText = await page.locator('.quiz-question').textContent();
+  const partialAnswers = await page.evaluate(key => JSON.parse(localStorage.getItem(key)).answers, practiceQuizKey);
+  await page.locator('[data-previous]').click();
+  await page.reload();
+  await page.locator('.feedback').waitFor();
+  assert(await page.locator('.quiz-question').textContent() === partialWrong.question, 'Previous did not restore the second confirmed question after reload');
+  assert(await page.locator('input[name=answer]:disabled').count() === 4 && await page.locator('.quiz-option.is-wrong input:checked').count() === 1, 'Previous lost a confirmed incorrect answer or unlocked it');
+  assert(await page.locator('.quiz-meter').evaluate(node => node.value) === 2, 'Previous decreased confirmed-answer progress');
+  assert(JSON.stringify(await page.evaluate(key => JSON.parse(localStorage.getItem(key)).answers, practiceQuizKey)) === JSON.stringify(partialAnswers), 'Previous changed stored answers');
+  await page.locator('[data-previous]').click();
+  assert(await page.locator('.quiz-question').textContent() === partialCorrect.question && await page.locator('[data-previous]').isDisabled(), 'Previous did not stop at the first confirmed question');
+  await page.locator('[data-next]').click();
+  await page.locator('[data-next]').click();
+  assert(await page.locator('.quiz-question').textContent() === unansweredText && await page.locator('input[name=answer]:enabled').count() === 4 && await page.locator('.feedback').count() === 0, 'Forward navigation did not return to the unanswered question');
+  const beforeFinish = await page.evaluate(key => localStorage.getItem(key), practiceQuizKey);
+  await page.locator('[data-finish]').click();
+  const finishDialog = page.locator('[data-finish-confirm]');
+  assert(await finishDialog.evaluate(node => node.matches(':modal')), 'Finish did not open a native confirmation modal');
+  assert(await page.locator('#finish-confirm-title').textContent() === '¿Finalizar la práctica?' && await page.locator('#finish-confirm-title').evaluate(node => node === document.activeElement), 'Finish confirmation has the wrong title or focus');
+  assert(await finishDialog.locator('.confirmation-body svg').count() === 0, 'Finish confirmation contains a decorative icon');
+  await page.locator('[data-finish-no]').click();
+  const finishClosing = await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => {
+    const dialog = document.querySelector('[data-finish-confirm]');
+    resolve(!CSS.supports('transition-behavior', 'allow-discrete') || Boolean(dialog && !dialog.open && dialog.getAnimations().some(animation => animation.playState === 'running')));
+  })));
+  assert(finishClosing, 'Finish cancellation removes the dialog before its close transition finishes');
+  await finishDialog.waitFor({ state: 'detached' });
+  assert(await page.locator('[data-finish]').evaluate(node => node === document.activeElement), 'Finish cancellation did not restore focus');
+  await page.locator('[data-finish]').click();
+  await page.keyboard.press('Escape');
+  await finishDialog.waitFor({ state: 'detached' });
+  assert(await page.locator('[data-finish]').evaluate(node => node === document.activeElement), 'Escape did not restore focus to Finish');
+  assert(await page.evaluate(key => localStorage.getItem(key), practiceQuizKey) === beforeFinish, 'Cancelling Finish changed the active attempt');
+  await page.locator('[data-finish]').click();
+  await page.locator('[data-finish-yes]').click();
+  await finishDialog.waitFor({ state: 'detached' });
+  assert((await page.locator('.score-number').textContent()).replace(/\s/g, '') === '1/2', 'Partial result included unanswered questions in its score');
+  assert(await page.locator('.quiz-results tbody tr').count() === 12 && await page.locator('.quiz-result-status.is-correct').count() === 1 && await page.locator('.quiz-result-status.is-wrong').count() === 1 && await page.locator('.quiz-result-status.is-pending').count() === 10, 'Partial results table has incorrect question statuses');
+  const finishedAttempt = await page.evaluate(key => localStorage.getItem(key), practiceQuizKey);
+  assert(JSON.parse(finishedAttempt).finished === true, 'Confirmed finish was not persisted');
+  assert(await page.locator('.quiz-results caption, [data-review], [data-restart], .quiz-summary > .quiz-actions, .quiz-summary a, .quiz-summary .subtle').count() === 0, 'Summary retained removed captions, review/restart actions, links or guidance');
+  assert((await page.locator('.quiz-results th').allTextContents()).join('/') === 'ESTADO/PREGUNTA', 'Summary table headers are not uppercase');
+  assert(await page.locator('.quiz-results').getAttribute('aria-label'), 'Summary table has no accessible name');
+  for (const width of [1280, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    assert(await page.waitForFunction(() => {
+      const shell = document.querySelector('.quiz-summary'), header = shell.querySelector('.quiz-summary-header');
+      const heading = header.querySelector('.quiz-heading'), title = heading.querySelector('h2'), eyebrow = heading.querySelector('.eyebrow');
+      const controls = header.querySelector('.quiz-meta-actions'), reset = controls.querySelector('[data-reset]'), exit = controls.querySelector('[data-exit]');
+      const gap = title.getBoundingClientRect().top - eyebrow.getBoundingClientRect().bottom;
+      const right = shell.getBoundingClientRect().right - parseFloat(getComputedStyle(shell).paddingRight);
+      const ink = getComputedStyle(shell).color;
+      const lastDomain = shell.querySelector('.domain-results li:last-child');
+      const inset = parseFloat(getComputedStyle(shell).paddingLeft);
+      return document.documentElement.scrollWidth <= innerWidth + 1 && eyebrow.textContent === 'PRÁCTICA' && gap >= 0 && gap <= 8
+        && getComputedStyle(title).fontSize === '24px' && getComputedStyle(eyebrow).color === 'rgb(199, 70, 52)'
+        && reset.title === 'Reiniciar' && reset.getAttribute('aria-label') === 'Reiniciar'
+        && exit.title === 'Salir' && exit.getAttribute('aria-label') === 'Salir'
+        && !shell.querySelector('.quiz-score p')
+        && Math.abs(shell.getBoundingClientRect().bottom - lastDomain.getBoundingClientRect().bottom - inset) < 2
+        && Math.abs(controls.getBoundingClientRect().right - right) < 2
+        && Math.abs(controls.getBoundingClientRect().top - header.getBoundingClientRect().top) < 2
+        && exit.getBoundingClientRect().left >= reset.getBoundingClientRect().right
+        && [...document.querySelectorAll('.quiz-results [data-question-index]')].every(button => {
+          const style = getComputedStyle(button);
+          return button.title === button.textContent && style.fontWeight === '400' && style.color === ink
+            && style.whiteSpace === 'nowrap' && style.textOverflow === 'ellipsis' && style.overflowX === 'hidden';
+        })
+        && [...document.querySelectorAll('.domain-results strong')].every(score => getComputedStyle(score).color === ink);
+    }).then(handle => handle.jsonValue()), `Summary heading, top controls, neutral colors or single-line question links failed at ${width}px`);
+    if (width <= 390) assert(await page.locator('.quiz-results [data-question-index]').evaluateAll(buttons => buttons.some(button => button.scrollWidth > button.clientWidth)), 'Narrow result questions must truncate inside their cells');
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.locator('[data-question-index="0"]').click();
+  assert(await page.locator('.quiz-question').textContent() === partialCorrect.question && await page.locator('.quiz-option.is-correct input:checked').count() === 1 && await page.locator('[data-previous]').isDisabled(), 'Correct result did not reopen the matching locked question');
+  await page.locator('.quiz-meta [data-exit]').click();
+  const detailExit = page.locator('[data-exit-confirm]');
+  assert(await detailExit.evaluate(node => node.matches(':modal')) && await detailExit.locator('#exit-confirm-title').textContent() === '¿Salir de la práctica?' && (await detailExit.locator('.confirmation-actions button').allTextContents()).join('/') === 'Cancelar/Aceptar', 'Result detail X skipped the exit confirmation');
+  await detailExit.locator('[data-exit-no]').click();
+  await detailExit.waitFor({ state: 'detached' });
+  assert(await page.locator('.quiz-meta [data-exit]').evaluate(node => node === document.activeElement), 'Cancelling result-detail exit lost focus');
+  assert(await page.locator('.quiz-next-controls [data-results]').evaluate(button => {
+    const summary = button.getBoundingClientRect(), next = button.nextElementSibling.getBoundingClientRect();
+    return button.textContent === 'Resumen' && next.left - summary.right === 12 && Math.abs(next.top - summary.top) < 2;
+  }), 'Resumen must sit directly to the left of Siguiente');
+  assert(await page.locator('.feedback p').textContent() === partialCorrect.options.find(option => option.id === partialCorrect.correctOption).explanation, 'Correct result detail lost its explanation');
+  await page.locator('[data-next]').click();
+  assert(await page.locator('.quiz-question').textContent() === partialWrong.question && await page.locator('.quiz-option.is-wrong input:checked').count() === 1, 'Result navigation lost the incorrect chosen answer');
+  assert(await page.locator('input[name=answer]:disabled').count() === 4 && await page.locator('.feedback p').textContent() === partialWrong.options.find(option => option.id === partialWrong.correctOption).explanation, 'Incorrect result detail is editable or lost its explanation');
+  await page.locator('[data-previous]').click();
+  assert(await page.locator('.quiz-review-status').count() === 0 && await page.locator('.quiz-next-controls [data-results]').textContent() === 'Resumen', 'Result detail retained its redundant status or lacks the summary action');
+  await page.locator('.quiz-next-controls [data-results]').click();
+  await page.locator('[data-question-index="11"]').click();
+  assert(await page.locator('[data-next]').isDisabled() && await page.locator('input[name=answer]:disabled').count() === 4 && await page.locator('input[name=answer]:checked').count() === 0 && await page.locator('.quiz-option.is-correct').count() === 1, 'Pending final result is editable, lacks the correct answer or permits navigation past the end');
+  assert(await page.locator('.quiz-review-status').count() === 0 && await page.locator('.quiz-next-controls [data-results]').textContent() === 'Resumen', 'Pending detail retained redundant status or lost the summary action');
+  await page.locator('[data-previous]').click();
+  assert((await page.locator('.quiz-meta').textContent()).includes('11 de 12'), 'Result navigation did not move back from the final question');
+  await page.locator('.quiz-next-controls [data-results]').click();
+  assert(await page.evaluate(key => localStorage.getItem(key), practiceQuizKey) === finishedAttempt, 'Read-only result navigation modified saved answers or attempt position');
+  await page.reload();
+  await page.locator('.quiz-results').waitFor();
+  assert((await page.locator('.score-number').textContent()).replace(/\s/g, '') === '1/2', 'Reload did not restore the finalized partial result');
+  await page.locator('[data-exit]').click();
+  const exitDialog = page.locator('[data-exit-confirm]');
+  assert(await exitDialog.evaluate(node => node.matches(':modal')), 'Results exit did not open a native confirmation');
+  assert(await page.locator('#exit-confirm-title').textContent() === '¿Salir de la práctica?' && await page.locator('#exit-confirm-title').evaluate(node => node === document.activeElement), 'Results exit confirmation has the wrong heading or focus');
+  await page.locator('[data-exit-no]').click();
+  await exitDialog.waitFor({ state: 'detached' });
+  assert(await page.locator('[data-exit]').evaluate(node => node === document.activeElement), 'Cancelling results exit did not restore focus');
+  assert(await page.evaluate(key => localStorage.getItem(key), practiceQuizKey) === finishedAttempt, 'Cancelling results exit changed the saved result');
+  await page.locator('[data-exit]').click();
+  await page.keyboard.press('Escape');
+  await exitDialog.waitFor({ state: 'detached' });
+  assert(await page.locator('[data-exit]').evaluate(node => node === document.activeElement) && await page.locator('.quiz-results').isVisible(), 'Escape discarded results or failed to restore focus');
+  await page.locator('[data-exit]').click();
+  await page.locator('[data-exit-yes]').click();
+  await exitDialog.waitFor({ state: 'detached' });
+  assert(await page.locator('[data-start]').isVisible() && await page.evaluate(key => localStorage.getItem(key), practiceQuizKey) === null, 'Confirmed results exit did not clear the attempt and return to the intro');
+  assert(await page.evaluate(key => localStorage.getItem(key), practiceProgressKey) === savedProgress, 'Results exit erased reading progress');
+  await page.reload();
+  await page.locator('[data-start]').click();
+  await page.locator('[data-finish]').click();
+  await page.locator('[data-finish-yes]').click();
+  await finishDialog.waitFor({ state: 'detached' });
+  assert(await page.locator('.score-number, [data-review]').count() === 0 && await page.locator('.quiz-result-status.is-pending').count() === 12 && !/NaN|Infinity|0\s*\/\s*0/.test(await page.locator('#quiz').textContent()), 'Finishing with zero answers produced an invalid score or an errors review');
+  await page.locator('[data-reset]').click();
+  assert(await page.locator('[data-reset-confirm]').evaluate(node => node.matches(':modal')), 'Resetting an empty completed attempt needs confirmation');
+  await page.locator('[data-reset-yes]').click();
+  await page.locator('[data-reset-confirm]').waitFor({ state: 'detached' });
+  assert(await page.locator('[data-start]').isVisible(), 'Finalized empty attempt did not return to the start after reset');
+  checks.push('responsive practice heading, disabled Next, compact results table, immutable question browsing and confirmed results exit');
   await page.reload();
   await page.locator('[data-start]').click();
   for (let index = 0; index < 12; index++) {
@@ -347,13 +596,20 @@ async (page) => {
   }
   assert((await page.locator('.score-number').textContent()).replace(/\s/g, '') === '8/12', 'Expected practice result 8/12');
   assert(await page.locator('.domain-results li').count() === 6, 'Expected six domain results');
-  await page.getByRole('button', { name: 'Repasar mis errores', exact: true }).click();
-  for (let index = 0; index < 4; index++) { await answerCurrent(false); await page.locator('[data-next]').click(); }
-  assert((await page.locator('.score-number').textContent()).replace(/\s/g, '') === '4/4', 'Expected review result 4/4');
-  assert((await page.locator('#quiz').textContent()).includes('se mantiene en 8/12'), 'Review overwrote the original practice score');
-  checks.push('complete 12-question attempt, explanations, lock, reload, 8/12 score, separate 4/4 review');
+  await page.locator('[data-question-index="0"]').click();
+  assert(await page.locator('.quiz-option.is-wrong input:checked').count() === 1 && await page.locator('.quiz-option.is-correct').count() === 1, 'Completed result did not expose the selected mistake and correct answer');
+  await page.locator('.quiz-next-controls [data-results]').click();
+  assert((await page.locator('.score-number').textContent()).replace(/\s/g, '') === '8/12', 'Read-only review changed the completed score');
+  checks.push('complete 12-question Agentic attempt, explanations, lock, reload, 8/12 score and read-only answer review');
   await page.locator('[data-reset]').click();
-  assert(await page.locator('[data-start]').isVisible(), 'Completed review cannot be reset');
+  assert(await page.locator('[data-reset-confirm]').evaluate(node => node.matches(':modal')), 'Completed practice reset needs confirmation');
+  await page.locator('[data-reset-no]').click();
+  await page.locator('[data-reset-confirm]').waitFor({ state: 'detached' });
+  assert(await page.locator('.quiz-results').isVisible(), 'Cancelled completed reset discarded results');
+  await page.locator('[data-reset]').click();
+  await page.locator('[data-reset-yes]').click();
+  await page.locator('[data-reset-confirm]').waitFor({ state: 'detached' });
+  assert(await page.locator('[data-start]').isVisible(), 'Completed practice cannot be reset');
   await page.locator('[data-start]').click();
   assert((await page.locator('.quiz-meta').textContent()).includes('1 de 12'), 'New attempt did not reset question counter');
   checks.push('reset confirmation/cancellation, cleared saved test, retained course progress, intro-only instructions');
@@ -385,6 +641,20 @@ async (page) => {
       : placement.below >= 16 && placement.below <= 24 && placement.footer >= 12 && placement.launcherWidth === 48,
     `Incorrect home CertiChat placement at ${width}px`);
   }
+  await page.setViewportSize({ width: 1308, height: 900 });
+  await page.evaluate(() => {
+    document.documentElement.style.scrollbarGutter = 'stable';
+    scrollTo(0, document.documentElement.scrollHeight);
+    dispatchEvent(new Event('resize'));
+  });
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  assert(await page.evaluate(() => {
+    const card = document.querySelector('.path-section.is-active').getBoundingClientRect();
+    const launcher = document.querySelector('.certichat-launcher').getBoundingClientRect();
+    return innerWidth - document.documentElement.getBoundingClientRect().width >= 10 &&
+      Math.abs(card.right - launcher.right) <= 1;
+  }), 'Home CertiChat misses the card edge when a scrollbar reserves width');
+  await page.evaluate(() => { document.documentElement.style.scrollbarGutter = ''; });
   await page.setViewportSize({ width: 1280, height: 900 });
   const desktopHero = await page.evaluate(() => ({ copy: document.querySelector('.hero-copy').getBoundingClientRect().toJSON(), flow: document.querySelector('.hero-flow').getBoundingClientRect().toJSON() }));
   assert(desktopHero.copy.right < desktopHero.flow.left && desktopHero.flow.width > 350, 'Hero is not split into two readable columns');
@@ -490,6 +760,28 @@ async (page) => {
   await page.evaluate(() => localStorage.removeItem('certitips:theme'));
   await page.locator('[data-search-open]').click();
   assert(await page.locator('#site-search').evaluate(dialog => dialog.open), 'Search did not open');
+  assert(await page.evaluate(() => {
+    const backdrop = selector => getComputedStyle(document.querySelector(selector), '::backdrop');
+    const reference = backdrop('.certichat .confirmation');
+    return ['#site-search', '#diagram-viewer'].every(selector => {
+      const style = backdrop(selector);
+      return style.backgroundColor === reference.backgroundColor && style.backdropFilter === reference.backdropFilter && style.backdropFilter === 'blur(3px)';
+    });
+  }), 'Search and diagram backdrops must match the confirmation glass');
+  assert(await page.evaluate(() => {
+    const dialog = document.querySelector('.search-dialog');
+    const box = selector => dialog.querySelector(selector).getBoundingClientRect();
+    const row = box('.search-results li:not([hidden]) a'), icon = box('.search-result-icon');
+    const category = box('.search-result-copy small'), title = box('.search-result-copy strong');
+    const transition = getComputedStyle(dialog).transitionProperty;
+    const backdropTransition = getComputedStyle(dialog, '::backdrop').transitionProperty;
+    return row.height <= 70 && row.bottom - icon.bottom <= 16 &&
+      Math.abs((category.top + title.bottom - icon.top - icon.bottom) / 2) <= 1 &&
+      title.top - category.bottom <= 3 &&
+      (matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? getComputedStyle(dialog).transitionDuration === '0s' && getComputedStyle(dialog, '::backdrop').transitionDuration === '0s'
+        : transition.includes('opacity') && transition.includes('display') && backdropTransition.includes('opacity') && backdropTransition.includes('overlay'));
+  }), 'Search results need compact centered rows and a reduced-motion-safe dialog transition');
   assert(await page.locator('[data-search-kind="certification"]:visible').count() === 12, 'Search did not list all courses by default');
   assert(await page.locator('[data-search-kind="topic"]:visible').count() === 0, 'Topics should appear only when searching');
   assert(await page.locator('.search-results').evaluate(list => list.scrollHeight > list.clientHeight), 'Default certification list should scroll inside the dialog');
@@ -532,20 +824,20 @@ async (page) => {
   await page.waitForURL(`${base}${course}/overview/`);
   for (const removed of ['TU PRÓXIMA CERTIFICACIÓN EMPIEZA AQUÍ', 'EN ESPAÑOL', 'ACCESO LIBRE', 'SIN REGISTRO', '¿Vas a dar una charla?', '90 minutos']) assert(!homeText.includes(removed), `Removed text remains: ${removed}`);
   assert(await page.locator('.hero-visual, .approach-grid, .hero-proof, .course-metrics').count() === 0, 'Removed home panel remains');
-  checks.push('11 Oracle routes, four active and eight pending guides, five-group carousel, search, dropdowns, dark-mode persistence');
+  checks.push('10 Agentic routes, four active and eight pending guides, five-group carousel, search, dropdowns, dark-mode persistence');
 
   const context = await page.context().browser().newContext();
   await context.addInitScript(() => Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('Blocked for test', 'SecurityError'); } }));
   const blocked = await context.newPage();
-  await blocked.goto(`${base}${course}/practice/`);
-  await blocked.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await blocked.goto(`${base}${practiceCourse}/practice/`);
+  await blocked.getByRole('button', { name: 'Comenzar', exact: true }).click();
   await blocked.locator('input[name=answer]').first().check();
-  await blocked.getByRole('button', { name: 'Comprobar respuesta', exact: true }).click();
-  assert(await blocked.locator('.feedback li').count() === 4, 'Quiz failed with blocked storage');
+  await blocked.locator('#question-form button[type="submit"]').click();
+  assert(await blocked.locator('.feedback p').count() === 1, 'Quiz failed with blocked storage');
   assert((await blocked.locator('.quiz-notice').textContent()).includes('almacenamiento está bloqueado'), 'Blocked-storage notice missing');
   await context.close();
   checks.push('blocked storage still permits answering with clear session-only notice');
-  await page.evaluate(({ quizKey, progressKey }) => { localStorage.removeItem(quizKey); localStorage.removeItem(`${quizKey}:last-practice`); localStorage.removeItem(progressKey); }, { quizKey, progressKey });
+  await page.evaluate(keys => keys.forEach(key => localStorage.removeItem(key)), [quizKey, `${quizKey}:last-practice`, progressKey, practiceQuizKey, `${practiceQuizKey}:last-practice`, practiceProgressKey]);
   page.off('pageerror', pageError);
   assert(errors.length === 0, `Browser errors: ${errors.join('; ')}`);
   await page.goto(base);

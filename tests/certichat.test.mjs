@@ -145,8 +145,10 @@ test("published corpus covers catalog pages and questions with live canonical an
   const entries = new Map(corpus.documents.map(item => [item.id, item]));
   for (const course of catalog.courses) {
     for (const page of [...course.modules, ...course.resources]) assert.ok(entries.has(`${course.id}/${page.slug}`));
+    const hasPractice = course.resources.some(page => page.slug === 'practice');
     for (const question of JSON.parse(read(`data/${course.questionBank}.json`))) {
       const entry = entries.get(`${course.id}/questions/${question.id}`);
+      if (!hasPractice) { assert.equal(entry, undefined); continue; }
       assert.ok(entry);
       assert.ok(entry.text.includes(question.options.find(option => option.id === question.correctOption).explanation));
     }

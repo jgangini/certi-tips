@@ -147,7 +147,8 @@ function validateOptions(file, question, error) {
     for (const option of options) {
       if (!present(option?.id) || optionIds.has(option.id)) error(file, 'alternative ids must be nonempty and unique');
       optionIds.add(option?.id);
-      if (!present(option?.text) || !present(option?.explanation)) error(file, 'every alternative needs text and an explanation');
+      if (!present(option?.text) || typeof option?.explanation !== 'string') error(file, 'every alternative needs text and an explanation string');
+      if (option?.id === question.correctOption && !present(option.explanation)) error(file, 'the correct alternative needs a nonempty explanation');
     }
     if (!present(question.correctOption) || !optionIds.has(question.correctOption)) error(file, 'correctOption does not identify an alternative');
   }
@@ -173,12 +174,18 @@ function validateQuestions(context, questions) {
   try {
     if (JSON.stringify(JSON.parse(files.get(published))) !== JSON.stringify(questions)) error(published, 'published question bank differs from source; rebuild the site');
   } catch { error(published, 'published question bank is missing or invalid JSON'); }
-  if (questions.length !== domains.length * 6) error(source, `expected ${domains.length * 6} questions, received ${questions.length}`);
+  const counts = course.questionCounts === undefined ? Object.fromEntries(domains.map(domain => [domain, 6])) : course.questionCounts;
+  if (!counts || typeof counts !== 'object' || Array.isArray(counts) || Object.keys(counts).length !== domains.length || domains.some(domain => !Number.isSafeInteger(counts[domain]) || counts[domain] < 2)) {
+    error('data/catalog.json', `${course.id}: questionCounts must declare at least two questions for every domain`);
+    return;
+  }
+  const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+  if (questions.length !== total) error(source, `expected ${total} questions, received ${questions.length}`);
   const seen = new Set();
   for (const [index, question] of questions.entries()) validateQuestion(context, question, index, seen);
   for (const domain of domains) {
     const count = questions.filter(question => question?.domain === domain).length;
-    if (count !== 6) error(source, `${domain}: expected 6 questions, received ${count}`);
+    if (count !== counts[domain]) error(source, `${domain}: expected ${counts[domain]} questions, received ${count}`);
   }
 }
 

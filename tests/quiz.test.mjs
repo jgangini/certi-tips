@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
-import { advance, confirmAnswer, domains, newAttempt, restoreAttempt, results, reviewAttempt, shuffle } from '../assets/quiz-core.js';
+import { advance, confirmAnswer, domains, finishAttempt, newAttempt, previous, restoreAttempt, results, reviewAttempt, shuffle } from '../assets/quiz-core.js';
 import { getStorage, readStored, writeStored } from '../assets/storage.js';
 
 const bank = JSON.parse(readFileSync(new URL('../data/1Z0-1157-26/questions.json', import.meta.url), 'utf8'));
@@ -43,33 +43,43 @@ function finish(initial, isCorrect = () => true) {
   return current;
 }
 
-test('practice preserves storage identity and offers the appropriate course follow-up after completion', async () => {
+test('practice keeps storage identity and presents the concise intro and result controls for every course', async () => {
   const script = readFileSync(new URL('../assets/quiz.js', import.meta.url), 'utf8').replace(/^import .*;\r?\n/gm, '').replace(/^load\(\);$/m, 'globalThis.loaded = load();');
   for (const hasExam of [true, false]) {
-    for (const saved of [null, finish(attempt()), finish(attempt(), () => false)]) {
+    for (const saved of [null, finish(attempt()), finish(attempt(), () => false), finishAttempt(attempt())]) {
       const courseRoute = hasExam ? 'EXAM-1' : 'data-governance';
       const storageKeys = [];
       const root = { innerHTML: '', addEventListener() {}, querySelector: () => ({ addEventListener() {}, focus() {} }) };
       const context = vm.createContext({
         document: { body: { dataset: { course: 'saved-course-id', courseRoute, courseHasExam: String(hasExam), base: '/certitips/', questionBank: 'questions', quizDomains: JSON.stringify(Object.fromEntries(domains.map(domain => [domain, domain]))) } }, querySelector: () => root, querySelectorAll: () => [] },
         fetch: async () => ({ ok: true, json: async () => bank }),
-        newAttempt, confirmAnswer, advance, results, reviewAttempt, restoreAttempt,
+        newAttempt, confirmAnswer, advance, previous, finishAttempt, results, reviewAttempt, restoreAttempt,
         readStored: key => { storageKeys.push(key); return saved; }, writeStored: () => true,
       });
       vm.runInContext(script, context);
       await context.loaded;
       assert.deepEqual(storageKeys, ['certitips:quiz:v1:saved-course-id']);
       if (saved) {
-        assert.ok(root.innerHTML.includes(`href="/certitips/${courseRoute}/${hasExam ? 'exam-checklist' : 'case-study'}/"`));
-        assert.ok(root.innerHTML.includes(hasExam ? 'Ruta al examen oficial' : 'Caso integrador'));
-        if (results(saved, bank).wrong.length) assert.ok(root.innerHTML.includes(`href="/certitips/${courseRoute}/${domains[0]}/#conceptos-clave"`));
+        assert.match(root.innerHTML, /class="quiz-shell quiz-summary"/);
+        assert.match(root.innerHTML, /class="quiz-summary-header"/);
+        assert.match(root.innerHTML, /data-reset/);
+        assert.match(root.innerHTML, /data-exit/);
+        assert.match(root.innerHTML, /aria-label="Reiniciar" title="Reiniciar"/);
+        assert.match(root.innerHTML, /aria-label="Salir" title="Salir"/);
+        assert.match(root.innerHTML, /<table class="quiz-results" aria-label="[^"]+">/);
+        assert.match(root.innerHTML, /<th scope="col">ESTADO<\/th><th scope="col">PREGUNTA<\/th>/);
+        assert.equal((root.innerHTML.match(/data-question-index=/g) || []).length, saved.ids.length);
+        const escapedQuestion = `1. ${questionFor(saved.ids[0]).question}`.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+        assert.ok(root.innerHTML.includes(`title="${escapedQuestion}"`), 'question tooltip must preserve the full numbered question');
+        assert.doesNotMatch(root.innerHTML, /<caption>|data-review|data-restart|Ruta al examen oficial|Caso integrador|Vuelve a estos conceptos|Cada intento es una fotografía|Usa estos resultados|% de aciertos/);
       } else {
-        assert.match(root.innerHTML, /data-start>Entrar/);
+        assert.match(root.innerHTML, /data-start>Comenzar/);
         assert.match(root.innerHTML, /class="quiz-facts"/);
+        assert.match(root.innerHTML, /class="quiz-start-action"/);
         assert.doesNotMatch(root.innerHTML, /Dos preguntas de cada área|No necesitas una cuenta|Las preguntas son originales|quiz-notice/);
       }
-      if (!hasExam) assert.doesNotMatch(root.innerHTML, /examen|práctica oficial|exam-checklist/);
-      else if (saved) assert.match(root.innerHTML, /examen oficial/);
+      assert.match(root.innerHTML, /class="quiz-heading"><div class="eyebrow">PRÁCTICA<\/div>/);
+      assert.doesNotMatch(root.innerHTML, /examen|práctica oficial|exam-checklist|PRACTICA PARA ENTENDER|PRÁCTICA COMPLETADA/);
     }
   }
 });
@@ -138,6 +148,88 @@ test('navigation waits for an answer and stops after the final question', () => 
   assert.equal(Object.keys(completed.answers).length, 12);
   assert.strictEqual(advance(completed), completed);
   assert.strictEqual(confirmAnswer(completed, bank, 'a'), completed);
+  assert.strictEqual(previous(completed), completed);
+  assert.strictEqual(finishAttempt(completed), completed);
+});
+
+test('backward navigation preserves confirmed answers and restores the cursor in practice and review', () => {
+  for (const initial of [attempt(), reviewAttempt(finish(attempt(), (_, index) => index % 2 === 0), bank)]) {
+    assert.strictEqual(previous(initial), initial);
+    let current = initial;
+    for (let index = 0; index < 2; index++) {
+      const question = questionFor(current.ids[current.index]);
+      current = advance(confirmAnswer(current, bank, index ? wrongOption(question) : question.correctOption));
+    }
+    const saved = structuredClone(current);
+    const back = previous(previous(current));
+    assert.equal(back.index, 0);
+    assert.deepEqual(back.answers, saved.answers);
+    assert.deepEqual(back.ids, saved.ids);
+    assert.deepEqual(back.original, saved.original);
+    assert.deepEqual(results(back, bank), results(saved, bank));
+    const restored = restoreAttempt(JSON.parse(JSON.stringify(back)), bank);
+    assert.deepEqual(restored, back);
+    assert.strictEqual(confirmAnswer(restored, bank, wrongOption(questionFor(restored.ids[0]))), restored);
+    const resumed = advance(advance(restored));
+    assert.deepEqual(resumed, saved);
+    assert.strictEqual(advance(resumed), resumed, 'the next unanswered question still requires confirmation');
+    assert.deepEqual(current, saved, 'backward navigation must not mutate its starting state');
+  }
+});
+
+test('early finish preserves the cursor and scores only confirmed answers, including zero answers', () => {
+  let current = attempt();
+  const empty = finishAttempt(current);
+  assert.deepEqual(results(empty, bank), { correct: 0, total: 0, wrong: [], domains: {} });
+  assert.equal(empty.index, 0);
+  assert.deepEqual(empty.ids, current.ids);
+  assert.equal(current.finished, undefined);
+  assert.deepEqual(restoreAttempt(JSON.parse(JSON.stringify(empty)), bank), empty);
+  for (let index = 0; index < 2; index++) {
+    const question = questionFor(current.ids[current.index]);
+    current = advance(confirmAnswer(current, bank, index ? wrongOption(question) : question.correctOption));
+  }
+  for (const value of [current, previous(previous(current))]) {
+    const ended = finishAttempt(value);
+    assert.equal(ended.finished, true);
+    assert.equal(ended.index, value.index);
+    assert.deepEqual(ended.ids, value.ids);
+    assert.deepEqual(ended.answers, value.answers);
+    assert.deepEqual(restoreAttempt(JSON.parse(JSON.stringify(ended)), bank), ended);
+    const report = results(ended, bank);
+    assert.equal(report.correct, 1);
+    assert.equal(report.total, 2);
+    assert.deepEqual(report.wrong, [value.ids[1]]);
+    assert.equal(Object.values(report.domains).reduce((total, domain) => total + domain.total, 0), 2);
+    assert.strictEqual(finishAttempt(ended), ended);
+    assert.strictEqual(previous(ended), ended);
+    assert.strictEqual(advance(ended), ended);
+    assert.strictEqual(confirmAnswer(ended, bank, questionFor(ended.ids[ended.index]).correctOption), ended);
+  }
+});
+
+test('reviews of early finished attempts include actual mistakes and preserve the original partial result', () => {
+  let current = attempt();
+  for (let index = 0; index < 3; index++) {
+    const question = questionFor(current.ids[current.index]);
+    current = advance(confirmAnswer(current, bank, index === 1 ? question.correctOption : wrongOption(question)));
+  }
+  const original = finishAttempt(previous(current));
+  const snapshot = structuredClone(original);
+  const review = reviewAttempt(original, bank);
+  assert.deepEqual(review.ids, [original.ids[0], original.ids[2]]);
+  assert.deepEqual(review.original, snapshot);
+  assert.deepEqual(restoreAttempt(JSON.parse(JSON.stringify(review)), bank), review);
+  const first = questionFor(review.ids[0]);
+  const endedReview = finishAttempt(advance(confirmAnswer(review, bank, wrongOption(first))));
+  const repeated = reviewAttempt(endedReview, bank);
+  assert.deepEqual(repeated.ids, [first.id], 'an unanswered review question is not a mistake');
+  assert.deepEqual(repeated.original, snapshot);
+  assert.equal(Object.hasOwn(repeated.original, 'original'), false);
+  assert.deepEqual(restoreAttempt(JSON.parse(JSON.stringify(repeated)), bank), repeated);
+  assert.deepEqual(results(repeated.original, bank), results(snapshot, bank));
+  assert.equal(results(repeated.original, bank).total, 3);
+  assert.deepEqual(original, snapshot);
 });
 
 test('scoring tracks correct, incorrect and per-domain totals', () => {
@@ -286,7 +378,7 @@ test('invalid, stale and malformed saved state is discarded', () => {
   assert.equal(restoreAttempt(unbalanced, bank), null, 'practice cannot restore a changed domain balance');
 });
 
-test('restoration rejects skipped questions, future answers and false completion', () => {
+test('restoration rejects skipped questions, noncontiguous answers and false completion', () => {
   const valid = attempt();
   const first = valid.ids[0];
   const second = valid.ids[1];
@@ -298,6 +390,22 @@ test('restoration rejects skipped questions, future answers and false completion
   const completed = finish(valid);
   delete completed.answers[first];
   assert.equal(restoreAttempt(completed, bank), null);
+});
+
+test('finished state requires a boolean and never bypasses cursor or answer-prefix validation', () => {
+  const valid = attempt();
+  for (const finished of [undefined, null, 0, 1, 'true', [], {}]) {
+    assert.equal(restoreAttempt({ ...valid, finished }, bank), null);
+  }
+  for (const finished of [true, false]) {
+    const value = { ...valid, finished };
+    assert.deepEqual(restoreAttempt(JSON.parse(JSON.stringify(value)), bank), value);
+    assert.equal(restoreAttempt({ ...value, index: value.ids.length }, bank), null);
+    assert.equal(restoreAttempt({ ...value, answers: { [value.ids[1]]: 'a' } }, bank), null);
+    assert.equal(restoreAttempt({ ...value, answers: { [value.ids[0]]: 'a', [value.ids[2]]: 'a' } }, bank), null);
+  }
+  const inherited = Object.assign(Object.create({ finished: true }), valid);
+  assert.deepEqual(restoreAttempt(inherited, bank), valid);
 });
 
 test('prototype-like answer keys cannot enter a restored attempt or satisfy previous answers', () => {

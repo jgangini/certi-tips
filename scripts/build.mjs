@@ -15,6 +15,7 @@ const site = JSON.parse(
 const certiquizApi = new URL(process.env.CERTIQUIZ_API_ORIGIN || "https://certiquiz.cloudtechnext.net");
 if ((certiquizApi.protocol !== "https:" && !(certiquizApi.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(certiquizApi.hostname))) || certiquizApi.username || certiquizApi.password || certiquizApi.pathname !== "/" || certiquizApi.search || certiquizApi.hash)
   throw new Error("CERTIQUIZ_API_ORIGIN must be an HTTPS origin (HTTP only on loopback), without credentials, path, query, or fragment.");
+site.certiquizApi = certiquizApi.origin;
 const chatEnvFile = path.join(root, ".private/certichat.env");
 const certichatMode = process.env.CERTICHAT_MODE || (existsSync(chatEnvFile) ? parseEnv(await readFile(chatEnvFile, "utf8")).CERTICHAT_MODE : undefined) || "VPS";
 if (!["LOCAL", "VPS"].includes(certichatMode)) throw new Error("CERTICHAT_MODE must be LOCAL or VPS.");
@@ -31,6 +32,10 @@ const md = new MarkdownIt({ html: true, linkify: true });
 
 md.renderer.rules.table_open = () => '<div class="table-scroll" role="region" aria-label="Tabla de referencia" tabindex="0"><table>\n';
 md.renderer.rules.table_close = () => "</table></div>\n";
+md.renderer.rules.heading_open = (tokens, index, options, env, renderer) => {
+  env.heading = tokens[index + 1].children.filter(token => ["text", "code_inline"].includes(token.type)).map(token => token.content).join("");
+  return renderer.renderToken(tokens, index, options);
+};
 
 md.renderer.rules.image = (tokens, index, _options, env) => {
   const token = tokens[index];
@@ -40,10 +45,11 @@ md.renderer.rules.image = (tokens, index, _options, env) => {
   const src = escapeHtml(imageUrl);
   const alt = escapeHtml(token.content);
   const caption = escapeHtml(token.attrGet("title") || token.content);
-  env.gallery.push({ src: imageUrl, alt: token.content, caption: token.attrGet("title") || token.content, module: env.pageTitle });
+  const heading = env.heading || token.content;
+  env.gallery.push({ src: imageUrl, alt: token.content, caption: token.attrGet("title") || token.content, module: env.pageTitle, heading });
   const size = imageSizes.get(imageUrl);
   if (!size?.every(value => Number.isFinite(value) && value > 0)) throw new Error(`Missing image dimensions: ${src}`);
-  return `<button class="diagram" id="diagram-${reference.slice(4)}" type="button" data-diagram="${src}" aria-label="Ampliar: ${alt}"><img src="${src}" alt="${alt}" width="${size[0]}" height="${size[1]}" loading="lazy"><span>${caption} <span aria-hidden="true">↗</span></span></button>`;
+  return `<button class="diagram" id="diagram-${reference.slice(4)}" type="button" data-diagram="${src}" data-diagram-heading="${escapeHtml(heading)}" aria-label="Ampliar: ${alt}"><img src="${src}" alt="${alt}" width="${size[0]}" height="${size[1]}" loading="lazy"><span>${caption} <span aria-hidden="true">↗</span></span></button>`;
 };
 
 function renderMarkdown(source, publicPath, pageTitle) {
@@ -138,12 +144,14 @@ for (const course of site.courses) {
       }),
     );
   }
-  const questions = JSON.parse(await readFile(path.join(root, "data", `${course.questionBank}.json`), "utf8"));
-  for (const question of questions) knowledge.push({
-    id: `${course.id}/questions/${question.id}`, title: `${course.title} · Práctica: ${question.id}`,
-    url: `${site.origin}${site.base}${publicPath}/practice/`, courseId: course.id,
-    text: `${course.title}\n${question.question}\n${question.options.map(option => `${option.id === question.correctOption ? "Respuesta correcta" : "Opción incorrecta"}: ${option.text}\nExplicación: ${option.explanation}`).join("\n")}`,
-  });
+  if (course.resources.some(page => page.slug === "practice")) {
+    const questions = JSON.parse(await readFile(path.join(root, "data", `${course.questionBank}.json`), "utf8"));
+    for (const question of questions) knowledge.push({
+      id: `${course.id}/questions/${question.id}`, title: `${course.title} · Práctica: ${question.id}`,
+      url: `${site.origin}${site.base}${publicPath}/practice/`, courseId: course.id,
+      text: `${course.title}\n${question.question}\n${question.options.map(option => `${option.id === question.correctOption ? "Respuesta correcta" : "Opción incorrecta"}: ${option.text}${option.explanation ? `\nExplicación: ${option.explanation}` : ""}`).join("\n")}`,
+    });
+  }
 }
 knowledge.push({ id: "home", title: "CertiTips · Rutas de aprendizaje", url: `${site.origin}${site.base}`, courseId: "site", text: site.paths.map(group => `${group.title}\n${group.description}\n${group.items.map(item => `${item.title}: ${item.description}${item.guide ? "" : " (guía próximamente)"}`).join("\n")}`).join("\n\n") });
 const { corpus, manifest } = corpusArtifacts(knowledge, `${site.origin}${site.base}assets/certichat/corpus.json`);

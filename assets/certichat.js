@@ -64,9 +64,9 @@ if (root) {
     if (!homePath || !panel.hidden) return;
     if (mobileChat.matches) { launcher.style.removeProperty("right"); launcher.style.removeProperty("top"); return; }
     const card = homePath.querySelector(".path-section.is-active") || homePath;
-    const box = card.getBoundingClientRect(), top = root.getBoundingClientRect().top;
-    const beside = box.right + launcher.offsetWidth + 40 <= innerWidth;
-    launcher.style.right = beside ? "0px" : `${Math.max(0, innerWidth - box.right - 20)}px`;
+    const box = card.getBoundingClientRect(), rootBox = root.getBoundingClientRect(), top = rootBox.top;
+    const beside = box.right + launcher.offsetWidth + 40 <= document.documentElement.getBoundingClientRect().right;
+    launcher.style.right = beside ? "0px" : `${Math.max(0, rootBox.right - box.right)}px`;
     const targetTop = (beside ? box.bottom - launcher.offsetHeight : box.bottom + 20) - top;
     launcher.style.top = `${Math.max(Math.min(0, 88 - top), Math.min(0, targetTop))}px`;
   }
@@ -102,6 +102,21 @@ if (root) {
   const clear = root.querySelector("[data-chat-clear]"), retry = root.querySelector("[data-chat-retry]");
   const confirmation = root.querySelector("[data-chat-confirm]"), confirmClear = confirmation.querySelector("[data-chat-confirm-yes]"), cancelClear = confirmation.querySelector("[data-chat-confirm-no]");
   const storageKey = `certichat:${root.dataset.siteRoot}`;
+  const quizLockKey = "certitips:certiquiz:active-player";
+  const quizApi = root.dataset.quizApi;
+  function readQuizLock() {
+    try {
+      const value = localStorage.getItem(quizLockKey);
+      if (!value) return null;
+      const match = /^(\d{6}):(\d{13})$/.exec(value);
+      const now = Date.now();
+      if (match && Number(match[2]) > now && Number(match[2]) <= now + 8 * 60 * 60 * 1000) return match[1];
+      localStorage.removeItem(quizLockKey);
+    } catch { /* The chat remains usable when browser storage is unavailable. */ }
+    return null;
+  }
+  let quizCode = readQuizLock();
+  if (quizCode) root.hidden = true;
   const saved = restoreChat(readStored(storageKey, null), root.dataset.siteRoot);
   const preview = isChatPreview(location.href, root.dataset.api);
   let chat, opening, verifying = false, verified = false, available = false, busy = false, turnstileId, turnstileLoad;
@@ -375,7 +390,52 @@ if (root) {
     closing = true;
     panelAnimation.finished.then(finish, finish);
   }
+  function syncQuizLock() {
+    quizCode = readQuizLock();
+    if (quizCode) {
+      const hadFocus = root.contains(document.activeElement);
+      if (confirmation.open) confirmation.close();
+      panelAnimation?.cancel(); panelAnimation = undefined; closing = false;
+      panel.hidden = true; launcher.hidden = false; launcher.setAttribute("aria-expanded", "false");
+      root.hidden = true;
+      try { sessionStorage.removeItem(`${storageKey}:open`); sessionStorage.removeItem(`${storageKey}:reference`); } catch { /* Storage is optional. */ }
+      if (hadFocus) document.querySelector("#main")?.focus({ preventScroll: true });
+    } else if (root.hidden) {
+      root.hidden = false;
+      if (dock) launcher.click();
+      positionHomeLauncher();
+    }
+  }
+  let checkingQuiz = false;
+  async function refreshQuizLock() {
+    const code = readQuizLock();
+    if (!code || !quizApi || checkingQuiz) { syncQuizLock(); return; }
+    checkingQuiz = true;
+    try {
+      const options = { credentials: "include", cache: "no-store", signal: AbortSignal.timeout(5000) };
+      const sessionResponse = await fetch(`${quizApi}/api/session`, options);
+      if (!sessionResponse.ok) return;
+      const session = await sessionResponse.json();
+      let finished = session.roomCode !== code;
+      if (!finished) {
+        const roomResponse = await fetch(`${quizApi}/api/rooms/${code}`, options);
+        if ([401, 403, 404, 410].includes(roomResponse.status)) finished = true;
+        else if (roomResponse.ok) {
+          const room = await roomResponse.json();
+          finished = room.status === "finished" || room.role !== "player";
+        }
+      }
+      if (finished && readQuizLock() === code) { localStorage.removeItem(quizLockKey); syncQuizLock(); }
+    } catch { /* Keep the lock while the room status cannot be verified. */ }
+    finally { checkingQuiz = false; }
+  }
+  syncQuizLock();
+  if (quizCode) refreshQuizLock();
+  setInterval(() => { if (quizCode) refreshQuizLock(); }, 15000);
+  addEventListener("storage", event => { if (event.key === quizLockKey) { syncQuizLock(); if (quizCode) refreshQuizLock(); } });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && quizCode) refreshQuizLock(); });
   launcher.addEventListener("click", async event => {
+    if (readQuizLock()) { syncQuizLock(); return; }
     if (!panel.hidden) return closePanel(event.isTrusted);
     const button = launcher.getBoundingClientRect();
     panel.hidden = false; launcher.hidden = true; launcher.setAttribute("aria-expanded", "true");
@@ -390,12 +450,14 @@ if (root) {
     wasOpen = sessionStorage.getItem(`${storageKey}:open`) === "true" || sessionStorage.getItem(`${storageKey}:reference`) === location.href;
     sessionStorage.removeItem(`${storageKey}:reference`);
   } catch { /* Browsers may disable session storage. */ }
-  if (dock || location.hash === "#certichat" || wasOpen) launcher.click();
+  if (!quizCode && (dock || location.hash === "#certichat" || wasOpen)) launcher.click();
   window.addEventListener("pageshow", event => {
+    syncQuizLock();
+    if (quizCode) refreshQuizLock();
     if (!event.persisted || dock) return;
     try {
       const open = sessionStorage.getItem(`${storageKey}:open`) === "true";
-      if (open && panel.hidden) launcher.click();
+      if (open && panel.hidden && !quizCode) launcher.click();
       if (!open && !panel.hidden) closePanel(false);
     } catch { /* Keep the restored panel state if storage is unavailable. */ }
   });
@@ -424,7 +486,7 @@ if (root) {
     const bounds = confirmation.getBoundingClientRect();
     if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) confirmation.close();
   });
-  confirmation.addEventListener("close", () => clear.focus());
+  confirmation.addEventListener("close", () => (quizCode ? document.querySelector("#main") : clear)?.focus({ preventScroll: true }));
   confirmClear.addEventListener("click", async () => {
     busy = true; clear.disabled = true; confirmClear.disabled = true; cancelClear.disabled = true;
     confirmation.setAttribute("aria-busy", "true");

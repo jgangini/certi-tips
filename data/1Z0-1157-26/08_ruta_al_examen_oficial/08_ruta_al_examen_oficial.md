@@ -24,10 +24,10 @@ Mantén separadas dos cosas: tus marcas de avance en CertiTips se guardan en est
 
 - Explica sin apuntes el ciclo de un agente y la separación entre modelo y ejecución.
 - Repite los ejercicios de los seis módulos y justifica las decisiones.
-- Usa la [práctica de CertiTips]({{base}}1Z0-1157-26/practice/) para encontrar conceptos que debes repasar.
+- Completa la [práctica de CertiTips]({{base}}1Z0-1157-26/practice/) y revisa la explicación de cada respuesta.
 - Completa la [práctica oficial de Oracle](https://mylearn.oracle.com/ou/course/practice-exam-oci-agentic-ai-associate-certification/163247) y revisa el material de preparación del examen.
 
-La meta local de **10/12** sirve para orientar el estudio; no predice el resultado oficial. Cada intento breve solo incluye dos preguntas de cada tema.
+Usa los ejercicios de los módulos para detectar conceptos que debas repasar; el resultado de la práctica oficial se rige por las condiciones que muestre Oracle.
 
 ## Paso 3 · Revisa temas y condiciones
 

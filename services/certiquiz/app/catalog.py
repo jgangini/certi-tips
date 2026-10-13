@@ -76,7 +76,10 @@ def parse_catalog(document, read_bank):
         if not NAME.fullmatch(identity) or identity in courses or not BANK.fullmatch(bank):
             raise ValueError("El catálogo contiene un identificador o banco no válido.")
         if bank not in banks:
-            banks[bank] = validate_questions(read_bank(f"{bank}.json"))
+            try:
+                banks[bank] = validate_questions(read_bank(f"{bank}.json"))
+            except (OSError, ValueError, RecursionError) as error:
+                raise ValueError(f"{bank}.json (curso {identity}): {error}") from error
         courses[identity] = {"id": identity, "title": text(item.get("title"), 240), "questions": banks[bank]}
     if not courses:
         raise ValueError("No hay cursos con preguntas disponibles.")
@@ -84,12 +87,20 @@ def parse_catalog(document, read_bank):
 
 
 def load_catalog(data_dir: Path):
+    budget = REFRESH_BYTES
+
     def read_file(name):
-        with (data_dir / name).open("rb") as source:
-            raw = source.read(BANK_BYTES + 1)
-        if len(raw) > BANK_BYTES:
-            raise ValueError("El archivo de preguntas excede el límite.")
-        return json.loads(raw)
+        nonlocal budget
+        limit = min(CATALOG_BYTES if name == "catalog.json" else BANK_BYTES, budget)
+        try:
+            with (data_dir / name).open("rb") as source:
+                raw = source.read(limit + 1)
+            if len(raw) > limit:
+                raise ValueError("Excede el límite del archivo o del catálogo completo.")
+            budget -= len(raw)
+            return json.loads(raw)
+        except (OSError, ValueError, RecursionError) as error:
+            raise ValueError(f"{name}: {error}") from error
     return parse_catalog(read_file("catalog.json"), read_file)
 
 

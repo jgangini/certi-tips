@@ -1,57 +1,67 @@
-import { newAttempt, confirmAnswer, advance, results, reviewAttempt, restoreAttempt } from './quiz-core.js';
+import { newAttempt, confirmAnswer, advance, previous, finishAttempt, results, restoreAttempt } from './quiz-core.js';
 import { readStored, writeStored } from './storage.js';
 
 const root = document.querySelector('#quiz');
 const course = document.body.dataset.course;
-const courseRoute = document.body.dataset.courseRoute || course;
-const hasExam = document.body.dataset.courseHasExam !== 'false';
 const base = document.body.dataset.base;
 const domainLabels = JSON.parse(document.body.dataset.quizDomains);
 const domains = Object.keys(domainLabels);
 const questionCount = domains.length * 2;
-const target = Math.ceil(questionCount * 0.8);
 const key = `certitips:quiz:v1:${course}`;
-const resetButton = '<button class="button button-secondary" type="button" data-reset>Reiniciar test</button>';
+const resetButton = '<button class="quiz-reset" type="button" data-reset aria-label="Reiniciar" title="Reiniciar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21C16.9706 21 21 16.9706 21 12C21 9.69494 20.1334 7.59227 18.7083 6L16 3M12 3C7.02944 3 3 7.02944 3 12C3 14.3051 3.86656 16.4077 5.29168 18L8 21M21 3H16M16 3V8M3 21H8M8 21V16"/></svg></button>';
+const closeIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg>';
 const escape = text => String(text).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 let bank;
 let attempt;
+let resultIndex = null;
 let persisted = true;
 
 function save() { persisted = writeStored(key, attempt); }
-function reference(question) { return `${base}${courseRoute}/${question.reference.module}/#${question.reference.anchor}`; }
-function notice() { return `<p class="quiz-notice">${attempt?.mode === 'review' ? 'Repaso de errores: este resultado no modifica tu intento de práctica anterior.' : `Práctica educativa · Meta orientativa: ${target}/${questionCount}${hasExam ? ' · No equivale al examen oficial.' : ' · Aplica lo aprendido en el caso integrador.'}`}${persisted ? '' : '<br>El almacenamiento está bloqueado. Puedes continuar, pero el avance se perderá al cerrar o recargar.'}</p>`; }
+function notice() { return persisted ? '' : '<p class="quiz-notice" role="status">El almacenamiento está bloqueado. Puedes continuar, pero el avance se perderá al cerrar o recargar.</p>'; }
 
 function intro(moveFocus = false) {
-  root.innerHTML = `<div class="quiz-shell quiz-intro"><div class="eyebrow">PRACTICA PARA ENTENDER</div><h2>Un paso más cerca de tenerlo claro.</h2><p>Selecciona una alternativa y pulsa <strong>Comprobar</strong>. Verás el resultado, el porqué y qué repasar antes de continuar.</p><div class="quiz-facts"><div><strong>${questionCount}</strong><span>preguntas por intento</span></div><div><strong>${String(domains.length).padStart(2, "0")}</strong><span>áreas de estudio</span></div><div><strong>∞</strong><span>sin límite de tiempo</span></div></div><button class="button" data-start>Entrar</button></div>`;
+  root.innerHTML = `<div class="quiz-shell quiz-intro"><div class="quiz-heading"><div class="eyebrow">PRÁCTICA</div><h2>Un paso más cerca de tenerlo claro.</h2></div><p>Selecciona una alternativa y pulsa <strong>Siguiente</strong> para ver la explicación. Pulsa otra vez para continuar.</p><div class="quiz-facts"><div><strong>${questionCount}</strong><span>preguntas por intento</span></div><div><strong>${String(domains.length).padStart(2, "0")}</strong><span>áreas de estudio</span></div><div><strong>∞</strong><span>sin límite de tiempo</span></div></div><div class="quiz-start-action"><button class="button" data-start>Comenzar</button></div></div>`;
   root.querySelector('[data-start]').addEventListener('click', start);
   if (!persisted) root.insertAdjacentHTML('beforeend', '<p class="quiz-notice" role="status">El test se reinició en esta sesión, pero no se pudo borrar el avance guardado. Al recargar podría reaparecer el intento anterior.</p>');
   if (moveFocus) root.querySelector('[data-start]').focus();
 }
 
-function reset(confirmed = false) {
-  if (confirmed !== true && attempt.index < attempt.ids.length) {
-    if (root.querySelector('[data-reset-confirm]')) return;
-    const dialog = document.createElement('dialog');
-    dialog.className = 'confirmation'; dialog.dataset.resetConfirm = '';
-    dialog.setAttribute('aria-labelledby', 'reset-confirm-title'); dialog.setAttribute('aria-describedby', 'reset-confirm-message');
-    dialog.innerHTML = `<div class="confirmation-body"><span class="confirmation-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="currentColor" focusable="false"><use href="${base}assets/icons/confirmation-question.svg#question"/></svg></span><h2 id="reset-confirm-title" tabindex="-1" autofocus>¿Reiniciar el test?</h2><p id="reset-confirm-message">Se borrarán las respuestas de este intento. Tu progreso de estudio no cambiará.</p></div><div class="confirmation-actions"><button class="button button-secondary" type="button" data-reset-no>Cancelar</button><button class="button" type="button" data-reset-yes>Aceptar</button></div>`;
-    root.append(dialog);
-    dialog.querySelector('[data-reset-no]').addEventListener('click', () => dialog.close());
-    dialog.querySelector('[data-reset-yes]').addEventListener('click', () => dialog.close('reset'));
-    dialog.addEventListener('click', event => {
-      if (event.target !== dialog) return;
-      const bounds = dialog.getBoundingClientRect();
-      if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
-    });
-    dialog.addEventListener('close', () => {
+function confirmAction(action) {
+  if (root.querySelector('dialog.confirmation')) return;
+  const [title, message] = {
+    finish: ['¿Finalizar la práctica?', 'Verás los resultados de las respuestas confirmadas. Las preguntas sin responder no contarán como errores.'],
+    reset: ['¿Reiniciar la práctica?', 'Se borrarán las respuestas de este intento para que puedas comenzar de nuevo.'],
+    exit: ['¿Salir de la práctica?', 'Se cerrarán los resultados de este intento y volverás al inicio de la práctica.'],
+  }[action];
+  const dialog = document.createElement('dialog');
+  dialog.className = 'confirmation'; dialog.setAttribute(`data-${action}-confirm`, '');
+  dialog.setAttribute('aria-labelledby', `${action}-confirm-title`); dialog.setAttribute('aria-describedby', `${action}-confirm-message`);
+  dialog.innerHTML = `<div class="confirmation-body"><h2 id="${action}-confirm-title" tabindex="-1" autofocus>${title}</h2><p id="${action}-confirm-message">${message}</p></div><div class="confirmation-actions"><button class="button button-secondary" type="button" data-${action}-no>Cancelar</button><button class="button" type="button" data-${action}-yes>Aceptar</button></div>`;
+  root.append(dialog);
+  dialog.querySelector(`[data-${action}-no]`).addEventListener('click', () => dialog.close());
+  dialog.querySelector(`[data-${action}-yes]`).addEventListener('click', () => dialog.close(action));
+  dialog.addEventListener('click', event => {
+    if (event.target !== dialog) return;
+    const bounds = dialog.getBoundingClientRect();
+    if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
+  });
+  dialog.addEventListener('close', () => {
+    const accepted = dialog.returnValue === action;
+    Promise.allSettled(dialog.getAnimations().map(animation => animation.finished)).then(() => {
       dialog.remove();
-      if (dialog.returnValue === 'reset') reset(true);
-      else root.querySelector('[data-reset]')?.focus();
+      if (!accepted) return;
+      if (action === 'finish') { attempt = finishAttempt(attempt); save(); render(true); }
+      else reset(true);
     });
-    dialog.showModal();
-    return;
-  }
+    if (!accepted) root.querySelector(`[data-${action}]`)?.focus();
+  });
+  dialog.showModal();
+}
+
+function reset(confirmed = false) {
+  if (confirmed !== true) return confirmAction('reset');
   attempt = null;
+  resultIndex = null;
   try {
     globalThis.localStorage.removeItem(key);
     persisted = true;
@@ -63,46 +73,79 @@ function reset(confirmed = false) {
 
 function start() {
   attempt = newAttempt(bank, Math.random, domains);
+  resultIndex = null;
   save();
   render(true);
 }
 
-function questionView(question, selected) {
-  const locked = Boolean(selected);
-  return `<div class="quiz-meta"><span class="tag">${escape(domainLabels[question.domain])}</span><span>${attempt.mode === 'review' ? 'Repaso' : 'Pregunta'} ${attempt.index + 1} de ${attempt.ids.length}</span>${resetButton}</div><div class="quiz-meter" aria-hidden="true"><span style="width:${100 * attempt.index / attempt.ids.length}%"></span></div><form id="question-form"><fieldset class="quiz-options"><legend class="quiz-question" tabindex="-1">${escape(question.question)}</legend>${question.options.map(option => `<label class="quiz-option ${locked && option.id === question.correctOption ? 'is-correct' : ''} ${locked && option.id === selected && selected !== question.correctOption ? 'is-wrong' : ''}"><input type="radio" name="answer" value="${option.id}" required ${selected === option.id ? 'checked' : ''} ${locked ? 'disabled' : ''}><span><span class="option-letter">${option.id.toUpperCase()}.</span>${escape(option.text)}${locked && option.id === question.correctOption ? '<span class="option-status">✓ Respuesta correcta</span>' : ''}${locked && option.id === selected && selected !== question.correctOption ? '<span class="option-status">Tu respuesta</span>' : ''}</span></label>`).join('')}</fieldset>${!locked ? '<div class="quiz-actions"><button class="button" type="submit">Comprobar respuesta</button></div>' : ''}</form>${locked ? feedback(question, selected) : ''}${notice()}`;
+function questionView(question, selected, index, reviewing) {
+  const locked = reviewing || Boolean(selected);
+  const closeLabel = reviewing ? 'Salir' : 'Finalizar la práctica';
+  const actions = `<div class="quiz-actions quiz-next-action"><button class="button button-secondary" type="button" data-previous ${index === 0 ? 'disabled' : ''}>Anterior</button><span class="quiz-next-controls">${reviewing ? '<button class="button button-secondary" type="button" data-results>Resumen</button>' : ''}<button class="button" type="${locked ? 'button' : 'submit'}" ${locked ? 'data-next' : ''} ${!locked || reviewing && index === attempt.ids.length - 1 ? 'disabled' : ''}>Siguiente</button></span></div>`;
+  return `<div class="quiz-meta"><span>${attempt.mode === 'review' ? 'Repaso' : 'Pregunta'} ${index + 1} de ${attempt.ids.length}</span><span class="quiz-meta-actions">${resetButton}<button class="quiz-close" type="button" data-${reviewing ? 'exit' : 'finish'} aria-label="${closeLabel}" title="${closeLabel}">${closeIcon}</button></span></div><progress class="quiz-meter" value="${Object.keys(attempt.answers).length}" max="${attempt.ids.length}" aria-label="Progreso ${attempt.mode === 'review' ? 'del repaso' : 'de la práctica'}"></progress><form id="question-form"><fieldset class="quiz-options"><legend class="quiz-question" tabindex="-1" data-question-number="${index + 1}. ">${escape(question.question)}</legend>${question.options.map(option => `<label class="quiz-option ${locked && option.id === question.correctOption ? 'is-correct' : ''} ${locked && option.id === selected && selected !== question.correctOption ? 'is-wrong' : ''}"><input type="radio" name="answer" value="${option.id}" required ${selected === option.id ? 'checked' : ''} ${locked ? 'disabled' : ''}><span class="option-letter">${option.id.toUpperCase()}</span><span>${escape(option.text)}${locked && option.id === question.correctOption ? '<span class="visually-hidden">Respuesta correcta</span>' : ''}${locked && option.id === selected && selected !== question.correctOption ? '<span class="visually-hidden">Tu respuesta</span>' : ''}</span></label>`).join('')}</fieldset>${!locked ? actions : ''}</form>${locked ? `${feedback(question)}${actions}` : ''}${notice()}`;
 }
 
-function feedback(question, selected) {
-  const correct = selected === question.correctOption;
+function feedback(question) {
   const option = question.options.find(item => item.id === question.correctOption);
-  return `<section class="feedback" aria-labelledby="feedback-title"><h2 id="feedback-title" tabindex="-1" class="${correct ? 'feedback-correct' : 'feedback-wrong'}">${correct ? '✓ Correcto. Estas son las razones.' : 'Vamos a aclararlo.'}</h2><p>${correct ? 'La respuesta es' : 'La respuesta correcta es'} <strong>${option.id.toUpperCase()}. ${escape(option.text)}</strong></p><ol type="A">${question.options.map(item => `<li><strong>${item.id === question.correctOption ? 'Correcta' : 'Por qué no'}:</strong> ${escape(item.explanation)}</li>`).join('')}</ol><a class="review-link" href="${reference(question)}">${escape(question.reference.label)} →</a><div class="quiz-actions"><button class="button" data-next>${attempt.index === attempt.ids.length - 1 ? 'Ver mis resultados' : 'Siguiente pregunta'} →</button></div></section>`;
+  return `<section class="feedback" aria-labelledby="feedback-title"><h2 id="feedback-title" tabindex="-1">Explicación</h2><p>${escape(option.explanation)}</p></section>`;
+}
+
+function questionResults() {
+  return `<table class="quiz-results" aria-label="Resultados por pregunta"><thead><tr><th scope="col">ESTADO</th><th scope="col">PREGUNTA</th></tr></thead><tbody>${attempt.ids.map((id, index) => {
+    const question = bank.find(item => item.id === id);
+    const answer = attempt.answers[id];
+    const status = !answer ? 'pending' : answer === question.correctOption ? 'correct' : 'wrong';
+    const label = { pending: 'Sin responder', correct: 'Correcta', wrong: 'Incorrecta' }[status];
+    return `<tr><td><span class="quiz-result-status is-${status}">${label}</span></td><td><button type="button" class="text-link" data-question-index="${index}" title="${index + 1}. ${escape(question.question)}">${index + 1}. ${escape(question.question)}</button></td></tr>`;
+  }).join('')}</tbody></table>`;
 }
 
 function summary() {
   const report = results(attempt, bank);
   const previous = attempt.mode === 'review' ? results(attempt.original, bank) : null;
-  const pending = [...new Set(report.wrong.map(id => bank.find(question => question.id === id).domain))];
-  root.innerHTML = `<div class="quiz-shell"><div class="eyebrow">${attempt.mode === 'review' ? 'REPASO COMPLETADO' : 'PRÁCTICA COMPLETADA'}</div><h2 tabindex="-1" id="results-title">${report.correct === report.total ? 'Las piezas están conectadas.' : 'Ya sabes dónde enfocar tu repaso.'}</h2><div class="quiz-score"><div class="score-number">${report.correct}<small> / ${report.total}</small></div><p>${Math.round(100 * report.correct / report.total)}% de aciertos<br><span class="subtle">${attempt.mode === 'practice' && report.correct >= target ? 'Alcanzaste la meta orientativa de esta práctica.' : 'Cada intento es una fotografía de tu aprendizaje.'}</span></p></div>${previous ? `<p class="quiz-notice">Tu práctica anterior se mantiene en ${previous.correct}/${previous.total}.</p>` : ''}<h3>Resultado por área</h3><ul class="domain-results">${Object.entries(report.domains).map(([domain, score]) => `<li><span>${escape(domainLabels[domain])}</span><strong>${score.correct} / ${score.total}</strong></li>`).join('')}</ul><p class="quiz-notice">Dos preguntas por área no bastan para medir dominio completo. Usa estos resultados como orientación.</p>${pending.length ? `<h3>Vuelve a estos conceptos</h3><ul>${pending.map(domain => `<li><a href="${base}${courseRoute}/${domain}/#conceptos-clave">${escape(domainLabels[domain])}</a></li>`).join('')}</ul>` : `<p>${hasExam ? 'Continúa con la práctica oficial de Oracle y comprueba que también puedes explicar las respuestas sin ver las alternativas.' : 'Aplica lo aprendido en el caso integrador y justifica tus decisiones con evidencias.'}</p>`}<div class="quiz-actions">${report.wrong.length ? '<button class="button" data-review>Repasar mis errores</button>' : ''}<button class="button button-secondary" data-restart>Nuevo intento de ${questionCount}</button>${resetButton}<a class="text-link" href="${base}${courseRoute}/${hasExam ? 'exam-checklist' : 'case-study'}/">${hasExam ? 'Ruta al examen oficial' : 'Caso integrador'} →</a></div>${notice()}</div>`;
-  root.querySelector('[data-review]')?.addEventListener('click', () => { attempt = reviewAttempt(attempt, bank, domains); save(); render(true); });
-  root.querySelector('[data-restart]').addEventListener('click', start);
+  const partial = report.total < attempt.ids.length;
+  root.innerHTML = `<div class="quiz-shell quiz-summary"><div class="quiz-summary-header"><div class="quiz-heading"><div class="eyebrow">PRÁCTICA</div><h2 tabindex="-1" id="results-title">Resumen</h2></div><span class="quiz-meta-actions">${resetButton}<button class="quiz-close" type="button" data-exit aria-label="Salir" title="Salir">${closeIcon}</button></span></div>
+  ${report.total ? `<div class="quiz-score"><div class="score-number">${report.correct}<small> / ${report.total}</small></div></div>` : ''}
+  ${partial ? `<p>Respondiste ${report.total} de ${attempt.ids.length} preguntas. El resultado considera solo las respuestas confirmadas.</p>` : ''}
+  ${previous ? `<p class="quiz-notice">Tu práctica anterior se mantiene en ${previous.correct}/${previous.total}.</p>` : ''}
+  ${questionResults()}
+  ${report.total ? `<h3>Resultado por área</h3><ul class="domain-results">${Object.entries(report.domains).map(([domain, score]) => `<li><span>${escape(domainLabels[domain])}</span><strong>${score.correct} / ${score.total}</strong></li>`).join('')}</ul>` : ''}
+  ${notice()}</div>`;
 }
 
 function render(moveFocus = false) {
-  if (attempt.index >= attempt.ids.length) {
+  const completed = attempt.finished || attempt.index >= attempt.ids.length;
+  if (completed && resultIndex === null) {
     summary();
     if (moveFocus) root.querySelector('#results-title').focus();
     return;
   }
-  const question = bank.find(item => item.id === attempt.ids[attempt.index]);
+  const index = resultIndex ?? attempt.index;
+  const question = bank.find(item => item.id === attempt.ids[index]);
   const selected = attempt.answers[question.id];
-  root.innerHTML = `<div class="quiz-shell">${questionView(question, selected)}</div>`;
-  root.querySelector('#question-form').addEventListener('submit', event => {
+  root.innerHTML = `<div class="quiz-shell">${questionView(question, selected, index, completed)}</div>`;
+  const form = root.querySelector('#question-form');
+  form.addEventListener('change', () => {
+    const submit = form.querySelector('button[type="submit"]');
+    if (submit) submit.disabled = !form.querySelector('input[name="answer"]:checked');
+  });
+  form.addEventListener('submit', event => {
     event.preventDefault();
+    if (completed) return;
     const answer = new FormData(event.currentTarget).get('answer');
     attempt = confirmAnswer(attempt, bank, answer);
     save(); render(); root.querySelector('#feedback-title')?.focus();
   });
-  root.querySelector('[data-next]')?.addEventListener('click', () => { attempt = advance(attempt); save(); render(true); });
+  root.querySelector('[data-next]')?.addEventListener('click', () => {
+    if (completed) resultIndex = Math.min(index + 1, attempt.ids.length - 1);
+    else { attempt = advance(attempt); save(); }
+    render(true);
+  });
+  root.querySelector('[data-previous]').addEventListener('click', () => {
+    if (completed) resultIndex = Math.max(index - 1, 0);
+    else { attempt = previous(attempt); save(); }
+    render(true);
+  });
   if (moveFocus) root.querySelector('.quiz-question').focus();
 }
 
@@ -119,4 +162,11 @@ async function load() {
   }
 }
 load();
-root.addEventListener('click', event => { if (event.target.closest('[data-reset]')) reset(); });
+root.addEventListener('click', event => {
+  if (event.target.closest('[data-reset]')) reset();
+  if (event.target.closest('[data-finish]')) confirmAction('finish');
+  if (event.target.closest('[data-exit]')) confirmAction('exit');
+  if (event.target.closest('[data-results]')) { resultIndex = null; render(true); }
+  const question = event.target.closest('[data-question-index]');
+  if (question) { resultIndex = Number(question.dataset.questionIndex); render(true); }
+});

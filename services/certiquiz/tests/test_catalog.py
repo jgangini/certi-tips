@@ -35,6 +35,48 @@ def remote(monkeypatch, documents):
     return calls
 
 
+@pytest.mark.parametrize("limited", ["CATALOG_BYTES", "BANK_BYTES", "REFRESH_BYTES"])
+def test_local_catalog_enforces_file_and_total_byte_limits(tmp_path, monkeypatch, limited):
+    packaged(tmp_path)
+    catalog_bytes = (tmp_path / "catalog.json").stat().st_size
+    bank_bytes = (tmp_path / "questions.json").stat().st_size
+    limits = {"CATALOG_BYTES": catalog_bytes, "BANK_BYTES": bank_bytes,
+              "REFRESH_BYTES": catalog_bytes + bank_bytes}
+    for name, value in limits.items():
+        monkeypatch.setattr(catalog, name, value)
+    assert catalog.load_catalog(tmp_path)["practice"]["questions"][0]["id"] == "q1"
+    monkeypatch.setattr(catalog, limited, limits[limited] - 1)
+    with pytest.raises(ValueError):
+        catalog.load_catalog(tmp_path)
+
+
+def test_refresh_discovers_new_bank_and_rejects_invalid_set_without_changing_room(tmp_path, monkeypatch):
+    now = [100]
+    monkeypatch.setattr(catalog, "monotonic", lambda: now[0])
+    documents = {"catalog.json": copy.deepcopy(DOCUMENT), "questions.json": copy.deepcopy(QUESTIONS)}
+    calls = remote(monkeypatch, documents)
+    cache = catalog.Catalog(packaged(tmp_path), "github")
+    room = game.new_room(cache.get()["practice"], 1, 10)
+    documents["catalog.json"]["courses"].append(
+        {"id": "new-course", "title": "Nuevo curso", "questionBank": "NEW/questions"})
+    documents["NEW/questions.json"] = copy.deepcopy(QUESTIONS)
+    documents["NEW/questions.json"][0]["question"] = "Pregunta del nuevo banco"
+    documents["questions.json"][0]["question"] = "Pregunta actualizada"
+    now[0] += 301
+    courses = cache.get()
+    assert set(courses) == {"practice", "new-course"}
+    assert courses["practice"]["questions"][0]["question"] == "Pregunta actualizada"
+    assert courses["new-course"]["questions"][0]["question"] == "Pregunta del nuevo banco"
+    assert calls[-3:] == ["catalog.json", "questions.json", "NEW/questions.json"]
+    documents["questions.json"][0]["question"] = "Cambio que no debe aplicarse"
+    documents["NEW/questions.json"][0]["correctOption"] = "unknown"
+    now[0] += 301
+    assert cache.get() is courses
+    assert courses["practice"]["questions"][0]["question"] == "Pregunta actualizada"
+    assert courses["new-course"]["questions"][0]["correctOption"] == "a"
+    assert room["questions"][0]["question"] == "Pregunta original"
+
+
 def test_refresh_is_cached_authoritative_and_preserves_existing_room(tmp_path, monkeypatch):
     now = [100]
     monkeypatch.setattr(catalog, "monotonic", lambda: now[0])

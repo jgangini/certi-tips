@@ -5,6 +5,7 @@
 !services/certiquiz/requirements.txt
 !services/certiquiz/requirements-test.txt
 !services/certiquiz/migrate.py
+!services/certiquiz/check-catalog.py
 !services/certiquiz/schema.sql
 !services/certiquiz/app/
 !services/certiquiz/app/**

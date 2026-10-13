@@ -298,16 +298,16 @@ async (page) => {
     await exitRoom.click();
     const confirmation = host.locator('dialog[data-confirm]');
     assert(await confirmation.evaluate(node => node.open && node.matches(':modal')), 'Room exit did not open a native modal');
+    assert((await confirmation.locator('.confirmation-actions button').allTextContents()).join('/') === 'Cancelar/Aceptar', 'Room exit confirmation uses inconsistent action labels');
     assert(await confirmation.locator('#confirmation-title').evaluate(node => node === document.activeElement && getComputedStyle(node).outlineStyle === 'none'), 'Destructive confirmation did not focus its static heading');
-    assert(await confirmation.locator('use').getAttribute('href') === '/certitips/assets/icons/confirmation-question.svg#question', 'Room exit lost the shared question icon');
+    assert(await confirmation.locator('.confirmation-body svg').count() === 0, 'Room exit confirmation still shows an icon');
     await host.keyboard.press('Tab');
     assert(await confirmation.locator('[data-confirm-no]').evaluate(node => node === document.activeElement && node.matches(':focus-visible') && getComputedStyle(node).outlineStyle !== 'none'), 'Keyboard navigation lost the visible Cancel focus');
     const confirmationSize = await confirmation.evaluate(node => ({
       width: node.getBoundingClientRect().width,
-      icon: node.querySelector('.confirmation-icon').getBoundingClientRect().width,
       action: node.querySelector('.confirmation-actions .button').getBoundingClientRect().height
     }));
-    assert(confirmationSize.width <= 400 && confirmationSize.icon <= 76 && confirmationSize.action >= 44, 'Room exit confirmation is too large or loses a usable action target');
+    assert(confirmationSize.width <= 400 && confirmationSize.action >= 44, 'Room exit confirmation is too large or loses a usable action target');
     await confirmation.locator('[data-confirm-no]').click(); await confirmation.waitFor({ state: 'hidden' });
     assert(await exitRoom.evaluate(node => node === document.activeElement), 'Cancelling room exit did not restore focus');
     checks.push('Anonymous room creation, generated PIN/settings, HttpOnly cookies, host refresh and Salir before Comenzar with cancellable native modal');
@@ -483,6 +483,9 @@ async (page) => {
     await host.locator('[data-start]').click();
     await first.locator('[data-send]').waitFor(); await second.locator('[data-send]').waitFor();
     for (const tab of [host, first, second]) assert(await tab.locator('.welcome, .room-header').count() === 0, 'Active question still shows the welcome or room heading');
+    for (const tab of [host, first, second]) assert(await tab.locator('.site-header').evaluate(node => getComputedStyle(node).display === 'none' && document.body.classList.contains('certiquiz-playing')), 'Shared site header remains visible during the game');
+    for (const tab of [host, first, second]) assert(await tab.locator('.game-toolbar .game-close').evaluate(node => node.getAttribute('aria-label') === 'Salir' && node.getBoundingClientRect().width >= 44 && node.getBoundingClientRect().height >= 44 && node.querySelector('svg path')?.getAttribute('d') === 'm6 6 12 12M18 6 6 18'), 'Active question lacks the accessible practice exit button');
+    assert(await first.locator('.game-toolbar-info').evaluate(node => { const brand = node.querySelector('.brand').getBoundingClientRect(); const count = node.querySelector('[data-answer-count]').getBoundingClientRect(); const toolbar = node.closest('.game-toolbar'); const close = toolbar.querySelector('.game-close').getBoundingClientRect(); const meter = toolbar.nextElementSibling.getBoundingClientRect(); return brand.bottom <= count.top && Math.abs(brand.left - count.left) < 1 && close.left > count.right && Math.abs((brand.top + brand.bottom - close.top - close.bottom) / 2) < 1 && Math.abs(meter.top - count.bottom) < 1; }), 'CertiQuiz brand must align with the exit button and the answer count must touch the progress bar');
     let current = await snapshot(first, code);
     assert(!Object.hasOwn(current.question, 'correctOption') && !Object.hasOwn(current.question, 'explanation'), 'The open question exposed its answer');
     const source = bank.find(question => question.id === current.question.id);
@@ -512,11 +515,21 @@ async (page) => {
     await host.locator('[data-next]').waitFor();
     await first.locator('.explanation').waitFor(); await second.locator('.explanation').waitFor();
     for (const tab of [host, first, second]) assert(await tab.locator('.welcome, .room-header').count() === 0, 'Answer reveal restored the welcome or room heading');
+    await first.locator('.game-close').click();
+    const playerConfirmation = first.locator('dialog[data-confirm]');
+    assert(await playerConfirmation.getByRole('heading').textContent() === '¿Salir de la sala?' && (await playerConfirmation.locator('.confirmation-actions button').allTextContents()).join('/') === 'Cancelar/Aceptar', 'Participant exit lacks the expected confirmation');
+    await playerConfirmation.locator('[data-confirm-no]').click();
+    assert(await first.locator('.game-close').evaluate(node => node === document.activeElement) && (await snapshot(first, code)).status === 'reveal', 'Cancelling participant exit changed the room or lost focus');
+    await host.locator('.game-close').click();
+    assert(await confirmation.getByRole('heading').textContent() === '¿Finalizar la partida?' && (await confirmation.locator('.confirmation-actions button').allTextContents()).join('/') === 'Cancelar/Aceptar', 'Host exit lacks the finalization confirmation');
+    await confirmation.locator('[data-confirm-no]').click();
+    assert(await host.locator('.game-close').evaluate(node => node === document.activeElement), 'Cancelling host exit lost focus');
     assert(await host.locator('.ranking-card, [data-answer-note]').count() === 0 && await host.locator('.explanation strong').textContent() === 'Explicación', 'Reveal still shows its ranking/instruction or the old explanation heading');
     assert(await host.locator('[data-finish]').evaluate(node => node.textContent === 'Finalizar' && node.nextElementSibling?.hasAttribute('data-next') && node.nextElementSibling.textContent === 'Siguiente' && node.parentElement.classList.contains('game-actions')), 'Finalizar and Siguiente are not together in the game actions');
     await host.locator('[data-finish]').click();
     await confirmation.waitFor({ state: 'visible' });
     assert(await confirmation.getByRole('heading').textContent() === '¿Finalizar la partida?' && await confirmation.locator('#confirmation-title').evaluate(node => node === document.activeElement), 'Finalizar lacks a focused confirmation heading');
+    assert((await confirmation.locator('.confirmation-actions button').allTextContents()).join('/') === 'Cancelar/Aceptar', 'Finish confirmation uses inconsistent action labels');
     await confirmation.locator('[data-confirm-no]').click();
     assert(await host.locator('[data-finish]').evaluate(node => node === document.activeElement), 'Cancelling Finalizar lost its trigger focus');
     current = await snapshot(first, code);
@@ -531,6 +544,8 @@ async (page) => {
 
     await host.locator('[data-next]').click();
     await first.locator('.ranking-card').waitFor(); await second.locator('.ranking-card').waitFor();
+    for (const tab of [host, first, second]) assert(await tab.locator('.ranking-card .game-close').count() === 1, 'Ranking lacks its exit button');
+    for (const tab of [host, first, second]) assert(await tab.locator('.site-header').evaluate(node => getComputedStyle(node).display === 'none'), 'Shared site header returned before the game finished');
     assert(await host.locator('#question-title').count() === 0 && (await snapshot(first, code)).status === 'ranking' && (await snapshot(first, code)).deadline === null, 'Siguiente skipped the shared ranking or started its timer');
     await host.locator('[data-next]').click();
     await first.locator('[data-send]').waitFor();
@@ -550,6 +565,7 @@ async (page) => {
     await first.locator('[data-exit]').waitFor(); await second.locator('[data-exit]').waitFor();
     const final = await snapshot(first, code);
     assert(final.status === 'finished' && final.leaderboard[0].nickname === playerName && final.leaderboard[0].score === firstPoints && final.leaderboard[1].score === 0, 'Final winner/ranking is incorrect');
+    for (const tab of [host, first, second]) assert(await tab.locator('.site-header').evaluate(node => getComputedStyle(node).display !== 'none' && !document.body.classList.contains('certiquiz-playing')), 'Shared site header did not return after the game finished');
     assert(new URL(first.url()).origin === origin && new URL(first.url()).pathname === '/certitips/certiquiz/', 'The game navigated outside CertiTips');
     await geometry(first, '390px results'); await geometry(second, '320px results');
     checks.push('Server deadline, unanswered question, late-answer rejection, active refresh, final winner');

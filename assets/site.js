@@ -74,17 +74,21 @@ showProgress();
 
 const toggle = document.querySelector(".menu-toggle");
 const navigation = document.querySelector(".sidebar");
+const menuReturn = toggle?.nextElementSibling;
 const courseNavMedia = matchMedia("(max-width: 800px)");
 function syncCourseMenu() {
   if (!toggle || !navigation) return;
   const mobile = courseNavMedia.matches;
   const compact = document.body.classList.contains("is-compact-nav");
+  const focused = document.activeElement === toggle;
+  if (!mobile && compact && toggle.parentElement !== navigation) navigation.prepend(toggle);
+  else if ((mobile || !compact) && toggle.parentElement !== menuReturn.parentElement) menuReturn.before(toggle);
+  if (focused) toggle.focus({ preventScroll: true });
   toggle.setAttribute("aria-expanded", String(mobile ? navigation.classList.contains("is-open") : !compact));
   toggle.setAttribute("aria-label", mobile ? "Contenido del curso" : compact ? "Expandir menú del curso" : "Contraer menú del curso");
   toggle.title = mobile ? "Contenido del curso" : compact ? "Mostrar menú completo" : "Mostrar solo números";
 }
 if (toggle && navigation) {
-  try { document.body.classList.toggle("is-compact-nav", sessionStorage.getItem("certitips:course-nav:compact") === "true"); } catch { /* Use the expanded course menu. */ }
   syncCourseMenu();
   courseNavMedia.addEventListener("change", () => { navigation.classList.remove("is-open"); syncCourseMenu(); });
 }
@@ -305,20 +309,25 @@ const menu = dialog.querySelector("[data-diagram-menu]");
 const slideCount = dialog.querySelector(".diagram-slide-count");
 let galleryPromise, gallery = [], slideIndex = 0, slideToken = 0, countTimer;
 const moduleLinkForImage = src => [...document.querySelectorAll(".sidebar .nav-link")].find(link => new URL(src, location.href).pathname.startsWith(`${link.pathname}img/`));
-const moduleCaptionForImage = (src, fallback) => moduleLinkForImage(src)?.textContent.trim().replace(/\s+/g, " ") || fallback;
+const moduleCaptionForImage = (src, fallback) => {
+  const link = moduleLinkForImage(src);
+  return link ? `${link.querySelector(".nav-number").textContent.trim()} ${link.querySelector(".nav-title").textContent.trim()}` : fallback;
+};
 const diagramIdForImage = src => `diagram-${new URL(src, location.href).pathname.split("/").pop()}`;
 function setPresentationMenu(open) {
   filmstrip.classList.toggle("is-open", open);
   filmstrip.inert = !open;
   menu.setAttribute("aria-expanded", String(open));
   menu.setAttribute("aria-label", open ? "Ocultar imágenes" : "Mostrar imágenes");
+  if (dialog.classList.contains("is-presenting")) dialog.querySelector(".dialog-content").setAttribute("aria-label", open ? "Diagrama en presentación; haz clic para ocultar imágenes" : "Diagrama en presentación; haz clic para avanzar");
 }
 menu.addEventListener("click", () => setPresentationMenu(!filmstrip.classList.contains("is-open")));
 function restoreDiagram() {
   const image = opener.querySelector("img"), enlarged = dialog.querySelector(".dialog-content img");
   enlarged.src = image.src;
   enlarged.alt = image.alt;
-  document.querySelector("#diagram-caption").textContent = moduleCaptionForImage(image.getAttribute("src"), image.alt);
+  document.querySelector("#diagram-group").textContent = moduleCaptionForImage(image.getAttribute("src"), "");
+  document.querySelector("#diagram-caption").textContent = opener.dataset.diagramHeading || image.alt;
   const description = dialog.querySelector("#diagram-description");
   if (description) description.textContent = opener.querySelector("span").firstChild.textContent.trim();
 }
@@ -345,7 +354,8 @@ async function showSlide(index) {
   const image = dialog.querySelector(".dialog-content img");
   image.src = item.src;
   image.alt = item.alt;
-  document.querySelector("#diagram-caption").textContent = moduleCaptionForImage(item.src, item.module);
+  document.querySelector("#diagram-group").textContent = moduleCaptionForImage(item.src, item.module);
+  document.querySelector("#diagram-caption").textContent = typeof item.heading === "string" ? item.heading : item.alt;
   const description = dialog.querySelector("#diagram-description");
   if (description) description.textContent = item.caption;
   filmstrip.querySelectorAll("button").forEach((button, position) => button.setAttribute("aria-current", String(position === index)));
@@ -412,7 +422,10 @@ present.addEventListener("click", async () => {
   await showSlide(Math.max(0, current));
 });
 dialog.querySelector(".dialog-content img").addEventListener("click", () => {
-  if (dialog.classList.contains("is-presenting")) showSlide(slideIndex + 1);
+  if (dialog.classList.contains("is-presenting")) {
+    if (filmstrip.classList.contains("is-open")) { slideToken++; setPresentationMenu(false); }
+    else showSlide(slideIndex + 1);
+  }
   else if (!present.hidden) present.click();
 });
 dialog.addEventListener("keydown", event => {

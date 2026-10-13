@@ -12,6 +12,7 @@ const playerRoleIcon = '<svg viewBox="0 0 297 297" fill="currentColor" aria-hidd
 const roomIcon = `<svg class="room-icon" fill="currentColor" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M17.7540247,11 C18.720523,11 19.5040247,11.7835017 19.5040247,12.75 L19.5040247,19.4989513 C19.5040247,22.5370966 17.0411213,25 14.002976,25 C10.9648308,25 8.50192738,22.5370966 8.50192738,19.4989513 L8.50192738,12.75 C8.50192738,11.7835017 9.28542907,11 10.2519274,11 L17.7540247,11 Z M3.75,11 L8.13210827,10.9980646 C7.78221386,11.420954 7.55643325,11.9502867 7.51057947,12.5302496 L7.50192738,12.75 L7.50192738,19.4989513 C7.50192738,20.6323434 7.79196393,21.6979939 8.30186513,22.6257307 C7.75085328,22.8662539 7.14166566,23 6.50123996,23 C4.01527377,23 2,20.9847262 2,18.49876 L2,12.75 C2,11.7835017 2.78350169,11 3.75,11 Z M19.8738438,10.9980646 L24.25,11 C25.2164983,11 26,11.7835017 26,12.75 L26,18.5 C26,20.9852814 23.9852814,23 21.5,23 C20.8609276,23 20.2529701,22.8667819 19.7023824,22.6266008 L19.7581025,22.5253735 C20.1867892,21.7118524 20.4480368,20.7963864 20.4959995,19.8248213 L20.5040247,19.4989513 L20.5040247,12.75 C20.5040247,12.084283 20.267475,11.4738152 19.8738438,10.9980646 Z M14,3 C15.9329966,3 17.5,4.56700338 17.5,6.5 C17.5,8.43299662 15.9329966,10 14,10 C12.0670034,10 10.5,8.43299662 10.5,6.5 C10.5,4.56700338 12.0670034,3 14,3 Z M22.0029842,4 C23.6598384,4 25.0029842,5.34314575 25.0029842,7 C25.0029842,8.65685425 23.6598384,10 22.0029842,10 C20.3461299,10 19.0029842,8.65685425 19.0029842,7 C19.0029842,5.34314575 20.3461299,4 22.0029842,4 Z M5.99701582,4 C7.65387007,4 8.99701582,5.34314575 8.99701582,7 C8.99701582,8.65685425 7.65387007,10 5.99701582,10 C4.34016157,10 2.99701582,8.65685425 2.99701582,7 C2.99701582,5.34314575 4.34016157,4 5.99701582,4 Z"/></svg>`;
 let catalog;
 let session = { host: false, roomCode: null };
+const chatLockKey = 'certitips:certiquiz:active-player';
 let room = null;
 let stage = '';
 let rankingOrder = [];
@@ -131,12 +132,13 @@ function formatCountdown(seconds) { return `${String(Math.floor(seconds / 60)).p
 
 function entry(role = selectedRole) {
   document.querySelector('[data-confirm]')?.close();
+  document.body.classList.remove('certiquiz-playing');
   clearTimeout(pollTimer); stage = ''; room = null; rankingOrder = []; expiredLobbyCode = '';
   selectedRole = role;
   if (role !== 'player' || !draftCode) history.replaceState(null, '', `${siteBase}certiquiz/${role === 'host' ? '#host' : role === 'player' ? '#participant' : ''}`);
   const limits = catalog.limits;
   if (!role) {
-    app.innerHTML = `${welcome()}<div class="entry-grid role-options"><button class="card join-card role-card" type="button" data-role="host" aria-label="Crear una partida como anfitrión"><span class="role-icon" aria-hidden="true">${hostRoleIcon}</span><span class="role-copy"><strong class="role-title">Anfitrión</strong><span class="muted">Elige un quiz, genera el código e invita a tu equipo.</span></span></button><button class="card join-card role-card" type="button" data-role="player" aria-label="Unirme a una partida como participante"><span class="role-icon" aria-hidden="true">${playerRoleIcon}</span><span class="role-copy"><strong class="role-title">Participante</strong><span class="muted">Ingresa el código de la sala y pon a prueba tus ideas.</span></span></button></div>`;
+    app.innerHTML = `${welcome()}<div class="entry-grid role-options"><button class="card join-card role-card" type="button" data-role="host" aria-label="Crear una partida como anfitrión"><span class="role-icon" aria-hidden="true">${hostRoleIcon}</span><span class="role-copy"><strong class="role-title">Anfitrión</strong><span class="muted">Elige un quiz, genera el código e invita a tu equipo.</span></span></button><button class="card join-card role-card" type="button" data-role="player" aria-label="Unirme a una partida como participante"><span class="role-icon" aria-hidden="true">${playerRoleIcon}</span><span class="role-copy"><strong class="role-title">Participante</strong><span class="muted">Ingresa el código de la sala y participa.</span></span></button></div>`;
     const participantRole = app.querySelector('[data-role="player"]');
     if (session.host && session.hostRoomCode) {
       participantRole.disabled = true;
@@ -269,17 +271,19 @@ function lobby() {
   const facts = roomFacts(room.questionCount, room.secondsPerQuestion);
   const lobbyWaitTimer = room.role === 'host' && room.lobbyDeadline ? `<output class="lobby-wait-timer" data-lobby-wait-timer role="timer" aria-live="off" aria-label="Tiempo restante para iniciar la sala">${formatCountdown(lobbyWaitSeconds())}</output>` : '';
   const hostFooter = `<div class="lobby-footer">${facts}<div class="actions game-actions">${lobbyWaitTimer}<button class="button secondary" type="button" data-exit>Finalizar</button><button class="button" type="button" data-start>Comenzar</button></div></div>`;
-  const playerFooter = `<div class="lobby-footer">${facts}<div class="actions game-actions"><button class="button secondary" type="button" data-exit>Salir</button></div></div>`;
+  const playerFooter = `<div class="lobby-footer player-lobby-footer">${facts}<div class="actions game-actions"><button class="button secondary" type="button" data-exit>Salir</button></div></div>`;
   return `${roomHeader()}<div class="room-grid"><section class="card join-card"><span class="eyebrow">${room.role === 'host' ? 'INVITA A PARTICIPANTES' : 'YA ESTÁS DENTRO'}</span><h2 id="stage-title" tabindex="-1">${room.role === 'host' ? 'Sala de Espera' : `¡Todo listo, ${escape(room.me?.nickname)}!`}</h2>${room.role === 'host' ? hostInvitation : '<p class="muted">El anfitrión iniciará la primera pregunta. Mantén esta página abierta para responder.</p>'}${room.role === 'host' ? hostFooter : playerFooter}</section><div class="room-side"><div data-players></div></div></div>`;
 }
+const roomCloseButton = '<button class="quiz-close game-close" type="button" data-exit aria-label="Salir" title="Salir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button>';
+
 function questionView() {
   const question = room.question;
   const revealed = room.status === 'reveal';
-  return `${roomHeader()}<section class="card"><div class="game-toolbar"><span data-answer-count></span><span class="${revealed ? 'brand' : 'timer'}"${revealed ? '' : ' data-timer role="timer" aria-live="off"'}>${revealed ? 'Certi<span class="brand-accent">Quiz</span>' : ''}</span></div><progress data-timer-meter max="${room.secondsPerQuestion}" value="${revealed ? 0 : room.secondsPerQuestion}" aria-label="Tiempo restante"></progress><h2 class="question" id="question-title" tabindex="-1">${room.questionIndex + 1}. ${escape(question.text)}</h2><form id="answer-form" novalidate><fieldset aria-labelledby="question-title"><div class="options">${question.options.map((option, index) => `<label class="option${revealed && option.id === question.correctOption ? ' correct' : ''}${revealed && option.id === room.me?.answer && option.id !== question.correctOption ? ' incorrect' : ''}"><input type="radio" name="optionId" value="${escape(option.id)}" ${room.me?.answer === option.id ? 'checked' : ''} ${revealed || room.role === 'host' || room.me?.answer ? 'disabled' : ''} required><span class="option-letter" aria-hidden="true">${String.fromCharCode(65 + index)}</span><span>${escape(option.text)}${revealed && option.id === question.correctOption ? '<span class="visually-hidden">Respuesta correcta</span>' : ''}</span></label>`).join('')}</div></fieldset>${room.role === 'player' && !revealed ? '<div class="actions game-actions"><button class="button" type="submit" data-send>Enviar</button></div>' : ''}</form>${!revealed ? '<p class="answer-note" data-answer-note role="status"></p>' : ''}${revealed ? `<div class="explanation"><strong>Explicación</strong><p>${escape(question.explanation || '')}</p></div>` : ''}${room.role === 'host' ? `<div class="actions game-actions"><button class="button secondary" type="button" data-finish>Finalizar</button>${revealed ? '<button class="button" type="button" data-next>Siguiente</button>' : ''}</div>` : ''}</section>`;
+  return `${roomHeader()}<section class="card"><div class="game-toolbar"><span class="game-toolbar-info"><span class="brand">Certi<span class="brand-accent">Quiz</span></span><span data-answer-count></span></span><span class="game-toolbar-trailing">${revealed ? '' : '<span class="timer" data-timer role="timer" aria-live="off"></span>'}${roomCloseButton}</span></div><progress data-timer-meter max="${room.secondsPerQuestion}" value="${revealed ? 0 : room.secondsPerQuestion}" aria-label="Tiempo restante"></progress><h2 class="question" id="question-title" tabindex="-1">${room.questionIndex + 1}. ${escape(question.text)}</h2><form id="answer-form" novalidate><fieldset aria-labelledby="question-title"><div class="options">${question.options.map((option, index) => `<label class="option${revealed && option.id === question.correctOption ? ' correct' : ''}${revealed && option.id === room.me?.answer && option.id !== question.correctOption ? ' incorrect' : ''}"><input type="radio" name="optionId" value="${escape(option.id)}" ${room.me?.answer === option.id ? 'checked' : ''} ${revealed || room.role === 'host' || room.me?.answer ? 'disabled' : ''} required><span class="option-letter" aria-hidden="true">${String.fromCharCode(65 + index)}</span><span>${escape(option.text)}${revealed && option.id === question.correctOption ? '<span class="visually-hidden">Respuesta correcta</span>' : ''}</span></label>`).join('')}</div></fieldset>${room.role === 'player' && !revealed ? '<div class="actions game-actions"><button class="button" type="submit" data-send>Enviar</button></div>' : ''}</form>${!revealed ? '<p class="answer-note" data-answer-note role="status"></p>' : ''}${revealed ? `<div class="explanation"><strong>Explicación</strong><p>${escape(question.explanation || '')}</p></div>` : ''}${room.role === 'host' ? `<div class="actions game-actions"><button class="button secondary" type="button" data-finish>Finalizar</button>${revealed ? '<button class="button" type="button" data-next>Siguiente</button>' : ''}</div>` : ''}</section>`;
 }
 
 function ranking() {
-  return `<section class="card ranking-card" id="stage-title" tabindex="-1" aria-label="Clasificación por puntos">${leaderboard()}${room.role === 'host' ? '<div class="actions game-actions"><button class="button secondary" type="button" data-finish>Finalizar</button><button class="button" type="button" data-next>Siguiente</button></div>' : ''}</section>`;
+  return `<section class="card ranking-card" id="stage-title" tabindex="-1" aria-label="Clasificación por puntos"><div class="game-toolbar"><span class="brand">Certi<span class="brand-accent">Quiz</span></span>${roomCloseButton}</div>${leaderboard()}${room.role === 'host' ? '<div class="actions game-actions"><button class="button secondary" type="button" data-finish>Finalizar</button><button class="button" type="button" data-next>Siguiente</button></div>' : ''}</section>`;
 }
 
 function leaderboard() {
@@ -331,12 +335,25 @@ function finished() {
   return `${roomHeader()}<section class="result-banner"><h2 id="stage-title" tabindex="-1">${title}</h2>${room.courseTitle ? `<p class="result-course">${oracleBadgeIcon}<span>${escape(room.courseTitle)}</span></p>` : ''}${leaders.length ? podium() + confetti() : ''}</section><section class="card">${leaderboard()}<div class="actions game-actions"><button class="button" type="button" data-exit>Salir</button></div></section>`;
 }
 
+function setChatLock(code, active) {
+  try {
+    const current = localStorage.getItem(chatLockKey);
+    if (!active) { if (!code || current?.startsWith(`${code}:`)) localStorage.removeItem(chatLockKey); return; }
+    if (!/^\d{6}$/.test(code)) return;
+    if (current?.startsWith(`${code}:`) && Number(current.slice(7)) > Date.now()) return;
+    // ponytail: the room expires server-side within eight hours; stale browser locks share that ceiling.
+    localStorage.setItem(chatLockKey, `${code}:${Date.now() + 8 * 60 * 60 * 1000}`);
+  } catch { /* Storage is optional; the CertiQuiz page itself never renders CertiChat. */ }
+}
+
 function showRoom(snapshot) {
   if (room?.code === snapshot.code && snapshot.version < room.version) return;
   const nextStage = `${snapshot.code}:${snapshot.status}:${snapshot.questionIndex}:${snapshot.lobbyDeadline ?? ''}`;
   const changed = stage !== nextStage;
   const answered = snapshot.me?.answer && snapshot.me.answer !== room?.me?.answer;
   room = snapshot; clock = { server: snapshot.clockServer || snapshot.serverNow, received: snapshot.clockReceived || performance.now() };
+  document.body.classList.toggle('certiquiz-playing', !['lobby', 'finished'].includes(snapshot.status));
+  if (snapshot.role === 'player') setChatLock(snapshot.code, snapshot.status !== 'finished');
   session.roomCode = snapshot.code;
   selectedRole = snapshot.role;
   if (new URL(location.href).searchParams.get('room') !== snapshot.code) history.replaceState(null, '', joinUrl());
@@ -486,12 +503,13 @@ function expireLobby() {
   clearTimeout(pollTimer);
   const dialog = document.createElement('dialog'); dialog.className = 'confirmation confirmation-expired'; dialog.dataset.lobbyExpired = '';
   dialog.setAttribute('aria-labelledby', 'lobby-expired-title'); dialog.setAttribute('aria-describedby', 'lobby-expired-message');
-  dialog.innerHTML = `<div class="confirmation-body"><span class="confirmation-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M12 13V9M21 6L19 4M10 2H14M12 21C7.58172 21 4 17.4183 4 13C4 8.58172 7.58172 5 12 5C16.4183 5 20 8.58172 20 13C20 17.4183 16.4183 21 12 21Z"/></svg></span><h2 id="lobby-expired-title">Tiempo de espera agotado</h2><p id="lobby-expired-message">El tiempo de espera de 15 minutos de la sala expiró. Volverás a CertiQuiz y podrás crear una nueva sala.</p></div><div class="confirmation-actions"><button class="button" type="button" data-return-to-entry>Aceptar</button></div>`;
+  dialog.innerHTML = `<div class="confirmation-body"><h2 id="lobby-expired-title">Tiempo de espera agotado</h2><p id="lobby-expired-message">El tiempo de espera de 15 minutos de la sala expiró. Volverás a CertiQuiz y podrás crear una nueva sala.</p></div><div class="confirmation-actions"><button class="button" type="button" data-return-to-entry>Aceptar</button></div>`;
   app.closest('.certiquiz-app').append(dialog);
   dialog.querySelector('[data-return-to-entry]').addEventListener('click', () => {
-    dialog.close(); dialog.remove(); session = { host: false, roomCode: null }; draftCode = ''; entry(null);
+    dialog.close(); session = { host: false, roomCode: null }; draftCode = ''; entry(null);
     app.querySelector('[data-role]')?.focus({ preventScroll: true });
   });
+  dialog.addEventListener('close', () => Promise.allSettled(dialog.getAnimations().map(animation => animation.finished)).then(() => dialog.remove()));
   dialog.addEventListener('cancel', event => event.preventDefault());
   dialog.showModal();
 }
@@ -522,20 +540,21 @@ function bindRoom() {
     showRoom(await request(roomPath('/answers'), { questionId: room.question.id, optionId: data.get('optionId') }));
   });
   document.querySelector('[data-finish]')?.addEventListener('click', event => {
-    confirmRoomAction(event.currentTarget, 'La partida terminará para todos y se mostrarán los resultados de las preguntas respondidas.', 'Finalizar partida', async () => showRoom(await request(roomPath('/finish'), {})));
+    confirmRoomAction(event.currentTarget, 'La partida terminará para todos y se mostrarán los resultados de las preguntas respondidas.', async () => showRoom(await request(roomPath('/finish'), {})));
   });
   document.querySelector('[data-exit]')?.addEventListener('click', event => {
-    if (room.role === 'host' && room.status !== 'finished') confirmRoomAction(event.currentTarget, 'Si sales, esta partida terminará para todos. Después podrás crear otra sala.', 'Salir', () => logout('host'));
-    else action(() => logout(room.status === 'finished' ? null : room.role), event.currentTarget);
+    if (room.role === 'host' && room.status !== 'finished') confirmRoomAction(event.currentTarget, 'Si sales, esta partida terminará para todos. Después podrás crear otra sala.', () => logout('host'));
+    else if (room.status !== 'finished') confirmRoomAction(event.currentTarget, 'Saldrás de la sala y dejarás de participar en esta partida.', () => logout('player'));
+    else action(() => logout(null), event.currentTarget);
   });
 }
 
-function confirmRoomAction(button, message, label, callback) {
+function confirmRoomAction(button, message, callback) {
   if (busy || document.querySelector('[data-confirm]')) return;
   showError('');
   const dialog = document.createElement('dialog'); dialog.className = 'confirmation'; dialog.dataset.confirm = '';
   dialog.setAttribute('aria-labelledby', 'confirmation-title'); dialog.setAttribute('aria-describedby', 'confirmation-message');
-  dialog.innerHTML = `<div class="confirmation-body"><span class="confirmation-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="currentColor" focusable="false"><use href="${siteBase}assets/icons/confirmation-question.svg#question"/></svg></span><h2 id="confirmation-title" tabindex="-1" autofocus>${button.hasAttribute('data-exit') ? '¿Salir de la sala?' : '¿Finalizar la partida?'}</h2><p id="confirmation-message">${escape(message)}</p><div class="notice error" data-error role="alert" hidden></div></div><div class="confirmation-actions"><button class="button secondary" type="button" data-confirm-no>Cancelar</button><button class="button" type="button" data-confirm-yes>${escape(label)}</button></div>`;
+  dialog.innerHTML = `<div class="confirmation-body"><h2 id="confirmation-title" tabindex="-1" autofocus>${room.role === 'host' && room.status !== 'finished' ? '¿Finalizar la partida?' : '¿Salir de la sala?'}</h2><p id="confirmation-message">${escape(message)}</p><div class="notice error" data-error role="alert" hidden></div></div><div class="confirmation-actions"><button class="button secondary" type="button" data-confirm-no>Cancelar</button><button class="button" type="button" data-confirm-yes>Aceptar</button></div>`;
   app.closest('.certiquiz-app').append(dialog);
   const confirm = dialog.querySelector('[data-confirm-yes]');
   const cancel = dialog.querySelector('[data-confirm-no]');
@@ -552,13 +571,13 @@ function confirmRoomAction(button, message, label, callback) {
     if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
   });
   dialog.addEventListener('close', () => {
-    dialog.remove();
+    Promise.allSettled(dialog.getAnimations().map(animation => animation.finished)).then(() => dialog.remove());
     (button.isConnected ? button : app.querySelector('#question-title, #stage-title, #course, #room-code'))?.focus({ preventScroll: true });
   });
   dialog.showModal();
 }
 async function logout(role) {
-  await request('/api/logout', {}); session = { host: false, roomCode: null }; draftCode = ''; entry(role); app.querySelector(role === 'host' ? '#course' : role === 'player' ? '#room-code' : '[data-role]')?.focus();
+  await request('/api/logout', {}); setChatLock(null, false); session = { host: false, roomCode: null }; draftCode = ''; entry(role); app.querySelector(role === 'host' ? '#course' : role === 'player' ? '#room-code' : '[data-role]')?.focus();
 }
 function schedulePoll(delay = 1000) { clearTimeout(pollTimer); if (room?.code && room.status !== 'finished') pollTimer = setTimeout(poll, delay); }
 async function poll() {
@@ -575,6 +594,7 @@ async function poll() {
     if (!room || room.code !== code) return;
     if ([401, 403, 404, 410].includes(error.status)) {
       if (room.role === 'host' && room.status === 'lobby' && lobbyWaitSeconds() === 0) { expireLobby(); return; }
+      if (room.role === 'player') setChatLock(code, false);
       const role = room.role; draftCode = role === 'player' ? code : ''; session = { host: false, roomCode: null }; entry(role); showWarning('La sala o tu acceso ya no están disponibles. Solicita otro código.'); return;
     }
     setConnection('Reconectando… Tu respuesta solo se registra cuando recibes la confirmación.'); retry = 2500;
@@ -588,6 +608,7 @@ async function load() {
   showError(''); app.setAttribute('aria-busy', 'true');
   try {
     [catalog, session] = await Promise.all([request('/api/catalog'), request('/api/session')]);
+    if (!session.roomCode) setChatLock(null, false);
     const roomCode = session.host && (!prefilledCode || prefilledCode === session.hostRoomCode) ? session.hostRoomCode : session.roomCode;
     if (roomCode && entryUrl.searchParams.has('room') && (!prefilledCode || prefilledCode === roomCode)) {
       try { const snapshot = await request(`/api/rooms/${encodeURIComponent(roomCode)}`); await finishLoading(); showRoom(snapshot); schedulePoll(); return; }

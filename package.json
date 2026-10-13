@@ -10,6 +10,7 @@
     "build": "node scripts/build.mjs",
     "test": "node --test --test-isolation=none tests/*.test.mjs",
     "check": "node scripts/check-site.mjs",
+    "check:certiquiz": "python services/certiquiz/check-catalog.py",
     "preview": "node scripts/serve.mjs"
   },
   "devDependencies": {

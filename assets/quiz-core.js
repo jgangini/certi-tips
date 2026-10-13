@@ -16,6 +16,7 @@ export function newAttempt(bank, random = Math.random, areas = domains) {
 }
 
 export function confirmAnswer(attempt, bank, option) {
+  if (attempt.finished) return attempt;
   const id = attempt.ids[attempt.index];
   const question = bank.find(item => item.id === id);
   if (!question || Object.hasOwn(attempt.answers, id) || !question.options.some(item => item.id === option)) return attempt;
@@ -23,16 +24,28 @@ export function confirmAnswer(attempt, bank, option) {
 }
 
 export function advance(attempt) {
-  if (!Object.hasOwn(attempt.answers, attempt.ids[attempt.index])) return attempt;
+  if (attempt.finished || !Object.hasOwn(attempt.answers, attempt.ids[attempt.index])) return attempt;
   return { ...attempt, index: Math.min(attempt.index + 1, attempt.ids.length) };
 }
 
+export function previous(attempt) {
+  if (attempt.finished || attempt.index === 0 || attempt.index >= attempt.ids.length) return attempt;
+  return { ...attempt, index: attempt.index - 1 };
+}
+
+export function finishAttempt(attempt) {
+  if (attempt.finished || attempt.index >= attempt.ids.length) return attempt;
+  return { ...attempt, finished: true };
+}
+
 export function results(attempt, bank) {
-  const report = { correct: 0, total: attempt.ids.length, wrong: [], domains: {} };
+  const report = { correct: 0, total: 0, wrong: [], domains: {} };
   for (const id of attempt.ids) {
+    if (!Object.hasOwn(attempt.answers, id)) continue;
     const question = bank.find(item => item.id === id);
     const correct = attempt.answers[id] === question.correctOption;
     const tally = report.domains[question.domain] ||= { correct: 0, total: 0 };
+    report.total++;
     tally.total++;
     if (correct) { report.correct++; tally.correct++; }
     else report.wrong.push(id);
@@ -42,25 +55,28 @@ export function results(attempt, bank) {
 
 export function reviewAttempt(attempt, bank, areas = domains) {
   const original = restoreAttempt(attempt.mode === 'practice' ? attempt : attempt.original, bank, areas);
-  if (!original || original.mode !== 'practice' || original.index !== original.ids.length || attempt.index !== attempt.ids.length) throw new Error('Completa la práctica antes de repasar sus errores.');
+  if (!original || original.mode !== 'practice' || (!original.finished && original.index !== original.ids.length) || (!attempt.finished && attempt.index !== attempt.ids.length)) throw new Error('Completa la práctica antes de repasar sus errores.');
   return { version: 1, mode: 'review', ids: results(attempt, bank).wrong, answers: {}, index: 0, original };
 }
 
 export function restoreAttempt(value, bank, areas = domains) {
   if (!value || value.version !== 1 || !['practice', 'review'].includes(value.mode)) return null;
+  if (Object.hasOwn(value, 'finished') && typeof value.finished !== 'boolean') return null;
   if (!Array.isArray(value.ids) || !value.ids.length || value.ids.length > areas.length * 2 || new Set(value.ids).size !== value.ids.length) return null;
   if (!Number.isInteger(value.index) || value.index < 0 || value.index > value.ids.length || !value.answers || typeof value.answers !== 'object' || Array.isArray(value.answers)) return null;
   const questions = new Map(bank.map(question => [question.id, question]));
   if (value.ids.some(id => !questions.has(id))) return null;
   if (value.mode === 'practice' && (value.ids.length !== areas.length * 2 || areas.some(domain => value.ids.filter(id => questions.get(id).domain === domain).length !== 2))) return null;
   if (Object.keys(value.answers).some(id => !value.ids.includes(id) || !questions.get(id).options.some(option => option.id === value.answers[id]))) return null;
-  // ponytail: only the current question may be answered ahead; no arbitrary navigation/history engine.
-  if (value.ids.some((id, i) => (i < value.index && !Object.hasOwn(value.answers, id)) || (i > value.index && Object.hasOwn(value.answers, id)))) return null;
+  // ponytail: answers form one continuous prefix; the cursor may revisit it without a separate history.
+  const answeredCount = Object.keys(value.answers).length;
+  if (value.index > answeredCount || value.ids.some((id, i) => Object.hasOwn(value.answers, id) !== (i < answeredCount))) return null;
   const restored = { version: 1, mode: value.mode, ids: [...value.ids], answers: { ...value.answers }, index: value.index };
+  if (Object.hasOwn(value, 'finished')) restored.finished = value.finished;
   if (value.mode === 'review') {
     if (value.original?.mode !== 'practice') return null;
     const original = restoreAttempt(value.original, bank, areas);
-    if (!original || original.index !== original.ids.length) return null;
+    if (!original || (!original.finished && original.index !== original.ids.length)) return null;
     const wrong = results(original, bank).wrong;
     if (value.ids.some(id => !wrong.includes(id))) return null;
     restored.original = original;

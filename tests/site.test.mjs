@@ -56,10 +56,10 @@ test('validates a second course with independent coverage and bank, including it
   input.files.set('assets/second-questions.json', JSON.stringify(input.questions.second));
   assert.deepEqual(validateSite(input), []);
   input.coverage.second[2].anchor = 'missing';
-  input.questions.second[0].options[0].explanation = '';
+  input.questions.second[0].options[1].explanation = '';
   const issues = validateSite(input);
   includesIssue(issues, /data\/second-coverage\.json\[2\].*missing anchor #missing/);
-  includesIssue(issues, /data\/second-questions\.json\[0\].*every alternative needs text and an explanation/);
+  includesIssue(issues, /data\/second-questions\.json\[0\].*correct alternative needs a nonempty explanation/);
   includesIssue(issues, /assets\/second-questions\.json: published question bank differs/);
   assert.ok(!issues.some(issue => /data\/(?:questions|coverage)\.json/.test(issue)));
 });
@@ -136,11 +136,11 @@ test('requires diagram use, accessible descriptions and self-contained SVG conte
   includesIssue(issues, /guardrails\.svg: diagram is not used/);
 });
 
-test('requires a complete bank with unique questions and four explained choices', () => {
+test('requires a complete bank with unique questions and four valid choices', () => {
   const input = fixture();
   input.questions.course[1].id = input.questions.course[0].id;
   input.questions.course[0].correctOption = 'e';
-  input.questions.course[0].options[0].explanation = '';
+  delete input.questions.course[0].options[0].explanation;
   input.questions.course[2].options.pop();
   input.questions.course.pop();
   const issues = validateSite(input);
@@ -150,6 +150,24 @@ test('requires a complete bank with unique questions and four explained choices'
   includesIssue(issues, /every alternative needs text and an explanation/);
   includesIssue(issues, /exactly four alternatives/);
   includesIssue(issues, /oracle-database: expected 6 questions, received 5/);
+});
+
+test('accepts source-sized banks without inventing explanations for distractors', () => {
+  const input = fixture();
+  const course = input.catalog.courses[0];
+  course.questionCounts = Object.fromEntries(course.modules.slice(1).map((module, index) => [module.slug, index ? 6 : 2]));
+  input.questions.course = input.questions.course.filter(question => question.domain !== 'agents' || /-[12]$/.test(question.id));
+  for (const question of input.questions.course) for (const option of question.options) {
+    if (option.id !== question.correctOption) option.explanation = '';
+  }
+  input.files.set('assets/questions.json', JSON.stringify(input.questions.course));
+  assert.deepEqual(validateSite(input), []);
+  input.questions.course[0].options[1].explanation = '';
+  includesIssue(validateSite(input), /correct alternative needs a nonempty explanation/);
+  for (const invalid of [null, [], 'six', { ...course.questionCounts, agents: 1 }, { ...course.questionCounts, agents: '2' }, { ...course.questionCounts, unknown: 2 }]) {
+    course.questionCounts = invalid;
+    includesIssue(validateSite(input), /questionCounts must declare at least two questions for every domain/);
+  }
 });
 
 test('SVG illustrations allow inline PNG only and still reject active or external content', () => {

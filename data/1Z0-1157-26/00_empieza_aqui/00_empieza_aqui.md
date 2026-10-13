@@ -1,4 +1,4 @@
-Entender un agente significa poder seguir una petición desde la intención del usuario hasta una acción comprobable. Esta ruta conecta esa idea con LangChain, MCP, OpenAI, OCI y Oracle AI Database, y termina con una práctica que explica cada respuesta.
+Entender un agente significa poder seguir una petición desde la intención del usuario hasta una acción comprobable. Esta ruta conecta esa idea con LangChain, MCP, OpenAI, OCI y Oracle AI Database mediante ejemplos y ejercicios.
 
 ## Objetivos y examen
 
