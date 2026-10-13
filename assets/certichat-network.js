@@ -105,7 +105,8 @@ export function createNetwork(canvas, graph, onSelect, onAnchor) {
     selected = layout.indexes.has(id) ? id : undefined;
     const node = layout.nodes[layout.indexes.get(selected)];
     if (center && node) moveTo({ scale: view.scale, x: width / 2 - node.x * view.scale, y: height / 2 - node.y * view.scale }, true);
-    else invalidate();
+    pulse = node && !reducedMotion.matches ? { repeat: true, nodes: [selected] } : undefined;
+    invalidate();
   }
   function hit(x, y) {
     let closest, distance = Infinity;
@@ -126,9 +127,9 @@ export function createNetwork(canvas, graph, onSelect, onAnchor) {
       const progress = ((elapsed % 1200) - delay) / 960;
       if (progress < 0 || progress >= 1) continue;
       context.beginPath();
-      for (const id of activeNodes) {
+      for (const id of pulse.nodes ?? activeNodes) {
         const node = layout.nodes[layout.indexes.get(id)];
-        const radius = (node.radius * 1.25 + 4 + 28 * progress) / view.scale;
+        const radius = (node.radius * (activeNodes.has(id) ? 1.25 : 1) + 4 + 28 * progress) / view.scale;
         context.moveTo(node.x + radius, node.y); context.arc(node.x, node.y, radius, 0, Math.PI * 2);
       }
       context.globalAlpha = 0.38 * (1 - progress) ** 2; context.stroke();
@@ -182,8 +183,10 @@ export function createNetwork(canvas, graph, onSelect, onAnchor) {
       const radius = node.radius * (activeNodes.has(node.id) ? 1.25 : 1);
       const screenX = node.x * view.scale + view.x, screenY = node.y * view.scale + view.y;
       if (screenX + radius >= 0 && screenX - radius <= width && screenY + radius >= 0 && screenY - radius <= height) {
-        context.beginPath(); context.arc(node.x, node.y, (radius + 3) / view.scale, 0, Math.PI * 2);
-        context.strokeStyle = color("--red", "#c74634"); context.lineWidth = 2 / view.scale; context.stroke();
+        if (reducedMotion.matches) {
+          context.beginPath(); context.arc(node.x, node.y, (radius + 3) / view.scale, 0, Math.PI * 2);
+          context.strokeStyle = color("--red", "#c74634"); context.lineWidth = 2 / view.scale; context.stroke();
+        }
         anchor = { id: selected, x: screenX, y: screenY - radius - 8, width, height };
       }
     }

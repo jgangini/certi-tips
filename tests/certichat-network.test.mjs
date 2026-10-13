@@ -157,6 +157,20 @@ test("Canvas preserves trace membership, camera control and selection styling", 
     renderer.stopPulse(); step(12416);
     assert.equal(canvas.dataset.pulseActive, "false");
     assert.equal(frames.size, 0, "leaving the answer must stop the repeated frame loop");
+    const selectedStart = strokes.length;
+    renderer.select("c"); step(14000);
+    const selectedWave = strokes.slice(selectedStart).find(stroke => stroke.color === "#c74634" && stroke.opacity === 0.38);
+    assert.deepEqual(selectedWave.radii, [grayRadii[2] + 4], "selection waves must target only the selected node, without marking it as retrieved");
+    assert.equal(canvas.dataset.activeNodeCount, "2");
+    assert.ok(!strokes.slice(selectedStart).some(stroke => stroke.color === "#c74634" && stroke.radii.length === 1 && stroke.opacity === 1), "normal motion must not leave a fixed selection ring");
+    const selectedMiddle = strokes.length; step(14480);
+    assert.ok(strokes.slice(selectedMiddle).some(stroke => stroke.color === "#c74634" && stroke.radii.length === 1 && stroke.radii[0] > selectedWave.radii[0] && stroke.opacity < selectedWave.opacity), "the selected node's waves must expand and fade");
+    step(15200); step(16400);
+    assert.equal(canvas.dataset.pulseActive, "true", "selected node waves repeat while its card remains selected");
+    renderer.select("missing"); step(16416);
+    assert.equal(anchors.at(-1), null);
+    assert.equal(canvas.dataset.pulseActive, "false");
+    assert.equal(frames.size, 0, "invalid selection must not retain an animation loop");
     for (const interrupt of [() => renderer.zoom(1.1), () => renderer.fit(),
       () => events.get("pointerdown")(pointerPan),
       () => events.get("keydown")({ key: "ArrowRight", preventDefault() {} }),

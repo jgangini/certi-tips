@@ -217,6 +217,16 @@ async page => {
     await tab.waitForFunction(() => document.querySelector('canvas[data-graph-canvas]').dataset.cameraMoving === 'true');
     await tab.waitForFunction(() => document.querySelector('canvas[data-graph-canvas]').dataset.cameraMoving === 'false');
     await card.waitFor({ state: 'visible' });
+    const selectedWaves = await canvas.evaluate(element => new Promise(resolve => {
+      const frames = [], start = performance.now();
+      const sample = () => {
+        frames.push({ active: element.dataset.pulseActive, draw: Number(element.dataset.drawCount) });
+        if (performance.now() - start >= 1500) resolve(frames);
+        else requestAnimationFrame(sample);
+      };
+      requestAnimationFrame(sample);
+    }));
+    assert(selectedWaves.length > 2 && selectedWaves.every(frame => frame.active === 'true') && selectedWaves.at(-1).draw > selectedWaves[0].draw, 'Selected concept displays a fixed ring or stops after one wave');
     const cardGeometry = await card.evaluate(element => {
       const a = element.getBoundingClientRect(), b = element.parentElement.getBoundingClientRect();
       return { centerX: (a.left + a.right) / 2, nodeX: (b.left + b.right) / 2, bottom: a.bottom, nodeY: (b.top + b.bottom) / 2, left: a.left, right: a.right, minX: b.left, maxX: b.right };
