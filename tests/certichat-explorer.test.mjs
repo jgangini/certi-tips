@@ -46,6 +46,11 @@ test("the explorer is a standalone site page and offers an honest missing-snapsh
   assert.match(body, /<canvas data-graph-canvas tabindex="0"[^>]+role="img"[^>]+aria-label="[^"]+"/);
   assert.doesNotMatch(body, /chat-graph-help|chat-graph-legend/);
   assert.match(body, /data-graph-active aria-label="Conceptos recuperados para esta consulta"/);
+  assert.match(body, /<small>BASE DE CONOCIMIENTO<\/small>/);
+  assert.match(body, /data-graph-zoom aria-label="Nivel de zoom" aria-live="off"/);
+  assert.equal((body.match(/data-graph-scroll=/g) || []).length, 2);
+  assert.match(body, /data-graph-scroll="-1" aria-label="Desplazar conceptos a la izquierda" aria-controls="chat-graph-concepts"/);
+  assert.match(body, /data-graph-scroll="1" aria-label="Desplazar conceptos a la derecha" aria-controls="chat-graph-concepts"/);
   const loading = certichatExplorerBody(site.base, true);
   assert.match(loading, /data-knowledge-graph="\/certitips\/assets\/certichat\/graph.json"/);
   assert.match(loading, /role="status" aria-label="Cargando el mapa de conocimiento"><span class="certichat-spinner" aria-hidden="true"><\/span>/);

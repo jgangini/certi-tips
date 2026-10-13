@@ -38,7 +38,7 @@ test("layout preserves islands and self edges without introducing connections", 
 test("Canvas preserves trace membership, camera control and selection styling", () => {
   const keys = ["window", "document", "getComputedStyle", "requestAnimationFrame", "cancelAnimationFrame", "ResizeObserver", "MutationObserver"];
   const previous = new Map(keys.map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
-  const frames = new Map(), fills = [], strokes = [], anchors = [], events = new Map(), motion = { matches: true };
+  const frames = new Map(), fills = [], strokes = [], anchors = [], zooms = [], events = new Map(), motion = { matches: true };
   let destroyed = 0, frameId = 0;
   const observer = class { observe() {} disconnect() { destroyed++; } };
   Object.assign(globalThis, { window: { devicePixelRatio: 3, matchMedia: () => motion }, document: { documentElement: {} }, getComputedStyle: () => ({ getPropertyValue: () => "" }), requestAnimationFrame: fn => { frames.set(++frameId, fn); return frameId; }, cancelAnimationFrame: id => frames.delete(id), ResizeObserver: observer, MutationObserver: observer });
@@ -48,7 +48,7 @@ test("Canvas preserves trace membership, camera control and selection styling", 
   const canvas = { clientWidth: 390, clientHeight: 400, style: {}, dataset: {}, hasAttribute: () => false, getContext: () => context, addEventListener: (name, handler) => events.set(name, handler), focus() {}, setPointerCapture() {}, getBoundingClientRect: () => ({ left: 0, top: 0 }) };
   const graph = { nodes: [{ id: "a", label: "A" }, { id: "b", label: "B" }, { id: "c", label: "C" }], edges: [{ source: "a", target: "b", label: "uses" }, { source: "b", target: "c", label: "contains" }] };
   try {
-    const renderer = createNetwork(canvas, graph, () => {}, anchor => anchors.push(anchor));
+    const renderer = createNetwork(canvas, graph, () => {}, anchor => anchors.push(anchor), percent => zooms.push(percent));
     flush();
     assert.equal(canvas.width, 780);
     assert.equal(canvas.dataset.nodeCount, "3");
@@ -86,6 +86,7 @@ test("Canvas preserves trace membership, camera control and selection styling", 
     const before = Number(canvas.dataset.scale);
     renderer.zoom(1.25); flush();
     assert.ok(Number(canvas.dataset.scale) > before);
+    assert.equal(zooms.at(-1), Math.round(Number(canvas.dataset.scale) * 100), "zoom badge must track the actual camera scale");
     assert.deepEqual(fills.findLast(fill => fill.color === "#747680").radii, grayRadii, "zoom must preserve legible relative node sizes");
     renderer.fit(true); flush();
     assert.ok(Number.isFinite(Number(canvas.dataset.panX)));
@@ -128,14 +129,26 @@ test("Canvas preserves trace membership, camera control and selection styling", 
     startKeyboardFit(); motion.matches = true; step(time += 16);
     assert.deepEqual(pose(), target, "enabling reduced motion during travel must finish immediately");
     assert.equal(frames.size, 0);
-    renderer.fit(); flush();
+    renderer.fit(); renderer.zoom(.2); flush();
     const centerStart = pose(), centeredNode = layoutNetwork(graph).nodes[2];
-    motion.matches = false; renderer.select("c", true); step(5000); step(5210);
+    motion.matches = false; renderer.select("c", true); step(5000);
+    assert.deepEqual(pose(), centerStart, "map flight starts from the current camera without jumping");
+    step(5350);
     assert.equal(canvas.dataset.cameraMoving, "true", "concept tag selection must use smooth camera motion");
-    assert.equal(pose()[0], centerStart[0], "centering a concept preserves the user's zoom level");
-    step(5420);
+    assert.ok(pose()[0] < centerStart[0], "map flight must first pull back");
+    step(5700); const overviewScale = pose()[0];
+    step(6050); assert.ok(pose()[0] > overviewScale, "map flight must approach the selected concept after pulling back");
+    step(6400);
+    assert.equal(pose()[0], 2, "concept navigation must finish at a close zoom");
+    assert.equal(zooms.at(-1), 200);
+    assert.equal(canvas.dataset.cameraMoving, "false");
     assert.ok(Math.abs(centeredNode.x * pose()[0] + pose()[1] - canvas.clientWidth / 2) < 1e-9);
     assert.ok(Math.abs(centeredNode.y * pose()[0] + pose()[2] - canvas.clientHeight / 2) < 1e-9);
+    renderer.select("a", true); step(6420); step(6490); renderer.zoom(1.1); step(6500);
+    const interrupted = pose(); step(6600);
+    assert.deepEqual(pose(), interrupted, "manual zoom cancels both stages of concept navigation");
+    assert.equal(canvas.dataset.cameraMoving, "false");
+    assert.equal(frames.size, 0);
     renderer.setTrace({ nodes: ["a", "b"], edges: [] }); flush();
     const pulseStart = strokes.length;
     renderer.pulse(); step(6000);

@@ -25,6 +25,7 @@ const root = typeof document === "undefined" ? null : document.querySelector("[d
 if (root?.dataset.knowledgeGraph) {
   const status = root.querySelector("[data-graph-status]"), workspace = root.querySelector("[data-graph-workspace]");
   const notice = root.querySelector("[data-graph-trace]"), active = root.querySelector("[data-graph-active]");
+  const scrollButtons = root.querySelectorAll("[data-graph-scroll]"), zoom = root.querySelector("[data-graph-zoom]");
   const selection = root.querySelector("[data-graph-selection]"), activeRelations = root.querySelector("[data-graph-active-relations]");
   const activeFit = root.querySelector("[data-graph-active-fit]");
   const card = root.querySelector("[data-graph-card]"), cardTitle = root.querySelector("[data-graph-card-title]"), cardSources = root.querySelector("[data-graph-card-sources]");
@@ -42,6 +43,14 @@ if (root?.dataset.knowledgeGraph) {
   if (latest.trace) latest.status = "ready";
   const updating = element("span", undefined, "certichat-spinner chat-graph-updating");
   updating.hidden = true; updating.setAttribute("role", "status"); updating.setAttribute("aria-label", "Actualizando el índice de conocimiento");
+
+  function updateScroll() {
+    scrollButtons[0].disabled = active.scrollLeft <= 4;
+    scrollButtons[1].disabled = active.scrollLeft >= active.scrollWidth - active.clientWidth - 4;
+  }
+  for (const button of scrollButtons) button.addEventListener("click", () => active.scrollBy({ left: Number(button.dataset.graphScroll) * active.clientWidth * .8, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" }));
+  active.addEventListener("scroll", updateScroll, { passive: true });
+  new ResizeObserver(updateScroll).observe(active);
 
   async function refreshVersionStatus() {
     if (!apiOrigin || document.hidden) return;
@@ -67,12 +76,14 @@ if (root?.dataset.knowledgeGraph) {
   function conceptButton(id) {
     const button = element("button", graph.byId.get(id).label);
     button.type = "button"; button.dataset.concept = id;
+    button.setAttribute("aria-pressed", "false");
     button.addEventListener("click", () => select(id, true));
     return button;
   }
 
   function select(id, center = false) {
     network.select(id, center);
+    active.querySelectorAll("button").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.concept === id)));
     selection.textContent = `${graph.byId.get(id).label}. ${graph.neighbors.get(id).size} conceptos relacionados.`;
     cardTitle.textContent = graph.byId.get(id).label;
     cardSources.replaceChildren();
@@ -118,6 +129,7 @@ if (root?.dataset.knowledgeGraph) {
     for (const id of nodes) {
       const item = element("li"); item.append(conceptButton(id)); active.append(item);
     }
+    active.scrollTo({ left: 0, behavior: "instant" }); updateScroll();
     activeRelations.replaceChildren();
     for (const edge of edges) activeRelations.append(element("li", `${graph.byId.get(edge.source).label} → ${edge.label || "relacionado con"} → ${graph.byId.get(edge.target).label}`));
     activeFit.disabled = !nodes.length;
@@ -162,7 +174,7 @@ if (root?.dataset.knowledgeGraph) {
       if (label === "Versión") item.lastElementChild.append(updating);
     }
     status.hidden = true; workspace.hidden = false;
-    network = createNetwork(root.querySelector("[data-graph-canvas]"), graph, select, anchorCard);
+    network = createNetwork(root.querySelector("[data-graph-canvas]"), graph, select, anchorCard, percent => { zoom.value = `${percent}%`; });
     updateTrace();
     if (focusAfterRefresh && currentTrace?.nodes.length) { network.fit(true); network.pulse(Boolean(hoveredTrace && hoveredTrace === latest.trace)); focusAfterRefresh = false; }
     else if (hoveredTrace && hoveredTrace === latest.trace && currentTrace?.nodes.length) network.pulse(true);

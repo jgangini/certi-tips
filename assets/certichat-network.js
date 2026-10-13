@@ -64,7 +64,7 @@ export function layoutNetwork(graph) {
   return { nodes, edges, indexes };
 }
 
-export function createNetwork(canvas, graph, onSelect, onAnchor) {
+export function createNetwork(canvas, graph, onSelect, onAnchor, onZoom) {
   const context = canvas.getContext("2d");
   if (!context) throw new Error("Canvas is unavailable");
   const layout = layoutNetwork(graph), edgeKeys = new Set(layout.edges.map(edge => edge.key));
@@ -77,9 +77,10 @@ export function createNetwork(canvas, graph, onSelect, onAnchor) {
   if (!canvas.hasAttribute("tabindex")) canvas.tabIndex = 0;
 
   function invalidate() { if (!frame && !destroyed) frame = requestAnimationFrame(draw); }
-  function moveTo(target, animate) {
+  function moveTo(target, animate, via, duration = 420) {
     pulse = undefined;
-    camera = animate && !reducedMotion.matches && Object.keys(target).some(key => target[key] !== view[key]) ? { from: { ...view }, target } : undefined;
+    const points = [{ ...view }, via, target].filter(Boolean);
+    camera = animate && !reducedMotion.matches && Object.keys(target).some(key => target[key] !== view[key]) ? { points, target, duration } : undefined;
     if (!camera) Object.assign(view, target);
     invalidate();
   }
@@ -104,7 +105,14 @@ export function createNetwork(canvas, graph, onSelect, onAnchor) {
   function select(id, center = false) {
     selected = layout.indexes.has(id) ? id : undefined;
     const node = layout.nodes[layout.indexes.get(selected)];
-    if (center && node) moveTo({ scale: view.scale, x: width / 2 - node.x * view.scale, y: height / 2 - node.y * view.scale }, true);
+    if (center && node) {
+      const x = (width / 2 - view.x) / view.scale, y = (height / 2 - view.y) / view.scale;
+      const scale = Math.max(view.scale, 2), span = Math.min(width, height);
+      const overview = clamp(.7 * Math.min(view.scale, span / (Math.hypot(node.x - x, node.y - y) + span / view.scale)), .04, 12);
+      // Reuse the camera loop for a map flight: pull back along the route, then approach the concept.
+      moveTo({ scale, x: width / 2 - node.x * scale, y: height / 2 - node.y * scale }, true,
+        { scale: overview, x: width / 2 - (x + node.x) / 2 * overview, y: height / 2 - (y + node.y) / 2 * overview }, 1400);
+    }
     pulse = node && !reducedMotion.matches ? { repeat: true, nodes: [selected] } : undefined;
     invalidate();
   }
@@ -140,9 +148,11 @@ export function createNetwork(canvas, graph, onSelect, onAnchor) {
     if (!width || !height || destroyed) return;
     if (camera) {
       camera.started ??= time;
-      const progress = reducedMotion.matches ? 1 : clamp((time - camera.started) / 420, 0, 1);
-      const eased = progress * progress * (3 - 2 * progress);
-      for (const key of ["scale", "x", "y"]) view[key] = camera.from[key] + (camera.target[key] - camera.from[key]) * eased;
+      const progress = reducedMotion.matches ? 1 : clamp((time - camera.started) / camera.duration, 0, 1);
+      const position = progress * (camera.points.length - 1), segment = Math.min(Math.floor(position), camera.points.length - 2);
+      const from = camera.points[segment], target = camera.points[segment + 1], phase = position - segment;
+      const eased = phase * phase * (3 - 2 * phase);
+      for (const key of ["scale", "x", "y"]) view[key] = from[key] + (target[key] - from[key]) * eased;
       if (progress === 1) { Object.assign(view, camera.target); camera = undefined; }
     }
     const style = getComputedStyle(canvas), color = (name, fallback) => style.getPropertyValue(name).trim() || fallback;
@@ -191,6 +201,7 @@ export function createNetwork(canvas, graph, onSelect, onAnchor) {
       }
     }
     onAnchor?.(anchor);
+    onZoom?.(Math.round(view.scale * 100));
     Object.assign(canvas.dataset, { nodeCount: String(layout.nodes.length), edgeCount: String(layout.edges.length), activeNodeCount: String(activeNodes.size), activeEdgeCount: String(activeEdges.size), drawCount: String(Number(canvas.dataset.drawCount || 0) + 1), scale: String(view.scale), panX: String(view.x), panY: String(view.y), cameraMoving: String(Boolean(camera)), pulseActive: String(Boolean(pulse)) });
     if (camera || pulse) invalidate();
   }

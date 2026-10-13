@@ -49,16 +49,18 @@ async page => {
     const labels = await tab.locator('[data-graph-active] button[data-concept]').evaluateAll(items => items.map(item => ({ id: item.dataset.concept, label: item.textContent })));
     assert(labels.every(item => snapshot.nodes.some(node => node.id === item.id && node.label === item.label)), 'Active concepts fabricated names absent from the public graph');
     assert(labels.every((item, index) => !index || labels[index - 1].label.localeCompare(item.label, 'es', { numeric: true, sensitivity: 'base' }) <= 0), 'Retrieved concepts are not alphabetically ordered');
-    assert(await tab.locator('.chat-graph-evidence').evaluate(element => {
-      const buttons = [...element.querySelectorAll('[data-graph-active] button')], style = getComputedStyle(element);
+    const stripState = await tab.locator('.chat-graph-evidence').evaluate(element => {
+      const strip = element.querySelector('[data-graph-active]'), buttons = [...strip.querySelectorAll('button')], style = getComputedStyle(strip);
       const row = buttons[0]?.getBoundingClientRect().top;
-      const reference = document.createElement('span'); reference.style.color = 'var(--scrollbar)'; element.append(reference);
-      const thumbColor = getComputedStyle(reference).color; reference.remove();
-      return style.overflowX === 'auto' && style.overflowY === 'hidden' && style.scrollbarWidth === 'thin'
-        && style.scrollbarColor.startsWith(thumbColor)
-        && buttons.every(button => Math.abs(button.getBoundingClientRect().top - row) <= 1)
-        && document.documentElement.scrollWidth <= document.documentElement.clientWidth;
-    }), 'Concepts wrap, overflow the page, or do not use the standard horizontal scrollbar');
+      const controls = [...element.querySelectorAll('[data-graph-scroll]')], box = strip.getBoundingClientRect();
+      return { overflowX: style.overflowX, overflowY: style.overflowY, scrollbar: style.scrollbarWidth,
+        controls: controls.map(button => { const b = button.getBoundingClientRect(); return { left: b.left, right: b.right }; }), left: box.left, right: box.right,
+        singleRow: buttons.every(button => Math.abs(button.getBoundingClientRect().top - row) <= 1), page: document.documentElement.scrollWidth, viewport: document.documentElement.clientWidth };
+    });
+    assert(stripState.overflowX === 'auto' && stripState.overflowY === 'hidden' && stripState.scrollbar === 'none', 'Concept strip does not hide its native scrollbar');
+    assert(stripState.singleRow && stripState.page <= stripState.viewport, 'Concepts wrap or overflow the page');
+    assert(stripState.controls.length === 2, 'Concept strip lacks its two triangular controls');
+    if (ids.length) assert(stripState.controls[0].right <= stripState.left && stripState.controls[1].left >= stripState.right, 'Triangle controls do not flank the concept strip');
     const names = new Map(snapshot.nodes.map(node => [node.id, node.label]));
     const expectedRelations = edges.map(edge => `${names.get(edge.source)} → ${edge.label || 'relacionado con'} → ${names.get(edge.target)}`).sort();
     const actualRelations = (await tab.locator('[data-graph-active-relations] li').allTextContents()).sort();
@@ -188,6 +190,7 @@ async page => {
     const beforeZoom = await state();
     await tab.locator('[data-graph-zoom-in]').click();
     await tab.waitForFunction(scale => Number(document.querySelector('canvas[data-graph-canvas]').dataset.scale) > scale, beforeZoom.scale);
+    assert(await tab.locator('[data-graph-zoom]').textContent() === `${Math.round((await state()).scale * 100)}%`, 'Zoom badge differs from the actual camera scale');
     await tab.locator('[data-graph-zoom-out]').click();
     await canvas.focus();
     assert(await canvas.evaluate(element => document.activeElement === element), 'Network canvas is not keyboard focusable');
@@ -215,7 +218,15 @@ async page => {
     await tab.emulateMedia({ reducedMotion: 'no-preference' });
     await tab.locator(`[data-graph-active] button[data-concept="${first.source}"]`).click();
     await tab.waitForFunction(() => document.querySelector('canvas[data-graph-canvas]').dataset.cameraMoving === 'true');
-    await tab.waitForFunction(() => document.querySelector('canvas[data-graph-canvas]').dataset.cameraMoving === 'false');
+    const flight = await canvas.evaluate(element => new Promise(resolve => {
+      const samples = [], deadline = performance.now() + 1500;
+      const sample = () => {
+        samples.push(Number(element.dataset.scale));
+        if (element.dataset.cameraMoving === 'false' || performance.now() > deadline) resolve(samples);
+        else requestAnimationFrame(sample);
+      }; sample();
+    }));
+    assert(flight.length > 2 && Math.min(...flight) < flight[0] && flight.at(-1) >= 2 && await canvas.getAttribute('data-camera-moving') === 'false', 'Concept navigation did not pull back and then zoom in');
     await card.waitFor({ state: 'visible' });
     const selectedWaves = await canvas.evaluate(element => new Promise(resolve => {
       const frames = [], start = performance.now();
@@ -233,6 +244,7 @@ async page => {
     });
     assert(Math.abs(cardGeometry.centerX - cardGeometry.nodeX) <= 1 && cardGeometry.bottom < cardGeometry.nodeY - 8 && cardGeometry.left >= cardGeometry.minX && cardGeometry.right <= cardGeometry.maxX, `Concept card did not float centered above the selected node: ${JSON.stringify(cardGeometry)}`);
     assert(await card.locator('strong').textContent() === snapshot.nodes.find(node => node.id === first.source).label, 'Card title does not match the selected concept');
+    assert(await tab.locator('[data-graph-active] button[aria-pressed="true"]').count() === 1 && await tab.locator('[data-graph-active] button[aria-pressed="true"]').getAttribute('data-concept') === first.source, 'Selected concept tag is not uniquely marked');
     assert(await card.locator('strong').evaluate(element => getComputedStyle(element).borderBottomWidth) === '1px', 'Concept card has no separator between title and sources');
     const reference = card.getByRole('link', { name: `Profundizar: ${trace1.sources[0].title}` });
     assert(await reference.getAttribute('href') === guidePath && await card.locator('a').count() === 1, 'Card reference was not restricted to current-query source evidence');
@@ -247,6 +259,10 @@ async page => {
     checks.push('concept tags center smoothly, floating cards show only matching query evidence, guide links retain chat');
     for (const theme of ['dark', 'light']) {
       await tab.evaluate(value => document.documentElement.dataset.theme = value, theme);
+      assert(await tab.locator('[data-graph-meta]').evaluate(element => {
+        const bubble = document.querySelector('deep-chat').shadowRoot.querySelector('.ai-message'), reference = getComputedStyle(bubble);
+        return [...element.querySelectorAll('dd')].every(cell => getComputedStyle(cell).backgroundColor === reference.backgroundColor && getComputedStyle(cell).color === reference.color);
+      }), `${theme}: graph values do not share the answer bubble colors`);
       const tags = await tab.locator('[data-graph-active] button').evaluateAll(items => items.map(element => {
         const s = getComputedStyle(element);
         return { background: s.backgroundColor, border: s.borderTopColor, borderWidth: s.borderTopWidth, radius: s.borderRadius, fontSize: parseFloat(s.fontSize), paddingY: parseFloat(s.paddingTop) + parseFloat(s.paddingBottom) };
@@ -457,6 +473,20 @@ async page => {
     }
     checks.push('aligned desktop map/chat and in-page mobile stack at 1440/1280/1024/800/360/320');
     checks.push('four named SVG controls float in a 36 px vertical column with 6 px gaps and 12 px inset');
+    const many = { version: snapshot.version, nodes: snapshot.nodes.slice(0, 80).map(node => node.id), edges: [], truncated: false };
+    await send('Consulta para desplazar conceptos', many); await answered('Respuesta: Consulta para desplazar conceptos.'); await active(many.nodes);
+    const strip = tab.locator('[data-graph-active]'), left = tab.locator('[data-graph-scroll="-1"]'), right = tab.locator('[data-graph-scroll="1"]');
+    assert(await left.isHidden() && await right.isVisible(), 'Scroll controls do not hide at the initial boundary');
+    await right.click();
+    await tab.waitForFunction(() => document.querySelector('[data-graph-active]').scrollLeft > 0);
+    assert(await left.isVisible(), 'Left control remains hidden after scrolling right');
+    await left.click();
+    await tab.waitForFunction(() => document.querySelector('[data-graph-active]').scrollLeft <= 1);
+    assert(await left.isHidden(), 'Left control remains visible at the beginning');
+    await strip.locator('button').last().focus();
+    await tab.waitForFunction(() => document.querySelector('[data-graph-scroll="1"]').disabled);
+    assert(await right.isHidden(), 'Right control remains visible at the end');
+    checks.push('triangle controls scroll both directions, hide at boundaries, and retain keyboard access to every tag');
     for (const theme of ['dark', 'light']) {
       await tab.evaluate(value => document.documentElement.dataset.theme = value, theme);
       await tab.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));

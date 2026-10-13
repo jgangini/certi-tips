@@ -12,6 +12,7 @@
 .chat-graph-toolbar .button { width: 36px; height: 36px; min-height: 36px; padding: 0; background: var(--paper); box-shadow: 0 2px 8px var(--shadow); }
 .chat-graph-toolbar svg { width: 18px; height: 18px; }
 .chat-graph-toolbar .button:disabled { opacity: .5; cursor: default; }
+.chat-graph-zoom { align-self: center; padding: 2px 5px; border: 1px solid var(--line); border-radius: 4px; background: var(--hover); color: var(--ink); font-size: 11px; font-variant-numeric: tabular-nums; }
 .chat-graph-network { position: relative; flex: 1; min-height: 100px; overflow: hidden; }
 .chat-graph-network canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 .chat-graph-network canvas:focus-visible { outline: 3px solid var(--blue); outline-offset: -4px; }
@@ -20,24 +21,31 @@
 .chat-graph-card p { margin: 4px 0 0; color: var(--muted); }
 .chat-graph-card a { display: block; margin-top: 5px; color: var(--red); }
 .chat-graph-card[hidden] { display: none; }
-.chat-graph-evidence { flex-shrink: 0; padding: 0 16px; overflow-x: auto; overflow-y: hidden; overscroll-behavior: contain; scrollbar-color: var(--scrollbar) transparent; scrollbar-width: thin; }
+.chat-graph-evidence { flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 0 8px; }
+.chat-graph-evidence:has(.chat-graph-active:empty) > .chat-graph-scroll { display: none; }
 .chat-graph-evidence:has(.chat-graph-active:not(:empty)) { border-top: 1px solid var(--line); }
+.chat-graph-scroll { flex-shrink: 0; width: 32px; height: 32px; min-height: 32px; padding: 0; }
+.chat-graph-scroll svg { width: 14px; height: 14px; }
+.chat-graph-scroll:disabled { visibility: hidden; }
 .chat-graph-footer { flex-shrink: 0; min-height: 46px; display: flex; border-top: 1px solid var(--line); container-type: inline-size; }
 .chat-graph-meta { display: grid; grid-template-columns: max-content max-content minmax(max-content, 1fr) max-content; width: 100%; color: var(--muted); font-size: 12px; line-height: 1.5; margin: 0; }
 .chat-graph-meta > div { display: flex; min-height: 23px; }
 .chat-graph-meta > div + div, .chat-graph-meta dd { border-left: 1px solid var(--line); }
 .chat-graph-meta > div:nth-child(2) { border-right: 1px solid var(--line); }
 .chat-graph-meta dt, .chat-graph-meta dd { display: flex; align-items: center; padding: 2px 8px; margin: 0; }
-.chat-graph-meta dd { flex: 1; justify-content: flex-end; color: var(--ink); white-space: nowrap; }
+.chat-graph-meta dd { flex: 1; justify-content: flex-end; background: var(--hover); color: var(--ink); white-space: nowrap; }
 .chat-graph-stamp { justify-self: end; }
 .chat-graph-updating { flex-shrink: 0; width: 12px; height: 12px; margin-left: 6px; border-width: 2px; }
 .chat-graph-updating[hidden] { display: none; }
 @container (max-width: 660px) { .chat-graph-meta { grid-template-columns: 1fr 1fr; } .chat-graph-stamp { justify-self: stretch; } }
 @container (max-width: 430px) { .chat-graph-meta { grid-template-columns: 1fr; } }
-.chat-graph-active { display: flex; flex-wrap: nowrap; gap: 6px; list-style: none; padding: 0; margin: 8px 0; }
+.chat-graph-active { display: flex; flex: 1; min-width: 0; flex-wrap: nowrap; gap: 6px; list-style: none; padding: 2px; margin: 6px 0; overflow-x: auto; overflow-y: hidden; overscroll-behavior: contain; scrollbar-width: none; }
+.chat-graph-active::-webkit-scrollbar { display: none; }
 .chat-graph-active li { flex-shrink: 0; }
 .chat-graph-active:empty { display: none; }
 .chat-graph-active button { font: inherit; font-size: 13px; line-height: 1.4; border: 1px solid var(--muted); border-radius: 4px; background: var(--chrome-bg); color: var(--ink); padding: 3px 6px; white-space: nowrap; cursor: pointer; }
+.chat-graph-active button:focus-visible { outline-offset: -2px; }
+.chat-graph-active button[aria-pressed="true"] { background: var(--red); border-color: var(--red); color: var(--on-red); }
 .chat-graph-status { margin: 8px 16px; padding: 18px; border-radius: 8px; background: var(--hover); }
 .chat-graph-status.is-loading { flex: 1; display: grid; place-items: center; margin: 0; background: none; }
 [data-graph-workspace][hidden], .chat-graph-status[hidden] { display: none; }
