@@ -2,6 +2,7 @@
 
 import asyncio
 from contextlib import asynccontextmanager, suppress
+from datetime import datetime, timezone
 import hashlib
 import json
 import re
@@ -189,7 +190,13 @@ def create_app(settings=None, *, transport=None):
             value = response.json()
             version = value.get("version")
             result["knowledge"] = {"version": version if isinstance(version, str) and re.fullmatch(r"[0-9a-f]{64}", version) else None,
-                                   "indexing": value.get("indexing") is True}
+                                   "indexing": value.get("indexing") is True, "checkedAt": None}
+            checked_at = value.get("checkedAt")
+            with suppress(ValueError):
+                if isinstance(checked_at, str) and len(checked_at) <= 40:
+                    stamp = datetime.fromisoformat(checked_at)
+                    if stamp.tzinfo:
+                        result["knowledge"]["checkedAt"] = stamp.astimezone(timezone.utc).isoformat()
         except (httpx.HTTPError, ValueError, AttributeError):
             pass
         return result

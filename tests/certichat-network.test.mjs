@@ -149,22 +149,30 @@ test("Canvas preserves trace membership, camera control and selection styling", 
     step(7200);
     assert.equal(canvas.dataset.pulseActive, "false");
     assert.equal(frames.size, 0, "pulse must stop requesting frames after 1.2 seconds");
+    renderer.pulse(true); step(10000);
+    const repeatedWave = strokes.findLast(stroke => stroke.color === "#c74634" && stroke.opacity === 0.38);
+    step(11200); step(12400);
+    assert.equal(canvas.dataset.pulseActive, "true", "hover must repeat beyond the single-click pulse duration");
+    assert.deepEqual(strokes.findLast(stroke => stroke.color === "#c74634" && stroke.opacity === 0.38).radii, repeatedWave.radii, "each hover cycle highlights only the same retrieved nodes");
+    renderer.stopPulse(); step(12416);
+    assert.equal(canvas.dataset.pulseActive, "false");
+    assert.equal(frames.size, 0, "leaving the answer must stop the repeated frame loop");
     for (const interrupt of [() => renderer.zoom(1.1), () => renderer.fit(),
       () => events.get("pointerdown")(pointerPan),
       () => events.get("keydown")({ key: "ArrowRight", preventDefault() {} }),
       () => renderer.setTrace({ nodes: ["c"], edges: [] })]) {
-      renderer.pulse(); step(8000); interrupt(); step(8016);
+      renderer.pulse(true); step(8000); interrupt(); step(8016);
       assert.equal(canvas.dataset.pulseActive, "false", "manual camera controls and new evidence must cancel the pulse");
       assert.equal(frames.size, 0);
     }
-    motion.matches = true; renderer.pulse();
+    motion.matches = true; renderer.pulse(true);
     assert.equal(frames.size, 0, "reduced motion must not start a pulse");
-    motion.matches = false; renderer.pulse(); step(9000); motion.matches = true; step(9016);
+    motion.matches = false; renderer.pulse(true); step(9000); motion.matches = true; step(9016);
     assert.equal(canvas.dataset.pulseActive, "false", "enabling reduced motion must stop an active pulse");
     assert.equal(frames.size, 0);
     motion.matches = true; renderer.select("a", true); flush();
     assert.equal(canvas.dataset.cameraMoving, "false", "reduced motion centers concepts immediately");
-    motion.matches = false; startKeyboardFit(); renderer.pulse();
+    motion.matches = false; startKeyboardFit(); renderer.pulse(true);
     renderer.destroy();
     assert.equal(canvas.dataset.pulseActive, "false");
     assert.equal(destroyed, 2);

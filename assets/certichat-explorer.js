@@ -18,7 +18,7 @@ export function indexGraph(data) {
       links.get(to).push(edges.at(-1));
     }
   }
-  return { byId, neighbors, edges, nodes: [...byId.values()].sort((a, b) => a.label.localeCompare(b.label, "es")) };
+  return { byId, neighbors, edges, nodes: [...byId.values()].sort((a, b) => a.label.localeCompare(b.label, "es", { numeric: true, sensitivity: "base" })) };
 }
 
 const root = typeof document === "undefined" ? null : document.querySelector("[data-knowledge-graph]");
@@ -36,7 +36,8 @@ if (root?.dataset.knowledgeGraph) {
     if (className) node.className = className;
     return node;
   };
-  let graph, network, version, currentTrace, refreshing, focusAfterRefresh = false, lastGraphCheck = 0;
+  const timestampFormat = new Intl.DateTimeFormat("es", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" });
+  let graph, network, version, generatedWhen, currentTrace, refreshing, hoveredTrace, focusAfterRefresh = false, lastGraphCheck = 0;
   let latest = { status: "idle", trace: readTrace(siteRoot) };
   if (latest.trace) latest.status = "ready";
   const updating = element("span", undefined, "certichat-spinner chat-graph-updating");
@@ -51,6 +52,12 @@ if (root?.dataset.knowledgeGraph) {
         const knowledge = (await response.json()).knowledge;
         indexing = knowledge?.indexing === true;
         if (knowledge?.version && knowledge.version !== version) await refreshGraph();
+        const date = typeof knowledge?.checkedAt === "string" ? new Date(knowledge.checkedAt) : null;
+        if (date && Number.isFinite(date.getTime())) {
+          const stamp = root.querySelector(".chat-graph-stamp dd");
+          stamp.textContent = timestampFormat.format(date).replaceAll("/", "-").replace(",", "");
+          stamp.title = `Última sincronización con el repositorio. Índice generado el ${generatedWhen}.`;
+        }
       }
     } catch { /* An unverified update must not keep the spinner running. */ }
     updating.hidden = !indexing;
@@ -96,7 +103,7 @@ if (root?.dataset.knowledgeGraph) {
     const mismatch = trace && trace.version !== version;
     if (mismatch) trace = null;
     if (trace) {
-      const nodes = trace.nodes.filter(id => graph.byId.has(id)), ids = new Set(nodes);
+      const retrieved = new Set(trace.nodes), nodes = graph.nodes.filter(node => retrieved.has(node.id)).map(node => node.id), ids = new Set(nodes);
       const edges = trace.edges.filter(edge => ids.has(edge.source) && ids.has(edge.target) && graph.neighbors.get(edge.source)?.get(edge.target)?.some(link => link.source === edge.source && link.target === edge.target && link.label === edge.label));
       trace = { ...trace, nodes, edges };
     }
@@ -122,10 +129,17 @@ if (root?.dataset.knowledgeGraph) {
   }
 
   window.addEventListener("certichat:trace", event => { latest = event.detail; updateTrace(); });
+  window.addEventListener("certichat:hover", event => {
+    hoveredTrace = event.detail;
+    if (!hoveredTrace) { network?.stopPulse(); return; }
+    focusAfterRefresh = false;
+    latest = { status: "ready", trace: hoveredTrace }; updateTrace();
+    if (currentTrace?.nodes.length) network.pulse(true);
+  });
   window.addEventListener("certichat:focus", event => {
     focusAfterRefresh = true;
     latest = { status: "ready", trace: event.detail }; updateTrace();
-    if (currentTrace?.nodes.length) { network.fit(true); network.pulse(); focusAfterRefresh = false; }
+    if (currentTrace?.nodes.length) { network.fit(true); network.pulse(Boolean(hoveredTrace && hoveredTrace === event.detail)); focusAfterRefresh = false; }
   });
 
   function showGraph(data) {
@@ -133,18 +147,20 @@ if (root?.dataset.knowledgeGraph) {
     if (!indexed.nodes.length || !/^[a-f0-9]{64}$/.test(data.version)) throw new Error("Invalid graph");
     network?.destroy();
     graph = indexed; version = data.version;
-    const date = new Date(data.generatedAt), when = Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat("es", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).format(date).replaceAll("/", "-").replace(",", "") : "fecha no disponible";
+    const date = new Date(data.generatedAt), when = Number.isFinite(date.getTime()) ? timestampFormat.format(date).replaceAll("/", "-").replace(",", "") : "fecha no disponible";
+    generatedWhen = when;
     const metadata = root.querySelector("[data-graph-meta]");
     metadata.replaceChildren();
     for (const [label, value] of [["Conceptos", graph.nodes.length.toLocaleString("es")], ["Relaciones", graph.edges.length.toLocaleString("es")], ["Actualización", when], ["Versión", String(version).slice(0, 12)]]) {
       const item = element("div"); item.append(element("dt", label), element("dd", value)); metadata.append(item);
-      if (label === "Actualización") item.className = "chat-graph-stamp";
+      if (label === "Actualización") { item.className = "chat-graph-stamp"; item.lastElementChild.title = `Índice generado el ${when}. Sincronización del repositorio pendiente de comprobar.`; }
       if (label === "Versión") item.lastElementChild.append(updating);
     }
     status.hidden = true; workspace.hidden = false;
     network = createNetwork(root.querySelector("[data-graph-canvas]"), graph, select, anchorCard);
     updateTrace();
-    if (focusAfterRefresh && currentTrace?.nodes.length) { network.fit(true); network.pulse(); focusAfterRefresh = false; }
+    if (focusAfterRefresh && currentTrace?.nodes.length) { network.fit(true); network.pulse(Boolean(hoveredTrace && hoveredTrace === latest.trace)); focusAfterRefresh = false; }
+    else if (hoveredTrace && hoveredTrace === latest.trace && currentTrace?.nodes.length) network.pulse(true);
   }
 
   async function refreshGraph() {
@@ -173,7 +189,10 @@ if (root?.dataset.knowledgeGraph) {
       activeFit.addEventListener("click", () => network.fit(true));
       refreshVersionStatus();
       setInterval(refreshVersionStatus, 30000);
-      document.addEventListener("visibilitychange", refreshVersionStatus);
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) { hoveredTrace = null; network.stopPulse(); }
+        else refreshVersionStatus();
+      });
     } catch {
       status.classList.remove("is-loading"); status.removeAttribute("aria-label");
       status.textContent = "No se pudo cargar la instantánea del mapa. Actualiza la página para volver a intentarlo.";

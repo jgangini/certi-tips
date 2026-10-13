@@ -24,6 +24,9 @@ test("knowledge exploration indexes real directions, self-links and labels witho
   assert.equal(graph.neighbors.get("b").get("b").length, 1);
   assert.equal(graph.neighbors.get("c").size, 0);
   assert.throws(() => indexGraph({ nodes: [] }), /Invalid knowledge graph/);
+  assert.deepEqual(indexGraph({ nodes: ["Región", "área de DAMA 10", "Área de DAMA 2", "Acceso"]
+    .map(label => ({ id: label, label })), edges: [] }).nodes.map(node => node.label),
+  ["Acceso", "Área de DAMA 2", "área de DAMA 10", "Región"]);
 });
 
 test("the explorer is a standalone site page and offers an honest missing-snapshot state", () => {

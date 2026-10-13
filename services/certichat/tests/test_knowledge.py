@@ -2,6 +2,8 @@
 
 import asyncio
 import fcntl
+import os
+from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 import sys
 from types import SimpleNamespace
@@ -124,7 +126,8 @@ def test_retrieval_uses_latest_manifest_after_search_while_health_keeps_snapshot
     assert result["version"] == current["contentHash"]
     assert result["graphTrace"]["version"] == initial["contentHash"]
     assert [fragment["url"] for fragment in result["fragments"]] == [SITE + "stable/"]
-    assert asyncio.run(knowledge.health()) == {"status": "ready", "version": "a"*64, "indexing": False}
+    assert asyncio.run(knowledge.health()) == {"status": "ready", "version": "a"*64, "indexing": False,
+        "checkedAt": datetime.fromtimestamp((tmp_path / "latest.json").stat().st_mtime, timezone.utc).isoformat()}
 
 
 def test_health_tracks_the_live_index_lock_and_stops_after_release(tmp_path, monkeypatch):
@@ -133,6 +136,14 @@ def test_health_tracks_the_live_index_lock_and_stops_after_release(tmp_path, mon
         fcntl.flock(lock, fcntl.LOCK_EX)
         assert asyncio.run(knowledge.health())["indexing"] is True
     assert asyncio.run(knowledge.health())["indexing"] is False
+    assert asyncio.run(knowledge.health())["checkedAt"] is None
+    latest = tmp_path / "latest.json"
+    atomic_json(latest, {"contentHash": "b"*64})
+    for timestamp in (1791878400, 1791878700):
+        os.utime(latest, (timestamp, timestamp))
+        status = asyncio.run(knowledge.health())
+        assert status["checkedAt"] == datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
+        assert status["version"] == "a"*64 and status["indexing"] is False
 
 
 def test_current_page_precedes_graph_results_with_existing_source_limit(tmp_path, monkeypatch):

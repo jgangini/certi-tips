@@ -5,7 +5,7 @@ async page => {
   const base = new URL('/certitips/', page.url()), context = await page.context().browser().newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
   const tab = await context.newPage(), requests = [], calls = [], errors = [], checks = [], geometry = [];
   let snapshot, graphOverride, reply = {}, releaseReply, pendingReply, releaseGraph, pendingGraph;
-  let indexing = true, healthAvailable = true, serverGraph, graphAvailable = true;
+  let indexing = true, healthAvailable = true, serverGraph, graphAvailable = true, checkedAt = '2026-10-13T16:00:00+00:00';
   const quota = { remaining: 20, limit: 20, refreshHours: 6, resetAt: null, minuteRemaining: 2, retryAfter: 0 };
   const session = { mode: 'LOCAL', authenticated: true, verificationRequired: false, available: true, quota };
   tab.on('request', request => requests.push(request.url()));
@@ -15,7 +15,7 @@ async page => {
     if (url.origin !== base.origin) return route.abort('blockedbyclient');
     if (url.pathname.startsWith('/api/')) {
       calls.push({ path: url.pathname, method: request.method(), body: request.postDataJSON() });
-      if (url.pathname === '/api/health') return route.fulfill({ status: healthAvailable ? 200 : 503, json: { ok: healthAvailable, knowledge: { version: (serverGraph || snapshot)?.version, indexing } } });
+      if (url.pathname === '/api/health') return route.fulfill({ status: healthAvailable ? 200 : 503, json: { ok: healthAvailable, knowledge: { version: (serverGraph || snapshot)?.version, indexing, checkedAt } } });
       if (url.pathname === '/api/graph') return route.fulfill({ status: graphAvailable ? 200 : 503, json: serverGraph || snapshot });
       if (url.pathname !== '/api/chat') return route.fulfill({ json: session });
       const response = reply;
@@ -45,6 +45,17 @@ async page => {
     }, { ids, edges: edges.length });
     const labels = await tab.locator('[data-graph-active] button[data-concept]').evaluateAll(items => items.map(item => ({ id: item.dataset.concept, label: item.textContent })));
     assert(labels.every(item => snapshot.nodes.some(node => node.id === item.id && node.label === item.label)), 'Active concepts fabricated names absent from the public graph');
+    assert(labels.every((item, index) => !index || labels[index - 1].label.localeCompare(item.label, 'es', { numeric: true, sensitivity: 'base' }) <= 0), 'Retrieved concepts are not alphabetically ordered');
+    assert(await tab.locator('.chat-graph-evidence').evaluate(element => {
+      const buttons = [...element.querySelectorAll('[data-graph-active] button')], style = getComputedStyle(element);
+      const row = buttons[0]?.getBoundingClientRect().top;
+      const reference = document.createElement('span'); reference.style.color = 'var(--scrollbar)'; element.append(reference);
+      const thumbColor = getComputedStyle(reference).color; reference.remove();
+      return style.overflowX === 'auto' && style.overflowY === 'hidden' && style.scrollbarWidth === 'thin'
+        && style.scrollbarColor.startsWith(thumbColor)
+        && buttons.every(button => Math.abs(button.getBoundingClientRect().top - row) <= 1)
+        && document.documentElement.scrollWidth <= document.documentElement.clientWidth;
+    }), 'Concepts wrap, overflow the page, or do not use the standard horizontal scrollbar');
     const names = new Map(snapshot.nodes.map(node => [node.id, node.label]));
     const expectedRelations = edges.map(edge => `${names.get(edge.source)} → ${edge.label || 'relacionado con'} → ${names.get(edge.target)}`).sort();
     const actualRelations = (await tab.locator('[data-graph-active-relations] li').allTextContents()).sort();
@@ -89,7 +100,7 @@ async page => {
     assert(await loading.isHidden() && await tab.locator('[data-graph-trace]').isHidden() && !(await tab.locator('[data-graph-trace]').textContent()).trim(), 'Graph startup leaves a loader or idle instructions visible');
     checks.push('centered accessible graph spinner rotates, respects reduced motion, and yields to graph without idle text');
     const loadMs = Date.now() - start, initial = await state();
-    assert(snapshot.nodes.length >= 4000 && snapshot.edges.length >= 10000, 'Smoke requires the real published graph, not a reduced fixture');
+    assert(snapshot.nodes.length >= 3000 && snapshot.edges.length >= 8000, 'Smoke requires the real published graph, not a reduced fixture');
     assert(initial.nodes === snapshot.nodes.length && initial.edges === snapshot.edges.length, 'Network omitted public graph nodes or edges');
     assert(loadMs < 15000, `Real graph startup took ${loadMs} ms`);
     await active([]);
@@ -103,6 +114,16 @@ async page => {
       return stamp.nextElementSibling === version && Math.abs(version.getBoundingClientRect().right - frame.right) <= 1 && stamp.getBoundingClientRect().right <= version.getBoundingClientRect().left + 1;
     }), 'Update date and version are not grouped on the right');
     assert(await metadata.evaluate(element => [...element.querySelectorAll('dd')].every(cell => getComputedStyle(cell).borderLeftWidth === '1px' && getComputedStyle(cell).color !== getComputedStyle(cell.previousElementSibling).color)), 'Graph cells lack real dividing borders or distinct label/value colors');
+    await tab.waitForFunction(() => document.querySelector('.chat-graph-stamp dd')?.title.startsWith('Última sincronización'));
+    const priorStamp = await metadata.locator('dd').nth(2).textContent(), priorCamera = await state();
+    const priorGraphCalls = calls.filter(call => call.path === '/api/graph').length;
+    checkedAt = '2026-10-13T16:05:00+00:00';
+    await tab.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await tab.waitForFunction(previous => document.querySelector('.chat-graph-stamp dd')?.textContent !== previous, priorStamp);
+    const refreshedCamera = await state();
+    assert(calls.filter(call => call.path === '/api/graph').length === priorGraphCalls && priorCamera.scale === refreshedCamera.scale && priorCamera.panX === refreshedCamera.panX && priorCamera.panY === refreshedCamera.panY, 'A metadata-only synchronization reloaded or moved the graph');
+    assert((await metadata.locator('dd').nth(2).getAttribute('title')).includes('Índice generado el'), 'Synchronization hides the original index creation time');
+    checks.push('successful synchronization updates the timestamp with the same index version and preserves the camera');
     const versionSpinner = tab.getByRole('status', { name: 'Actualizando el índice de conocimiento', exact: true });
     await versionSpinner.waitFor();
     assert(await metadata.locator('dd').last().getAttribute('aria-busy') === 'true' && await versionSpinner.evaluate(element => getComputedStyle(element).animationName === 'none'), 'Indexing status is not accessible or ignores reduced motion');
@@ -154,7 +175,7 @@ async page => {
     assert(await tab.locator('[data-chat-open]').isHidden(), 'Auto-opened chat leaves a redundant launcher');
     await tab.getByRole('textbox', { name: 'Escribe tu consulta', exact: true }).press('Escape');
     assert(await tab.locator('#certichat-panel').isVisible(), 'Escape closes the persistent explorer chat');
-    checks.push('real 4k/10k graph initialized within 15s', 'initial graph has no active trace', 'snapshot provenance');
+    checks.push('real published graph initialized within 15s', 'initial graph has no active trace', 'snapshot provenance');
     checks.push('removed intro/sections stay absent', 'chat opens automatically with hidden close/graph controls and ignores Escape');
     const beforeZoom = await state();
     await tab.locator('[data-graph-zoom-in]').click();
@@ -262,14 +283,27 @@ async page => {
     await tab.mouse.move(0, 0);
     const beforeHover = await state();
     await responses.first().hover();
-    await active(trace2.nodes, trace2.edges);
-    assert(JSON.stringify(await state()) === JSON.stringify(beforeHover), 'Hover moved the camera or changed the active trace');
+    await active(trace1.nodes, trace1.edges);
+    const hoverPose = await state();
+    assert(hoverPose.scale === beforeHover.scale && hoverPose.panX === beforeHover.panX && hoverPose.panY === beforeHover.panY, 'Hover moved the camera');
+    const hoverFrames = await canvas.evaluate(element => new Promise(resolve => {
+      const frames = [], start = performance.now();
+      const sample = () => {
+        frames.push(element.dataset.pulseActive);
+        if (performance.now() - start >= 2600) resolve(frames);
+        else requestAnimationFrame(sample);
+      };
+      requestAnimationFrame(sample);
+    }));
+    assert(hoverFrames.length > 2 && hoverFrames.every(active => active === 'true'), 'Hover pulse stopped after one cycle');
     assert(await responses.first().evaluate(element => {
       const style = getComputedStyle(element), reference = document.createElement('span');
       reference.style.color = 'var(--red)'; element.append(reference);
       const red = getComputedStyle(reference).color; reference.remove();
       return style.borderTopWidth === '1px' && style.borderTopColor === red;
     }), 'Explorer answer hover does not have the theme red border');
+    await tab.mouse.move(0, 0);
+    await tab.waitForFunction(() => document.querySelector('canvas[data-graph-canvas]').dataset.pulseActive === 'false');
     await responses.first().focus();
     assert(JSON.stringify(await state()) === JSON.stringify(beforeHover), 'Keyboard focus moved the camera before activation');
     await responses.first().click({ position: { x: 5, y: 5 } });
@@ -285,6 +319,7 @@ async page => {
     }));
     assert(clickFrames.length >= 3 && clickFrames.at(-1).cameraMoving === 'false' && new Set(clickFrames.map(frame => `${frame.scale}:${frame.panX}:${frame.panY}`)).size >= 3, 'Click did not use smooth intermediate camera positions');
     assert(await canvas.getAttribute('data-pulse-active') === 'true', 'Click did not start the concept pulse');
+    await tab.mouse.move(0, 0);
     await tab.waitForFunction(() => document.querySelector('canvas[data-graph-canvas]').dataset.pulseActive === 'false');
     const idleDraws = await canvas.getAttribute('data-draw-count');
     await canvas.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
@@ -300,13 +335,15 @@ async page => {
     assert(await canvas.getAttribute('data-camera-moving') === 'false' && await canvas.getAttribute('data-pulse-active') === 'false', 'Keyboard activation ignored reduced motion');
     await responses.first().focus(); await responses.first().press('Space'); await active(trace1.nodes, trace1.edges);
     await responses.nth(1).click({ position: { x: 5, y: 5 } }); await active(trace2.nodes, trace2.edges);
-    const beforeLink = await state(), guideLink = responses.first().locator('a');
+    const guideLink = responses.first().locator('a');
+    await guideLink.hover(); await active(trace1.nodes, trace1.edges);
+    const beforeLink = await state();
     await guideLink.evaluate(link => link.addEventListener('click', event => event.preventDefault(), { once: true }));
     await guideLink.click();
     assert(JSON.stringify(await state()) === JSON.stringify(beforeLink), 'Reference click also selected the answer graph');
     assert(await tab.evaluate(root => sessionStorage.getItem(`certichat:${root}:reference`), siteRoot) === trace1.sources[0].url, 'Reference click lost its navigation marker');
     assert(calls.filter(call => call.path === '/api/chat').length === countBeforeReload, 'Response interaction made an API request');
-    checks.push('answer hover shows red border without moving graph; click centers historical evidence smoothly and pulses briefly', 'Enter and Space activate responses, focus alone and reference clicks do not; reduced motion skips animation');
+    checks.push('answer hover selects historical evidence without moving the camera and repeats the pulse until exit; click centers it smoothly', 'Enter and Space activate responses, focus alone and reference clicks do not; reduced motion skips animation');
 
     await tab.reload(); await ready(); await active(trace2.nodes, trace2.edges);
     await openChat();

@@ -54,7 +54,8 @@ def clients(database_url, request):
             return httpx.Response(200, json=turnstile)
         if request.url.host == "knowledge":
             if request.url.path == "/health":
-                return httpx.Response(200, json={"status": knowledge["status"], "version": knowledge["version"], "indexing": knowledge.get("indexing", False)})
+                return httpx.Response(200, json={"status": knowledge["status"], "version": knowledge["version"],
+                                               "indexing": knowledge.get("indexing", False), "checkedAt": knowledge.get("checkedAt")})
             assert request.headers["Authorization"] == "Bearer " + "c"*32
             if request.url.path == "/graph":
                 return httpx.Response(200, json=knowledge.get("graph"))
@@ -97,9 +98,13 @@ def test_public_health_reports_indexing_without_a_paid_request_and_rejects_inval
     make, _app, calls, _turnstile, knowledge = clients
     client = make()
     knowledge["indexing"] = True
-    assert client.get("/api/health").json() == {"ok": True, "knowledge": {"version": VERSION, "indexing": True}}
+    knowledge["checkedAt"] = "2026-10-13T11:04:11-05:00"
+    assert client.get("/api/health").json() == {"ok": True, "knowledge": {"version": VERSION, "indexing": True,
+        "checkedAt": "2026-10-13T16:04:11+00:00"}}
     knowledge.update(indexing="true", version="private/internal/path")
-    assert client.get("/api/health").json()["knowledge"] == {"version": None, "indexing": False}
+    for invalid in (None, "private/internal/path", "2026-10-32T16:04:11+00:00", "2026-10-13T16:04:11", 123):
+        knowledge["checkedAt"] = invalid
+        assert client.get("/api/health").json()["knowledge"] == {"version": None, "indexing": False, "checkedAt": None}
     assert all(request.url.host == "knowledge" and request.url.path == "/health" for request in calls)
 
 

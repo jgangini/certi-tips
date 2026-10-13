@@ -120,10 +120,10 @@ export function createNetwork(canvas, graph, onSelect, onAnchor) {
     if (!pulse) return;
     pulse.started ??= time;
     const elapsed = time - pulse.started;
-    if (reducedMotion.matches || elapsed >= 1200) { pulse = undefined; return; }
+    if (reducedMotion.matches || (!pulse.repeat && elapsed >= 1200)) { pulse = undefined; return; }
     context.strokeStyle = red; context.lineWidth = 1.5 / view.scale;
     for (const delay of [0, 240]) {
-      const progress = (elapsed - delay) / 960;
+      const progress = ((elapsed % 1200) - delay) / 960;
       if (progress < 0 || progress >= 1) continue;
       context.beginPath();
       for (const id of activeNodes) {
@@ -251,10 +251,12 @@ export function createNetwork(canvas, graph, onSelect, onAnchor) {
       activeEdges = new Set((trace?.edges || []).map(edgeKey).filter(key => edgeKeys.has(key)));
       invalidate();
     },
-    pulse() {
+    pulse(repeat = false) {
       if (destroyed || reducedMotion.matches || !activeNodes.size) return;
-      pulse = {}; invalidate();
+      // ponytail: repeat within the existing frame loop; hover exit and camera controls cancel it.
+      pulse = { repeat }; invalidate();
     },
+    stopPulse() { pulse = undefined; invalidate(); },
     select, fit, zoom: zoomAt,
     destroy() { destroyed = true; camera = pulse = undefined; canvas.dataset.pulseActive = "false"; onAnchor?.(null); cancelAnimationFrame(frame); events.abort(); observer.disconnect(); theme.disconnect(); pointers.clear(); },
   };

@@ -150,14 +150,16 @@ if (root) {
   }
 
   function focusResponse(event) {
-    if (!dock || busy || event.target.closest?.("a")) return;
+    const hovering = event.type.startsWith("pointer");
+    if (!dock || busy || (!hovering && event.target.closest?.("a"))) return;
+    if (hovering && event.pointerType === "touch") return;
     if (event.type === "keydown" && (!["Enter", " "].includes(event.key) || event.repeat)) return;
-    const bubble = event.target.closest?.(responseSelector);
-    if (!bubble || bubble.classList.contains("streamed-message")) return;
+    const bubble = hovering ? event.target : event.target.closest?.(responseSelector);
+    if (!bubble?.matches?.(responseSelector) || bubble.classList.contains("streamed-message")) return;
     if (event.type === "keydown") event.preventDefault();
     const index = [...chat.shadowRoot.querySelectorAll(responseSelector)].indexOf(bubble);
-    const trace = responseTraces[index];
-    window.dispatchEvent(new CustomEvent("certichat:focus", { detail: trace || null }));
+    const trace = event.type === "pointerleave" ? null : responseTraces[index];
+    window.dispatchEvent(new CustomEvent(hovering ? "certichat:hover" : "certichat:focus", { detail: trace || null }));
   }
 
   function setStatus(message, error = false) {
@@ -279,6 +281,8 @@ if (root) {
           }).observe(chat.shadowRoot.querySelector("#input"), { box: "border-box" });
           chat.shadowRoot.addEventListener("click", focusResponse);
           chat.shadowRoot.addEventListener("keydown", focusResponse);
+          chat.shadowRoot.addEventListener("pointerenter", focusResponse, true);
+          chat.shadowRoot.addEventListener("pointerleave", focusResponse, true);
           chat.shadowRoot.querySelectorAll(responseSelector).forEach(bubble => { bubble.tabIndex = 0; });
         }
         updateQuota();

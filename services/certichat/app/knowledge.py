@@ -159,7 +159,12 @@ async def health():
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             indexing = True
-    return {"status": "ready" if app.state.snapshot else "waiting", "version": getattr(app.state, "version", None), "indexing": indexing}
+    try:
+        checked_at = datetime.fromtimestamp((app.state.root / "latest.json").stat().st_mtime, timezone.utc).isoformat()
+    except FileNotFoundError:
+        checked_at = None
+    return {"status": "ready" if app.state.snapshot else "waiting", "version": getattr(app.state, "version", None),
+            "indexing": indexing, "checkedAt": checked_at}
 
 
 async def cached_graph():
