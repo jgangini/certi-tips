@@ -25,17 +25,17 @@ Desarrolla tu propuesta usando la [matriz DAMA → Oracle]({{base}}CDMP-DMF/orac
 
 | Área | Pregunta que debe responder la propuesta |
 | --- | --- |
-| Gobierno | ¿Quién aprueba la definición y las excepciones de uso? |
-| Arquitectura | ¿Qué papel desempeñan Oracle AI Data Platform y Oracle Autonomous AI Lakehouse y qué conexiones debes validar? |
-| Modelado | ¿Cómo representas cliente, contrato y consentimiento sin duplicar significados? |
-| Operaciones | ¿Cómo detectas retrasos, recuperas una versión y atribuyes el gasto? |
-| Seguridad | ¿Qué ve cada perfil y cómo verificas sus permisos efectivos? |
-| Integración | ¿Cómo detectas duplicados, reintentos y cambios tardíos? |
-| Documentos | ¿Cómo llega un documento vigente a la IA y cómo deja de utilizarse? |
-| Maestros | ¿Qué atributos vinculan registros y qué conflictos requieren revisión humana? |
-| DW y BI | ¿Cuál es el grano del indicador y cómo evitas multiplicar importes al unir tablas? |
-| Metadatos | ¿Cómo identificas consumidores afectados por un cambio de contrato? |
-| Calidad | ¿Por qué bloqueas los 120 contratos y no descartas los 700 clientes sin fecha de nacimiento? |
+| Gobierno de Datos | ¿Quién aprueba la definición y las excepciones de uso? |
+| Arquitectura de Datos | ¿Qué papel desempeñan Oracle AI Data Platform y Oracle Autonomous AI Lakehouse y qué conexiones debes validar? |
+| Modelado de Datos y Diseño | ¿Cómo representas cliente, contrato y consentimiento sin duplicar significados? |
+| Almacenamiento de Datos y Operaciones | ¿Cómo detectas retrasos, recuperas una versión y atribuyes el gasto? |
+| Seguridad de Datos | ¿Qué ve cada perfil y cómo verificas sus permisos efectivos? |
+| Integración de Datos e Interoperabilidad | ¿Cómo detectas duplicados, reintentos y cambios tardíos? |
+| Gestión de Documentos y Contenido | ¿Cómo llega un documento vigente a la IA y cómo deja de utilizarse? |
+| Datos Maestros y de Referencia | ¿Qué atributos vinculan registros y qué conflictos requieren revisión humana? |
+| Data Warehousing e Inteligencia de Negocio | ¿Cuál es el grano del indicador y cómo evitas multiplicar importes al unir tablas? |
+| Gestión de Metadatos | ¿Cómo identificas consumidores afectados por un cambio de contrato? |
+| Calidad de Datos | ¿Por qué bloqueas los 120 contratos y no descartas los 700 clientes sin fecha de nacimiento? |
 
 No se evalúa recordar nombres comerciales. Una buena respuesta conecta la finalidad con el mecanismo y reconoce las condiciones para demostrar que funciona.
 

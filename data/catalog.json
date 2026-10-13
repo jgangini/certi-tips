@@ -355,7 +355,7 @@
           "slug": "governance",
           "file": "01_gobierno/01_gobierno.md",
           "title": "Gobierno de Datos",
-          "short": "Gobierno",
+          "short": "Gobierno de Datos",
           "description": "Define autoridad, responsabilidades, políticas y evidencia para el uso de los datos.",
           "minutes": 25,
           "type": "module"
@@ -364,7 +364,7 @@
           "slug": "data-architecture",
           "file": "02_arquitectura/02_arquitectura.md",
           "title": "Arquitectura de Datos",
-          "short": "Arquitectura",
+          "short": "Arquitectura de Datos",
           "description": "Relaciona capacidades y flujos con las decisiones de negocio y la arquitectura de datos.",
           "minutes": 25,
           "type": "module"
@@ -372,8 +372,8 @@
         {
           "slug": "data-modeling",
           "file": "03_modelado/03_modelado.md",
-          "title": "Modelado y Diseño de Datos",
-          "short": "Modelado",
+          "title": "Modelado de Datos y Diseño",
+          "short": "Modelado de Datos y Diseño",
           "description": "Representa entidades, relaciones, vigencia y significado sin confundir esquema con semántica.",
           "minutes": 25,
           "type": "module"
@@ -381,8 +381,8 @@
         {
           "slug": "data-operations",
           "file": "04_operaciones/04_operaciones.md",
-          "title": "Almacenamiento y Operaciones",
-          "short": "Operaciones",
+          "title": "Almacenamiento de Datos y Operaciones",
+          "short": "Almacenamiento de Datos y Operaciones",
           "description": "Define retención, recuperación, observabilidad y atribución del consumo.",
           "minutes": 25,
           "type": "module"
@@ -391,7 +391,7 @@
           "slug": "data-security",
           "file": "05_seguridad/05_seguridad.md",
           "title": "Seguridad de Datos",
-          "short": "Seguridad",
+          "short": "Seguridad de Datos",
           "description": "Conecta finalidades, PII, identidades y protección con evidencia de acceso efectivo.",
           "minutes": 25,
           "type": "module"
@@ -399,8 +399,8 @@
         {
           "slug": "data-integration",
           "file": "06_integracion/06_integracion.md",
-          "title": "Integración e Interoperabilidad",
-          "short": "Integración",
+          "title": "Integración de Datos e Interoperabilidad",
+          "short": "Integración de Datos e Interoperabilidad",
           "description": "Elige ingestión, CDC y federación con contratos, frescura y tratamiento de fallos.",
           "minutes": 25,
           "type": "module"
@@ -408,8 +408,8 @@
         {
           "slug": "content-management",
           "file": "07_contenido/07_contenido.md",
-          "title": "Documentos y Contenido",
-          "short": "Contenido",
+          "title": "Gestión de Documentos y Contenido",
+          "short": "Gestión de Documentos y Contenido",
           "description": "Gestiona aprobación, vigencia y recuperación de documentos para atención asistida por IA.",
           "minutes": 25,
           "type": "module"
@@ -418,7 +418,7 @@
           "slug": "master-reference-data",
           "file": "08_maestros_y_referencias/08_maestros_y_referencias.md",
           "title": "Datos Maestros y de Referencia",
-          "short": "Maestros y Referencias",
+          "short": "Datos Maestros y de Referencia",
           "description": "Resuelve identidades, valores controlados, conflictos y reglas de supervivencia.",
           "minutes": 25,
           "type": "module"
@@ -426,8 +426,8 @@
         {
           "slug": "data-warehousing-bi",
           "file": "09_dw_y_bi/09_dw_y_bi.md",
-          "title": "Data Warehousing y BI",
-          "short": "DW y BI",
+          "title": "Data Warehousing e Inteligencia de Negocio",
+          "short": "Data Warehousing e Inteligencia de Negocio",
           "description": "Publica indicadores con grano, semántica y consumo analítico gobernado.",
           "minutes": 25,
           "type": "module"
@@ -435,8 +435,8 @@
         {
           "slug": "metadata",
           "file": "10_metadatos/10_metadatos.md",
-          "title": "Metadatos",
-          "short": "Metadatos",
+          "title": "Gestión de Metadatos",
+          "short": "Gestión de Metadatos",
           "description": "Distingue catálogos, glosario, linaje e impacto de cambios.",
           "minutes": 25,
           "type": "module"
@@ -445,7 +445,7 @@
           "slug": "data-quality",
           "file": "11_calidad/11_calidad.md",
           "title": "Calidad de Datos",
-          "short": "Calidad",
+          "short": "Calidad de Datos",
           "description": "Mide aptitud para el uso, prioriza reglas y resuelve incidencias con responsables.",
           "minutes": 25,
           "type": "module"

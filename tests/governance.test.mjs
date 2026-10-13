@@ -55,6 +55,19 @@ test('Governance graphics use readable widescreen slides with accessible descrip
   }
 });
 
+test('DAMA navigation uses full knowledge-area names from the Spanish reference', () => {
+  const names = [
+    'Gobierno de Datos', 'Arquitectura de Datos', 'Modelado de Datos y Diseño',
+    'Almacenamiento de Datos y Operaciones', 'Seguridad de Datos',
+    'Integración de Datos e Interoperabilidad', 'Gestión de Documentos y Contenido',
+    'Datos Maestros y de Referencia', 'Data Warehousing e Inteligencia de Negocio',
+    'Gestión de Metadatos', 'Calidad de Datos',
+  ];
+  const modules = course.modules.filter(module => module.type === 'module');
+  assert.deepEqual(modules.map(module => module.title), names);
+  assert.deepEqual(modules.map(module => module.short), names, 'Navigation must not shorten the knowledge-area names');
+});
+
 test('Governance evidence maps eleven areas, original diagrams and all assessment references', () => {
   assert.equal(course.modules.filter(page => page.type === 'module').length, 11);
   assert.equal(bank.length, 66);
