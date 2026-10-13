@@ -29,7 +29,6 @@
 .certichat-actions :is(button, a):hover { filter: brightness(.95); }
 .certichat-actions svg { width: 12px; height: 12px; }
 .certichat-actions [data-chat-close] svg { width: 10px; height: 10px; }
-.certichat-status { margin: 0 16px 8px; color: var(--ink); font-size: 12px; line-height: 1.45; }
 .certichat-connecting { flex: 1; min-height: 0; display: grid; place-items: center; }
 .certichat-spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid var(--line); border-top-color: var(--red); border-radius: 50%; animation: certichat-spin .8s linear infinite; }
 @keyframes certichat-spin { to { transform: rotate(360deg); } }

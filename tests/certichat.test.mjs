@@ -42,7 +42,7 @@ test("CertiChat includes unique verified section links with every sourced answer
     const answer = answerWithReferences(text, sources, site);
     assert.ok(answer.startsWith(text) && answer.includes(url));
     const html = plainChatHTML(answer, site);
-    assert.match(html, /<a href="https:\/\/jgangini.github.io\/certitips\/1Z0-1157-26\/agents\/#conceptos-clave">/);
+    assert.match(html, /<a href="\/certitips\/1Z0-1157-26\/agents\/#conceptos-clave" data-source-url="https:\/\/jgangini.github.io\/certitips\/1Z0-1157-26\/agents\/#conceptos-clave">/);
     assert.doesNotMatch(html, /<img|attacker\.test/);
     assert.match(html, /&lt;img src=x&gt; &amp; herramientas/);
     assert.equal((html.match(/<a /g) || []).length, 1);
@@ -51,6 +51,23 @@ test("CertiChat includes unique verified section links with every sourced answer
   }
   for (const invalid of [undefined, [], {}, [null, { title: " ", url }, { title: "Unsafe", url: "javascript:alert(1)" }]]) assert.equal(answerWithReferences("Respuesta", invalid, site), "Respuesta");
   assert.doesNotMatch(plainChatHTML('[x](https://attacker.test/) [x](javascript:alert(1)) <a href="https://attacker.test">x</a>', site), /<a /);
+});
+
+test("guide references navigate on the current origin while retaining canonical evidence and transcript", () => {
+  const site = "https://jgangini.github.io/certitips/", url = `${site}CDMP-DMF/oracle-map/#arquitectura-conceptual-y-tecnologica`;
+  const text = answerWithReferences("Puedes aplicar DAMA con Oracle.", [{ title: "De DAMA a las Capacidades Oracle", url }], site);
+  const saved = { updatedAt: 100, messages: [{ role: "user", text: "¿Se puede aplicar DAMA y OCI?" }, { role: "ai", text }] };
+  const restored = restoreChat(saved, site, 100), html = plainChatHTML(restored.messages[1].text, site);
+  const path = html.match(/href="([^"]+)"/)[1];
+  assert.equal(path, new URL(url).pathname + new URL(url).hash);
+  assert.ok(html.includes(`data-source-url="${url}"`));
+  for (const origin of ["http://127.0.0.1:4173", "http://localhost:4173", "http://[::1]:4173", new URL(site).origin]) {
+    const destination = new URL(path, `${origin}/certitips/certichat/`);
+    assert.equal(destination.origin, origin);
+    assert.equal(destination.pathname + destination.hash, path);
+    assert.deepEqual(restoreChat(saved, site, 100).messages, saved.messages);
+  }
+  assert.equal(safeSourceURL(path, site), null, "Relative navigation must not weaken canonical source validation");
 });
 
 test("CertiChat restores bounded message text and discards the old sources panel data", () => {

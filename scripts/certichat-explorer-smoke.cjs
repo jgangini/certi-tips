@@ -2,7 +2,7 @@
 // DOM and accessible-state checks, isolated mocked API, real public graph; no screenshots or paid calls.
 async page => {
   const assert = (condition, message) => { if (!condition) throw new Error(message); };
-  const base = new URL('/certitips/', page.url()), context = await page.context().browser().newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
+  const base = new URL('/certitips/', page.url()), context = await page.context().browser().newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce', timezoneId: 'UTC' });
   const tab = await context.newPage(), requests = [], calls = [], errors = [], checks = [], geometry = [];
   let snapshot, graphOverride, reply = {}, releaseReply, pendingReply, releaseGraph, pendingGraph;
   let indexing = true, healthAvailable = true, serverGraph, graphAvailable = true, checkedAt = '2026-10-13T16:00:00+00:00';
@@ -65,7 +65,7 @@ async page => {
     await tab.locator('#certichat-panel').waitFor({ state: 'visible' });
     await tab.waitForFunction(() => document.querySelector('deep-chat')?.validateInput('Prueba') && !document.querySelector('[data-chat-clear]').disabled);
   };
-  const alignedFooter = () => tab.waitForFunction(() => Math.abs(document.querySelector('.chat-graph-footer').getBoundingClientRect().top - document.querySelector('deep-chat').shadowRoot.querySelector('#input').getBoundingClientRect().top) <= 1);
+  const fixedFooter = () => tab.waitForFunction(() => Math.abs(document.querySelector('.chat-graph-footer').getBoundingClientRect().height - 46) <= 1);
   const send = async (question, trace, status = 0) => {
     await openChat();
     reply = { answer: `Respuesta: ${question}.`, trace, status };
@@ -115,6 +115,7 @@ async page => {
     }), 'Update date and version are not grouped on the right');
     assert(await metadata.evaluate(element => [...element.querySelectorAll('dd')].every(cell => getComputedStyle(cell).borderLeftWidth === '1px' && getComputedStyle(cell).color !== getComputedStyle(cell.previousElementSibling).color)), 'Graph cells lack real dividing borders or distinct label/value colors');
     await tab.waitForFunction(() => document.querySelector('.chat-graph-stamp dd')?.title.startsWith('Última sincronización'));
+    assert(await metadata.locator('dd').nth(2).textContent() === '13-10-2026 11:00:00', 'The timestamp must use Peru UTC−5 even when the browser uses UTC');
     const priorStamp = await metadata.locator('dd').nth(2).textContent(), priorCamera = await state();
     const priorGraphCalls = calls.filter(call => call.path === '/api/graph').length;
     checkedAt = '2026-10-13T16:05:00+00:00';
@@ -155,13 +156,17 @@ async page => {
       assert(await tab.getByRole('button', { name, exact: true }).count() === 1, 'Map control accessible name is ambiguous');
     }
     await openChat();
-    await alignedFooter();
+    await fixedFooter();
     assert(await tab.locator('.chat-graph-evidence').evaluate(element => element.getBoundingClientRect().height) === 0, 'Idle evidence leaves an empty row above graph metadata');
     const composer = tab.getByRole('textbox', { name: 'Escribe tu consulta', exact: true });
     await composer.fill('Primera línea\nSegunda línea\nTercera línea');
-    await alignedFooter();
-    assert(await tab.locator('.chat-graph-footer').evaluate(element => element.getBoundingClientRect().height) > 46, 'Graph footer does not follow the multiline composer');
-    await composer.fill(''); await alignedFooter();
+    await tab.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('#input').getBoundingClientRect().height > 46);
+    await fixedFooter();
+    await composer.fill('Una consulta larga sin enviar.\n'.repeat(30));
+    await tab.waitForFunction(() => { const input = document.querySelector('deep-chat').shadowRoot.querySelector('#text-input'); return input.scrollHeight > input.clientHeight; });
+    await fixedFooter();
+    await composer.fill(''); await fixedFooter();
+    checks.push('metadata stays 46 px high with a multiline or scrolling composer');
     const governance = tab.locator('.path-nav .path-group').filter({ hasText: 'Governance' });
     await governance.locator('summary').click();
     assert(await governance.locator('.path-group-panel a').first().evaluate(link => {
@@ -199,6 +204,7 @@ async page => {
     const trace1 = makeTrace(first), trace2 = makeTrace(second), empty = { version: snapshot.version, nodes: [], edges: [], truncated: false };
     const siteRoot = await tab.locator('[data-certichat]').getAttribute('data-site-root');
     trace1.sources = [{ nodeId: first.source, title: 'Guía de la primera consulta · Concepto', url: `${siteRoot}CDMP-DMF/overview/` }];
+    const source = new URL(trace1.sources[0].url), guidePath = source.pathname + source.hash, guideURL = new URL(guidePath, base).href;
     await send('Consulta uno', trace1);
     await answered('Respuesta: Consulta uno.');
     await active(trace1.nodes, trace1.edges);
@@ -216,10 +222,10 @@ async page => {
     assert(await card.locator('strong').textContent() === snapshot.nodes.find(node => node.id === first.source).label, 'Card title does not match the selected concept');
     assert(await card.locator('strong').evaluate(element => getComputedStyle(element).borderBottomWidth) === '1px', 'Concept card has no separator between title and sources');
     const reference = card.getByRole('link', { name: `Profundizar: ${trace1.sources[0].title}` });
-    assert(await reference.getAttribute('href') === trace1.sources[0].url && await card.locator('a').count() === 1, 'Card reference was not restricted to current-query source evidence');
+    assert(await reference.getAttribute('href') === guidePath && await card.locator('a').count() === 1, 'Card reference was not restricted to current-query source evidence');
     await reference.evaluate(link => link.addEventListener('click', event => event.preventDefault(), { once: true }));
     await reference.click();
-    assert(await tab.evaluate(root => sessionStorage.getItem(`certichat:${root}:reference`), siteRoot) === trace1.sources[0].url, 'Card source navigation loses the open-chat reference marker');
+    assert(await tab.evaluate(root => sessionStorage.getItem(`certichat:${root}:reference`), siteRoot) === guideURL, 'Card source navigation loses the open-chat reference marker');
     await tab.evaluate(root => sessionStorage.removeItem(`certichat:${root}:reference`), siteRoot);
     await tab.emulateMedia({ reducedMotion: 'reduce' });
     await tab.locator(`[data-graph-active] button[data-concept="${first.target}"]`).click();
@@ -326,7 +332,7 @@ async page => {
     assert(await canvas.getAttribute('data-draw-count') === idleDraws, 'Concept pulse kept drawing after finishing');
     await tab.locator(`[data-graph-active] button[data-concept="${first.source}"]`).click();
     await card.waitFor({ state: 'visible' });
-    assert(await card.locator('a').getAttribute('href') === trace1.sources[0].url, 'Click restored concepts with the wrong response source');
+    assert(await card.locator('a').getAttribute('href') === guidePath, 'Click restored concepts with the wrong response source');
     await tab.emulateMedia({ reducedMotion: 'reduce' });
     await tab.waitForFunction(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
     await responses.nth(1).focus(); await active(trace1.nodes, trace1.edges);
@@ -341,7 +347,7 @@ async page => {
     await guideLink.evaluate(link => link.addEventListener('click', event => event.preventDefault(), { once: true }));
     await guideLink.click();
     assert(JSON.stringify(await state()) === JSON.stringify(beforeLink), 'Reference click also selected the answer graph');
-    assert(await tab.evaluate(root => sessionStorage.getItem(`certichat:${root}:reference`), siteRoot) === trace1.sources[0].url, 'Reference click lost its navigation marker');
+    assert(await tab.evaluate(root => sessionStorage.getItem(`certichat:${root}:reference`), siteRoot) === guideURL, 'Reference click lost its navigation marker');
     assert(calls.filter(call => call.path === '/api/chat').length === countBeforeReload, 'Response interaction made an API request');
     checks.push('answer hover selects historical evidence without moving the camera and repeats the pulse until exit; click centers it smoothly', 'Enter and Space activate responses, focus alone and reference clicks do not; reduced motion skips animation');
 
@@ -400,7 +406,7 @@ async page => {
     for (const question of ['donde buscar mas informacion', 'dame en enlace', 'me referia al enlace en estas guias']) {
       await send(question, trace1); await answered(`Respuesta: ${question}.`);
       const links = responses.last().locator('a');
-      assert(await links.count() === 1 && await links.getAttribute('href') === trace1.sources[0].url, `Follow-up did not show its verified guide link: ${question}`);
+      assert(await links.count() === 1 && await links.getAttribute('href') === guidePath, `Follow-up did not show its verified guide link: ${question}`);
     }
     checks.push('source links appear for paraphrased follow-ups and typos, without intent matching');
 
@@ -426,7 +432,7 @@ async page => {
       assert(Math.abs(measured.canvas.top - measured.mapHeading.bottom) <= 1, `Unwanted gap remains between Cognee header and graph at ${width}`);
       if (width >= 1024) {
         assert(measured.map.right <= measured.chat.left && Math.abs(measured.map.top - measured.chat.top) <= 1 && Math.abs(measured.map.height - measured.chat.height) <= 1, `Desktop panels are not aligned side by side at ${width}`);
-        assert(Math.abs(measured.mapFooter.top - measured.composer.top) <= 1 && measured.meta.top >= measured.mapFooter.top && measured.meta.bottom <= measured.mapFooter.bottom, `Graph metadata and composer separators diverge or metadata is clipped at ${width}`);
+        assert(Math.abs(measured.mapFooter.height - 46) <= 1 && measured.meta.top >= measured.mapFooter.top && measured.meta.bottom <= measured.mapFooter.bottom, `Graph metadata grows or is clipped at ${width}`);
       } else {
         assert(measured.map.bottom <= measured.chat.top && Math.abs(measured.map.left - measured.chat.left) <= 1 && Math.abs(measured.map.width - measured.chat.width) <= 1, `Mobile panels do not stack with matching widths at ${width}`);
         assert(measured.chatStyle.position !== 'fixed' && measured.bodyOverflow !== 'hidden', `Mobile explorer still uses a fullscreen overlay at ${width}`);

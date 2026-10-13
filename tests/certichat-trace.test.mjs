@@ -1,9 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { normalizeTrace, readTrace, publishTrace } from "../assets/certichat-trace.js";
+import { normalizeTrace, readTrace, publishTrace, sourcePath } from "../assets/certichat-trace.js";
 
 const a = "00000000-0000-4000-8000-000000000001", b = "00000000-0000-4000-8000-000000000002";
 const trace = { version: "a".repeat(64), nodes: [a, b], edges: [{ source: a, target: b, label: "relacionado" }], truncated: false };
+
+test("source paths preserve guide anchors and reject untrusted destinations", () => {
+  const root = "https://jgangini.github.io/certitips/";
+  assert.equal(sourcePath(`${root}CDMP-DMF/oracle-map/#aplicacion`, root), "/certitips/CDMP-DMF/oracle-map/#aplicacion");
+  assert.equal(sourcePath(root, root), "/certitips/");
+  for (const value of [undefined, "/certitips/", "javascript:alert(1)", "https://attacker.test/certitips/", `${root}?secret=1`, `${root}../escape/`]) assert.equal(sourcePath(value, root), null);
+});
 
 test("trace accepts bounded identifiers and edges, never a fragment ID or dangling relationship", () => {
   assert.deepEqual(normalizeTrace(trace), trace);

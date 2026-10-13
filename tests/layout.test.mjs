@@ -365,6 +365,8 @@ test("CertiQuiz host lobby keeps facts beside its actions and uses a compact con
   assert.match(sharedCss, /:is\(\.certiquiz-app, \.certichat, #quiz\) \.confirmation-actions \.button\s*\{[^}]*min-height: 52px;/);
   const chatHtml = layout({ site: { ...site, certichat: { enabled: true, apiOrigin: "https://example.test" }, certiquizApi: 'https://quiz.example.test' }, course, page: course.modules[0], body: "" });
   assert.match(chatHtml, /data-quiz-api="https:\/\/quiz\.example\.test"/);
+  assert.doesNotMatch(chatHtml, /data-chat-status|Preparando el asistente|Completa la verificación/);
+  assert.match(chatHtml, /data-chat-verification/);
   assert.match(chatHtml, /<h2 id="chat-confirm-title" tabindex="-1" autofocus>/);
   assert.match(chatHtml, /data-chat-confirm-yes>Aceptar<\/button>/);
   assert.match(script, /<h2 id="confirmation-title" tabindex="-1" autofocus>/);

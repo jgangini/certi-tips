@@ -1,5 +1,5 @@
 import { createNetwork } from "./certichat-network.js";
-import { normalizeTrace, readTrace } from "./certichat-trace.js";
+import { normalizeTrace, readTrace, sourcePath } from "./certichat-trace.js";
 
 export function indexGraph(data) {
   if (!data || !Array.isArray(data.nodes) || !Array.isArray(data.edges)) throw new Error("Invalid knowledge graph");
@@ -36,7 +36,7 @@ if (root?.dataset.knowledgeGraph) {
     if (className) node.className = className;
     return node;
   };
-  const timestampFormat = new Intl.DateTimeFormat("es", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" });
+  const timestampFormat = new Intl.DateTimeFormat("es", { timeZone: "America/Lima", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" });
   let graph, network, version, generatedWhen, currentTrace, refreshing, hoveredTrace, focusAfterRefresh = false, lastGraphCheck = 0;
   let latest = { status: "idle", trace: readTrace(siteRoot) };
   if (latest.trace) latest.status = "ready";
@@ -56,7 +56,7 @@ if (root?.dataset.knowledgeGraph) {
         if (date && Number.isFinite(date.getTime())) {
           const stamp = root.querySelector(".chat-graph-stamp dd");
           stamp.textContent = timestampFormat.format(date).replaceAll("/", "-").replace(",", "");
-          stamp.title = `Última sincronización con el repositorio. Índice generado el ${generatedWhen}.`;
+          stamp.title = `Última sincronización con el repositorio (hora de Perú, UTC−5). Índice generado el ${generatedWhen}.`;
         }
       }
     } catch { /* An unverified update must not keep the spinner running. */ }
@@ -79,7 +79,7 @@ if (root?.dataset.knowledgeGraph) {
     const sources = currentTrace?.sources?.filter(source => source.nodeId === id) || [];
     if (!sources.length) cardSources.append(element("p", "Sin referencia asociada a esta consulta."));
     for (const source of sources) {
-      const link = element("a", source.title); link.href = source.url;
+      const link = element("a", source.title); link.href = sourcePath(source.url, siteRoot);
       link.setAttribute("aria-label", `Profundizar: ${source.title}`);
       link.addEventListener("click", event => {
         if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
@@ -153,7 +153,7 @@ if (root?.dataset.knowledgeGraph) {
     metadata.replaceChildren();
     for (const [label, value] of [["Conceptos", graph.nodes.length.toLocaleString("es")], ["Relaciones", graph.edges.length.toLocaleString("es")], ["Actualización", when], ["Versión", String(version).slice(0, 12)]]) {
       const item = element("div"); item.append(element("dt", label), element("dd", value)); metadata.append(item);
-      if (label === "Actualización") { item.className = "chat-graph-stamp"; item.lastElementChild.title = `Índice generado el ${when}. Sincronización del repositorio pendiente de comprobar.`; }
+      if (label === "Actualización") { item.className = "chat-graph-stamp"; item.lastElementChild.title = `Índice generado el ${when} (hora de Perú, UTC−5). Sincronización del repositorio pendiente de comprobar.`; }
       if (label === "Versión") item.lastElementChild.append(updating);
     }
     status.hidden = true; workspace.hidden = false;

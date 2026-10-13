@@ -155,7 +155,7 @@ async (page) => {
         await input.press('Enter');
         const loading = tab.locator('deep-chat .deep-chat-loading-message-dots-container');
         await loading.waitFor({ state: 'visible' });
-        assert(await tab.locator('[data-chat-status]').isHidden(), 'Pending reply shows a loading banner above the conversation');
+        assert(await tab.locator('[data-chat-status]').count() === 0, 'Pending reply shows a loading banner above the conversation');
         const dots = await loading.evaluate(bubble => {
           const b = bubble.getBoundingClientRect(), dot = bubble.querySelector('.loading-message-dots'), d = dot.getBoundingClientRect();
           const points = [d, ...['::before', '::after'].map(pseudo => {
@@ -215,10 +215,10 @@ async (page) => {
     assert(await referenceTab.locator('#certichat-panel').isVisible(), 'Following the current anchor closes the chat');
     for (const theme of ['light', 'dark']) {
       await referenceTab.evaluate(value => { document.documentElement.dataset.theme = value; }, theme);
-      const scrollbars = await referenceTab.evaluate(() => [document.querySelector('.sidebar nav'), document.querySelector('deep-chat').shadowRoot.querySelector('#messages')].map(element => {
+      const scrollbars = await referenceTab.evaluate(() => [document.querySelector('.sidebar nav'), document.querySelector('deep-chat').shadowRoot.querySelector('#messages'), document.querySelector('deep-chat').shadowRoot.querySelector('#text-input')].map(element => {
         const style = getComputedStyle(element); return { width: style.scrollbarWidth, color: style.scrollbarColor };
       }));
-      assert(scrollbars[0].width === 'thin' && JSON.stringify(scrollbars[0]) === JSON.stringify(scrollbars[1]), `Chat scrollbar differs from the sidebar in ${theme} theme`);
+      assert(scrollbars[0].width === 'thin' && scrollbars.every(style => JSON.stringify(style) === JSON.stringify(scrollbars[0])), `Transcript or composer scrollbar differs from the sidebar in ${theme} theme`);
     }
     phase = 'open conversation across ordinary navigation';
     await referenceTab.locator('.path-nav').getByText('Governance', { exact: true }).click();

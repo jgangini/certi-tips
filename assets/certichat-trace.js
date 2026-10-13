@@ -8,6 +8,13 @@ export function safeSourceURL(value, root) {
   } catch { return null; }
 }
 
+export function sourcePath(value, root) {
+  const safe = safeSourceURL(value, root);
+  if (!safe) return null;
+  const url = new URL(safe);
+  return url.pathname + url.hash;
+}
+
 function normalizeSources(values, ids, siteRoot) {
   if (!Array.isArray(values) || values.length > 512) return undefined;
   const seen = new Set();

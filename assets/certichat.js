@@ -1,5 +1,5 @@
 import { readStored, writeStored } from "./storage.js";
-import { normalizeTrace, publishTrace, safeSourceURL } from "./certichat-trace.js";
+import { normalizeTrace, publishTrace, safeSourceURL, sourcePath } from "./certichat-trace.js";
 export { safeSourceURL } from "./certichat-trace.js";
 
 const escapeChat = text => String(text).replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
@@ -9,7 +9,7 @@ export function plainChatHTML(text, siteRoot) {
   return `<p>${String(text).split(/(\[[^\[\]\n]+\]\(https:\/\/[^\s()]+\))/g).map(part => {
     const link = part.match(/^\[([^\[\]\n]+)\]\((https:\/\/[^\s()]+)\)$/);
     const url = link && safeSourceURL(link[2], siteRoot);
-    return url ? `<a href="${escapeChat(url)}">${escapeChat(link[1])}</a>` : escapeChat(part);
+    return url ? `<a href="${escapeChat(sourcePath(url, siteRoot))}" data-source-url="${escapeChat(url)}">${escapeChat(link[1])}</a>` : escapeChat(part);
   }).join("").replace(/\n/g, "<br>")}</p>`;
 }
 
@@ -92,7 +92,7 @@ if (root) {
   window.visualViewport?.addEventListener("resize", fitMobileViewport);
   window.visualViewport?.addEventListener("scroll", fitMobileViewport);
   mobileChat.addEventListener("change", fitMobileViewport);
-  const status = root.querySelector("[data-chat-status]"), verification = root.querySelector("[data-chat-verification]");
+  const verification = root.querySelector("[data-chat-verification]");
   const messages = root.querySelector("[data-chat-messages]"), connecting = document.createElement("div");
   connecting.className = "certichat-connecting";
   connecting.hidden = true;
@@ -163,8 +163,6 @@ if (root) {
   }
 
   function setStatus(message, error = false) {
-    status.querySelector("[data-chat-status-text]").textContent = message;
-    status.hidden = error || !message;
     accessError = error ? message : "";
     retry.hidden = preview || !error;
   }
@@ -200,7 +198,7 @@ if (root) {
       setStatus("La verificación de acceso no está disponible. Inténtalo más tarde.", true);
       return;
     }
-    setStatus("Completa la verificación para consultar las guías.");
+    setStatus("");
     if (!turnstileLoad) turnstileLoad = new Promise((resolve, reject) => {
       if (window.turnstile) return resolve();
       const script = document.createElement("script");
@@ -249,7 +247,7 @@ if (root) {
       chat.messageStyles = { default: { shared: { bubble: { maxWidth: "92%", fontSize: "14px", lineHeight: "1.5" } }, ai: { bubble: { backgroundColor: "var(--hover)", color: "var(--ink)" } }, user: { bubble: { backgroundColor: "var(--accent)", color: "var(--on-red)" } } } };
       chat.messageStyles.loading = { message: { styles: { bubble: { display: "flex", alignItems: "center", justifyContent: "center", width: "56px", height: "36px", padding: "0", boxSizing: "border-box" } } } };
       chat.remarkable = { html: false, applyHTML: false };
-      chat.auxiliaryStyle = "* { overflow-wrap: anywhere; } #messages { scrollbar-color: var(--scrollbar) transparent; scrollbar-width: thin; } #chat-view { grid-template-rows: minmax(0, 1fr) auto auto; } #certichat-quota { color: var(--muted); text-align: center; font-size: 12px; line-height: 1.4; padding: 8px 12px; } #certichat-quota[hidden] { display: none; } a { color: var(--blue); text-decoration: underline; } a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; } @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }";
+      chat.auxiliaryStyle = "* { overflow-wrap: anywhere; } #messages, #text-input { scrollbar-color: var(--scrollbar) transparent; scrollbar-width: thin; } #chat-view { grid-template-rows: minmax(0, 1fr) auto auto; } #certichat-quota { color: var(--muted); text-align: center; font-size: 12px; line-height: 1.4; padding: 8px 12px; } #certichat-quota[hidden] { display: none; } a { color: var(--blue); text-decoration: underline; } a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; } @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }";
       if (dock) chat.auxiliaryStyle += `${responseSelector}:not(.streamed-message) { border: 1px solid transparent; cursor: pointer; } ${responseSelector}:not(.streamed-message):hover { border-color: var(--red); } ${responseSelector}:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }`;
       chat.introMessage = { text: "Hola. Resuelve tus dudas sobre las guías y prácticas del sitio." };
       chat.history = saved.messages.map(({ role, text }) => ({ role, text }));
@@ -275,10 +273,6 @@ if (root) {
         input?.setAttribute("enterkeyhint", "send");
         chat.shadowRoot.querySelector('.input-button.inside-end')?.setAttribute("aria-label", "Enviar consulta");
         if (dock) {
-          new ResizeObserver(([entry]) => {
-            const height = entry.target.getBoundingClientRect().height;
-            if (height) dock.parentElement.style.setProperty("--chat-composer-height", `${height}px`);
-          }).observe(chat.shadowRoot.querySelector("#input"), { box: "border-box" });
           chat.shadowRoot.addEventListener("click", focusResponse);
           chat.shadowRoot.addEventListener("keydown", focusResponse);
           chat.shadowRoot.addEventListener("pointerenter", focusResponse, true);
@@ -295,7 +289,7 @@ if (root) {
       }, { capture: true });
       chat.addEventListener("click", event => {
         const link = event.composedPath().find(node => node.tagName === "A");
-        if (link && safeSourceURL(link.href, root.dataset.siteRoot) && event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
+        if (link && safeSourceURL(link.dataset.sourceUrl, root.dataset.siteRoot) && event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
           try { sessionStorage.setItem(`${storageKey}:reference`, link.href); } catch { /* The open panel remains usable without storage. */ }
         }
       });
