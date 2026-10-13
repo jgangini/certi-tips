@@ -117,7 +117,7 @@ async (page) => {
   assert(await quotaNotice.isHidden(), 'Reconnecting starts the renewal window without a question');
   assert(await page.locator('[data-chat-open]').isHidden(), 'Launcher remains visible while chat is open');
   assert(await page.locator('[data-chat-retry]').isHidden(), 'Retry appears without an error');
-  assert(requests.some(url => url.endsWith('/assets/deep-chat.js')), 'Missing local Deep Chat');
+  assert(requests.some(url => new URL(url).pathname.endsWith('/assets/deep-chat.js')), 'Missing local Deep Chat');
   const submit = page.getByRole('button', { name: 'Enviar consulta', exact: true });
   assert(await submit.count() === 1, 'Submit button has no accessible name');
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).fill('Consulta en dos líneas');

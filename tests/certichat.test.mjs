@@ -152,6 +152,17 @@ test("CertiChat uses the rendered heading resolver and deterministic knowledge-o
   assert.notEqual(corpusArtifacts(documents.map((item, index) => index === 0 ? { ...item, text: `${item.text} Updated` } : item), "https://example.test/corpus.json").manifest, artifacts.manifest);
 });
 
+test("published entries and shared modules use the same cache version, including dynamic imports", () => {
+  const read = name => readFileSync(new URL(`../dist/${name}`, import.meta.url), "utf8");
+  const html = read("certichat/index.html"), version = html.match(/assets\/certichat\.js\?v=([a-f0-9]{12})/)[1];
+  for (const asset of ["site.js", "site.css", "certichat.js", "certichat.css", "certichat-explorer.js", "certichat-explorer.css"]) assert.ok(html.includes(`/assets/${asset}?v=${version}"`), asset);
+  for (const [name, imports] of [["certichat", ["storage", "certichat-trace", "deep-chat"]], ["certichat-explorer", ["certichat-trace", "certichat-network"]]]) {
+    const code = read(`assets/${name}.js`);
+    for (const dependency of imports) assert.ok(code.includes(`./${dependency}.js?v=${version}`), `${name} → ${dependency}`);
+  }
+  assert.ok(read("assets/certichat-trace.js").includes("export function sourcePath"));
+});
+
 test("published corpus covers catalog pages and questions with live canonical anchors and exact hashes", () => {
   const read = relative => readFileSync(new URL(`../${relative}`, import.meta.url), "utf8");
   const catalog = JSON.parse(read("data/catalog.json"));

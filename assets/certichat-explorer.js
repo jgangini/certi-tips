@@ -108,21 +108,26 @@ if (root?.dataset.knowledgeGraph) {
       trace = { ...trace, nodes, edges };
     }
     currentTrace = trace;
+    const { nodes = [], edges = [] } = trace || {};
+    const [concepts, relations] = root.querySelectorAll("[data-graph-meta] dd");
+    concepts.textContent = `${nodes.length}/${graph.nodes.length.toLocaleString("es")}`;
+    relations.textContent = `${edges.length}/${graph.edges.length.toLocaleString("es")}`;
     card.hidden = true;
     network.setTrace(trace);
     active.replaceChildren();
-    for (const id of trace?.nodes || []) {
+    for (const id of nodes) {
       const item = element("li"); item.append(conceptButton(id)); active.append(item);
     }
     activeRelations.replaceChildren();
-    for (const edge of trace?.edges || []) activeRelations.append(element("li", `${graph.byId.get(edge.source).label} → ${edge.label || "relacionado con"} → ${graph.byId.get(edge.target).label}`));
-    activeFit.disabled = !trace?.nodes.length;
+    for (const edge of edges) activeRelations.append(element("li", `${graph.byId.get(edge.source).label} → ${edge.label || "relacionado con"} → ${graph.byId.get(edge.target).label}`));
+    activeFit.disabled = !nodes.length;
     const messages = {
       idle: "",
       loading: "",
       error: "La consulta no se completó. No hay información que resaltar.",
     };
-    notice.textContent = mismatch ? "El mapa y la consulta corresponden a versiones distintas. Actualiza la página para cargar el mapa publicado más reciente." : trace?.nodes.length ? `${trace.nodes.length} conceptos y ${trace.edges.length} relaciones recuperados para esta respuesta.${trace.truncated ? " Se muestra una selección acotada." : ""}` : messages[latest.status] ?? messages.idle;
+    notice.textContent = mismatch ? "El mapa y la consulta corresponden a versiones distintas. Actualiza la página para cargar el mapa publicado más reciente." : messages[latest.status] ?? messages.idle;
+    concepts.title = relations.title = trace?.truncated ? "Recuperados/total del mapa. Se muestra una selección acotada." : "Recuperados/total del mapa.";
     notice.hidden = !notice.textContent;
     root.dataset.traceStatus = mismatch ? "version-mismatch" : latest.status;
     if (mismatch) refreshGraph();

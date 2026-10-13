@@ -43,6 +43,9 @@ async page => {
       const actual = [...document.querySelectorAll('[data-graph-active] button[data-concept]')].map(item => item.dataset.concept).sort();
       return Number(data?.activeNodeCount) === ids.length && Number(data?.activeEdgeCount) === edges && JSON.stringify(actual) === JSON.stringify([...ids].sort());
     }, { ids, edges: edges.length });
+    const totals = await state(), counts = await tab.locator('[data-graph-meta] dd').allTextContents();
+    assert(counts[0] === `${ids.length}/${totals.nodes.toLocaleString('es')}` && counts[1] === `${edges.length}/${totals.edges.toLocaleString('es')}`, 'Footer counts do not match validated retrieved concepts/relationships and map totals');
+    if (ids.length) assert(!(await tab.locator('[data-graph-trace]').textContent()).trim(), 'Retrieved counts still appear above the tags');
     const labels = await tab.locator('[data-graph-active] button[data-concept]').evaluateAll(items => items.map(item => ({ id: item.dataset.concept, label: item.textContent })));
     assert(labels.every(item => snapshot.nodes.some(node => node.id === item.id && node.label === item.label)), 'Active concepts fabricated names absent from the public graph');
     assert(labels.every((item, index) => !index || labels[index - 1].label.localeCompare(item.label, 'es', { numeric: true, sensitivity: 'base' }) <= 0), 'Retrieved concepts are not alphabetically ordered');

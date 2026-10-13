@@ -21,7 +21,7 @@
 .chat-graph-card a { display: block; margin-top: 5px; color: var(--red); }
 .chat-graph-card[hidden] { display: none; }
 .chat-graph-evidence { flex-shrink: 0; padding: 0 16px; overflow-x: auto; overflow-y: hidden; overscroll-behavior: contain; scrollbar-color: var(--scrollbar) transparent; scrollbar-width: thin; }
-.chat-graph-evidence:has(.chat-graph-trace:not([hidden]), .chat-graph-active:not(:empty)) { border-top: 1px solid var(--line); }
+.chat-graph-evidence:has(.chat-graph-active:not(:empty)) { border-top: 1px solid var(--line); }
 .chat-graph-footer { flex-shrink: 0; min-height: 46px; display: flex; border-top: 1px solid var(--line); container-type: inline-size; }
 .chat-graph-meta { display: grid; grid-template-columns: max-content max-content minmax(max-content, 1fr) max-content; width: 100%; color: var(--muted); font-size: 12px; line-height: 1.5; margin: 0; }
 .chat-graph-meta > div { display: flex; min-height: 23px; }
@@ -34,7 +34,6 @@
 .chat-graph-updating[hidden] { display: none; }
 @container (max-width: 660px) { .chat-graph-meta { grid-template-columns: 1fr 1fr; } .chat-graph-stamp { justify-self: stretch; } }
 @container (max-width: 430px) { .chat-graph-meta { grid-template-columns: 1fr; } }
-.chat-graph-trace { font-size: 13px; margin: 6px 0; white-space: nowrap; }
 .chat-graph-active { display: flex; flex-wrap: nowrap; gap: 6px; list-style: none; padding: 0; margin: 8px 0; }
 .chat-graph-active li { flex-shrink: 0; }
 .chat-graph-active:empty { display: none; }

@@ -25,7 +25,8 @@ if ((certichatApi.protocol !== "https:" && !(certichatApi.protocol === "http:" &
 if ((certichatMode === "LOCAL") !== ["localhost", "127.0.0.1", "[::1]"].includes(certichatApi.hostname))
   throw new Error("LOCAL requires a loopback API; VPS requires a public HTTPS API.");
 site.certichat = { apiOrigin: certichatApi.origin, siteKey: process.env.CERTICHAT_TURNSTILE_SITE_KEY || "" };
-site.certichat.version = contentHash((await Promise.all(["js", "css"].map(extension => readFile(path.join(root, `assets/certichat.${extension}`), "utf8")))).join("\n")).slice(0, 12);
+const assetSources = new Map(await Promise.all((await readdir(path.join(root, "assets"))).filter(name => /\.(js|css)$/.test(name)).sort().map(async name => [name, await readFile(path.join(root, "assets", name), "utf8")])));
+site.certichat.version = contentHash([...assetSources].flat().join("\n") + await readFile(path.join(root, "package-lock.json"), "utf8")).slice(0, 12);
 const knowledge = [];
 const imageSizes = new Map();
 const md = new MarkdownIt({ html: true, linkify: true });
@@ -62,6 +63,7 @@ function renderMarkdown(source, publicPath, pageTitle) {
 async function save(relative, html) {
   const destination = path.join(output, relative);
   await mkdir(path.dirname(destination), { recursive: true });
+  if (relative.endsWith(".html")) html = html.replace(/((?:href|src)=")([^"?]+\.(?:js|css))"/g, (match, prefix, url) => url.startsWith(`${site.base}assets/`) ? `${prefix}${url}?v=${site.certichat.version}"` : match);
   await writeFile(destination, html);
 }
 
@@ -117,6 +119,10 @@ await cp(path.join(root, "assets"), path.join(output, "assets"), {
 await cp(path.join(root, "node_modules", "qrcode-generator", "qrcode.js"), path.join(output, "assets", "qrcode-generator.js"));
 await cp(path.join(root, "node_modules", "deep-chat", "dist", "deepChat.js"), path.join(output, "assets", "deep-chat.js"));
 await cp(path.join(root, "node_modules", "deep-chat", "LICENSE"), path.join(output, "assets", "deep-chat.LICENSE.txt"));
+// ponytail: our flat browser modules use literal relative imports; keep their cache version with the entry points.
+for (const [name, source] of assetSources) if (name.endsWith(".js")) {
+  await save(`assets/${name}`, source.replace(/((?:\bfrom\s*|\bimport\s*(?:\(\s*)?)["'])(\.\/[\w-]+\.js)(["'])/g, `$1$2?v=${site.certichat.version}$3`));
+}
 for (const course of site.courses) {
   await save(`assets/${course.questionBank}.json`, await readFile(path.join(root, "data", `${course.questionBank}.json`)));
   const publicPath = courseRoute(course);

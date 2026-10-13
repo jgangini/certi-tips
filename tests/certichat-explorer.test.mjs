@@ -50,6 +50,7 @@ test("the explorer is a standalone site page and offers an honest missing-snapsh
   assert.match(loading, /data-knowledge-graph="\/certitips\/assets\/certichat\/graph.json"/);
   assert.match(loading, /role="status" aria-label="Cargando el mapa de conocimiento"><span class="certichat-spinner" aria-hidden="true"><\/span>/);
   assert.match(loading, /data-graph-trace role="status" hidden><\/p>/);
+  assert.doesNotMatch(loading, /class="chat-graph-trace"/);
 });
 
 test("the published graph is a faithful static copy of the exported snapshot", () => {
