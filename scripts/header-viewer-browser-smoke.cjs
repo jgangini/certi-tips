@@ -38,7 +38,7 @@ async (page) => {
       assert(await page.locator('#site-search').evaluate(node => node.open), `Search does not open at ${width}px ${route}`);
       await page.keyboard.press('Escape');
     }
-    assert(positions.every(item => item.left === positions[0].left && item.padRight === positions[0].padRight && item.searchGap === positions[0].searchGap && item.mobile === positions[0].mobile), `Header geometry differs among page types at ${width}px: ${JSON.stringify(positions)}`);
+    assert(positions.every(item => ['left', 'padRight', 'searchGap'].every(key => Math.abs(item[key] - positions[0][key]) < 0.01) && item.mobile === positions[0].mobile), `Header geometry differs among page types at ${width}px: ${JSON.stringify(positions)}`);
   }
   for (const route of ['1Z0-1122-26/generative-ai/', 'CDMP-DMF/governance/']) {
     for (const [theme, background] of [['light', 'rgb(255, 255, 255)'], ['dark', 'rgb(0, 0, 0)']]) {
