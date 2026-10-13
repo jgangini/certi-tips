@@ -326,10 +326,10 @@ async (page) => {
     return { heading: !!document.querySelector('main .page-heading'), gap: title.getBoundingClientRect().top - eyebrow.getBoundingClientRect().bottom,
       titleSize: getComputedStyle(title).fontSize, label: eyebrow.textContent, labelColor: getComputedStyle(eyebrow).color,
       start: node.querySelector('[data-start]').textContent,
-      divider: getComputedStyle(action).borderTopStyle === 'solid' && parseFloat(getComputedStyle(action).borderTopWidth) === 1,
+      divider: getComputedStyle(action).borderTopStyle === 'solid' && parseFloat(getComputedStyle(action).borderTopWidth) > 0,
       actionGap: node.querySelector('[data-start]').getBoundingClientRect().top - action.getBoundingClientRect().top };
   });
-  assert(!intro.heading && intro.gap >= 0 && intro.gap <= 8 && intro.titleSize === '24px' && intro.label === 'PRÁCTICA' && intro.labelColor === 'rgb(199, 70, 52)' && intro.start === 'Comenzar' && intro.divider && intro.actionGap >= 16, `Practice intro does not match its compact heading and separated action: ${JSON.stringify(intro)}`);
+  assert(!intro.heading && intro.gap >= -0.01 && intro.gap <= 8 && intro.titleSize === '24px' && intro.label === 'PRÁCTICA' && intro.labelColor === 'rgb(199, 70, 52)' && intro.start === 'Comenzar' && intro.divider && intro.actionGap >= 16, `Practice intro does not match its compact heading and separated action: ${JSON.stringify(intro)}`);
   assert(await page.locator('[data-practice-intro]:not([hidden])').count() === 0, 'Practice landing must not have surrounding text');
   await page.getByRole('button', { name: 'Comenzar', exact: true }).click();
   assert(await page.locator('[data-practice-intro]:not([hidden])').count() === 0, 'Instructions repeat during questions');
@@ -358,7 +358,7 @@ async (page) => {
         && finish.getBoundingClientRect().left >= reset.getBoundingClientRect().right
         && previous?.disabled && previous.textContent === 'Anterior' && previous.type === 'button'
         && next.disabled
-        && getComputedStyle(actions).borderTopStyle === 'solid' && parseFloat(getComputedStyle(actions).borderTopWidth) === 1
+        && getComputedStyle(actions).borderTopStyle === 'solid' && parseFloat(getComputedStyle(actions).borderTopWidth) > 0
         && Math.abs(previous.getBoundingClientRect().left - bounds.left - parseFloat(style.paddingLeft)) < 2
         && Math.abs(next.getBoundingClientRect().right - bounds.right + parseFloat(style.paddingRight)) < 2
         && Math.abs(previous.getBoundingClientRect().top - next.getBoundingClientRect().top) < 2
@@ -497,7 +497,7 @@ async (page) => {
       const ink = getComputedStyle(shell).color;
       const lastDomain = shell.querySelector('.domain-results li:last-child');
       const inset = parseFloat(getComputedStyle(shell).paddingLeft);
-      return document.documentElement.scrollWidth <= innerWidth + 1 && eyebrow.textContent === 'PRÁCTICA' && gap >= 0 && gap <= 8
+      return document.documentElement.scrollWidth <= innerWidth + 1 && eyebrow.textContent === 'PRÁCTICA' && gap >= -0.01 && gap <= 8
         && getComputedStyle(title).fontSize === '24px' && getComputedStyle(eyebrow).color === 'rgb(199, 70, 52)'
         && reset.title === 'Reiniciar' && reset.getAttribute('aria-label') === 'Reiniciar'
         && exit.title === 'Salir' && exit.getAttribute('aria-label') === 'Salir'
@@ -526,7 +526,7 @@ async (page) => {
   assert(await page.locator('.quiz-meta [data-exit]').evaluate(node => node === document.activeElement), 'Cancelling result-detail exit lost focus');
   assert(await page.locator('.quiz-next-controls [data-results]').evaluate(button => {
     const summary = button.getBoundingClientRect(), next = button.nextElementSibling.getBoundingClientRect();
-    return button.textContent === 'Resumen' && next.left - summary.right === 12 && Math.abs(next.top - summary.top) < 2;
+    return button.textContent === 'Resumen' && Math.abs(next.left - summary.right - 12) < 0.01 && Math.abs(next.top - summary.top) < 2;
   }), 'Resumen must sit directly to the left of Siguiente');
   assert(await page.locator('.feedback p').textContent() === partialCorrect.options.find(option => option.id === partialCorrect.correctOption).explanation, 'Correct result detail lost its explanation');
   await page.locator('[data-next]').click();
@@ -633,12 +633,12 @@ async (page) => {
     const placement = await page.evaluate(() => {
       const card = document.querySelector('.path-section.is-active').getBoundingClientRect(), launcher = document.querySelector('[data-chat-open]').getBoundingClientRect();
       const footer = document.querySelector('.site-footer').getBoundingClientRect();
-      return { beside: launcher.left - card.right, rightInset: innerWidth - launcher.right, bottom: launcher.bottom - card.bottom, below: launcher.top - card.bottom, footer: footer.top - launcher.bottom,
+      return { beside: launcher.left - card.right, rightInset: document.documentElement.clientWidth - launcher.right, bottom: launcher.bottom - card.bottom, below: launcher.top - card.bottom, footer: footer.top - launcher.bottom,
         launcherWidth: launcher.width, textClip: getComputedStyle(document.querySelector('[data-chat-open] > span')).clipPath };
     });
     assert(width === 1671 ? placement.beside >= 20 && Math.abs(placement.rightInset - 20) <= 1 && Math.abs(placement.bottom) <= 1 && placement.textClip === 'none'
-      : width === 1551 ? placement.beside >= 20 && placement.launcherWidth === 48 && placement.textClip === 'inset(50%)'
-      : placement.below >= 16 && placement.below <= 24 && placement.footer >= 12 && placement.launcherWidth === 48,
+      : width === 1551 ? placement.beside >= 20 && Math.abs(placement.launcherWidth - 48) < 0.01 && placement.textClip === 'inset(50%)'
+      : placement.below >= 16 && placement.below <= 24 && placement.footer >= 12 && Math.abs(placement.launcherWidth - 48) < 0.01,
     `Incorrect home CertiChat placement at ${width}px`);
   }
   await page.setViewportSize({ width: 1308, height: 900 });

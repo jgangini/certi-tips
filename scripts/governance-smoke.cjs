@@ -48,6 +48,7 @@ async (page) => {
     assert(await card.locator('.certification-actions a').count() === 1, 'Workshop must not invent an official certification route');
     await card.locator('.certitips-button').click();
     await page.waitForURL(`${route}overview/`);
+    await page.locator('[data-search-open]').focus();
     await page.keyboard.press('Control+k');
     await page.locator('#search-query').fill('Governance');
     assert(await page.locator('[data-search-kind="certification"]:visible a[href="/certitips/CDMP-DMF/overview/"]').count() === 1, 'Search cannot find the Governance course');
