@@ -991,22 +991,24 @@ progress::-webkit-progress-value {
   width: fit-content;
   margin: 24px 0 0 auto;
   min-height: 44px;
-  border: 0;
-  background: transparent;
-  border-radius: 6px;
-  padding: 8px;
-  color: var(--ink);
+  border: 1px solid var(--selected-surface);
+  background: var(--selected-surface);
+  border-radius: 30px;
+  padding: 9px 18px;
+  color: var(--selected-ink);
   font-size: 0.82rem;
   font-weight: 600;
+  box-shadow: 0 8px 24px var(--shadow);
   cursor: pointer;
 }
 .complete-button:hover {
-  background: var(--hover);
+  filter: brightness(0.85);
 }
-.complete-switch { position: relative; flex-shrink: 0; width: 40px; height: 22px; border-radius: 11px; background: var(--muted); }
-.complete-switch::after { content: ""; position: absolute; width: 16px; height: 16px; top: 3px; left: 3px; border-radius: 50%; background: var(--on-red); }
-.complete-button[aria-checked="true"] .complete-switch { background: var(--red); }
-.complete-button[aria-checked="true"] .complete-switch::after { transform: translateX(18px); }
+.complete-switch { position: relative; flex-shrink: 0; width: 40px; height: 22px; border-radius: 11px; background: var(--selected-ink); }
+.complete-switch::after { content: ""; position: absolute; width: 16px; height: 16px; top: 3px; left: 3px; border-radius: 50%; background: var(--selected-surface); }
+.complete-button[aria-checked="true"] { background: var(--red); border-color: var(--red); color: var(--on-red); }
+.complete-button[aria-checked="true"] .complete-switch { background: var(--red-dark); }
+.complete-button[aria-checked="true"] .complete-switch::after { background: var(--on-red); transform: translateX(18px); }
 .prose {
   max-width: 940px;
   overflow-wrap: anywhere;

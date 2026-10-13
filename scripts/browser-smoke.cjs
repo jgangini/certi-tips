@@ -309,6 +309,11 @@ async (page) => {
   await page.locator('[data-mark-complete]').click();
   await page.reload();
   assert(await page.locator('[data-mark-complete]').getAttribute('role') === 'switch' && await page.locator('[data-mark-complete]').getAttribute('aria-checked') === 'true', 'Completion switch did not persist');
+  assert(await page.locator('[data-completion-label]').textContent() === 'Completado · Desmarcar', 'Completed button did not restore its original action label');
+  assert(await page.locator('[data-mark-complete]').evaluate(button => {
+    const style = getComputedStyle(button);
+    return style.borderRadius === '30px' && style.backgroundColor === getComputedStyle(document.querySelector('.brand-accent')).color;
+  }), 'Completion button lost its rounded shape or selected red background');
   checks.push('lesson completion follows article, clears pager/footer and survives reload');
   assert(await page.locator('a[href$="/1Z0-1157-26/practice/"]').count() > 0, 'Agentic course is missing its practice entry');
   assert((await page.request.get(`${base}${course}/practice/`)).status() === 200, 'Agentic practice route is missing');

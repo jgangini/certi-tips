@@ -662,9 +662,12 @@ test("lesson completion follows the article before next-page navigation", () => 
   const rule = css.match(/\.complete-button\s*\{([^}]*)\}/)?.[1];
   assert.doesNotMatch(rule, /position:\s*(?:sticky|fixed|absolute);/);
   assert.match(rule, /margin:\s*24px 0 0 auto;/);
-  assert.match(html, /<span class="complete-switch" aria-hidden="true"><\/span>Completado<\/button>/);
+  assert.match(html, /aria-label="Módulo completado" role="switch"/);
+  assert.match(html, /<span class="complete-switch" aria-hidden="true"><\/span><span data-completion-label>Marcar como completado<\/span><\/button>/);
   assert.doesNotMatch(html, /✓ Completado|○ Marcar como completado/);
-  assert.match(css, /\.complete-button\[aria-checked="true"\] \.complete-switch\s*\{\s*background:\s*var\(--red\);/);
+  assert.match(rule, /border-radius:\s*30px;/);
+  assert.match(rule, /background:\s*var\(--selected-surface\);/);
+  assert.match(css, /\.complete-button\[aria-checked="true"\]\s*\{\s*background:\s*var\(--red\);/);
   assert.match(css, /\.course-main\.lesson-main\s*\{\s*padding-bottom:\s*16px;/);
 });
 
