@@ -22,11 +22,10 @@
 .chat-graph-card a { display: block; margin-top: 5px; color: var(--red); }
 .chat-graph-card[hidden] { display: none; }
 .chat-graph-evidence { flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 0 8px; }
-.chat-graph-evidence:has(.chat-graph-active:empty) > .chat-graph-scroll { display: none; }
 .chat-graph-evidence:has(.chat-graph-active:not(:empty)) { border-top: 1px solid var(--line); }
 .chat-graph-scroll { flex-shrink: 0; width: 32px; height: 32px; min-height: 32px; padding: 0; }
 .chat-graph-scroll svg { width: 14px; height: 14px; }
-.chat-graph-scroll:disabled { visibility: hidden; }
+.chat-graph-scroll:disabled { display: none; }
 .chat-graph-footer { flex-shrink: 0; min-height: 46px; display: flex; border-top: 1px solid var(--line); container-type: inline-size; }
 .chat-graph-meta { display: grid; grid-template-columns: max-content max-content minmax(max-content, 1fr) max-content; width: 100%; color: var(--muted); font-size: 12px; line-height: 1.5; margin: 0; }
 .chat-graph-meta > div { display: flex; min-height: 23px; }

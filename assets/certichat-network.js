@@ -111,7 +111,7 @@ export function createNetwork(canvas, graph, onSelect, onAnchor, onZoom) {
       const overview = clamp(.7 * Math.min(view.scale, span / (Math.hypot(node.x - x, node.y - y) + span / view.scale)), .04, 12);
       // Reuse the camera loop for a map flight: pull back along the route, then approach the concept.
       moveTo({ scale, x: width / 2 - node.x * scale, y: height / 2 - node.y * scale }, true,
-        { scale: overview, x: width / 2 - (x + node.x) / 2 * overview, y: height / 2 - (y + node.y) / 2 * overview }, 1400);
+        { scale: overview, x: width / 2 - (x + node.x) / 2 * overview, y: height / 2 - (y + node.y) / 2 * overview }, 1800);
     }
     pulse = node && !reducedMotion.matches ? { repeat: true, nodes: [selected] } : undefined;
     invalidate();

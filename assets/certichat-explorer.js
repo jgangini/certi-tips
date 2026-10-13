@@ -45,8 +45,9 @@ if (root?.dataset.knowledgeGraph) {
   updating.hidden = true; updating.setAttribute("role", "status"); updating.setAttribute("aria-label", "Actualizando el índice de conocimiento");
 
   function updateScroll() {
-    scrollButtons[0].disabled = active.scrollLeft <= 4;
-    scrollButtons[1].disabled = active.scrollLeft >= active.scrollWidth - active.clientWidth - 4;
+    const { scrollLeft, scrollWidth, clientWidth } = active;
+    scrollButtons[0].disabled = scrollLeft <= 4;
+    scrollButtons[1].disabled = scrollLeft >= scrollWidth - clientWidth - 4;
   }
   for (const button of scrollButtons) button.addEventListener("click", () => active.scrollBy({ left: Number(button.dataset.graphScroll) * active.clientWidth * .8, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" }));
   active.addEventListener("scroll", updateScroll, { passive: true });

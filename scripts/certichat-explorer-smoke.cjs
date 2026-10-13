@@ -55,13 +55,15 @@ async page => {
       const row = buttons[0]?.getBoundingClientRect().top;
       const controls = [...element.querySelectorAll('[data-graph-scroll]')], box = strip.getBoundingClientRect();
       return { overflowX: style.overflowX, overflowY: style.overflowY, scrollbar: style.scrollbarWidth,
-        controls: controls.map(button => { const b = button.getBoundingClientRect(); return { left: b.left, right: b.right }; }), left: box.left, right: box.right,
+        controls: controls.map(button => { const b = button.getBoundingClientRect(); return { left: b.left, right: b.right, width: b.width, disabled: button.disabled }; }), left: box.left, right: box.right,
         singleRow: buttons.every(button => Math.abs(button.getBoundingClientRect().top - row) <= 1), page: document.documentElement.scrollWidth, viewport: document.documentElement.clientWidth };
     });
     assert(stripState.overflowX === 'auto' && stripState.overflowY === 'hidden' && stripState.scrollbar === 'none', 'Concept strip does not hide its native scrollbar');
     assert(stripState.singleRow && stripState.page <= stripState.viewport, 'Concepts wrap or overflow the page');
     assert(stripState.controls.length === 2, 'Concept strip lacks its two triangular controls');
-    if (ids.length) assert(stripState.controls[0].right <= stripState.left && stripState.controls[1].left >= stripState.right, 'Triangle controls do not flank the concept strip');
+    assert(stripState.controls.every(control => !control.disabled || control.width === 0), 'Hidden arrows reserve blank space');
+    if (stripState.controls[0].width) assert(stripState.controls[0].right <= stripState.left, 'Left triangle does not flank the concept strip');
+    if (stripState.controls[1].width) assert(stripState.controls[1].left >= stripState.right, 'Right triangle does not flank the concept strip');
     const names = new Map(snapshot.nodes.map(node => [node.id, node.label]));
     const expectedRelations = edges.map(edge => `${names.get(edge.source)} → ${edge.label || 'relacionado con'} → ${names.get(edge.target)}`).sort();
     const actualRelations = (await tab.locator('[data-graph-active-relations] li').allTextContents()).sort();
@@ -220,7 +222,7 @@ async page => {
     await tab.locator(`[data-graph-active] button[data-concept="${first.source}"]`).click();
     await tab.waitForFunction(() => document.querySelector('canvas[data-graph-canvas]').dataset.cameraMoving === 'true');
     const flight = await canvas.evaluate(element => new Promise(resolve => {
-      const samples = [], deadline = performance.now() + 1500;
+      const samples = [], deadline = performance.now() + 2200;
       const sample = () => {
         samples.push(Number(element.dataset.scale));
         if (element.dataset.cameraMoving === 'false' || performance.now() > deadline) resolve(samples);
