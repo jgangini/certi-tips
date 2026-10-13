@@ -642,7 +642,7 @@ test("layout moves the contents into the sidebar while preserving reading and si
   assert.match(html, /id="diagram-viewer"/);
   assert.match(html, /data-mark-complete="agents"/);
   assert.doesNotMatch(html, /MÓDULO 01 \/ 06|LECTURA ·/);
-  assert.match(html, /<article class="prose">[^]*<\/article><button[^>]+data-mark-complete="agents"[^>]+aria-pressed="false">/);
+  assert.match(html, /<article class="prose">[^]*<\/article><button[^>]+data-mark-complete="agents"[^>]+role="switch" aria-checked="false">/);
   assert.match(html, /<summary>Foundation Sprint<\/summary>/);
   assert.doesNotMatch(html, /Ver grupo completo/);
   assert.match(html, /href="\/certitips\/EXAM-1\/overview\/"><span class="path-title">Course<\/span><\/a>/);
@@ -662,8 +662,9 @@ test("lesson completion follows the article before next-page navigation", () => 
   const rule = css.match(/\.complete-button\s*\{([^}]*)\}/)?.[1];
   assert.doesNotMatch(rule, /position:\s*(?:sticky|fixed|absolute);/);
   assert.match(rule, /margin:\s*24px 0 0 auto;/);
-  assert.match(rule, /border:\s*1px solid var\(--selected-surface\);\s*background:\s*var\(--selected-surface\);/);
-  assert.doesNotMatch(css, /\.complete-button\[aria-pressed="true"\]/);
+  assert.match(html, /<span class="complete-switch" aria-hidden="true"><\/span>Completado<\/button>/);
+  assert.doesNotMatch(html, /✓ Completado|○ Marcar como completado/);
+  assert.match(css, /\.complete-button\[aria-checked="true"\] \.complete-switch\s*\{\s*background:\s*var\(--red\);/);
   assert.match(css, /\.course-main\.lesson-main\s*\{\s*padding-bottom:\s*16px;/);
 });
 

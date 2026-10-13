@@ -54,10 +54,7 @@ function showProgress() {
   });
   document.querySelectorAll("[data-mark-complete]").forEach((button) => {
     const done = completed.has(button.dataset.markComplete);
-    button.setAttribute("aria-pressed", String(done));
-    button.textContent = done
-      ? "✓ Completado · Desmarcar"
-      : "○ Marcar como completado";
+    button.setAttribute("aria-checked", String(done));
   });
 }
 

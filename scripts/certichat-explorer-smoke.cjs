@@ -46,7 +46,8 @@ async page => {
     const totals = await state(), counts = await tab.locator('[data-graph-meta] dd').allTextContents();
     assert(counts[0] === `${ids.length}/${totals.nodes.toLocaleString('es')}` && counts[1] === `${edges.length}/${totals.edges.toLocaleString('es')}`, 'Footer counts do not match validated retrieved concepts/relationships and map totals');
     if (ids.length) assert(!(await tab.locator('[data-graph-trace]').textContent()).trim(), 'Retrieved counts still appear above the tags');
-    const labels = await tab.locator('[data-graph-active] button[data-concept]').evaluateAll(items => items.map(item => ({ id: item.dataset.concept, label: item.textContent })));
+    const labels = await tab.locator('[data-graph-active] button[data-concept]').evaluateAll(items => items.map(item => ({ id: item.dataset.concept, label: item.querySelector('.chat-graph-label').textContent, number: item.querySelector('.chat-graph-number').textContent })));
+    assert(labels.every((item, index) => item.number === String(index + 1)), 'Concept numbers are not consecutive in their visible order');
     assert(labels.every(item => snapshot.nodes.some(node => node.id === item.id && node.label === item.label)), 'Active concepts fabricated names absent from the public graph');
     assert(labels.every((item, index) => !index || labels[index - 1].label.localeCompare(item.label, 'es', { numeric: true, sensitivity: 'base' }) <= 0), 'Retrieved concepts are not alphabetically ordered');
     const stripState = await tab.locator('.chat-graph-evidence').evaluate(element => {
@@ -515,7 +516,7 @@ async page => {
     await answered('Respuesta: Consulta de etiqueta.');
     await tab.waitForFunction(() => Number(document.querySelector('canvas[data-graph-canvas]').dataset.activeNodeCount) === 1);
     const labelButton = tab.locator('[data-graph-active] button[data-concept]');
-    assert(await labelButton.textContent() === graphOverride.nodes[0].label && await labelButton.locator('img').count() === 0, 'Graph label activated HTML');
+    assert(await labelButton.locator('.chat-graph-label').textContent() === graphOverride.nodes[0].label && await labelButton.locator('img').count() === 0, 'Graph label activated HTML');
     await tab.mouse.move(0, 0);
     await labelButton.focus(); await labelButton.press('Enter');
     await card.waitFor({ state: 'visible' });

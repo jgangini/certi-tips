@@ -308,7 +308,7 @@ async (page) => {
   assert(completionPosition.aboveFooter && completionPosition.abovePager && completionPosition.alignedWithPager && completionPosition.footerGap >= 14 && completionPosition.footerGap <= 18, 'Completion button must float above the next-page link with the pager aligned to CertiChat');
   await page.locator('[data-mark-complete]').click();
   await page.reload();
-  assert(await page.locator('[data-mark-complete]').getAttribute('aria-pressed') === 'true', 'Progress did not persist');
+  assert(await page.locator('[data-mark-complete]').getAttribute('role') === 'switch' && await page.locator('[data-mark-complete]').getAttribute('aria-checked') === 'true', 'Completion switch did not persist');
   checks.push('lesson completion follows article, clears pager/footer and survives reload');
   assert(await page.locator('a[href$="/1Z0-1157-26/practice/"]').count() > 0, 'Agentic course is missing its practice entry');
   assert((await page.request.get(`${base}${course}/practice/`)).status() === 200, 'Agentic practice route is missing');

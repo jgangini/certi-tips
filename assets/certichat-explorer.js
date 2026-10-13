@@ -73,10 +73,12 @@ if (root?.dataset.knowledgeGraph) {
     updating.parentElement?.setAttribute("aria-busy", String(indexing));
   }
 
-  function conceptButton(id) {
-    const button = element("button", graph.byId.get(id).label);
+  function conceptButton(id, position) {
+    const label = graph.byId.get(id).label, button = element("button");
+    button.append(element("span", position, "chat-graph-number"), element("span", label, "chat-graph-label"));
     button.type = "button"; button.dataset.concept = id;
     button.setAttribute("aria-pressed", "false");
+    button.setAttribute("aria-label", `${position}. ${label}`);
     button.addEventListener("click", () => select(id, true));
     return button;
   }
@@ -126,8 +128,8 @@ if (root?.dataset.knowledgeGraph) {
     card.hidden = true;
     network.setTrace(trace);
     active.replaceChildren();
-    for (const id of nodes) {
-      const item = element("li"); item.append(conceptButton(id)); active.append(item);
+    for (const [index, id] of nodes.entries()) {
+      const item = element("li"); item.append(conceptButton(id, index + 1)); active.append(item);
     }
     active.scrollTo({ left: 0, behavior: "instant" }); updateScroll();
     activeRelations.replaceChildren();
