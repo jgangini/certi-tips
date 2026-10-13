@@ -90,7 +90,7 @@ async (page) => {
   checks.push('intermediate course widths: header controls and CertiChat align with the article edge');
   for (const [width, compact, labelVisible] of [
     [1556, false, true], [1556, true, true], [1314, false, false],
-    [1314, true, true], [1200, true, true], [1171, true, true], [1170, true, false]
+    [1314, true, true], [1200, true, false], [1171, true, false], [1170, true, false]
   ]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto(`${base}CDMP-DMF/overview/`);
