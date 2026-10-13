@@ -42,6 +42,21 @@ def public_graph(nodes, edges, version):
                       for source, target, name in sorted(relationships)]}
 
 
+def sanitize_graph(value):
+    if (not isinstance(value, dict) or not isinstance(value.get("version"), str)
+            or not re.fullmatch(r"[a-f0-9]{64}", value["version"])
+            or not isinstance(value.get("nodes"), list) or len(value["nodes"]) > 50000
+            or not isinstance(value.get("edges"), list) or len(value["edges"]) > 150000):
+        raise ValueError("Invalid public graph")
+    stamp = datetime.fromisoformat(value["generatedAt"])
+    if stamp.tzinfo is None:
+        raise ValueError("Invalid graph timestamp")
+    result = public_graph([(node["id"], {"type": node["type"], "name": node["label"]}) for node in value["nodes"]],
+                          [(edge["source"], edge["target"], edge["label"], {}) for edge in value["edges"]], value["version"])
+    result["generatedAt"] = stamp.astimezone(timezone.utc).isoformat()
+    return result
+
+
 def source_title(value):
     return (isinstance(value, str) and 1 <= len(value) <= 200 and value == value.strip()
             and not any(ord(character) < 32 for character in value))
@@ -57,6 +72,27 @@ def node_documents(nodes, edges):
         if relation == "contains" and str(source) in chunks:
             documents.setdefault(str(target), set()).add(chunks[str(source)])
     return documents
+
+
+def current_evidence(evidence, fragments, documents):
+    """Keep native provenance only for fragments accepted against the latest manifest."""
+    current = {fragment["id"] for fragment in fragments}
+    segments = [item for item in evidence if item.get("kind") == "segment"
+                and isinstance(item.get("document_name"), str)
+                and item["document_name"].removesuffix(".txt") in current]
+    assertions = {item["assertion_id"] for item in segments
+                  if item.get("role") == "supports_assertion" and isinstance(item.get("assertion_id"), str)}
+    retrieved = {item["document_name"].removesuffix(".txt") for item in segments}
+    supported = {node for node, names in documents.items()
+                 if any(name.removesuffix(".txt") in current for name in names)}
+    # A RAG-only lane still has real chunk -> contains -> entity provenance.
+    nodes = {node for node in supported
+             if any(name.removesuffix(".txt") in retrieved for name in documents[node])}
+    nodes.update(item["artifact_id"] for item in evidence
+                 if item.get("kind") == "graph_node" and item.get("artifact_id") in supported)
+    return (segments + [{"kind": "graph_node", "artifact_id": node} for node in sorted(nodes)]
+            + [item for item in evidence if item.get("kind") == "graph_edge"
+               and item.get("artifact_id") in assertions])
 
 
 def trace_sources(evidence, assertions, selected_edges, fragments, documents):

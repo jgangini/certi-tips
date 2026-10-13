@@ -29,15 +29,33 @@ if (root?.dataset.knowledgeGraph) {
   const activeFit = root.querySelector("[data-graph-active-fit]");
   const card = root.querySelector("[data-graph-card]"), cardTitle = root.querySelector("[data-graph-card-title]"), cardSources = root.querySelector("[data-graph-card-sources]");
   const siteRoot = document.querySelector("[data-certichat]")?.dataset.siteRoot;
+  const apiOrigin = document.querySelector("[data-certichat]")?.dataset.api;
   const element = (tag, text, className) => {
     const node = document.createElement(tag);
     if (text !== undefined) node.textContent = text;
     if (className) node.className = className;
     return node;
   };
-  let graph, network, version, currentTrace;
+  let graph, network, version, currentTrace, refreshing, focusAfterRefresh = false, lastGraphCheck = 0;
   let latest = { status: "idle", trace: readTrace(siteRoot) };
   if (latest.trace) latest.status = "ready";
+  const updating = element("span", undefined, "certichat-spinner chat-graph-updating");
+  updating.hidden = true; updating.setAttribute("role", "status"); updating.setAttribute("aria-label", "Actualizando el índice de conocimiento");
+
+  async function refreshVersionStatus() {
+    if (!apiOrigin || document.hidden) return;
+    let indexing = false;
+    try {
+      const response = await fetch(`${apiOrigin}/api/health`, { cache: "no-store", signal: AbortSignal.timeout(5000) });
+      if (response.ok) {
+        const knowledge = (await response.json()).knowledge;
+        indexing = knowledge?.indexing === true;
+        if (knowledge?.version && knowledge.version !== version) await refreshGraph();
+      }
+    } catch { /* An unverified update must not keep the spinner running. */ }
+    updating.hidden = !indexing;
+    updating.parentElement?.setAttribute("aria-busy", String(indexing));
+  }
 
   function conceptButton(id) {
     const button = element("button", graph.byId.get(id).label);
@@ -96,34 +114,66 @@ if (root?.dataset.knowledgeGraph) {
       idle: "",
       loading: "",
       error: "La consulta no se completó. No hay información que resaltar.",
-      ready: "Esta respuesta no incluye conceptos recuperados que se puedan mostrar en el mapa.",
     };
     notice.textContent = mismatch ? "El mapa y la consulta corresponden a versiones distintas. Actualiza la página para cargar el mapa publicado más reciente." : trace?.nodes.length ? `${trace.nodes.length} conceptos y ${trace.edges.length} relaciones recuperados para esta respuesta.${trace.truncated ? " Se muestra una selección acotada." : ""}` : messages[latest.status] ?? messages.idle;
     notice.hidden = !notice.textContent;
     root.dataset.traceStatus = mismatch ? "version-mismatch" : latest.status;
+    if (mismatch) refreshGraph();
   }
 
   window.addEventListener("certichat:trace", event => { latest = event.detail; updateTrace(); });
   window.addEventListener("certichat:focus", event => {
+    focusAfterRefresh = true;
     latest = { status: "ready", trace: event.detail }; updateTrace();
-    if (currentTrace?.nodes.length) { network.fit(true); network.pulse(); }
+    if (currentTrace?.nodes.length) { network.fit(true); network.pulse(); focusAfterRefresh = false; }
   });
+
+  function showGraph(data) {
+    const indexed = indexGraph(data);
+    if (!indexed.nodes.length || !/^[a-f0-9]{64}$/.test(data.version)) throw new Error("Invalid graph");
+    network?.destroy();
+    graph = indexed; version = data.version;
+    const date = new Date(data.generatedAt), when = Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat("es", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).format(date).replaceAll("/", "-").replace(",", "") : "fecha no disponible";
+    const metadata = root.querySelector("[data-graph-meta]");
+    metadata.replaceChildren();
+    for (const [label, value] of [["Conceptos", graph.nodes.length.toLocaleString("es")], ["Relaciones", graph.edges.length.toLocaleString("es")], ["Actualización", when], ["Versión", String(version).slice(0, 12)]]) {
+      const item = element("div"); item.append(element("dt", label), element("dd", value)); metadata.append(item);
+      if (label === "Actualización") item.className = "chat-graph-stamp";
+      if (label === "Versión") item.lastElementChild.append(updating);
+    }
+    status.hidden = true; workspace.hidden = false;
+    network = createNetwork(root.querySelector("[data-graph-canvas]"), graph, select, anchorCard);
+    updateTrace();
+    if (focusAfterRefresh && currentTrace?.nodes.length) { network.fit(true); network.pulse(); focusAfterRefresh = false; }
+  }
+
+  async function refreshGraph() {
+    if (refreshing) return refreshing;
+    if (!apiOrigin || Date.now() - lastGraphCheck < 5000) return;
+    lastGraphCheck = Date.now();
+    refreshing = (async () => {
+      try {
+        const response = await fetch(`${apiOrigin}/api/graph`, { headers: { "X-CertiChat": "1" }, cache: "no-store", signal: AbortSignal.timeout(15000) });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (data.version !== version) showGraph(data);
+      } catch { /* Keep the available snapshot and its version checks during a refresh outage. */ }
+    })();
+    try { await refreshing; } finally { refreshing = null; }
+  }
+
   async function load() {
     try {
       const response = await fetch(root.dataset.knowledgeGraph, { signal: AbortSignal.timeout(15000) });
       if (!response.ok) throw new Error("Graph unavailable");
-      const data = await response.json();
-      graph = indexGraph(data); version = data.version;
-      if (!graph.nodes.length) throw new Error("Empty graph");
-      const date = new Date(data.generatedAt), when = Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat("es", { dateStyle: "long", timeStyle: "short" }).format(date) : "fecha no disponible";
-      root.querySelector("[data-graph-meta]").textContent = `Fuente: Cognee · Instantánea del ${when} · ${graph.nodes.length.toLocaleString("es")} conceptos y ${graph.edges.length.toLocaleString("es")} relaciones · Versión ${String(version).slice(0, 12)}`;
-      status.hidden = true; workspace.hidden = false;
-      network = createNetwork(root.querySelector("[data-graph-canvas]"), graph, select, anchorCard);
-      updateTrace();
+      showGraph(await response.json());
       root.querySelector("[data-graph-zoom-in]").addEventListener("click", () => network.zoom(1.4));
       root.querySelector("[data-graph-zoom-out]").addEventListener("click", () => network.zoom(1 / 1.4));
       root.querySelector("[data-graph-fit]").addEventListener("click", () => network.fit());
       activeFit.addEventListener("click", () => network.fit(true));
+      refreshVersionStatus();
+      setInterval(refreshVersionStatus, 30000);
+      document.addEventListener("visibilitychange", refreshVersionStatus);
     } catch {
       status.classList.remove("is-loading"); status.removeAttribute("aria-label");
       status.textContent = "No se pudo cargar la instantánea del mapa. Actualiza la página para volver a intentarlo.";

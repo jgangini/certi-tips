@@ -9,7 +9,7 @@ from fastapi import HTTPException
 
 from app import graph as graph_module, knowledge
 from app.corpus import SITE
-from app.graph import graph_trace, node_documents, public_graph, validate_trace
+from app.graph import current_evidence, graph_trace, node_documents, public_graph, validate_trace
 
 NODES = [f"00000000-0000-0000-0000-{index:012d}" for index in range(3)]
 EDGE = {"source": NODES[0], "target": NODES[1], "label": "is_a"}
@@ -53,7 +53,8 @@ def test_private_graph_requires_authentication_ready_snapshot_and_free_owner(mon
 
 
 def test_graph_is_read_under_snapshot_lock_without_provider_calls(monkeypatch):
-    state = SimpleNamespace(token="test-token", snapshot=True, lock=asyncio.Lock(), version="a"*64)
+    state = SimpleNamespace(token="test-token", snapshot=True, lock=asyncio.Lock(), version="a"*64,
+                            graph_generated_at="2026-10-11T20:04:11+00:00")
     monkeypatch.setattr(knowledge.app, "state", state)
 
     reads = []
@@ -66,6 +67,7 @@ def test_graph_is_read_under_snapshot_lock_without_provider_calls(monkeypatch):
     monkeypatch.setattr(knowledge, "read_graph", read)
     result = asyncio.run(knowledge.graph("Bearer test-token"))
     assert result["version"] == "a"*64 and result["nodes"] == result["edges"] == []
+    assert result["generatedAt"] == state.graph_generated_at
     assert asyncio.run(knowledge.graph("Bearer test-token")) == result and reads == ["a"*64]
     state.version = "b"*64
     assert asyncio.run(knowledge.graph("Bearer test-token"))["version"] == "b"*64
@@ -149,6 +151,24 @@ def test_trace_uses_exact_retrieved_ids_and_relationships_not_labels():
     assert graph_trace(evidence, projection) == TRACE
     assert validate_trace(TRACE) == TRACE
     assert graph_trace([], projection) == {**TRACE, "nodes": [], "edges": []}
+
+
+def test_current_evidence_preserves_rag_provenance_but_excludes_stale_assertions():
+    fragments = [{"id": "accepted", "title": "DAMA", "url": SITE + "guide/"}]
+    documents = {NODES[0]: {"accepted.txt"}, NODES[1]: {"accepted"}, NODES[2]: {"changed.txt"}}
+    edge = {"kind": "graph_edge", "artifact_id": "assertion", "source_node_id": NODES[0],
+            "target_node_id": NODES[1], "relationship_name": "is_a"}
+    evidence = [{"kind": "segment", "document_name": "accepted"},
+                {"kind": "segment", "document_name": "changed.txt", "role": "supports_assertion", "assertion_id": "assertion"},
+                {"kind": "graph_node", "artifact_id": NODES[2]}, edge]
+    projection = {**TRACE, "nodes": [{"id": node} for node in NODES]}
+    scoped = current_evidence(evidence, fragments, documents)
+    trace = graph_trace(scoped, projection, fragments, documents)
+    assert trace["nodes"] == NODES[:2] and trace["edges"] == []
+    assert {source["nodeId"] for source in trace["sources"]} == set(NODES[:2])
+    assert not current_evidence(evidence, [], documents)
+    evidence.append({"kind": "segment", "document_name": "accepted.txt", "role": "supports_assertion", "assertion_id": "assertion"})
+    assert graph_trace(current_evidence(evidence, fragments, documents), projection, fragments, documents)["edges"] == [EDGE]
 
 
 def test_trace_caps_keep_only_edges_with_visible_endpoints():

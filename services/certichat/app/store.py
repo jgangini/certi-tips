@@ -9,17 +9,18 @@ from psycopg.types.json import Jsonb
 from psycopg_pool import ConnectionPool
 
 from .security import ChatError
-
-CHAT_DAILY_MICRO = 5_000_000
+from .settings import Settings
 
 class Store:
-    def __init__(self, database_url, refresh_hours=6, questions=20):
+    def __init__(self, database_url, refresh_hours=6, questions=20, *, index_budget_usd=Settings.index_budget_usd,
+                 chat_budget_usd=Settings.chat_budget_usd):
         self.pool = ConnectionPool(database_url, min_size=1, max_size=8, timeout=3, max_waiting=64,
                                    open=False, name="certichat", kwargs={"connect_timeout": 5,
                                    "row_factory": dict_row, "options": "-c statement_timeout=5000 -c lock_timeout=3000"})
         self.last_cleanup = 0.0
         self.refresh_hours = refresh_hours
         self.questions = questions
+        self.monthly_limits = {"index": int(index_budget_usd * 1000000), "chat": int(chat_budget_usd * 1000000)}
 
     def open(self):
         self.pool.open(wait=True, timeout=5)
@@ -168,17 +169,15 @@ class Store:
 
     @staticmethod
     def spending(connection, purpose):
-        return connection.execute("SELECT COALESCE(sum(charged_micro),0)::bigint AS total, "
-                                  "COALESCE(sum(charged_micro) FILTER(WHERE purpose=%s),0)::bigint AS purpose, "
-                                  "COALESCE(sum(charged_micro) FILTER(WHERE purpose='chat' AND "
-                                  "created_at>=date_trunc('day',now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'),0)::bigint AS day "
-                                  "FROM cc_spend WHERE created_at>=date_trunc('month',now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'",
+        return connection.execute("SELECT COALESCE(sum(charged_micro),0)::bigint AS purpose "
+                                  "FROM cc_spend WHERE purpose=%s AND "
+                                  "created_at>=date_trunc('month',now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'",
                                   (purpose,)).fetchone()
 
     def available(self):
         with self.pool.connection() as connection:
             spend = self.spending(connection, "chat")
-            return spend["total"] < 9000000 and spend["purpose"] < 7000000 and spend["day"] < CHAT_DAILY_MICRO
+            return spend["purpose"] < self.monthly_limits["chat"]
 
     def reserve(self, purpose, micro):
         if purpose not in ("chat", "index") or micro <= 0:
@@ -187,9 +186,7 @@ class Store:
         with self.pool.connection() as connection:
             connection.execute("SELECT pg_advisory_xact_lock(61473303)")
             spend = self.spending(connection, purpose)
-            ceiling = 7000000 if purpose == "chat" else 2000000
-            if (spend["total"]+micro > 9000000 or spend["purpose"]+micro > ceiling
-                    or (purpose == "chat" and spend["day"]+micro > CHAT_DAILY_MICRO)):
+            if spend["purpose"]+micro > self.monthly_limits[purpose]:
                 raise ChatError("CertiChat alcanzó su presupuesto de uso. Inténtalo más adelante.", 503, 3600)
             connection.execute("INSERT INTO cc_spend(id,purpose,reserved_micro,charged_micro) VALUES (%s,%s,%s,%s)",
                                (reservation, purpose, micro, micro))

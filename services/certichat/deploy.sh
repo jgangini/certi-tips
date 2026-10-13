@@ -5,6 +5,7 @@ umask 077
 python3 - <<'PY'
 import os
 import secrets
+from decimal import Decimal
 from pathlib import Path
 
 env = Path('services/certichat/.env')
@@ -31,11 +32,17 @@ production = {
     'CERTICHAT_TURNSTILE_HOSTNAME': 'jgangini.github.io',
     'CERTICHAT_PORT': '18741', 'CERTICHAT_SECURE_COOKIES': 'true',
 }
-for name, default, maximum in (('CERTICHAT_REFRESH', '6', 24), ('CERTICHAT_QUESTIONS', '20', 100)):
+for name, default, maximum in (('CERTICHAT_REFRESH', '6', 24), ('CERTICHAT_QUESTIONS', '20', 100),
+                               ('CERTICHAT_INDEX_REFRESH_MINUTES', '5', 15)):
     value = os.environ.get(name, existing.get(name, default)).strip("'\"")
     if not value.isascii() or not value.isdecimal() or not 1 <= int(value) <= maximum:
         raise SystemExit(f'{name} must be an integer from 1 to {maximum}.')
     production[name] = str(int(value))
+for name, default in (('CERTICHAT_INDEX_BUDGET_USD', '10'), ('CERTICHAT_CHAT_BUDGET_USD', '10')):
+    value = Decimal(os.environ.get(name, existing.get(name, default)).strip("'\""))
+    if not value.is_finite() or not 0 < value <= 1000000 or value.normalize().as_tuple().exponent < -2:
+        raise SystemExit(f'{name} must be a positive USD amount up to 1000000 with at most two decimal places.')
+    production[name] = format(value, 'f')
 lines = [line for line in env.read_text().splitlines() if line.split('=', 1)[0].strip() not in production]
 lines.extend(f"{name}='{value}'" for name, value in values.items() if name not in existing)
 lines.extend(f"{name}='{value}'" for name, value in production.items())
@@ -70,4 +77,4 @@ sudo -n bash services/certichat/install-timer.sh
 if [[ "${CERTICHAT_PUBLISH_PROXY:-true}" == true ]]; then
   sudo -n bash services/certichat/update-caddy.sh
 fi
-echo 'CertiChat deployed; indexing checks the published Pages manifest every five minutes.'
+echo 'CertiChat deployed; synchronization uses CERTICHAT_INDEX_REFRESH_MINUTES from the private service .env.'

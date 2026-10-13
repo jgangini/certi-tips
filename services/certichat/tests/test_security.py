@@ -1,4 +1,5 @@
 from dataclasses import replace
+from decimal import Decimal
 
 from fastapi import Response
 import pytest
@@ -29,6 +30,13 @@ def test_settings_fail_closed():
             replace(settings, **change).validate()
 
 
+@pytest.mark.parametrize('value', [Decimal('0'), Decimal('-1'), Decimal('NaN'), Decimal('Infinity'), Decimal('0.001'), Decimal('1000001'), True, '10'])
+def test_budget_settings_reject_invalid_amounts(value):
+    settings = Settings('postgresql://test/test', 'a'*32, 'b'*32, 'c'*32, 'd'*32, 'e'*32)
+    with pytest.raises(ValueError):
+        replace(settings, index_budget_usd=value).validate()
+
+
 def test_local_mode_requires_loopback_and_uses_separate_cookie():
     settings = Settings("postgresql://test/test", "a"*32, "", "c"*32, "d"*32, "e"*32,
                         mode="LOCAL", public_origin="http://127.0.0.1:18741",
@@ -53,7 +61,8 @@ def test_local_mode_requires_loopback_and_uses_separate_cookie():
 
 def test_environment_mode_defaults_fail_closed(monkeypatch):
     for name in ("CERTICHAT_MODE", "CERTICHAT_PUBLIC_ORIGIN", "CERTICHAT_ALLOWED_ORIGINS",
-                 "CERTICHAT_TURNSTILE_SECRET", "CERTICHAT_SITE_URL", "CERTICHAT_REFRESH", "CERTICHAT_QUESTIONS"):
+                 "CERTICHAT_TURNSTILE_SECRET", "CERTICHAT_SITE_URL", "CERTICHAT_REFRESH", "CERTICHAT_QUESTIONS",
+                 "CERTICHAT_INDEX_BUDGET_USD", "CERTICHAT_CHAT_BUDGET_USD"):
         monkeypatch.delenv(name, raising=False)
     for name, value in (("CERTICHAT_DATABASE_URL", "postgresql://test/test"), ("OPENROUTER_API_KEY", "a"*32),
                         ("CERTICHAT_CHAT_INTERNAL_TOKEN", "c"*32), ("CERTICHAT_INDEX_INTERNAL_TOKEN", "d"*32),
@@ -64,6 +73,12 @@ def test_environment_mode_defaults_fail_closed(monkeypatch):
         Settings.from_env().validate()
     monkeypatch.setenv("CERTICHAT_MODE", "LOCAL")
     Settings.from_env().validate()
+    assert Settings.from_env().index_budget_usd == Settings.from_env().chat_budget_usd == Decimal('10')
+    monkeypatch.setenv("CERTICHAT_INDEX_BUDGET_USD", "12.50")
+    monkeypatch.setenv("CERTICHAT_CHAT_BUDGET_USD", "9.25")
+    configured = Settings.from_env()
+    configured.validate()
+    assert configured.index_budget_usd == Decimal('12.50') and configured.chat_budget_usd == Decimal('9.25')
     monkeypatch.setenv("CERTICHAT_REFRESH", "12")
     monkeypatch.setenv("CERTICHAT_QUESTIONS", "30")
     assert Settings.from_env().refresh_hours == 12 and Settings.from_env().questions == 30

@@ -22,8 +22,18 @@
 .chat-graph-card[hidden] { display: none; }
 .chat-graph-evidence { flex-shrink: 0; max-height: 140px; padding: 0 16px; overflow: auto; overscroll-behavior: contain; }
 .chat-graph-evidence:has(.chat-graph-trace:not([hidden]), .chat-graph-active:not(:empty)) { border-top: 1px solid var(--line); }
-.chat-graph-footer { flex-shrink: 0; min-height: var(--chat-composer-height, 46px); display: flex; align-items: center; padding: 4px 16px; border-top: 1px solid var(--line); }
-.chat-graph-meta { color: var(--muted); font-size: 12px; line-height: 1.5; margin: 0; }
+.chat-graph-footer { flex-shrink: 0; min-height: var(--chat-composer-height, 46px); display: flex; border-top: 1px solid var(--line); container-type: inline-size; }
+.chat-graph-meta { display: grid; grid-template-columns: max-content max-content minmax(max-content, 1fr) max-content; width: 100%; color: var(--muted); font-size: 12px; line-height: 1.5; margin: 0; }
+.chat-graph-meta > div { display: flex; min-height: 23px; }
+.chat-graph-meta > div + div, .chat-graph-meta dd { border-left: 1px solid var(--line); }
+.chat-graph-meta > div:nth-child(2) { border-right: 1px solid var(--line); }
+.chat-graph-meta dt, .chat-graph-meta dd { display: flex; align-items: center; padding: 2px 8px; margin: 0; }
+.chat-graph-meta dd { flex: 1; justify-content: flex-end; color: var(--ink); white-space: nowrap; }
+.chat-graph-stamp { justify-self: end; }
+.chat-graph-updating { flex-shrink: 0; width: 12px; height: 12px; margin-left: 6px; border-width: 2px; }
+.chat-graph-updating[hidden] { display: none; }
+@container (max-width: 660px) { .chat-graph-meta { grid-template-columns: 1fr 1fr; } .chat-graph-stamp { justify-self: stretch; } }
+@container (max-width: 430px) { .chat-graph-meta { grid-template-columns: 1fr; } }
 .chat-graph-trace { font-size: 13px; margin: 6px 0; }
 .chat-graph-active { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 8px 0; }
 .chat-graph-active:empty { display: none; }

@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager, suppress
 import hashlib
 import json
 import re
+import time
 from urllib.parse import urlsplit
 from uuid import UUID
 
@@ -16,8 +17,8 @@ import httpx
 import psycopg
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from .provider import Provider, REFUSAL
-from .graph import validate_trace
+from .provider import Provider
+from .graph import sanitize_graph, validate_trace
 from .security import ChatError, GuardMiddleware, cookie_name, network_digest, new_token, set_cookie, token_digest
 from .settings import Settings
 from .store import Store
@@ -131,12 +132,15 @@ async def retrieve(application, body, history=()):
 
 
 def create_app(settings=None, *, transport=None):
+    graph_lock, graph_cache = asyncio.Lock(), {"until": 0, "value": None}
+
     @asynccontextmanager
     async def lifespan(application):
         configured = settings or Settings.from_env()
         configured.validate()
         application.state.settings = configured
-        application.state.store = Store(configured.database_url, configured.refresh_hours, configured.questions)
+        application.state.store = Store(configured.database_url, configured.refresh_hours, configured.questions,
+                                        index_budget_usd=configured.index_budget_usd, chat_budget_usd=configured.chat_budget_usd)
         await db(application.state.store.open)
         try:
             await db(application.state.store.health)
@@ -178,7 +182,40 @@ def create_app(settings=None, *, transport=None):
 
     @application.get("/api/health")
     async def health(request: Request):
-        return {"ok": await db(request.app.state.store.health)}
+        result = {"ok": await db(request.app.state.store.health), "knowledge": None}
+        try:
+            response = await request.app.state.client.get(f"{request.app.state.settings.knowledge_url}/health", timeout=2)
+            response.raise_for_status()
+            value = response.json()
+            version = value.get("version")
+            result["knowledge"] = {"version": version if isinstance(version, str) and re.fullmatch(r"[0-9a-f]{64}", version) else None,
+                                   "indexing": value.get("indexing") is True}
+        except (httpx.HTTPError, ValueError, AttributeError):
+            pass
+        return result
+
+    @application.get("/api/graph")
+    async def knowledge_graph(request: Request):
+        # One cached safe projection per API worker; concurrent visitors never fan out native graph reads.
+        async with graph_lock:
+            if time.monotonic() >= graph_cache["until"]:
+                graph_cache.update(until=time.monotonic() + 30, value=None)
+                settings = request.app.state.settings
+                try:
+                    async with request.app.state.client.stream("GET", f"{settings.knowledge_url}/graph",
+                               headers={"Authorization": f"Bearer {settings.chat_internal_token}"}, timeout=10) as response:
+                        response.raise_for_status()
+                        content = bytearray()
+                        async for chunk in response.aiter_bytes():
+                            content.extend(chunk)
+                            if len(content) > 16000000:
+                                raise ValueError("Graph is too large")
+                    graph_cache["value"] = sanitize_graph(json.loads(content))
+                except (httpx.HTTPError, KeyError, TypeError, ValueError, AttributeError):
+                    pass
+        if graph_cache["value"] is None:
+            raise ChatError("El mapa de conocimiento no está disponible. Inténtalo más tarde.")
+        return graph_cache["value"]
 
     async def session_state(request):
         store = request.app.state.store
@@ -242,7 +279,7 @@ def create_app(settings=None, *, transport=None):
                 version, fragments, graph_trace = await retrieve(request.app, body, history)
                 history = [{"question": turn["question"], "answer": turn["answer"]}
                            for turn in history if turn["version"] == version]
-                answer, sources = await request.app.state.provider.answer(body.message, fragments, history) if fragments else (REFUSAL, [])
+                answer, sources = await request.app.state.provider.answer(body.message, fragments, history)
                 if not sources:
                     graph_trace = {key: value for key, value in graph_trace.items() if key != "sources"}
                     graph_trace.update(nodes=[], edges=[], truncated=False)

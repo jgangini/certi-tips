@@ -5,6 +5,7 @@ async page => {
   const base = new URL('/certitips/', page.url()), context = await page.context().browser().newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
   const tab = await context.newPage(), requests = [], calls = [], errors = [], checks = [], geometry = [];
   let snapshot, graphOverride, reply = {}, releaseReply, pendingReply, releaseGraph, pendingGraph;
+  let indexing = true, healthAvailable = true, serverGraph, graphAvailable = true;
   const quota = { remaining: 20, limit: 20, refreshHours: 6, resetAt: null, minuteRemaining: 2, retryAfter: 0 };
   const session = { mode: 'LOCAL', authenticated: true, verificationRequired: false, available: true, quota };
   tab.on('request', request => requests.push(request.url()));
@@ -14,6 +15,8 @@ async page => {
     if (url.origin !== base.origin) return route.abort('blockedbyclient');
     if (url.pathname.startsWith('/api/')) {
       calls.push({ path: url.pathname, method: request.method(), body: request.postDataJSON() });
+      if (url.pathname === '/api/health') return route.fulfill({ status: healthAvailable ? 200 : 503, json: { ok: healthAvailable, knowledge: { version: (serverGraph || snapshot)?.version, indexing } } });
+      if (url.pathname === '/api/graph') return route.fulfill({ status: graphAvailable ? 200 : 503, json: serverGraph || snapshot });
       if (url.pathname !== '/api/chat') return route.fulfill({ json: session });
       const response = reply;
       if (pendingReply) await pendingReply;
@@ -92,7 +95,31 @@ async page => {
     await active([]);
     assert(await tab.locator('[data-graph-active-fit]').isDisabled(), 'Empty map offers a nonexistent active trace');
     const provenance = await tab.locator('[data-graph-meta]').textContent();
-    assert(provenance.includes('Instantánea del') && provenance.includes('Fuente: Cognee') && provenance.includes(snapshot.version.slice(0, 12)), 'Missing graph source, snapshot date or version');
+    const metadata = tab.locator('[data-graph-meta]');
+    assert(JSON.stringify(await metadata.locator('dt').allTextContents()) === JSON.stringify(['Conceptos', 'Relaciones', 'Actualización', 'Versión']), 'Graph metadata lost its individual labels or requested order');
+    assert(/^\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}$/.test(await metadata.locator('dd').nth(2).textContent()) && !/[|·]|Fuente:/.test(provenance) && provenance.includes(snapshot.version.slice(0, 12)), 'Graph metadata lacks its full date/time/version or retains text separators/source');
+    assert(await metadata.evaluate(element => {
+      const stamp = element.querySelector('.chat-graph-stamp'), version = element.lastElementChild, frame = element.getBoundingClientRect();
+      return stamp.nextElementSibling === version && Math.abs(version.getBoundingClientRect().right - frame.right) <= 1 && stamp.getBoundingClientRect().right <= version.getBoundingClientRect().left + 1;
+    }), 'Update date and version are not grouped on the right');
+    assert(await metadata.evaluate(element => [...element.querySelectorAll('dd')].every(cell => getComputedStyle(cell).borderLeftWidth === '1px' && getComputedStyle(cell).color !== getComputedStyle(cell.previousElementSibling).color)), 'Graph cells lack real dividing borders or distinct label/value colors');
+    const versionSpinner = tab.getByRole('status', { name: 'Actualizando el índice de conocimiento', exact: true });
+    await versionSpinner.waitFor();
+    assert(await metadata.locator('dd').last().getAttribute('aria-busy') === 'true' && await versionSpinner.evaluate(element => getComputedStyle(element).animationName === 'none'), 'Indexing status is not accessible or ignores reduced motion');
+    await tab.emulateMedia({ reducedMotion: 'no-preference' });
+    assert(await versionSpinner.evaluate(element => getComputedStyle(element).animationName === 'certichat-spin'), 'Version spinner does not rotate during confirmed indexing');
+    await tab.emulateMedia({ reducedMotion: 'reduce' });
+    healthAvailable = false;
+    await tab.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await versionSpinner.waitFor({ state: 'hidden' });
+    healthAvailable = true; indexing = true;
+    await tab.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await versionSpinner.waitFor();
+    indexing = false;
+    await tab.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await versionSpinner.waitFor({ state: 'hidden' });
+    assert(await metadata.locator('dd').last().getAttribute('aria-busy') === 'false', 'Completed indexing leaves a busy version cell');
+    checks.push('real metadata cells with muted labels/ink values; version spinner tracks confirmed indexing and stops on unavailable status');
     const heading = tab.locator('[data-knowledge-graph] .certichat-heading');
     assert(await heading.locator('h1').textContent() === 'Cognee' && (await heading.textContent()).includes('GRAFO DE CONOCIMIENTO'), 'Map header does not identify Cognee and its knowledge graph');
     assert(await tab.locator('.sidebar').count() === 0, 'Standalone page inherits a course sidebar');
@@ -123,12 +150,12 @@ async page => {
     }), 'Governance menu is covered by the overlapping chat panel');
     await governance.locator('summary').click();
     checks.push('graph footer aligns with empty and multiline composer; Governance menu receives pointer above chat');
-    assert(await tab.locator('[data-chat-close]').isDisabled(), 'Explorer permits closing its persistent chat');
+    assert(await tab.locator('[data-chat-close]').isHidden() && await tab.locator('.certichat-actions > a').isHidden(), 'Explorer displays its redundant close or graph control');
     assert(await tab.locator('[data-chat-open]').isHidden(), 'Auto-opened chat leaves a redundant launcher');
     await tab.getByRole('textbox', { name: 'Escribe tu consulta', exact: true }).press('Escape');
     assert(await tab.locator('#certichat-panel').isVisible(), 'Escape closes the persistent explorer chat');
     checks.push('real 4k/10k graph initialized within 15s', 'initial graph has no active trace', 'snapshot provenance');
-    checks.push('removed intro/sections stay absent', 'chat opens automatically with disabled X and ignores Escape');
+    checks.push('removed intro/sections stay absent', 'chat opens automatically with hidden close/graph controls and ignores Escape');
     const beforeZoom = await state();
     await tab.locator('[data-graph-zoom-in]').click();
     await tab.waitForFunction(scale => Number(document.querySelector('canvas[data-graph-canvas]').dataset.scale) > scale, beforeZoom.scale);
@@ -211,8 +238,6 @@ async page => {
     assert(frames.length >= 3 && finalFrame.moving === 'false' && frames.slice(0, -1).some(frame => frame.moving === 'true' && (frame.scale !== wholeGraph.scale || frame.x !== wholeGraph.panX || frame.y !== wholeGraph.panY) && (frame.scale !== finalFrame.scale || frame.x !== finalFrame.x || frame.y !== finalFrame.y)), 'Active fit did not animate through intermediate camera positions');
     await tab.emulateMedia({ reducedMotion: 'reduce' });
     checks.push('active fit animates through intermediate camera positions and finishes');
-    await tab.locator('[data-chat-map]').click();
-    assert(await canvas.evaluate(element => document.activeElement === element) && await tab.locator('#certichat-panel').isVisible(), 'Brain control does not focus the map while keeping chat open');
     await active(trace1.nodes, trace1.edges);
     assert(calls.at(-1).path === '/api/chat' && calls.at(-1).body.message === 'Consulta uno', 'Real chat UI did not send the question');
     checks.push('real textbox Enter publishes matching-version graphTrace');
@@ -300,9 +325,12 @@ async page => {
     await send('Consulta fallida', undefined, 503); await answered('El servicio no está disponible'); await active([]);
     await send('Consulta antes del rechazo', trace1); await answered('Respuesta: Consulta antes del rechazo.'); await active(trace1.nodes, trace1.edges);
     await send('Consulta sin evidencia', empty); await answered('Respuesta: Consulta sin evidencia.'); await active([]);
+    assert(await tab.locator('[data-graph-trace]').isHidden(), 'Empty evidence shows an unnecessary message');
+    assert(await tab.locator('.chat-graph-evidence').evaluate(node => node.getBoundingClientRect().height) === 0, 'Empty evidence leaves a blank row below the graph');
     await send('Consulta con otra versión', { ...trace2, version: 'f'.repeat(64) }); await answered('Respuesta: Consulta con otra versión.'); await active([]);
     assert(/versi[oó]n/i.test(await tab.locator('[data-graph-trace]').textContent()), 'Version mismatch has no accessible explanation');
     await send('Respuesta antigua sin traza'); await answered('Respuesta: Respuesta antigua sin traza.'); await active([]);
+    assert(await tab.locator('.chat-graph-evidence').evaluate(node => node.getBoundingClientRect().height) === 0, 'Legacy response without trace leaves a blank evidence row');
     await responses.first().click({ position: { x: 5, y: 5 } }); await active(trace1.nodes, trace1.edges);
     await responses.last().click({ position: { x: 5, y: 5 } }); await active([]);
     await responses.first().click({ position: { x: 5, y: 5 } }); await active(trace1.nodes, trace1.edges);
@@ -366,7 +394,7 @@ async page => {
         assert(measured.map.bottom <= measured.chat.top && Math.abs(measured.map.left - measured.chat.left) <= 1 && Math.abs(measured.map.width - measured.chat.width) <= 1, `Mobile panels do not stack with matching widths at ${width}`);
         assert(measured.chatStyle.position !== 'fixed' && measured.bodyOverflow !== 'hidden', `Mobile explorer still uses a fullscreen overlay at ${width}`);
       }
-      assert(await tab.locator('[data-chat-close]').isDisabled() && await tab.locator('#certichat-panel').isVisible(), `Chat can be closed at ${width}`);
+      assert(await tab.locator('[data-chat-close]').isHidden() && await tab.locator('.certichat-actions > a').isHidden() && await tab.locator('#certichat-panel').isVisible(), `Explorer displays its redundant close/graph controls at ${width}`);
       assert(Math.abs(measured.network.right - measured.toolbar.right - 12) <= 1 && Math.abs(measured.network.bottom - measured.toolbar.bottom - 12) <= 1, `Map controls lost their bottom/right inset at ${width}`);
       assert(measured.controls.every((control, index, all) => Math.abs(control.width - 36) <= 1 && Math.abs(control.height - 36) <= 1 && Math.abs(control.left - all[0].left) <= 1 && (!index || Math.abs(control.top - all[index - 1].bottom - 6) <= 1) && control.hasDrawing && control.backgroundImage === 'none' && (control.disabled || control.opacity === '1') && Math.abs((control.svg.left + control.svg.right - control.left - control.right) / 2) <= 1 && Math.abs((control.svg.top + control.svg.bottom - control.top - control.bottom) / 2) <= 1), `Map controls are not centered flat icons in a 36 px vertical column at ${width}: ${JSON.stringify(measured.controls)}`);
       geometry.push(measured);
@@ -379,6 +407,21 @@ async page => {
       assert((await state()).nodes === snapshot.nodes.length, `${theme}: theme change dropped the graph`);
     }
     checks.push('both themes retain the complete network');
+
+    const paidBeforePromotion = calls.filter(call => call.path === '/api/chat').length;
+    serverGraph = { ...snapshot, version: 'e'.repeat(64), generatedAt: '2026-10-13T12:34:56Z' };
+    await tab.reload(); await ready();
+    await tab.waitForFunction(() => document.querySelector('[data-graph-meta]').textContent.includes('eeeeeeeeeeee'));
+    assert((await state()).nodes === snapshot.nodes.length, 'Promoted graph loses concepts');
+    assert(calls.filter(call => call.path === '/api/chat').length === paidBeforePromotion, 'Graph synchronization submits a paid query');
+    await send('Consulta con índice actualizado', { ...trace1, version: serverGraph.version });
+    await answered('Respuesta: Consulta con índice actualizado.'); await active(trace1.nodes, trace1.edges);
+    await responses.last().click({ position: { x: 5, y: 5 } }); await active(trace1.nodes, trace1.edges);
+    graphAvailable = false;
+    await Promise.all([tab.waitForResponse(response => response.url().endsWith('/api/graph')), tab.reload()]); await ready();
+    assert((await state()).nodes === snapshot.nodes.length && (await metadata.textContent()).includes(snapshot.version.slice(0, 12)), 'Graph API outage removes the available published snapshot');
+    serverGraph = undefined; graphAvailable = true;
+    checks.push('active snapshot promotion refreshes graph and answer highlights without a paid query; unavailable graph API retains published fallback');
 
     graphOverride = { version: snapshot.version, generatedAt: new Date().toISOString(), nodes: [{ id: first.source, label: '<img src="https://evil.invalid/x" onerror="alert(1)">', type: 'Entity' }], edges: [] };
     await tab.reload(); await ready();

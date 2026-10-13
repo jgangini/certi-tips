@@ -1,6 +1,7 @@
 """Published freshness must invalidate conversational context before snapshot promotion."""
 
 import asyncio
+import fcntl
 from contextlib import asynccontextmanager
 import sys
 from types import SimpleNamespace
@@ -123,7 +124,15 @@ def test_retrieval_uses_latest_manifest_after_search_while_health_keeps_snapshot
     assert result["version"] == current["contentHash"]
     assert result["graphTrace"]["version"] == initial["contentHash"]
     assert [fragment["url"] for fragment in result["fragments"]] == [SITE + "stable/"]
-    assert asyncio.run(knowledge.health()) == {"status": "ready", "version": "a"*64}
+    assert asyncio.run(knowledge.health()) == {"status": "ready", "version": "a"*64, "indexing": False}
+
+
+def test_health_tracks_the_live_index_lock_and_stops_after_release(tmp_path, monkeypatch):
+    monkeypatch.setattr(knowledge.app, "state", SimpleNamespace(root=tmp_path, snapshot=tmp_path, version="a"*64))
+    with (tmp_path / "index.lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        assert asyncio.run(knowledge.health())["indexing"] is True
+    assert asyncio.run(knowledge.health())["indexing"] is False
 
 
 def test_current_page_precedes_graph_results_with_existing_source_limit(tmp_path, monkeypatch):
@@ -322,7 +331,7 @@ def test_native_search_timeout_cancels_slow_lane_and_keeps_completed_evidence(mo
 
 
 @pytest.mark.parametrize("current,active_version", [(True, "b"*64), (False, "a"*64), (True, "a"*64)])
-def test_trace_requires_same_indexed_content_even_when_published_navigation_survives(tmp_path, monkeypatch, current, active_version):
+def test_trace_requires_current_source_even_when_published_navigation_survives(tmp_path, monkeypatch, current, active_version):
     node = "00000000-0000-0000-0000-000000000001"
     doc = {"id": "guide", "title": "Guía", "courseId": "course", "url": SITE + "guide/", "text": "Información publicada."}
     home = {"id": "home", "title": "Rutas", "courseId": "site", "url": SITE, "text": "Oferta publicada."}
@@ -333,7 +342,8 @@ def test_trace_requires_same_indexed_content_even_when_published_navigation_surv
                               {key: value for key, value in home.items() if key != "text"} | {"hash": digest(home["text"])}]}
     atomic_json(tmp_path / "latest.json", manifest)
     indexed = {**manifest, "contentHash": active_version,
-               "documents": [{**manifest["documents"][0], "hash": digest(doc["text"])}, manifest["documents"][1]]}
+               "documents": [{**manifest["documents"][0], "hash": digest(doc["text"])}, manifest["documents"][1],
+                             {**manifest["documents"][0], "id": "removed-unrelated-document"}]}
     projection = {"version": active_version, "nodes": [{"id": node}], "edges": []}
     monkeypatch.setattr(knowledge.app, "state", SimpleNamespace(
         root=tmp_path, token="test-token", snapshot=tmp_path, version=active_version, sources=sources,

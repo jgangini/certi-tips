@@ -20,6 +20,8 @@ services:
       CERTICHAT_MODE: ${CERTICHAT_MODE:-VPS}
       CERTICHAT_REFRESH: ${CERTICHAT_REFRESH:-6}
       CERTICHAT_QUESTIONS: ${CERTICHAT_QUESTIONS:-20}
+      CERTICHAT_INDEX_BUDGET_USD: ${CERTICHAT_INDEX_BUDGET_USD:-10}
+      CERTICHAT_CHAT_BUDGET_USD: ${CERTICHAT_CHAT_BUDGET_USD:-10}
       CERTICHAT_DATABASE_URL: ${CERTICHAT_DATABASE_URL:?Configure private database credentials}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:?Configure the private OpenRouter key}
       CERTICHAT_TURNSTILE_SECRET: ${CERTICHAT_TURNSTILE_SECRET:?Configure Turnstile}
@@ -83,9 +85,10 @@ services:
     image: certichat-knowledge:${CERTICHAT_IMAGE_TAG:-local}
     profiles: [local]
     entrypoint: [/bin/sh, -c]
-    command: ['test "$$CERTICHAT_MODE" = LOCAL || exit 1; while true; do python -m app.indexer refresh; sleep 300; done']
+    command: ['test "$$CERTICHAT_MODE" = LOCAL || exit 1; case "$$CERTICHAT_INDEX_REFRESH_MINUTES" in [1-9]|1[0-5]) ;; *) exit 1;; esac; while true; do python -m app.indexer refresh; sleep "$$((CERTICHAT_INDEX_REFRESH_MINUTES * 60))"; done']
     environment:
       CERTICHAT_MODE: ${CERTICHAT_MODE:-VPS}
+      CERTICHAT_INDEX_REFRESH_MINUTES: ${CERTICHAT_INDEX_REFRESH_MINUTES:-5}
     volumes: [knowledge_data:/data]
     networks: [app]
     restart: unless-stopped

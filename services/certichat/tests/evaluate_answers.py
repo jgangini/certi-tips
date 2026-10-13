@@ -22,13 +22,17 @@ import httpx
 from app.corpus import (CORPUS_URL, MANIFEST_URL, download, public_url, segments,
                         validate_corpus, validate_manifest)
 from app.main import ChatBody, retrieve
-from app.provider import Provider
+from app.provider import Provider, REFUSAL
 from app.security import ChatError
 from app.settings import Settings
 from app.store import Store
 
 
 CASES = [
+    ("conversation_then_study", [("hola", "conversation"), ("¿Qué es DAMA?", True),
+                                 ("gracias", "conversation"), ("¿Dónde profundizo en ese tema?", True)]),
+    ("greeting_with_question", [("Hola, ¿qué es DAMA?", True)]),
+    ("thanks_without_support", [("Gracias, ahora dame una receta de pastel de chocolate", False)]),
     ("simple_dama", [("¿Qué es DAMA?", True)]),
     ("simple_oci", [("¿Qué es OCI?", True)]),
     ("compound_reported", [("De qué trata dama y OCI", True)]),
@@ -96,7 +100,8 @@ def citation_ids_are_hidden(answer, selected):
 async def evaluate_turn(application, provider, question, expected, history, published, content_version):
     provider.input, provider.output = None, None
     start = time.monotonic()
-    result = {"question": question, "expected_supported": expected, "input_history_turns": len(history)}
+    result = {"question": question, "expected_supported": expected is True,
+              "expected_conversation": expected == "conversation", "input_history_turns": len(history)}
     try:
         body = ChatBody(requestId=str(uuid4()), message=question, pageUrl=application.state.settings.site_url + "certichat/")
         version, fragments, trace = await retrieve(application, body, history)
@@ -104,9 +109,11 @@ async def evaluate_turn(application, provider, question, expected, history, publ
                            for row in history if row["version"] == version]
         answer, sources = await provider.answer(question, fragments, current_history)
         provenance = version == content_version and sources_are_published(sources, fragments, published)
+        reply_matches = (bool(sources) if expected is True else
+                         not sources and bool(answer.strip()) and (answer != REFUSAL if expected == "conversation" else answer == REFUSAL))
         result.update(answer=answer, supported=bool(sources), sources=sources, graph_trace=trace,
                       fragments=[fragment_summary(fragment) for fragment in fragments],
-                      provenance_valid=provenance, passed=bool(sources) == expected and provenance)
+                      provenance_valid=provenance, passed=reply_matches and provenance)
         history = [*history, {"question": question, "answer": answer, "version": version}][-4:]
     except Exception as error:
         # Never serialize arbitrary exception text: it may contain deployment details.
@@ -167,7 +174,8 @@ async def evaluate(output_path, case=None):
               "cost_scope": "Reported answer generation only; retrieval embeddings also use the persisted budget but are not included here.",
               "semantic_review": "Pending human inspection of answers, especially topic coverage, topic switches and partial support.",
               "results": []}
-    store = Store(settings.database_url, settings.refresh_hours, settings.questions)
+    store = Store(settings.database_url, settings.refresh_hours, settings.questions,
+                  index_budget_usd=settings.index_budget_usd, chat_budget_usd=settings.chat_budget_usd)
     store.open()
     try:
         failures = []

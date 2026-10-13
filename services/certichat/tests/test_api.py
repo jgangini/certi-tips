@@ -54,16 +54,20 @@ def clients(database_url, request):
             return httpx.Response(200, json=turnstile)
         if request.url.host == "knowledge":
             if request.url.path == "/health":
-                return httpx.Response(200, json={"status": knowledge["status"], "version": knowledge["version"]})
+                return httpx.Response(200, json={"status": knowledge["status"], "version": knowledge["version"], "indexing": knowledge.get("indexing", False)})
             assert request.headers["Authorization"] == "Bearer " + "c"*32
+            if request.url.path == "/graph":
+                return httpx.Response(200, json=knowledge.get("graph"))
             return httpx.Response(200, json=knowledge)
         assert request.url.host == "openrouter.ai"
         payload = json.loads(request.content)
         if request.url.path.endswith("embeddings"):
             return httpx.Response(200, json={"usage": {"cost": .000001}, "data": [{"embedding": [0.0]}]})
         assert payload["max_tokens"] <= 4096
+        content = payload["messages"][-1]["content"]
+        supported = not content.startswith("{") or json.loads(content).get("fragments") != []
         return httpx.Response(200, json={"usage": {"cost": .0001}, "choices": [{"message": {"content": json.dumps(
-            {"answer": "Oracle almacena datos.", "citations": ["S1"]})}}]})
+            {"kind": "grounded", "answer": "Oracle almacena datos.", "citations": ["S1"] if supported else []})}}]})
 
     application = create_app(settings, transport=httpx.MockTransport(handler))
     with ExitStack() as stack:
@@ -87,6 +91,43 @@ def session(make):
 
 def question():
     return {"requestId": str(uuid4()), "message": "¿Qué almacena Oracle?", "pageUrl": FRAGMENT["url"]}
+
+
+def test_public_health_reports_indexing_without_a_paid_request_and_rejects_invalid_metadata(clients):
+    make, _app, calls, _turnstile, knowledge = clients
+    client = make()
+    knowledge["indexing"] = True
+    assert client.get("/api/health").json() == {"ok": True, "knowledge": {"version": VERSION, "indexing": True}}
+    knowledge.update(indexing="true", version="private/internal/path")
+    assert client.get("/api/health").json()["knowledge"] == {"version": None, "indexing": False}
+    assert all(request.url.host == "knowledge" and request.url.path == "/health" for request in calls)
+
+
+def test_public_graph_is_safe_cached_and_does_not_call_provider(clients):
+    make, _app, calls, _turnstile, knowledge = clients
+    knowledge["graph"] = {"version": VERSION, "generatedAt": "2026-10-11T20:04:11+00:00",
+                          "nodes": [{"id": TRACE["nodes"][0], "type": "Entity", "label": "DAMA", "text": "private body"}],
+                          "edges": [], "private": "secret"}
+    client = make()
+    first = client.get("/api/graph")
+    assert first.status_code == 200
+    assert first.json() == {"version": VERSION, "generatedAt": "2026-10-11T20:04:11+00:00",
+                            "nodes": [{"id": TRACE["nodes"][0], "type": "Entity", "label": "DAMA"}], "edges": []}
+    assert client.get("/api/graph").json() == first.json()
+    assert [(request.url.host, request.url.path) for request in calls] == [("knowledge", "/graph")]
+    assert client.get("/api/graph", headers={"Origin": "https://evil.test"}).status_code == 403
+
+
+@pytest.mark.parametrize("graph", [None, {"version": "private/path"},
+    {"version": VERSION, "generatedAt": "bad date", "nodes": [], "edges": []},
+    {"version": VERSION, "generatedAt": "2026-10-11T20:04:11", "nodes": [], "edges": []},
+    {"version": VERSION, "generatedAt": "2026-10-11T20:04:11Z", "nodes": [None], "edges": []}])
+def test_public_graph_rejects_invalid_worker_metadata_without_leaking_it(clients, graph):
+    make, _app, calls, _turnstile, knowledge = clients
+    knowledge["graph"] = graph
+    response = make().get("/api/graph")
+    assert response.status_code == 503 and "private" not in response.text
+    assert len(calls) == 1
 
 
 def test_session_cookie_csrf_body_and_turnstile_validation(clients):
@@ -209,12 +250,14 @@ def test_private_gateway_denies_browser_and_reserves_per_purpose(clients):
     assert rows == [{"purpose": "chat", "charged_micro": 1, "settled": True}, {"purpose": "index", "charged_micro": 1, "settled": True}]
 
 
-def test_empty_or_unsafe_retrieval_never_generates(clients):
+def test_empty_retrieval_can_classify_conversation_but_unsafe_retrieval_never_generates(clients):
     make, app, calls, _, knowledge = clients
     client = session(make)
     knowledge["fragments"] = []
     result = client.post("/api/chat", json=question())
     assert result.status_code == 200 and result.json()["sources"] == []
+    assert sum(request.url.host == "openrouter.ai" for request in calls) == 1
+    calls.clear()
     knowledge["fragments"] = [{**FRAGMENT, "url": "https://evil.test/"}]
     assert client.post("/api/chat", json=question()).status_code == 503
     assert not any(request.url.host == "openrouter.ai" for request in calls)
@@ -327,7 +370,7 @@ def test_fixed_window_starts_on_first_question_and_resets_without_sliding(client
 def test_spent_budget_blocks_public_and_internal_outbound(clients):
     make, app, calls, _, _ = clients
     client = session(make)
-    app.state.store.reserve("chat", 5_000_000)
+    app.state.store.reserve("chat", 10_000_000)
     previous = len(calls)
     assert client.post("/api/chat", json=question()).status_code == 503
     private = TestClient(app, base_url=ORIGIN)
@@ -470,7 +513,6 @@ def test_unsupported_answer_has_no_graph_highlights(clients, monkeypatch, no_fra
         knowledge["fragments"] = []
 
     async def unsupported(*_args):
-        assert not no_fragments
         return "No dispongo de información suficiente para responder esa consulta.", []
 
     monkeypatch.setattr(app.state.provider, "answer", unsupported)

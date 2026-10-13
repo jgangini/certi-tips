@@ -1,19 +1,21 @@
 """One private process owns the embedded stores for the active snapshot."""
 
 import asyncio
+import fcntl
 import hmac
 import os
 import time
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from itertools import zip_longest
 from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
-from .corpus import (DATASET, SITE, public_url, read_json, same_indexed_content,
+from .corpus import (DATASET, SITE, public_url, read_json,
                      snapshot_path, supported_fragments, validate_manifest)
-from .graph import graph_trace, node_documents, public_graph, read_graph
+from .graph import current_evidence, graph_trace, node_documents, public_graph, read_graph
 
 
 def configure_cognee(snapshot: Path, token: str) -> None:
@@ -114,9 +116,13 @@ async def lifespan(app: FastAPI):
     if app.state.manifest["contentHash"] != version:
         raise RuntimeError("Snapshot manifest does not match its stores")
     app.state.sources = read_json(snapshot / "sources.json")
+    app.state.graph_generated_at = (read_json(snapshot / "ready.json").get("generatedAt")
+                                   or datetime.fromtimestamp((snapshot / "ready.json").stat().st_mtime, timezone.utc).isoformat())
     app.state.version, app.state.snapshot = version, snapshot
-    configure_cognee(snapshot, token)
+    stores_lock = (root / "stores.lock").open("a")
     try:
+        fcntl.flock(stores_lock, fcntl.LOCK_SH | fcntl.LOCK_NB)
+        configure_cognee(snapshot, token)
         # Open stores through a metadata-only startup check; no paid search on restart.
         from cognee.context_global_variables import set_database_global_context_variables
         from cognee.modules.users.methods import get_default_user
@@ -136,7 +142,10 @@ async def lifespan(app: FastAPI):
                 await cached_graph()
             yield
     finally:
-        await close_cognee()
+        try:
+            await close_cognee()
+        finally:
+            stores_lock.close()
 
 
 app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
@@ -144,7 +153,13 @@ app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None
 
 @app.get("/health")
 async def health():
-    return {"status": "ready" if app.state.snapshot else "waiting", "version": getattr(app.state, "version", None)}
+    indexing = False
+    with (app.state.root / "index.lock").open("a") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            indexing = True
+    return {"status": "ready" if app.state.snapshot else "waiting", "version": getattr(app.state, "version", None), "indexing": indexing}
 
 
 async def cached_graph():
@@ -153,6 +168,7 @@ async def cached_graph():
     if cached is None or cached["version"] != app.state.version:
         nodes, edges = await asyncio.wait_for(read_graph(), timeout=30)
         cached = public_graph(nodes, edges, app.state.version)
+        cached["generatedAt"] = getattr(app.state, "graph_generated_at", cached["generatedAt"])
         app.state.node_documents = node_documents(nodes, edges)
         app.state.public_graph = cached
     return cached
@@ -205,8 +221,8 @@ async def retrieve(body: Retrieval, authorization: str = Header(default="")):
                     for name, source in app.state.sources.items()
                     if source["id"] in current and current[source["id"]]["url"] in (SITE, body.pageUrl)]
     fragments = supported_fragments(page_context + evidence, app.state.sources, latest)
-    # Keep the physical graph version; relocated URLs are safe only while its full indexed content still matches.
-    trace_evidence = evidence if fragments and same_indexed_content(app.state.manifest, latest) else []
+    # Unrelated edits must not hide valid evidence; accepted fragments already exclude stale content.
+    documents = getattr(app.state, "node_documents", {})
+    trace_evidence = current_evidence(evidence, fragments, documents)
     return {"version": latest["contentHash"], "fragments": fragments,
-            "graphTrace": graph_trace(trace_evidence, projection, fragments,
-                                      getattr(app.state, "node_documents", {}))}
+            "graphTrace": graph_trace(trace_evidence, projection, fragments, documents)}

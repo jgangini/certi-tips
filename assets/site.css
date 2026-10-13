@@ -1085,6 +1085,8 @@ body[data-page="overview"][data-course-has-exam="true"] .prose th:first-child {
   background: var(--sidebar-bg);
   font-size: 0.74rem;
 }
+.table-scroll td .tag { max-width: 100%; margin: 0 4px 4px 0; padding: 3px 6px; background: var(--hover); font-size: 0.75rem; line-height: 1.4; letter-spacing: 0; }
+.table-scroll .official-sources { margin: 6px 0 0; padding-left: 18px; }
 .prose details {
   border: 1px solid var(--line);
   background: var(--chrome-bg);

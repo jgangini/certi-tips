@@ -14,7 +14,7 @@ export function certichatExplorerBody(base, hasGraph) {
 <p class="chat-graph-trace" data-graph-trace role="status" hidden></p>
 <ul class="chat-graph-active" data-graph-active aria-label="Conceptos recuperados para esta consulta"></ul>
 <p class="visually-hidden" data-graph-selection role="status"></p><ul class="visually-hidden" data-graph-active-relations aria-label="Relaciones recuperadas para esta consulta"></ul>
-</div><footer class="chat-graph-footer"><p class="chat-graph-meta" data-graph-meta></p></footer></div><noscript><p>Activa JavaScript para explorar el mapa y ver las consultas.</p></noscript></section>
+</div><footer class="chat-graph-footer"><dl class="chat-graph-meta" data-graph-meta></dl></footer></div><noscript><p>Activa JavaScript para explorar el mapa y ver las consultas.</p></noscript></section>
 <div data-explorer-chat-slot></div>
 </div>`;
 }

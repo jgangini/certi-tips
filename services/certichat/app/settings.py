@@ -1,6 +1,7 @@
 """Fail-closed deployment settings."""
 
 from dataclasses import dataclass
+from decimal import Decimal
 import os
 from urllib.parse import urlsplit
 
@@ -25,6 +26,8 @@ class Settings:
     mode: str = "VPS"
     refresh_hours: int = 6
     questions: int = 20
+    index_budget_usd: Decimal = Decimal("10")
+    chat_budget_usd: Decimal = Decimal("10")
 
     def validate(self):
         if self.mode not in ("LOCAL", "VPS"):
@@ -33,6 +36,9 @@ class Settings:
             raise ValueError("CERTICHAT_REFRESH must be an integer from 1 to 24 hours.")
         if type(self.questions) is not int or not 1 <= self.questions <= 100:
             raise ValueError("CERTICHAT_QUESTIONS must be an integer from 1 to 100.")
+        for value in (self.index_budget_usd, self.chat_budget_usd):
+            if type(value) not in (int, Decimal) or not Decimal(value).is_finite() or not 0 < value <= 1000000 or Decimal(value).normalize().as_tuple().exponent < -2:
+                raise ValueError("CertiChat budgets must be positive USD amounts up to 1000000 with at most two decimal places.")
         if not self.database_url.startswith(("postgresql://", "postgres://")):
             raise ValueError("CertiChat requires PostgreSQL.")
         secrets = (self.openrouter_api_key, self.chat_internal_token,
@@ -82,4 +88,6 @@ class Settings:
                    knowledge_url=os.environ.get("CERTICHAT_KNOWLEDGE_URL", cls.knowledge_url),
                    site_url=os.environ.get("CERTICHAT_SITE_URL", cls.site_url), mode=mode,
                    refresh_hours=int(os.environ.get("CERTICHAT_REFRESH", "6")),
-                   questions=int(os.environ.get("CERTICHAT_QUESTIONS", "20")))
+                   questions=int(os.environ.get("CERTICHAT_QUESTIONS", "20")),
+                   index_budget_usd=Decimal(os.environ.get("CERTICHAT_INDEX_BUDGET_USD", "10")),
+                   chat_budget_usd=Decimal(os.environ.get("CERTICHAT_CHAT_BUDGET_USD", "10")))

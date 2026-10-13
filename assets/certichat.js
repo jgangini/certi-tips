@@ -56,7 +56,8 @@ if (root) {
   if (dock) {
     dock.append(root);
     panel.setAttribute("role", "region");
-    root.querySelector("[data-chat-close]").disabled = true;
+    root.querySelector("[data-chat-close]").hidden = true;
+    root.querySelector('a[aria-label="Ver el grafo de CertiChat"]').hidden = true;
   }
   const mobileChat = matchMedia("(max-width: 800px)");
   const homePath = document.body.dataset.page === "home" ? document.querySelector(".path-carousel") : null;
@@ -462,17 +463,6 @@ if (root) {
     } catch { /* Keep the restored panel state if storage is unavailable. */ }
   });
   root.querySelector("[data-chat-close]").addEventListener("click", () => closePanel());
-  if (dock) {
-    const map = root.querySelector('a[aria-label="Ver el grafo de CertiChat"]');
-    map.dataset.chatMap = "";
-    map.setAttribute("aria-label", "Ver mapa de conocimiento");
-    map.title = "Ver mapa";
-    map.addEventListener("click", event => {
-      if (event.button || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
-      event.preventDefault();
-      document.querySelector("[data-graph-canvas]")?.focus();
-    });
-  }
   panel.addEventListener("keydown", event => { if (event.key === "Escape") { event.preventDefault(); closePanel(); } });
   retry.addEventListener("click", connect);
   clear.addEventListener("click", () => {

@@ -44,6 +44,9 @@ $values = @{
     CERTICHAT_TRUSTED_PROXY_IPS = '127.0.0.1'
     CERTICHAT_REFRESH = '6'
     CERTICHAT_QUESTIONS = '20'
+    CERTICHAT_INDEX_REFRESH_MINUTES = '5'
+    CERTICHAT_INDEX_BUDGET_USD = '10'
+    CERTICHAT_CHAT_BUDGET_USD = '10'
 }
 if ($Test) {
     # Isolated tmpfs database and dummy values: local tests cannot consume the real OpenRouter key.
@@ -60,18 +63,24 @@ if ($Test) {
         CERTICHAT_DATABASE_URL = 'postgresql://unused:unused@unused/unused'
     }
 } else {
-    $private = Read-PrivateValues (Join-Path $repo '.private/certichat.env') @('CERTICHAT_MODE', 'OPENROUTER_API_KEY', 'CERTICHAT_REFRESH', 'CERTICHAT_QUESTIONS')
+    $private = Read-PrivateValues (Join-Path $repo '.private/certichat.env') @('CERTICHAT_MODE', 'OPENROUTER_API_KEY', 'CERTICHAT_REFRESH', 'CERTICHAT_QUESTIONS', 'CERTICHAT_INDEX_REFRESH_MINUTES', 'CERTICHAT_INDEX_BUDGET_USD', 'CERTICHAT_CHAT_BUDGET_USD')
     if ($private.CERTICHAT_MODE -cne 'LOCAL') { throw 'Set CERTICHAT_MODE=LOCAL in .private/certichat.env before starting the local API.' }
     if (-not $private.OPENROUTER_API_KEY -or $private.OPENROUTER_API_KEY -match "['\r\n]") {
         throw 'A valid OPENROUTER_API_KEY is required in .private/certichat.env.'
     }
-    $maximums = @{ CERTICHAT_REFRESH = 24; CERTICHAT_QUESTIONS = 100 }
+    $maximums = @{ CERTICHAT_REFRESH = 24; CERTICHAT_QUESTIONS = 100; CERTICHAT_INDEX_REFRESH_MINUTES = 15 }
     foreach ($name in $maximums.Keys) {
         if ($private.ContainsKey($name)) {
             if ($private[$name] -notmatch '^[0-9]{1,3}$' -or [int]$private[$name] -lt 1 -or [int]$private[$name] -gt $maximums[$name]) {
                 throw "$name must be an integer from 1 to $($maximums[$name])."
             }
             $values[$name] = ([int]$private[$name]).ToString()
+        }
+    }
+    foreach ($name in @('CERTICHAT_INDEX_BUDGET_USD', 'CERTICHAT_CHAT_BUDGET_USD')) {
+        if ($private.ContainsKey($name)) {
+            if ($private[$name] -notmatch '^\d{1,7}(?:\.\d{1,2})?$' -or [decimal]::Parse($private[$name], [Globalization.CultureInfo]::InvariantCulture) -le 0 -or [decimal]::Parse($private[$name], [Globalization.CultureInfo]::InvariantCulture) -gt 1000000) { throw "$name must be a positive USD amount up to 1000000 with at most two decimal places." }
+            $values[$name] = $private[$name]
         }
     }
     $secretNames = @('CERTICHAT_POSTGRES_ADMIN_PASSWORD', 'CERTICHAT_POSTGRES_RUNTIME_PASSWORD',
