@@ -55,6 +55,7 @@ function showProgress() {
   document.querySelectorAll("[data-mark-complete]").forEach((button) => {
     const done = completed.has(button.dataset.markComplete);
     button.setAttribute("aria-checked", String(done));
+    button.querySelector("[data-completion-label]").textContent = done ? "Completado" : "Sin Completar";
   });
 }
 
