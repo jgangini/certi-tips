@@ -783,6 +783,7 @@ html[data-theme="dark"] .hero-actions .certiquiz-link:is(:hover, :focus-visible)
   scrollbar-color: var(--scrollbar) transparent;
   scrollbar-width: thin;
   padding-bottom: 26px;
+  caret-color: transparent;
 }
 .course-progress > div {
   display: flex;
@@ -816,7 +817,7 @@ progress::-webkit-progress-value {
 }
 .nav-link {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 8px;
   text-decoration: none;
   color: var(--muted);

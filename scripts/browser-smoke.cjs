@@ -195,6 +195,14 @@ async (page) => {
     const line = branch.querySelector('.nav-sections').getBoundingClientRect();
     return Math.abs((number.left + number.right) / 2 - line.left) <= 1;
   }), 'Section guide is not aligned with the module number');
+  assert(await page.locator('.sidebar .nav-link').evaluateAll(links => links.every(link => {
+    const number = link.querySelector('.nav-number').getBoundingClientRect(), title = link.querySelector('.nav-title');
+    return number.bottom <= title.getBoundingClientRect().top + parseFloat(getComputedStyle(title).lineHeight) + 1;
+  })), 'Module numbers are not aligned with the first title line');
+  assert(await mcpBranch.locator('summary').evaluate(summary => {
+    const focused = summary.matches(':focus-visible'), style = getComputedStyle(summary);
+    return style.caretColor === 'rgba(0, 0, 0, 0)' && focused && style.outlineStyle !== 'none';
+  }), 'Navigation caret is visible or keyboard focus was removed');
   await mcpBranch.locator('a[href$="#conceptos-clave"]').click();
   await page.waitForURL(`${base}${course}/mcp/#conceptos-clave`);
   assert(await menu.getAttribute('aria-expanded') === 'false', 'Section navigation did not close mobile menu');
