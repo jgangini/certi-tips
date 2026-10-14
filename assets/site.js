@@ -1,4 +1,5 @@
 import { readStored, writeStored } from "./storage.js";
+import { indexSearchEntry, searchContent, corpusSearchEntries, searchExcerpt } from "./site-search.js";
 
 const footer = document.querySelector(".site-footer");
 const footerCredit = footer?.querySelector(".footer-credit");
@@ -72,6 +73,7 @@ showProgress();
 
 const toggle = document.querySelector(".menu-toggle");
 const navigation = document.querySelector(".sidebar");
+const menuName = navigation?.dataset.menuName || "del curso";
 const menuReturn = toggle?.nextElementSibling;
 const courseNavMedia = matchMedia("(max-width: 800px)");
 function syncCourseMenu() {
@@ -83,7 +85,7 @@ function syncCourseMenu() {
   else if ((mobile || !compact) && toggle.parentElement !== menuReturn.parentElement) menuReturn.before(toggle);
   if (focused) toggle.focus({ preventScroll: true });
   toggle.setAttribute("aria-expanded", String(mobile ? navigation.classList.contains("is-open") : !compact));
-  toggle.setAttribute("aria-label", mobile ? "Contenido del curso" : compact ? "Expandir menú del curso" : "Contraer menú del curso");
+  toggle.setAttribute("aria-label", mobile ? `Contenido ${menuName}` : compact ? `Expandir menú ${menuName}` : `Contraer menú ${menuName}`);
   toggle.title = mobile ? "Contenido del curso" : compact ? "Mostrar menú completo" : "Mostrar solo números";
 }
 if (toggle && navigation) {
@@ -114,24 +116,58 @@ const searchEntries = [...(searchDialog?.querySelectorAll("[data-search-term]") 
 const searchCount = searchDialog?.querySelector("[data-search-count]");
 const searchEmpty = searchDialog?.querySelector("[data-search-empty]");
 const searchClose = searchDialog?.querySelector("[data-search-close]");
-const normalizeSearch = (value) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const searchList = searchDialog?.querySelector("#search-results");
+const catalogSearch = searchEntries.map(row => indexSearchEntry({
+  title: row.querySelector("strong").textContent, terms: row.dataset.searchTerm, text: row.querySelector(".search-result-description").textContent,
+  kind: row.dataset.searchKind, url: row.querySelector("a").getAttribute("href"), detail: row.querySelector("small").textContent, row,
+}));
+const searchIcons = new Map(searchEntries.map(row => [row.dataset.searchKind, row.querySelector(".search-result-icon")]));
+searchIcons.set("video", searchDialog.querySelector("#search-video-icon").content.firstElementChild);
+let contentSearch = [], searchLoading, searchError = false;
+
+function contentResult(entry, query) {
+  const row = searchEntries[0].cloneNode(true), link = row.querySelector("a");
+  row.hidden = false; row.dataset.searchKind = entry.kind;
+  link.href = entry.url; link.removeAttribute("target"); link.removeAttribute("rel");
+  row.querySelector("strong").textContent = entry.title;
+  row.querySelector("small").textContent = entry.kind === "video" ? "Video · CertiTube" : "Contenido de la guía";
+  row.querySelector(".search-result-description").textContent = searchExcerpt(entry.text, query);
+  row.querySelector(".search-result-icon").replaceWith(searchIcons.get(entry.kind).cloneNode(true));
+  return row;
+}
+
 function updateSearch() {
-  const terms = normalizeSearch(searchInput.value.trim()).split(/\s+/).filter(Boolean);
-  const searching = terms.length > 0;
-  let total = 0;
-  for (const entry of searchEntries) {
-    const matches = searching
-      ? terms.every((term) => normalizeSearch(entry.dataset.searchTerm).includes(term))
-      : entry.dataset.searchKind === "certification";
-    if (matches) total++;
-    entry.hidden = !matches;
-  }
+  const query = searchInput.value.trim(), searching = query.length > 0;
+  const focusedLink = searchDialog.querySelector("a:focus")?.getAttribute("href");
+  const results = searching ? searchContent([...catalogSearch, ...contentSearch], query) : catalogSearch.filter(entry => entry.kind !== "topic");
+  const rows = results.map(entry => {
+    if (!entry.row) return contentResult(entry, query);
+    entry.row.hidden = false; return entry.row;
+  });
+  searchList.replaceChildren(...rows, searchEmpty);
+  if (focusedLink) ([...searchList.querySelectorAll("a")].find(link => link.getAttribute("href") === focusedLink) ?? searchInput).focus();
+  const total = rows.length;
   searchDialog.classList.toggle("has-query", searching);
   searchEmpty.hidden = total !== 0;
   searchClose.setAttribute("aria-label", searchInput.value ? "Limpiar búsqueda" : "Cerrar búsqueda");
-  searchCount.textContent = !searching ? `${total} cursos disponibles.`
+  searchCount.textContent = !searching ? `${total} cursos y videos disponibles.`
     : total ? `${total} resultado${total === 1 ? "" : "s"}.`
     : "No se encontraron resultados. Prueba con otro término.";
+  if (searchError) searchCount.textContent += " No se pudieron cargar las secciones. Vuelve a abrir el buscador para reintentar; puedes buscar por título y tema.";
+  searchCount.classList.toggle("visually-hidden", !searchError);
+}
+
+async function loadSearchContent() {
+  if (searchLoading) return;
+  searchError = false; searchDialog.setAttribute("aria-busy", "true");
+  searchLoading = fetch(`${document.body.dataset.base}assets/certichat/corpus.json`, { cache: "no-store" });
+  try {
+    const response = await searchLoading;
+    if (!response.ok) throw new Error("Search content unavailable");
+    const siteRoot = new URL(document.body.dataset.base, document.querySelector('link[rel="canonical"]').href).href;
+    contentSearch = corpusSearchEntries(await response.json(), siteRoot);
+  } catch { searchError = true; searchLoading = undefined; }
+  finally { searchDialog.setAttribute("aria-busy", "false"); updateSearch(); }
 }
 function openSearch() {
   if (!searchDialog.open) {
@@ -140,6 +176,7 @@ function openSearch() {
   }
   updateSearch();
   searchInput.focus();
+  loadSearchContent();
 }
 searchButton?.addEventListener("click", openSearch);
 searchClose?.addEventListener("click", () => {

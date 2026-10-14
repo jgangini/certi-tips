@@ -34,6 +34,8 @@ function validateReference(context, file, value, asset = false) {
     return;
   }
   if (url.origin !== origin) {
+    const thumbnail = /^https:\/\/i\.ytimg\.com\/vi\/([A-Za-z0-9_-]{11})\/mqdefault\.jpg$/.exec(value);
+    if (asset === 'img' && file.startsWith('certitube/') && thumbnail && context.files.has(`certitube/${thumbnail[1]}/index.html`)) return;
     if (asset) error(file, `external asset is not allowed: ${value}`);
     return;
   }
@@ -65,7 +67,7 @@ function validateLocalReference(context, file, value, asset, url) {
 
 function validateHtmlLinks(context, file, tag, attributes) {
   if ('href' in attributes) validateReference(context, file, attributes.href, tag === 'link' && attributes.rel !== 'canonical');
-  if ('src' in attributes) validateReference(context, file, attributes.src, true);
+  if ('src' in attributes) validateReference(context, file, attributes.src, tag);
   if ('data-diagram' in attributes) validateReference(context, file, attributes['data-diagram'], true);
   if ('srcset' in attributes) for (const entry of attributes.srcset.split(',')) validateReference(context, file, entry.trim().split(/\s+/)[0], true);
 }

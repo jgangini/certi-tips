@@ -162,6 +162,11 @@ if (root) {
     window.dispatchEvent(new CustomEvent(hovering ? "certichat:hover" : "certichat:focus", { detail: trace || null }));
   }
 
+  function bindResponse(bubble) {
+    // Non-bubbling pointer events need a listener on the real bubble inside Deep Chat's shadow root.
+    bubble.tabIndex = 0; bubble.onpointerenter = focusResponse; bubble.onpointerleave = focusResponse;
+  }
+
   function setStatus(message, error = false) {
     accessError = error ? message : "";
     retry.hidden = preview || !error;
@@ -243,7 +248,7 @@ if (root) {
           text: { color: "var(--ink)", fontSize: "16px", paddingTop: "11px", paddingBottom: "13px", paddingLeft: "12px", paddingRight: "2.4em" },
         },
       };
-      chat.submitButtonStyles = { submit: { container: { default: { transform: "scale(1.21)", marginBottom: "-3px", marginRight: "0.4em" } } } };
+      chat.submitButtonStyles = { submit: { container: { default: { transform: "scale(1.21)", marginBottom: "-3px", marginRight: "0.4em" } }, svg: { styles: { hover: { fill: "var(--red)", color: "var(--red)" } } } } };
       chat.messageStyles = { default: { shared: { bubble: { maxWidth: "92%", fontSize: "14px", lineHeight: "1.5" } }, ai: { bubble: { backgroundColor: "var(--hover)", color: "var(--ink)" } }, user: { bubble: { backgroundColor: "var(--accent)", color: "var(--on-red)" } } } };
       chat.messageStyles.loading = { message: { styles: { bubble: { display: "flex", alignItems: "center", justifyContent: "center", width: "56px", height: "36px", padding: "0", boxSizing: "border-box" } } } };
       chat.remarkable = { html: false, applyHTML: false };
@@ -255,7 +260,7 @@ if (root) {
         if (isHistory) return;
         if (message.role === "ai") {
           responseTraces.push(completedTrace); completedTrace = undefined;
-          if (dock) chat.shadowRoot.querySelectorAll(responseSelector).forEach(bubble => { bubble.tabIndex = 0; });
+          if (dock) chat.shadowRoot.querySelectorAll(responseSelector).forEach(bindResponse);
           if (pendingRequest?.requestId === completedRequest) pendingRequest = undefined;
           completedRequest = undefined;
           busy = false; clear.disabled = !verified;
@@ -275,9 +280,7 @@ if (root) {
         if (dock) {
           chat.shadowRoot.addEventListener("click", focusResponse);
           chat.shadowRoot.addEventListener("keydown", focusResponse);
-          chat.shadowRoot.addEventListener("pointerenter", focusResponse, true);
-          chat.shadowRoot.addEventListener("pointerleave", focusResponse, true);
-          chat.shadowRoot.querySelectorAll(responseSelector).forEach(bubble => { bubble.tabIndex = 0; });
+          chat.shadowRoot.querySelectorAll(responseSelector).forEach(bindResponse);
         }
         updateQuota();
       };

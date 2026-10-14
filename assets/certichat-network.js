@@ -1,6 +1,16 @@
 const edgeKey = edge => JSON.stringify([edge.source, edge.target, edge.label]);
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
+export function videoEvidence(trace) {
+  const sources = new Map();
+  for (const source of trace?.sources || []) {
+    if (!/\/certitube\/[A-Za-z0-9_-]{11}\/$/.test(new URL(source.url).pathname)) continue;
+    if (!sources.has(source.nodeId)) sources.set(source.nodeId, new Set());
+    sources.get(source.nodeId).add(source.url);
+  }
+  return { nodes: new Set(sources.keys()), edges: new Set((trace?.edges || []).filter(edge => [...(sources.get(edge.source) || [])].some(url => sources.get(edge.target)?.has(url))).map(edgeKey)) };
+}
+
 export function layoutNetwork(graph) {
   const nodes = graph.nodes.map(node => ({ id: node.id, label: node.label, degree: 0, radius: 0, x: 0, y: 0 }));
   const indexes = new Map(nodes.map((node, index) => [node.id, index]));
@@ -71,7 +81,7 @@ export function createNetwork(canvas, graph, onSelect, onAnchor, onZoom) {
   const events = new AbortController(), pointers = new Map();
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   let width = 0, height = 0, frame = 0, destroyed = false, moved = false, selected, pressPosition, camera, pulse;
-  let activeNodes = new Set(), activeEdges = new Set();
+  let activeNodes = new Set(), activeEdges = new Set(), videoNodes = new Set(), videoEdges = new Set();
   const view = { scale: 1, x: 0, y: 0 };
   canvas.style.touchAction = "none";
   if (!canvas.hasAttribute("tabindex")) canvas.tabIndex = 0;
@@ -125,22 +135,25 @@ export function createNetwork(canvas, graph, onSelect, onAnchor, onZoom) {
     }
     if (closest !== undefined) { select(closest); onSelect(closest); }
   }
-  function drawPulse(time, red) {
+  function drawPulse(time, red, blue) {
     if (!pulse) return;
     pulse.started ??= time;
     const elapsed = time - pulse.started;
     if (reducedMotion.matches || (!pulse.repeat && elapsed >= 1200)) { pulse = undefined; return; }
-    context.strokeStyle = red; context.lineWidth = 1.5 / view.scale;
+    context.lineWidth = 1.5 / view.scale;
     for (const delay of [0, 240]) {
       const progress = ((elapsed % 1200) - delay) / 960;
       if (progress < 0 || progress >= 1) continue;
-      context.beginPath();
-      for (const id of pulse.nodes ?? activeNodes) {
-        const node = layout.nodes[layout.indexes.get(id)];
-        const radius = (node.radius * (activeNodes.has(id) ? 1.25 : 1) + 4 + 28 * progress) / view.scale;
-        context.moveTo(node.x + radius, node.y); context.arc(node.x, node.y, radius, 0, Math.PI * 2);
+      for (const isVideo of [false, true]) {
+        context.beginPath(); context.strokeStyle = isVideo ? blue : red;
+        for (const id of pulse.nodes ?? activeNodes) {
+          if (videoNodes.has(id) !== isVideo) continue;
+          const node = layout.nodes[layout.indexes.get(id)];
+          const radius = (node.radius * (activeNodes.has(id) ? 1.25 : 1) + 4 + 28 * progress) / view.scale;
+          context.moveTo(node.x + radius, node.y); context.arc(node.x, node.y, radius, 0, Math.PI * 2);
+        }
+        context.globalAlpha = 0.38 * (1 - progress) ** 2; context.stroke();
       }
-      context.globalAlpha = 0.38 * (1 - progress) ** 2; context.stroke();
     }
   }
   function draw(time) {
@@ -159,10 +172,10 @@ export function createNetwork(canvas, graph, onSelect, onAnchor, onZoom) {
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     context.setTransform(dpr, 0, 0, dpr, 0, 0); context.clearRect(0, 0, width, height);
     context.translate(view.x, view.y); context.scale(view.scale, view.scale);
-    const lines = active => {
+    const lines = (active, blue = false) => {
       context.beginPath();
       for (const edge of layout.edges) {
-        if (active && !activeEdges.has(edge.key)) continue;
+        if (active && (!activeEdges.has(edge.key) || videoEdges.has(edge.key) !== blue)) continue;
         const a = layout.nodes[edge.a], b = layout.nodes[edge.b];
         context.moveTo(a.x, a.y);
         if (edge.a === edge.b) {
@@ -171,21 +184,22 @@ export function createNetwork(canvas, graph, onSelect, onAnchor, onZoom) {
         }
         else context.lineTo(b.x, b.y);
       }
-      context.strokeStyle = active ? color("--red", "#c74634") : color("--muted", "#747680");
+      context.strokeStyle = active ? (blue ? color("--blue", "#0074b9") : color("--red", "#c74634")) : color("--muted", "#747680");
       context.globalAlpha = active ? 0.95 : 0.12; context.lineWidth = (active ? 1.6 : 0.55) / view.scale; context.stroke();
     };
-    lines(false); lines(true);
-    for (const active of [false, true]) {
+    lines(false); lines(true); lines(true, true);
+    for (const group of ["background", "tips", "tube"]) {
+      const active = group !== "background", blue = group === "tube";
       context.beginPath();
       for (const node of layout.nodes) {
-        if (active && !activeNodes.has(node.id)) continue;
+        if (active && (!activeNodes.has(node.id) || videoNodes.has(node.id) !== blue)) continue;
         const radius = node.radius * (active ? 1.25 : 1) / view.scale;
         context.moveTo(node.x + radius, node.y); context.arc(node.x, node.y, radius, 0, Math.PI * 2);
       }
       context.globalAlpha = active ? 1 : 0.5;
-      context.fillStyle = active ? color("--red", "#c74634") : color("--muted", "#747680"); context.fill();
+      context.fillStyle = active ? (blue ? color("--blue", "#0074b9") : color("--red", "#c74634")) : color("--muted", "#747680"); context.fill();
     }
-    drawPulse(time, color("--red", "#c74634"));
+    drawPulse(time, color("--red", "#c74634"), color("--blue", "#0074b9"));
     context.globalAlpha = 1;
     const node = layout.nodes[layout.indexes.get(selected)];
     let anchor = null;
@@ -195,14 +209,14 @@ export function createNetwork(canvas, graph, onSelect, onAnchor, onZoom) {
       if (screenX + radius >= 0 && screenX - radius <= width && screenY + radius >= 0 && screenY - radius <= height) {
         if (reducedMotion.matches) {
           context.beginPath(); context.arc(node.x, node.y, (radius + 3) / view.scale, 0, Math.PI * 2);
-          context.strokeStyle = color("--red", "#c74634"); context.lineWidth = 2 / view.scale; context.stroke();
+          context.strokeStyle = videoNodes.has(selected) ? color("--blue", "#0074b9") : color("--red", "#c74634"); context.lineWidth = 2 / view.scale; context.stroke();
         }
         anchor = { id: selected, x: screenX, y: screenY - radius - 8, width, height };
       }
     }
     onAnchor?.(anchor);
     onZoom?.(Math.round(view.scale * 100));
-    Object.assign(canvas.dataset, { nodeCount: String(layout.nodes.length), edgeCount: String(layout.edges.length), activeNodeCount: String(activeNodes.size), activeEdgeCount: String(activeEdges.size), drawCount: String(Number(canvas.dataset.drawCount || 0) + 1), scale: String(view.scale), panX: String(view.x), panY: String(view.y), cameraMoving: String(Boolean(camera)), pulseActive: String(Boolean(pulse)) });
+    Object.assign(canvas.dataset, { nodeCount: String(layout.nodes.length), edgeCount: String(layout.edges.length), activeNodeCount: String(activeNodes.size), activeEdgeCount: String(activeEdges.size), videoNodeCount: String(videoNodes.size), videoEdgeCount: String(videoEdges.size), drawCount: String(Number(canvas.dataset.drawCount || 0) + 1), scale: String(view.scale), panX: String(view.x), panY: String(view.y), cameraMoving: String(Boolean(camera)), pulseActive: String(Boolean(pulse)) });
     if (camera || pulse) invalidate();
   }
   function resize() {
@@ -263,6 +277,9 @@ export function createNetwork(canvas, graph, onSelect, onAnchor, onZoom) {
       selected = undefined;
       activeNodes = new Set((trace?.nodes || []).filter(id => layout.indexes.has(id)));
       activeEdges = new Set((trace?.edges || []).map(edgeKey).filter(key => edgeKeys.has(key)));
+      const video = videoEvidence(trace);
+      videoNodes = new Set([...video.nodes].filter(id => activeNodes.has(id)));
+      videoEdges = new Set([...video.edges].filter(key => activeEdges.has(key)));
       invalidate();
     },
     pulse(repeat = false) {

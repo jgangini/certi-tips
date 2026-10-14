@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { layoutNetwork, createNetwork } from "../assets/certichat-network.js";
+import { layoutNetwork, createNetwork, videoEvidence } from "../assets/certichat-network.js";
 
 test("network layout retains every real concept and edge with deterministic finite positions", () => {
   const graph = JSON.parse(readFileSync(new URL("../data/certichat-graph.json", import.meta.url)));
@@ -201,6 +201,17 @@ test("Canvas preserves trace membership, camera control and selection styling", 
     motion.matches = true; renderer.select("a", true); flush();
     assert.equal(canvas.dataset.cameraMoving, "false", "reduced motion centers concepts immediately");
     motion.matches = false; startKeyboardFit(); renderer.pulse(true);
+    const videoURL = "https://jgangini.github.io/certitips/certitube/Ha74VhpQwQo/#t-61";
+    const mixed = { nodes: ["a", "b", "c"], edges: graph.edges, sources: ["a", "b"].map(nodeId => ({ nodeId, url: videoURL })) };
+    renderer.setTrace(mixed); renderer.fit(); flush();
+    assert.equal(canvas.dataset.videoNodeCount, "2"); assert.equal(canvas.dataset.videoEdgeCount, "1");
+    assert.equal(fills.findLast(fill => fill.color === "#0074b9").radii.length, 2);
+    assert.equal(fills.findLast(fill => fill.color === "#c74634").radii.length, 1);
+    renderer.pulse(true); step(12000);
+    assert.ok(strokes.some(stroke => stroke.color === "#0074b9" && stroke.opacity === .38 && stroke.radii.length === 2), "video waves use blue");
+    renderer.stopPulse(); flush();
+    renderer.select("a"); motion.matches = true; flush();
+    assert.equal(strokes.at(-1).color, "#0074b9", "reduced-motion selection uses the evidence color");
     renderer.destroy();
     assert.equal(canvas.dataset.pulseActive, "false");
     assert.equal(destroyed, 2);
@@ -222,4 +233,13 @@ test("Canvas preserves trace membership, camera control and selection styling", 
       if (descriptor) Object.defineProperty(globalThis, key, descriptor); else delete globalThis[key];
     }
   }
+});
+
+
+test("video provenance uses canonical sources and a common source for each blue relationship", () => {
+  const url = "https://jgangini.github.io/certitips/certitube/Ha74VhpQwQo/#t-61";
+  const trace = { sources: [{ nodeId: "a", url }, { nodeId: "b", url }, { nodeId: "c", url: url.replace("t-61", "t-243") }, { nodeId: "d", url: "https://jgangini.github.io/certitips/guide/#certitube" }], edges: [{ source: "a", target: "b", label: "uses" }, { source: "b", target: "c", label: "different source" }] };
+  const colors = videoEvidence(trace);
+  assert.deepEqual([...colors.nodes], ["a", "b", "c"]); assert.equal(colors.edges.size, 1);
+  assert.equal(videoEvidence({ sources: [{ nodeId: "guide", url: "https://jgangini.github.io/certitips/guide/#/certitube/Ha74VhpQwQo/" }] }).nodes.size, 0, "a guide fragment cannot claim video provenance");
 });

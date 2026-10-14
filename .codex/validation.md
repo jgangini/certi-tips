@@ -36,6 +36,8 @@ El preflight guarda la referencia de arquitectura antes del primer cambio. El po
 | `layout.test.mjs` | Componentes compartidos, navegación y contratos de las páginas. |
 | `governance.test.mjs` | Contenido, cobertura y reglas específicas de CDMP-DMF. |
 | `diagram-design.test.mjs`, `error-diagrams.test.mjs` | Geometría, conectores, iconos y composición de los SVG. |
+| `certitube.test.mjs` | Fichas, fecha de incorporación, borradores, tiempos, barra de capítulos, evidencia fechada y reproductor con API simulada. |
+| `search.test.mjs` | Relevancia, acentos, prefijos, errores de escritura, acrónimos y secciones/anclas del corpus Markdown real. |
 | `certichat.test.mjs` | Corpus, sanitización, enlaces y restauración de conversaciones. |
 | `certichat-trace.test.mjs`, `certichat-explorer.test.mjs`, `certichat-network.test.mjs` | Evidencia, procedencia, grafo, cámara y límites del almacenamiento. |
 
@@ -62,6 +64,7 @@ Elegir el archivo según el cambio y usar una sesión nueva por comprobación:
 | `anchor-navigation-smoke.cjs` | Cambios en anclas, imágenes con carga tardía e historial de navegación. |
 | `certichat-browser-smoke.cjs` | Sesión, cuotas, reintentos, fuentes y persistencia; API simulada, sin llamadas pagadas. |
 | `certichat-explorer-smoke.cjs` | Grafo, tarjetas, enfoque, ondas y evidencia por respuesta; API simulada. |
+| `certitube-browser-smoke.cjs` | Último video por incorporación, accesos de portada/encabezado, búsqueda real y reintentos, barra inferior de capítulos, cita temporal, historial, errores de YouTube y ajuste compartido del chat; API simulada, sin capturas. |
 | `certichat-mobile-smoke.cjs` | Footer, panel móvil y navegación; viewport simulado, no teclado físico de iOS. |
 | `certiquiz-browser-smoke.cjs` | Salas, cookies y flujo de grupo; requiere API local real y crea salas de prueba. |
 
@@ -106,3 +109,5 @@ if ($LASTEXITCODE -ne 0) { throw 'CertiQuiz rollout self-check failed.' }
 ## Archivos generados
 
 `dist/` contiene solo el último build con las rutas actuales por código y módulo, sin redirecciones ni alias históricos. `output/` es desechable: conservar la evidencia de la validación final y retirar allí copias de build, reportes anteriores, fixtures y experimentos al cerrar el trabajo. Comprobar los destinos resueltos y que ningún proceso los utiliza antes de borrar. Las fuentes, originales del usuario, credenciales y respaldos operativos tienen sus ubicaciones propias y no se limpian como resultados temporales.
+
+La aceptación de CertiTube también verifica miniaturas oficiales solo para fichas publicadas, icono azul en búsqueda y procedencia azul/roja del grafo. El smoke del explorador cubre hover de controles, envío y etiquetas, y el formato de la leyenda; los tests de Canvas comprueban los colores reales de trazos, puntos y ondas.

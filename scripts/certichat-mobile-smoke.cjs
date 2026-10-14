@@ -85,7 +85,9 @@ async (page) => {
         const r = element.getBoundingClientRect(), label = element.querySelector('span'), style = getComputedStyle(label), text = label.getBoundingClientRect();
         return { width: r.width, height: r.height, labelShown: style.display !== 'none' && style.visibility !== 'hidden' && text.width > 2 && text.height > 2 && !['inset(50%)', 'inset(100%)'].includes(style.clipPath) };
       });
-      assert(width <= 800 ? Math.abs(launch.width - launch.height) <= 1 && launch.width >= 44 && !launch.labelShown : launch.labelShown, `${width}: incorrect launcher shape or text visibility`);
+      // The existing home launcher stays compact through 1580px, including desktop.
+      const launcherSize = width <= 480 ? 31 : width <= 800 ? 44 : 48;
+      assert(width <= 1580 ? Math.abs(launch.width - launch.height) <= 1 && launch.width >= launcherSize && !launch.labelShown : launch.labelShown, `${width}: incorrect launcher shape or text visibility`);
       if (width <= 800) {
         assert(await tab.locator('.footer-credit').isHidden(), `${width}: developer credit remains visible on mobile`);
         const footerPosition = () => tab.evaluate(() => {

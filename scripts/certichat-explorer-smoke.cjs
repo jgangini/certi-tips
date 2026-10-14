@@ -86,7 +86,7 @@ async page => {
   };
   const answered = expected => tab.waitForFunction(expected => {
     const chat = document.querySelector('deep-chat'), message = chat?.getMessages().at(-1);
-    return message?.role === 'ai' && message.text.includes(expected) && chat.validateInput('Siguiente');
+    return message?.role === 'ai' && message.text.includes(expected) && chat.validateInput('Siguiente') && !document.querySelector('[data-chat-clear]').disabled;
   }, expected);
   try {
     const start = Date.now();
@@ -151,9 +151,9 @@ async page => {
     assert(await metadata.locator('dd').last().getAttribute('aria-busy') === 'false', 'Completed indexing leaves a busy version cell');
     checks.push('real metadata cells with muted labels/ink values; version spinner tracks confirmed indexing and stops on unavailable status');
     const heading = tab.locator('[data-knowledge-graph] .certichat-heading');
-    assert(await heading.locator('h1').textContent() === 'Cognee' && (await heading.textContent()).includes('GRAFO DE CONOCIMIENTO'), 'Map header does not identify Cognee and its knowledge graph');
+    assert(await heading.locator('h1').textContent() === 'Cognee' && (await heading.textContent()).includes('BASE DE CONOCIMIENTO'), 'Map header does not identify Cognee and its knowledge graph');
     assert(await tab.locator('.sidebar').count() === 0, 'Standalone page inherits a course sidebar');
-    assert(await tab.locator('#consulta, .chat-explorer-intro, .chat-explorer-breadcrumb, .chat-explorer-flow, .chat-graph-inspector, [data-explorer-chat], #chat-graph-help, .chat-graph-legend').count() === 0, 'Removed introductory sections, map help or legend returned');
+    assert(await tab.locator('#consulta, .chat-explorer-intro, .chat-explorer-breadcrumb, .chat-explorer-flow, .chat-graph-inspector, [data-explorer-chat], #chat-graph-help').count() === 0, 'Removed introductory sections, map help or legend returned');
     const controls = tab.locator('.chat-graph-network .chat-graph-toolbar button');
     assert(await controls.count() === 4, 'Map controls are not all inside the network container');
     for (const control of await controls.all()) {
@@ -268,14 +268,46 @@ async page => {
       }), `${theme}: graph values do not share the answer bubble colors`);
       const tags = await tab.locator('[data-graph-active] button').evaluateAll(items => items.map(element => {
         const s = getComputedStyle(element);
-        return { background: s.backgroundColor, border: s.borderTopColor, borderWidth: s.borderTopWidth, radius: s.borderRadius, fontSize: parseFloat(s.fontSize), paddingY: parseFloat(s.paddingTop) + parseFloat(s.paddingBottom) };
+        return { pressed: element.getAttribute("aria-pressed") === "true", selectedColor: getComputedStyle(document.querySelector("[data-source=tips]")).color, background: s.backgroundColor, border: s.borderTopColor, borderWidth: s.borderTopWidth, radius: s.borderRadius, fontSize: parseFloat(s.fontSize), paddingY: parseFloat(s.paddingTop) + parseFloat(s.paddingBottom) };
       }));
       assert(tags.length === trace1.nodes.length && tags.every(tag => {
         const neutral = color => { const rgb = color.match(/[\d.]+/g)?.slice(0, 3).map(Number); return rgb?.length === 3 && Math.max(...rgb) - Math.min(...rgb) <= 20; };
-        return tag.radius === '4px' && tag.borderWidth === '1px' && neutral(tag.background) && neutral(tag.border) && tag.fontSize <= 13 && tag.paddingY <= 8;
+        return tag.radius === '4px' && tag.borderWidth === '1px' && (tag.pressed ? tag.background === tag.selectedColor && tag.border === tag.selectedColor : neutral(tag.background) && neutral(tag.border)) && tag.fontSize <= 13 && tag.paddingY <= 8;
       }), `${theme}: active concepts are not compact neutral rectangular tags: ${JSON.stringify(tags)}`);
     }
     checks.push('compact gray reference tags in both themes');
+    for (const theme of ['light', 'dark']) {
+      await tab.evaluate(theme => document.documentElement.dataset.theme = theme, theme);
+      const red = await tab.locator('[data-source="tips"]').evaluate(node => getComputedStyle(node).color);
+      const blue = await tab.locator('[data-source="tube"]').evaluate(node => getComputedStyle(node).color);
+      assert(red !== blue, 'Legend has no distinct evidence colors');
+      for (const control of await tab.locator('.chat-graph-toolbar button:enabled, [data-graph-scroll]:enabled').all()) {
+        await control.hover();
+        assert(await control.evaluate(button => ({ border: getComputedStyle(button).borderTopColor, icon: getComputedStyle(button.querySelector('svg')).color })).then(style => style.border === red && style.icon === red), 'Graph control border/icon is not red on hover');
+      }
+      const tag = tab.locator('[data-graph-active] button:not([aria-pressed="true"])').first();
+      await tag.hover();
+      assert(await tag.evaluate(button => ({ border: getComputedStyle(button).borderTopColor, divider: getComputedStyle(button.querySelector('.chat-graph-number')).borderRightColor })).then(style => style.border === red && style.divider === red), 'Concept tag lines are not red on hover');
+      await composer.fill('Sólo borrador');
+      const submit = tab.locator('deep-chat .input-button.inside-end');
+      await submit.hover();
+      assert(await submit.locator('svg').evaluate(svg => getComputedStyle(svg).fill) === red, 'Composer send icon is not red on hover');
+      await composer.fill(''); await tab.mouse.move(0, 0);
+      const badge = await tab.locator('[data-graph-zoom]').evaluate(node => { const s = getComputedStyle(node); return [s.borderRadius, s.borderTopWidth, s.fontSize, s.padding]; });
+      for (const label of await tab.locator('.chat-graph-legend span').all()) assert(JSON.stringify(await label.evaluate(node => { const s = getComputedStyle(node); return [s.borderRadius, s.borderTopWidth, s.fontSize, s.padding]; })) === JSON.stringify(badge), 'Legend does not match zoom badge format');
+    }
+    const videoTrace = { ...trace1, sources: trace1.nodes.map(nodeId => ({ nodeId, title: 'CertiTube · Sensores', url: `${siteRoot}certitube/Ha74VhpQwQo/#t-61` })) };
+    await tab.evaluate(trace => window.dispatchEvent(new CustomEvent('certichat:trace', { detail: { status: 'ready', trace } })), videoTrace);
+    await tab.waitForFunction(() => document.querySelector('[data-graph-canvas]').dataset.videoNodeCount === '2' && document.querySelector('[data-graph-canvas]').dataset.videoEdgeCount === '1');
+    await tab.emulateMedia({ reducedMotion: 'no-preference' });
+    await tab.evaluate(trace => window.dispatchEvent(new CustomEvent('certichat:hover', { detail: trace })), videoTrace);
+    await tab.waitForFunction(() => document.querySelector('[data-graph-canvas]').dataset.pulseActive === 'true');
+    await tab.evaluate(() => window.dispatchEvent(new CustomEvent('certichat:hover', { detail: null })));
+    await tab.emulateMedia({ reducedMotion: 'reduce' });
+    await tab.evaluate(trace => window.dispatchEvent(new CustomEvent('certichat:trace', { detail: { status: 'ready', trace } })), trace1);
+    await tab.waitForFunction(() => document.querySelector('[data-graph-canvas]').dataset.videoNodeCount === '0');
+    checks.push('graph controls, concept borders and send SVG hover red in both themes; zoom-style legend; verified video nodes/edges/waves blue and guide evidence red');
+
     assert(await tab.locator('[data-graph-active-fit]').isEnabled(), 'Received trace cannot be fitted');
     await tab.locator('[data-graph-fit]').click();
     await canvas.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
@@ -319,6 +351,7 @@ async page => {
     await tab.locator('[data-graph-fit]').click();
     await tab.emulateMedia({ reducedMotion: 'no-preference' });
     await tab.mouse.move(0, 0);
+    await tab.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     const beforeHover = await state();
     await responses.first().hover();
     await active(trace1.nodes, trace1.edges);
@@ -480,11 +513,16 @@ async page => {
     await send('Consulta para desplazar conceptos', many); await answered('Respuesta: Consulta para desplazar conceptos.'); await active(many.nodes);
     const strip = tab.locator('[data-graph-active]'), left = tab.locator('[data-graph-scroll="-1"]'), right = tab.locator('[data-graph-scroll="1"]');
     assert(await left.isHidden() && await right.isVisible(), 'Scroll controls do not hide at the initial boundary');
+    await right.hover();
+    assert(await right.evaluate(button => getComputedStyle(button).color === getComputedStyle(document.querySelector('[data-source="tips"]')).color && getComputedStyle(button).borderTopColor === getComputedStyle(button).color), 'Concept scroll arrow border/icon is not red on hover');
     await right.click();
-    await tab.waitForFunction(() => document.querySelector('[data-graph-active]').scrollLeft > 0);
+    await tab.waitForFunction(() => document.querySelector('[data-graph-active]').scrollLeft > 4 && !document.querySelector('[data-graph-scroll="-1"]').disabled);
     assert(await left.isVisible(), 'Left control remains hidden after scrolling right');
-    await left.click();
-    await tab.waitForFunction(() => document.querySelector('[data-graph-active]').scrollLeft <= 1);
+    for (let attempt = 0; attempt < 4 && await left.isVisible(); attempt++) {
+      await left.click();
+      await tab.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    }
+    await tab.waitForFunction(() => document.querySelector('[data-graph-active]').scrollLeft <= 4 && document.querySelector('[data-graph-scroll="-1"]').disabled);
     assert(await left.isHidden(), 'Left control remains visible at the beginning');
     await strip.locator('button').last().focus();
     await tab.waitForFunction(() => document.querySelector('[data-graph-scroll="1"]').disabled);

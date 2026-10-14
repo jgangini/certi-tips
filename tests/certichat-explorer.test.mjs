@@ -44,7 +44,8 @@ test("the explorer is a standalone site page and offers an honest missing-snapsh
   assert.doesNotMatch(body, /certichat-spinner|is-loading|Haz una consulta/);
   assert.doesNotMatch(body, /id="consulta"|data-explorer-chat(?=[\s=>])|chat-explorer-flow|chat-graph-inspector|Cómo se prepara una respuesta|Explorar conceptos y relaciones/);
   assert.match(body, /<canvas data-graph-canvas tabindex="0"[^>]+role="img"[^>]+aria-label="[^"]+"/);
-  assert.doesNotMatch(body, /chat-graph-help|chat-graph-legend/);
+  assert.doesNotMatch(body, /chat-graph-help/);
+  assert.match(body, /class="chat-graph-legend"[^]*?data-source="tips">CertiTips[^]*?data-source="tube">CertiTube/);
   assert.match(body, /data-graph-active aria-label="Conceptos recuperados para esta consulta"/);
   assert.match(body, /<small>BASE DE CONOCIMIENTO<\/small>/);
   assert.match(body, /data-graph-zoom aria-label="Nivel de zoom" aria-live="off"/);

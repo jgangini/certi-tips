@@ -1,0 +1,51 @@
+.tube-player { margin: 0 0 24px; border: 1px solid var(--line); border-top: 4px solid var(--red); border-radius: var(--radius); overflow: hidden; background: var(--white); }
+.tube-heading { margin-bottom: 0; }
+.tube-heading strong { display: block; line-height: 1.05; }
+.tube-screen { width: 100%; aspect-ratio: 16 / 9; min-height: 200px; background: #111; }
+.tube-screen > * { display: block; width: 100%; height: 100%; border: 0; }
+.tube-player [hidden] { display: none; }
+.tube-player [role="status"] { margin: 0; padding: 10px 16px; color: var(--muted); }
+.tube-chapters { display: flex; align-items: center; gap: 6px; padding: 0 8px; border-top: 1px solid var(--line); }
+.tube-chapter-list { display: flex; flex: 1; min-width: 0; gap: 6px; margin: 6px 0; padding: 2px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+.tube-chapter-list::-webkit-scrollbar { display: none; }
+.tube-chapters a { flex-shrink: 0; display: inline-flex; align-items: stretch; border: 1px solid var(--line); border-radius: 4px; background: var(--hover); color: var(--ink); font-size: 13px; line-height: 1.4; white-space: nowrap; text-decoration: none; }
+.tube-time { margin: 3px 0; padding: 0 6px; border-right: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.tube-chapter-title { padding: 3px 6px; text-transform: uppercase; }
+.tube-chapters a[aria-current="true"] { background: var(--red); border-color: var(--red); color: var(--on-red); }
+.tube-chapters a[aria-current="true"] .tube-time { border-color: currentColor; }
+.tube-chapters a:hover { border-color: var(--red); }
+.tube-scroll { flex-shrink: 0; width: 32px; height: 32px; min-height: 32px; padding: 0; }
+.tube-scroll svg { width: 14px; height: 14px; }
+.tube-scroll:disabled { display: none; }
+.tube-summary, .tube-resources, .tube-chapter-description { border-top: 1px solid var(--line); padding: 12px 20px; background: var(--white); color: var(--muted); font-size: .8rem; line-height: 1.5; }
+.tube-summary h2, .tube-resources h2, .tube-chapter-description h3 { margin: 0 0 4px; color: var(--red); font-size: .65rem; font-weight: 750; letter-spacing: 1px; text-transform: uppercase; line-height: 1.6; }
+.tube-summary > :first-child, .tube-resources > :first-child, .tube-chapter-description > :first-child { margin-top: 0; }
+.tube-summary > p:first-of-type, .tube-chapter-description > p:first-of-type { margin-top: 0; }
+.tube-summary > :last-child, .tube-resources > :last-child, .tube-chapter-description > :last-child { margin-bottom: 0; }
+.tube-description { overflow: hidden; }
+.tube-resources ul { padding: 0; list-style: none; }
+.tube-resources li { display: flex; align-items: baseline; gap: 8px; margin: 6px 0; }
+.tube-resources li svg { flex-shrink: 0; width: 12px; height: 12px; fill: currentColor; }
+.tube-resources li, .tube-resources a { color: var(--ink); }
+.tube-resources a:hover { color: var(--red); }
+@media (max-width: 800px) {
+  body[data-page^="certitube/"]:has(.certichat-panel:not([hidden])) .course-main { padding-bottom: calc(40dvh + 80px); }
+  body[data-page^="certitube/"] .certichat .certichat-panel { inset: auto 16px max(calc(var(--footer-height) + 10px), calc(100dvh - var(--chat-top, 0px) - var(--chat-height, 100dvh) + 8px)); width: calc(100% - 32px); height: min(40dvh, 360px); max-height: calc(var(--chat-height, 100dvh) - var(--footer-height) - 24px); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 8px 36px var(--shadow); }
+}
+.course-page[data-page^="certitube"] { --sidebar: 0px; }
+.course-page[data-page^="certitube"] .course-main { max-width: none; }
+.tube-detail { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start; }
+.tube-videos { position: sticky; top: calc(var(--header) + 24px); max-height: calc(100dvh - var(--header) - var(--footer-height) - 48px); overflow: auto; scroll-snap-type: y proximity; }
+.tube-videos ol { list-style: none; padding: 0; margin: 0; }
+.tube-videos li { scroll-snap-align: start; }
+.tube-videos a { display: flex; gap: 10px; padding: 8px; border: 1px solid transparent; border-radius: 7px; color: var(--ink); text-decoration: none; }
+.tube-videos a:hover, .tube-videos a[aria-current="page"] { border-color: var(--blue); background: var(--hover); }
+.tube-videos img { flex-shrink: 0; width: 120px; height: auto; aspect-ratio: 16 / 9; align-self: flex-start; border-radius: 5px; background: var(--hover); }
+.tube-videos strong { display: block; font-size: .85rem; line-height: 1.4; }
+.tube-videos small { display: block; margin-top: 6px; color: var(--muted); font-size: .7rem; }
+@media (max-width: 1000px) {
+  .tube-detail { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .tube-videos { position: static; max-height: none; scroll-snap-type: x proximity; }
+  .tube-videos ol { display: flex; }
+  .tube-videos li { flex: 0 0 280px; }
+}

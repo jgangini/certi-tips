@@ -6,12 +6,14 @@ import MarkdownIt from "markdown-it";
 import { layout, homeBody, certiquizBody, escapeHtml, courseRoute } from "./layout.mjs";
 import { annotateHeadings, pageDocuments, corpusArtifacts, contentHash } from "./certichat-corpus.mjs";
 import { certichatExplorerBody } from "./certichat-explorer.mjs";
+import { loadVideos, videoDocuments, videoBody } from "./certitube.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const output = path.join(root, "dist");
 const site = JSON.parse(
   await readFile(path.join(root, "data/catalog.json"), "utf8"),
 );
+site.videos = await loadVideos(root, site.base);
 const certiquizApi = new URL(process.env.CERTIQUIZ_API_ORIGIN || "https://certiquiz.cloudtechnext.net");
 if ((certiquizApi.protocol !== "https:" && !(certiquizApi.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(certiquizApi.hostname))) || certiquizApi.username || certiquizApi.password || certiquizApi.pathname !== "/" || certiquizApi.search || certiquizApi.hash)
   throw new Error("CERTIQUIZ_API_ORIGIN must be an HTTPS origin (HTTP only on loopback), without credentials, path, query, or fragment.");
@@ -160,6 +162,16 @@ for (const course of site.courses) {
   }
 }
 knowledge.push({ id: "home", title: "CertiTips · Rutas de aprendizaje", url: `${site.origin}${site.base}`, courseId: "site", text: site.paths.map(group => `${group.title}\n${group.description}\n${group.items.map(item => `${item.title}: ${item.description}${item.guide ? "" : " (guía próximamente)"}`).join("\n")}`).join("\n\n") });
+const tubeCourse = { id: "site", route: "certitube", title: "CertiTube", modules: [], resources: [], description: "Explora proyectos de inteligencia artificial y Oracle Cloud. Comprende el caso y reproduce cada momento de la demostración." };
+if (!site.videos.length) await save("certitube/index.html", layout({ site, course: tubeCourse, page: { slug: "certitube", title: "CertiTube", description: "No hay videos publicados todavía." }, body: "<p>No hay videos publicados todavía.</p>" }));
+for (const video of site.videos) {
+  await publishImages(path.join(root, "data", video.publicPath), video.publicPath);
+  knowledge.push(...videoDocuments(video, site));
+  const html = layout({ site, course: tubeCourse, page: { slug: video.publicPath, title: video.title, description: video.summary }, body: videoBody(video, md, site) });
+  await save(`${video.publicPath}/index.html`, html);
+  if (video === site.videos[0]) await save("certitube/index.html", html);
+}
+knowledge.find(doc => doc.id === "home").text += "\n\nCertiTube: colección de casos prácticos de inteligencia artificial y Oracle Cloud con videos y capítulos reproducibles. Al entrar muestra el último video incorporado; los videos se buscan con el buscador del sitio y se seleccionan en el carrusel de videos.";
 const { corpus, manifest } = corpusArtifacts(knowledge, `${site.origin}${site.base}assets/certichat/corpus.json`);
 await save("assets/certichat/corpus.json", corpus);
 await save("assets/certichat/manifest.json", manifest);

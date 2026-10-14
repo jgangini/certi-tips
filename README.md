@@ -9,6 +9,7 @@ Aprende conceptos, explora diagramas y practica para preparar tus certificacione
 - **CertiTips:** recorrer cursos con ejemplos, diagramas ampliables, ejercicios y práctica individual con explicaciones. Incluye búsqueda, progreso por curso y modo oscuro.
 - **[CertiQuiz](https://jgangini.github.io/certitips/certiquiz/):** crear una sala, compartir su PIN y practicar en grupo con preguntas, explicaciones y clasificación.
 - **[CertiChat](https://jgangini.github.io/certitips/certichat/):** consultar las guías, abrir las fuentes de cada respuesta y explorar los conceptos recuperados en el grafo de Cognee.
+- **CertiTube:** explorar casos prácticos de AI CloudTech y reproducir los momentos citados por CertiChat en `/certitips/certitube/`.
 
 ## Cursos disponibles
 
@@ -36,6 +37,7 @@ Abrir [localhost:4173/certitips](http://127.0.0.1:4173/certitips/). Para configu
 ## Contribuir
 
 - [Editar un curso o añadir otra certificación](docs/courses.md).
+- [Incorporar un video a CertiTube](docs/certitube.md).
 - [Ejecutar pruebas y herramientas de mantenimiento](.codex/validation.md).
 - [Instrucciones para agentes y reglas de diseño](.codex/AGENTS.md).
 

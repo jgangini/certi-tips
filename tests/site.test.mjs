@@ -3,14 +3,19 @@ import assert from 'node:assert/strict';
 import { globSync, readFileSync } from 'node:fs';
 import { validateSite } from '../scripts/check-site.mjs';
 import { courseRoute } from '../scripts/layout.mjs';
+import { loadVideos } from '../scripts/certitube.mjs';
+import { fileURLToPath } from 'node:url';
 
-test('publishes only current pages without course aliases or redirects', () => {
+test('publishes only current pages without course aliases or redirects', async () => {
   const catalog = JSON.parse(readFileSync(new URL('../data/catalog.json', import.meta.url), 'utf8'));
   const dist = new URL('../dist/', import.meta.url);
   const pages = globSync('**/*.html', { cwd: dist }).map(file => file.replaceAll('\\', '/'));
-  const expected = ['index.html', '404.html', 'certichat/index.html', 'certiquiz/index.html',
+  const videos = await loadVideos(fileURLToPath(new URL('../', import.meta.url)), catalog.base);
+  const expected = ['index.html', '404.html', 'certichat/index.html', 'certiquiz/index.html', 'certitube/index.html',
+    ...videos.map(video => `${video.publicPath}/index.html`),
     ...catalog.courses.flatMap(course => [...course.modules, ...course.resources].map(page => `${courseRoute(course)}/${page.slug}/index.html`))];
   assert.deepEqual(pages.sort(), expected.sort());
+  if (videos.length) assert.equal(readFileSync(new URL('certitube/index.html', dist), 'utf8'), readFileSync(new URL(`${videos[0].publicPath}/index.html`, dist), 'utf8'));
   for (const file of pages) assert.doesNotMatch(readFileSync(new URL(file, dist), 'utf8'), /http-equiv=["']refresh["']/i, file);
 });
 
@@ -225,4 +230,18 @@ test('checks all 53 lesson ids, filenames and their module mapping', () => {
   includesIssue(issues, /missing lesson 01-02-01/);
   includesIssue(issues, /lowercase hyphenated filename/);
   includesIssue(issues, /lesson must map to module agents/);
+});
+
+
+test('only published CertiTube cards may embed the official fixed thumbnail URL', () => {
+  const input = fixture(), file = 'certitube/Ha74VhpQwQo/index.html';
+  const thumbnail = 'https://i.ytimg.com/vi/Ha74VhpQwQo/mqdefault.jpg';
+  input.files.set(file, `<main id="main"><img src="${thumbnail}"></main>`);
+  assert.deepEqual(validateSite(input), []);
+  for (const src of [thumbnail + '?tracking=1', thumbnail.replace('https:', 'http:'), thumbnail.replace('Ha74VhpQwQo', 'abcdefghijk'), thumbnail.replace('i.ytimg.com', 'evil.test')]) {
+    input.files.set(file, `<main id="main"><img src="${src}"></main>`);
+    includesIssue(validateSite(input), /external asset/);
+  }
+  input.files.set(file, `<main id="main"><script src="${thumbnail}"></script></main>`);
+  includesIssue(validateSite(input), /external asset/);
 });
