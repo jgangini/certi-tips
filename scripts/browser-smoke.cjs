@@ -309,7 +309,7 @@ async (page) => {
   await page.locator('[data-mark-complete]').click();
   await page.reload();
   assert(await page.locator('[data-mark-complete]').getAttribute('role') === 'switch' && await page.locator('[data-mark-complete]').getAttribute('aria-checked') === 'true', 'Completion switch did not persist');
-  assert(await page.locator('[data-completion-label]').textContent() === 'Completado · Desmarcar', 'Completed button did not restore its original action label');
+  assert(await page.locator('[data-mark-complete]').textContent() === 'Completado', 'Completion label changes with its toggle state');
   assert(await page.locator('[data-mark-complete]').evaluate(button => {
     const style = getComputedStyle(button);
     return style.borderRadius === '30px' && style.backgroundColor === getComputedStyle(document.querySelector('.brand-accent')).color;

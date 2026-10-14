@@ -663,8 +663,8 @@ test("lesson completion follows the article before next-page navigation", () => 
   assert.doesNotMatch(rule, /position:\s*(?:sticky|fixed|absolute);/);
   assert.match(rule, /margin:\s*24px 0 0 auto;/);
   assert.match(html, /aria-label="Módulo completado" role="switch"/);
-  assert.match(html, /<span class="complete-switch" aria-hidden="true"><\/span><span data-completion-label>Marcar como completado<\/span><\/button>/);
-  assert.doesNotMatch(html, /✓ Completado|○ Marcar como completado/);
+  assert.match(html, /<span class="complete-switch" aria-hidden="true"><\/span>Completado<\/button>/);
+  assert.doesNotMatch(html, /✓ Completado|Marcar como completado|Completado · Desmarcar/);
   assert.match(rule, /border-radius:\s*30px;/);
   assert.match(rule, /background:\s*var\(--selected-surface\);/);
   assert.match(css, /\.complete-button\[aria-checked="true"\]\s*\{\s*background:\s*var\(--red\);/);
