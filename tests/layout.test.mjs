@@ -129,14 +129,14 @@ test("sharing uses an English Oracle overview and a public PNG icon on every pag
   assert.match(home, /<meta name="description" content="Explore Oracle certification paths with visual study guides in Spanish, explained practice questions, and CertiQuiz team quizzes\."/);
   assert.doesNotMatch(home, /Ruta de certificaciones en Data e IA|Foundation Sprint y rutas/);
   for (const html of [home, layout({ site, course, page: course.modules[0], body: "" }), layout({ site, course, page: { slug: "certiquiz", title: "CertiQuiz" }, body: "" })]) {
-    assert.match(html, /<meta property="og:image" content="https:\/\/example\.test\/certitips\/assets\/icons\/favicon\.png">/);
+    assert.match(html, /<meta property="og:image" content="https:\/\/example\.test\/certitips\/assets\/icons\/share-logo-square\.png">/);
     assert.match(html, /<meta property="og:image:type" content="image\/png">/);
     assert.match(html, /<meta property="og:image:width" content="512"><meta property="og:image:height" content="512">/);
     assert.match(html, /<meta property="og:image:alt" content="CertiTips logo">/);
     assert.match(html, /<meta property="og:url" content="https:\/\/example\.test\/certitips\//);
     assert.match(html, /<link rel="icon" href="\/certitips\/assets\/icons\/favicon\.png" type="image\/png" sizes="512x512">/);
   }
-  const icon = readFileSync(new URL("../assets/icons/favicon.png", import.meta.url));
+  const icon = readFileSync(new URL("../assets/icons/share-logo-square.png", import.meta.url));
   assert.equal(icon.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
   assert.equal(icon.readUInt32BE(16), 512);
   assert.equal(icon.readUInt32BE(20), 512);
@@ -191,7 +191,7 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.match(css, /\.certiquiz-app \.entry-card\s*\{\s*max-width:\s*calc\(56\.521739% - 13\.565217px\);/);
   assert.match(css, /\.certiquiz-app \.role-card:is\(:hover, :focus-visible\):not\(:disabled\)\s*\{[^}]*border-color:\s*var\(--accent\);/);
   assert.match(css, /\.certiquiz-page \.certiquiz-main\s*\{[^}]*max-width:\s*1280px;/);
-  assert.match(css, /\.certiquiz-app \.welcome\s*\{\s*margin:\s*9px 0 35px;/);
+  assert.match(css, /\.certiquiz-app \.welcome\s*\{\s*margin:\s*0 0 24px;/);
   assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb\s*\{[^}]*width:\s*100%;[^}]*padding:\s*18px 24px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*var\(--radius\);[^}]*font-weight:\s*400;/);
   assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb a\s*\{[^}]*color:\s*var\(--ink\);[^}]*font-weight:\s*inherit;/);
   assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb \.certiquiz-mark\s*\{[^}]*color:\s*var\(--ink\);[^}]*font-weight:\s*inherit;/);
@@ -466,7 +466,7 @@ test("course menu follows certification groups and precedes search", () => {
   const search = html.indexOf('class="search-toggle"');
   assert.ok(pathMenu > 0 && pathMenu < courseMenu && courseMenu < search);
   assert.doesNotMatch(html, /sidebar-compact-toggle|data-course-nav-compact/);
-  assert.match(html, /<button class="menu-toggle" type="button" aria-expanded="false" aria-controls="course-navigation" aria-label="Contenido del curso"><svg viewBox="0 0 21 21" width="21" height="21"[^>]*><rect x="2\.5" y="2\.5" width="6" height="6" rx="1"\/><rect x="12\.5" y="2\.5" width="6" height="6" rx="1"\/><rect x="2\.5" y="12\.5" width="6" height="6" rx="1"\/><rect x="12\.5" y="12\.5" width="6" height="6" rx="1"\/><\/svg><span class="visually-hidden">Contenido del curso<\/span><\/button>/);
+  assert.match(html, /<button class="menu-toggle" type="button" aria-expanded="true" aria-controls="course-navigation" aria-label="Contraer menú del curso"><svg viewBox="0 0 21 21" width="21" height="21"[^>]*><rect x="2\.5" y="2\.5" width="6" height="6" rx="1"\/><rect x="12\.5" y="2\.5" width="6" height="6" rx="1"\/><rect x="2\.5" y="12\.5" width="6" height="6" rx="1"\/><rect x="12\.5" y="12\.5" width="6" height="6" rx="1"\/><\/svg><span class="visually-hidden">Contenido del curso<\/span><\/button>/);
   assert.doesNotMatch(html, /aria-controls="course-navigation">Menú<\/button>/);
   assert.match(css, /\.menu-toggle \{[\s\S]*?width: 44px;[\s\S]*?height: 44px;/);
   assert.match(css, /\.course-page \.menu-toggle \{ display: inline-flex; \}/);
@@ -669,6 +669,9 @@ test("lesson completion follows the article before next-page navigation", () => 
   assert.match(rule, /background:\s*var\(--selected-surface\);/);
   assert.match(css, /\.complete-button\[aria-checked="true"\]\s*\{\s*background:\s*var\(--red\);/);
   assert.match(css, /\.course-main\.lesson-main\s*\{\s*padding-bottom:\s*16px;/);
+  assert.match(css, /\.course-page:not\(\[data-page\^="certitube"\]\) \.course-main\s*\{[^}]*--reading-width:\s*900px;/s);
+  assert.match(css, /\.course-page:not\(\[data-page\^="certitube"\]\) \.course-main\s*\{[^}]*border-radius:\s*16px;[^}]*backdrop-filter:\s*blur\(16px\) saturate\(160%\);/s);
+  assert.match(css, /\.course-main\s*\{[^}]*--course-frame-width:\s*calc\(var\(--reading-width\) \+ 80px\);/s);
 });
 
 test("lesson navigation uses compact unframed arrow controls", () => {

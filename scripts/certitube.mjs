@@ -82,8 +82,10 @@ export function parseVideo(source, id, base = "/certitips/") {
   const { chapters, headings } = videoSections(tokens, metadata.durationSeconds);
   if (!chapters.length) throw new Error(`${id}: at least one verified chapter is required`);
   assertComplete(tokens, headings);
-  const summary = tokens[headings.get("Resumen") + 4]?.content;
-  if (!summary || summary.length > 1500) throw new Error(`${id}: Resumen needs a short introductory paragraph`);
+  const summaryStart = headings.get("Resumen") + 3;
+  const summaryEnd = tokens.findIndex((token, index) => index >= summaryStart && token.type === "heading_open");
+  const summary = tokens.slice(summaryStart, summaryEnd < 0 ? tokens.length : summaryEnd).filter(token => token.type === "inline").map(token => token.content).join(" ");
+  if (!summary || summary.length > 1500) throw new Error(`${id}: Resumen needs short introductory text`);
   return { ...metadata, tokens, chapters, summary, publicPath: `certitube/${id}` };
 }
 
@@ -135,18 +137,23 @@ export function videoBody(video, renderer, site) {
   // Render the same safe tokens used for evidence; playback controls never enter the corpus.
   const view = new MarkdownIt({ html: false, linkify: true });
   view.renderer.rules = { ...renderer.renderer.rules };
+  view.renderer.rules.link_open = (tokens, index, options, env, self) => {
+    const end = tokens.findIndex((token, position) => position > index && token.type === "link_close");
+    tokens[index].attrSet("title", tokens.slice(index + 1, end).map(token => token.content).join(""));
+    return self.renderToken(tokens, index, options);
+  };
   const start = video.tokens.findIndex(token => token.type === "heading_open" && token.attrGet("id") === "capitulos");
   const next = video.tokens.findIndex((token, index) => index > start && token.type === "heading_open" && token.tag === "h2");
   const end = next < 0 ? video.tokens.length : next;
   const body = [...video.tokens.slice(0, start), ...video.tokens.slice(end)];
   const summary = takeSection(body, "resumen", view, env);
   const resourceIcon = `<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="${site.base}assets/icons/resource-link.svg#resource-link"/></svg>`;
-  const resources = takeSection(body, "recursos-relacionados", view, env).replaceAll("<li>", `<li>${resourceIcon}`);
+  const resources = takeSection(body, "recursos-relacionados", view, env).replaceAll("<li>", `<li>${resourceIcon}`).replace(/<\/a>\.\s*<\/li>/g, "</a></li>");
   const html = view.renderer.render(body, view.options, env);
   const panels = chapterPanels(video, view, env);
-  return `<div class="tube-detail"><section class="tube-player" data-tube-player data-video-id="${video.videoId}" data-duration="${video.durationSeconds}" aria-label="Reproductor del caso" tabindex="-1"><header class="certichat-heading tube-heading"><div class="certichat-brand"><div><strong>${escapeHtml(video.title)}</strong><small>CERTITUBE · AI CLOUDTECH</small></div></div></header><div class="tube-screen"><div id="tube-youtube"></div></div><section class="tube-summary" aria-labelledby="resumen">${summary}</section><nav class="tube-chapters" aria-label="Momentos del video"><button type="button" class="button button-secondary tube-scroll" data-tube-scroll="-1" aria-label="Capítulos anteriores" aria-controls="tube-chapter-list" title="Desplazar a la izquierda" disabled><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M16 4 4 12 16 20Z" fill="currentColor"/></svg></button><div class="tube-chapter-list" id="tube-chapter-list">${video.chapters.map(item => `<a href="#${item.anchor}" data-tube-time="${item.seconds}"><span class="tube-time">${escapeHtml(item.label)}</span><span class="tube-chapter-title">${escapeHtml(item.title)}</span></a>`).join("")}</div><button type="button" class="button button-secondary tube-scroll" data-tube-scroll="1" aria-label="Capítulos siguientes" aria-controls="tube-chapter-list" title="Desplazar a la derecha" disabled><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 4 20 12 8 20Z" fill="currentColor"/></svg></button></nav><div class="tube-description">${panels}</div><section class="tube-resources" aria-labelledby="recursos-relacionados">${resources}</section><p data-tube-status role="status" aria-live="polite" hidden><span data-tube-message></span> <a data-tube-external href="https://www.youtube.com/watch?v=${video.videoId}" target="_blank" rel="noopener noreferrer" hidden>Abrir en YouTube</a></p></section>${videoCarousel(site.videos ?? [video], video.publicPath, site.base)}${html}</div>`;
+  return `<div class="tube-detail"><section class="tube-player" data-tube-player data-video-id="${video.videoId}" data-duration="${video.durationSeconds}" aria-label="Reproductor del caso" tabindex="-1"><header class="certichat-heading tube-heading"><div class="certichat-brand"><div><strong>${escapeHtml(video.title)}</strong><small>CERTITUBE</small></div></div></header><div class="tube-screen"><div id="tube-youtube"></div></div><section class="tube-summary" aria-labelledby="resumen">${summary}</section><nav class="tube-chapters"${video.chapters.length === 1 ? " hidden" : ""} aria-label="Momentos del video"><button type="button" class="button button-secondary tube-scroll" data-tube-scroll="-1" aria-label="Capítulos anteriores" aria-controls="tube-chapter-list" title="Desplazar a la izquierda" disabled><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M16 4 4 12 16 20Z" fill="currentColor"/></svg></button><div class="tube-chapter-list" id="tube-chapter-list">${video.chapters.map(item => `<a href="#${item.anchor}" data-tube-time="${item.seconds}"><span class="tube-time">${escapeHtml(item.label)}</span><span class="tube-chapter-title">${escapeHtml(item.title)}</span></a>`).join("")}</div><button type="button" class="button button-secondary tube-scroll" data-tube-scroll="1" aria-label="Capítulos siguientes" aria-controls="tube-chapter-list" title="Desplazar a la derecha" disabled><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 4 20 12 8 20Z" fill="currentColor"/></svg></button></nav><div class="tube-description"${video.chapters.length === 1 ? " hidden" : ""}>${panels}</div><section class="tube-resources" aria-labelledby="recursos-relacionados">${resources}</section><p data-tube-status role="status" aria-live="polite" hidden><span data-tube-message></span> <a data-tube-external href="https://www.youtube.com/watch?v=${video.videoId}" target="_blank" rel="noopener noreferrer" hidden>Abrir en YouTube</a></p></section>${videoCarousel(site.videos ?? [video], video.publicPath, site.base)}${html}</div>`;
 }
 
 export function videoCarousel(videos, active, base) {
-  return `<nav class="tube-videos" aria-label="Videos de CertiTube"><ol>${videos.map((video, index) => `<li><a href="${base}${video.publicPath}/"${active === video.publicPath ? ' aria-current="page"' : ""}><img src="https://i.ytimg.com/vi/${video.videoId}/mqdefault.jpg" width="320" height="180" alt="" loading="lazy"><span><strong>${escapeHtml(video.title)}</strong><small>${String(index + 1).padStart(2, "0")} · AI CloudTech</small></span></a></li>`).join("")}</ol></nav>`;
+  return `<nav class="tube-videos" aria-label="Videos de CertiTube"><header class="certichat-heading"><div class="certichat-brand"><div><strong>Certi<span class="brand-accent">Tube</span></strong><small>VIDEOTECA</small></div></div></header><ol>${videos.map(video => `<li><a href="${base}${video.publicPath}/" title="${escapeHtml(video.title)}"${active === video.publicPath ? ' aria-current="page"' : ""}><img src="https://i.ytimg.com/vi/${video.videoId}/mqdefault.jpg" width="320" height="180" alt="" loading="lazy"><span><strong>${escapeHtml(video.title)}</strong></span></a></li>`).join("")}</ol></nav>`;
 }

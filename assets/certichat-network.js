@@ -211,7 +211,7 @@ export function createNetwork(canvas, graph, onSelect, onAnchor, onZoom) {
           context.beginPath(); context.arc(node.x, node.y, (radius + 3) / view.scale, 0, Math.PI * 2);
           context.strokeStyle = videoNodes.has(selected) ? color("--blue", "#0074b9") : color("--red", "#c74634"); context.lineWidth = 2 / view.scale; context.stroke();
         }
-        anchor = { id: selected, x: screenX, y: screenY - radius - 8, width, height };
+        anchor = { id: selected, x: screenX, y: screenY - radius - 8, nodeY: screenY - radius, width, height };
       }
     }
     onAnchor?.(anchor);

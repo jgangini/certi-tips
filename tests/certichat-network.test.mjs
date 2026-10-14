@@ -64,6 +64,7 @@ test("Canvas preserves trace membership, camera control and selection styling", 
     assert.ok(Math.abs(anchor.x - (selected.x * scale + Number(canvas.dataset.panX))) < 1e-10, "concept card anchor must center over its node");
     assert.ok(Math.abs(anchor.y + 8 + selected.radius - (selected.y * scale + Number(canvas.dataset.panY))) < 1e-10, "concept card anchor must float above the node with a gap");
     assert.equal(anchor.id, "a");
+    assert.equal(anchor.nodeY, anchor.y + 8, "connector endpoint must touch the selected node's top");
     assert.equal(strokes.findLast(stroke => stroke.radii.length === 1).color, "#c74634", "selection ring must be red without changing trace membership");
     const pointerPan = { button: 0, pointerId: 1, clientX: 0, clientY: 0 };
     const nearEdge = { ...pointerPan, clientX: 12 - (selected.x * scale + Number(canvas.dataset.panX)), clientY: 12 - (selected.y * scale + Number(canvas.dataset.panY)) };

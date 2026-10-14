@@ -74,19 +74,15 @@ showProgress();
 const toggle = document.querySelector(".menu-toggle");
 const navigation = document.querySelector(".sidebar");
 const menuName = navigation?.dataset.menuName || "del curso";
-const menuReturn = toggle?.nextElementSibling;
 const courseNavMedia = matchMedia("(max-width: 800px)");
+const compactGroupsMedia = matchMedia("(max-width: 1360px)");
 function syncCourseMenu() {
   if (!toggle || !navigation) return;
   const mobile = courseNavMedia.matches;
   const compact = document.body.classList.contains("is-compact-nav");
-  const focused = document.activeElement === toggle;
-  if (!mobile && compact && toggle.parentElement !== navigation) navigation.prepend(toggle);
-  else if ((mobile || !compact) && toggle.parentElement !== menuReturn.parentElement) menuReturn.before(toggle);
-  if (focused) toggle.focus({ preventScroll: true });
   toggle.setAttribute("aria-expanded", String(mobile ? navigation.classList.contains("is-open") : !compact));
   toggle.setAttribute("aria-label", mobile ? `Contenido ${menuName}` : compact ? `Expandir menú ${menuName}` : `Contraer menú ${menuName}`);
-  toggle.title = mobile ? "Contenido del curso" : compact ? "Mostrar menú completo" : "Mostrar solo números";
+  toggle.title = (mobile ? navigation.classList.contains("is-open") : !compact) ? "Ocultar contenido del curso" : "Mostrar contenido del curso";
 }
 if (toggle && navigation) {
   syncCourseMenu();
@@ -240,18 +236,27 @@ desktopPathNav?.addEventListener("click", (event) => {
 pathMenu?.addEventListener("click", (event) => {
   if (event.target.closest("a")) pathMenu.open = false;
 });
+function setDesktopCourseMenu(compact) {
+  document.body.classList.toggle("is-compact-nav", compact);
+  try { sessionStorage.setItem("certitips:course-nav:compact", String(compact)); } catch { /* Keep the current page usable without storage. */ }
+  syncCourseMenu();
+}
 function closeMenu() {
   navigation?.classList.remove("is-open");
   syncCourseMenu();
 }
+pathMenu?.addEventListener("toggle", () => {
+  if (!pathMenu.open) return;
+  if (courseNavMedia.matches) closeMenu();
+  else setDesktopCourseMenu(true);
+});
 toggle?.addEventListener("click", () => {
   if (courseNavMedia.matches) navigation.classList.toggle("is-open");
-  else {
-    const compact = !document.body.classList.contains("is-compact-nav");
-    document.body.classList.toggle("is-compact-nav", compact);
-    try { sessionStorage.setItem("certitips:course-nav:compact", String(compact)); } catch { /* Keep the current page usable without storage. */ }
-  }
+  else setDesktopCourseMenu(!document.body.classList.contains("is-compact-nav"));
   syncCourseMenu();
+});
+document.querySelector("#main")?.addEventListener("click", () => {
+  if (compactGroupsMedia.matches && !courseNavMedia.matches) setDesktopCourseMenu(true);
 });
 navigation?.addEventListener("click", (event) => {
   if (event.target.closest("a") && navigation.classList.contains("is-open")) {

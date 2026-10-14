@@ -38,7 +38,8 @@
 .certichat-messages deep-chat { display: block; width: 100%; height: 100%; min-height: 0; min-width: 0; }
 @media (min-width: 801px) {
   .course-page .course-main { transition: margin-left 220ms ease, margin-right 360ms cubic-bezier(.22, 1, .36, 1), padding 360ms cubic-bezier(.22, 1, .36, 1); }
-  .course-page:has(.certichat-panel:not([hidden])) .course-main { margin-right: calc(min(420px, 30vw) + 40px); padding-inline: 24px; }
+  .course-page:has(.certichat-panel:not([hidden])) .course-main { --chat-space: calc(min(420px, 30vw) + 40px); }
+  .course-page[data-page^="certitube"]:has(.certichat-panel:not([hidden])) .course-main { transition: none; }
   .course-page .certichat-panel { width: min(420px, 30vw); }
 }
 @media (max-width: 800px) {

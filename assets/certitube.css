@@ -1,6 +1,8 @@
-.tube-player { margin: 0 0 24px; border: 1px solid var(--line); border-top: 4px solid var(--red); border-radius: var(--radius); overflow: hidden; background: var(--white); }
+.tube-player { margin: 0; border: 1px solid var(--line); border-top: 4px solid var(--red); border-radius: var(--radius); overflow: hidden; background: var(--white); }
+/* ponytail: the noninteractive card receives citation focus; its controls keep keyboard outlines. */
+.tube-player:focus { outline: none; }
 .tube-heading { margin-bottom: 0; }
-.tube-heading strong { display: block; line-height: 1.05; }
+.tube-heading strong, .tube-videos header strong { display: block; line-height: 1.05; }
 .tube-screen { width: 100%; aspect-ratio: 16 / 9; min-height: 200px; background: #111; }
 .tube-screen > * { display: block; width: 100%; height: 100%; border: 0; }
 .tube-player [hidden] { display: none; }
@@ -10,7 +12,7 @@
 .tube-chapter-list::-webkit-scrollbar { display: none; }
 .tube-chapters a { flex-shrink: 0; display: inline-flex; align-items: stretch; border: 1px solid var(--line); border-radius: 4px; background: var(--hover); color: var(--ink); font-size: 13px; line-height: 1.4; white-space: nowrap; text-decoration: none; }
 .tube-time { margin: 3px 0; padding: 0 6px; border-right: 1px solid var(--line); font-variant-numeric: tabular-nums; }
-.tube-chapter-title { padding: 3px 6px; text-transform: uppercase; }
+.tube-chapter-title { padding: 3px 6px; }
 .tube-chapters a[aria-current="true"] { background: var(--red); border-color: var(--red); color: var(--on-red); }
 .tube-chapters a[aria-current="true"] .tube-time { border-color: currentColor; }
 .tube-chapters a:hover { border-color: var(--red); }
@@ -19,6 +21,7 @@
 .tube-scroll:disabled { display: none; }
 .tube-summary, .tube-resources, .tube-chapter-description { border-top: 1px solid var(--line); padding: 12px 20px; background: var(--white); color: var(--muted); font-size: .8rem; line-height: 1.5; }
 .tube-summary h2, .tube-resources h2, .tube-chapter-description h3 { margin: 0 0 4px; color: var(--red); font-size: .65rem; font-weight: 750; letter-spacing: 1px; text-transform: uppercase; line-height: 1.6; }
+.tube-summary h2 { position: sticky; top: -12px; z-index: 1; margin: -12px -20px 4px; padding: 12px 20px 4px; background: var(--white); }
 .tube-summary > :first-child, .tube-resources > :first-child, .tube-chapter-description > :first-child { margin-top: 0; }
 .tube-summary > p:first-of-type, .tube-chapter-description > p:first-of-type { margin-top: 0; }
 .tube-summary > :last-child, .tube-resources > :last-child, .tube-chapter-description > :last-child { margin-bottom: 0; }
@@ -27,25 +30,48 @@
 .tube-resources li { display: flex; align-items: baseline; gap: 8px; margin: 6px 0; }
 .tube-resources li svg { flex-shrink: 0; width: 12px; height: 12px; fill: currentColor; }
 .tube-resources li, .tube-resources a { color: var(--ink); }
+.tube-resources a { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .tube-resources a:hover { color: var(--red); }
 @media (max-width: 800px) {
   body[data-page^="certitube/"]:has(.certichat-panel:not([hidden])) .course-main { padding-bottom: calc(40dvh + 80px); }
   body[data-page^="certitube/"] .certichat .certichat-panel { inset: auto 16px max(calc(var(--footer-height) + 10px), calc(100dvh - var(--chat-top, 0px) - var(--chat-height, 100dvh) + 8px)); width: calc(100% - 32px); height: min(40dvh, 360px); max-height: calc(var(--chat-height, 100dvh) - var(--footer-height) - 24px); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 8px 36px var(--shadow); }
 }
 .course-page[data-page^="certitube"] { --sidebar: 0px; }
-.course-page[data-page^="certitube"] .course-main { max-width: none; }
-.tube-detail { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start; }
-.tube-videos { position: sticky; top: calc(var(--header) + 24px); max-height: calc(100dvh - var(--header) - var(--footer-height) - 48px); overflow: auto; scroll-snap-type: y proximity; }
-.tube-videos ol { list-style: none; padding: 0; margin: 0; }
+.course-page[data-page^="certitube"] :is(.course-main, .prose) { max-width: none; }
+.tube-detail { display: grid; grid-template-columns: minmax(0, 1fr) clamp(300px, 30%, 360px); gap: 24px; align-items: start; }
+.tube-videos { align-self: stretch; contain: size; min-height: 0; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--line); border-top: 4px solid var(--red); border-radius: var(--radius); background: var(--white); }
+.tube-videos > header { flex-shrink: 0; }
+.tube-videos ol { flex: 1; min-height: 0; list-style: none; padding: 8px; margin: 0; overflow: auto; scroll-snap-type: y proximity; }
 .tube-videos li { scroll-snap-align: start; }
-.tube-videos a { display: flex; gap: 10px; padding: 8px; border: 1px solid transparent; border-radius: 7px; color: var(--ink); text-decoration: none; }
-.tube-videos a:hover, .tube-videos a[aria-current="page"] { border-color: var(--blue); background: var(--hover); }
-.tube-videos img { flex-shrink: 0; width: 120px; height: auto; aspect-ratio: 16 / 9; align-self: flex-start; border-radius: 5px; background: var(--hover); }
-.tube-videos strong { display: block; font-size: .85rem; line-height: 1.4; }
-.tube-videos small { display: block; margin-top: 6px; color: var(--muted); font-size: .7rem; }
+.tube-videos a { display: flex; gap: 10px; padding: 8px; margin-bottom: 8px; border: 1px solid transparent; border-radius: 7px; background: var(--hover); color: var(--ink); text-decoration: none; }
+.tube-videos a:hover, .tube-videos a:focus-visible { border-color: var(--red); }
+.tube-videos img { flex-shrink: 0; width: clamp(120px, 45%, 144px); height: auto; aspect-ratio: 16 / 9; align-self: flex-start; border-radius: 5px; background: var(--hover); }
+.tube-videos a > span { min-width: 0; align-self: center; }
+.tube-videos a strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; font-size: .85rem; line-height: 1.4; }
+.tube-summary, .tube-description, .tube-resources, .tube-videos ol { scrollbar-color: var(--scrollbar) transparent; scrollbar-width: thin; }
+@media (min-width: 801px) {
+  .tube-player { height: calc(100dvh - var(--header) - var(--footer-height) - 40px); display: flex; flex-direction: column; }
+  .tube-player > header, .tube-chapters { flex-shrink: 0; }
+  .tube-screen { flex-shrink: 1; min-height: 0; max-height: 40%; }
+  .tube-summary { flex: 0 1 auto; min-height: 0; max-height: 25%; overflow: auto; }
+  .tube-description { flex-shrink: 0; min-height: 0; max-height: 25%; overflow: auto; }
+  .tube-resources { flex: 1 0 auto; min-height: 0; overflow: auto; }
+  .tube-player:has(.tube-chapters[hidden]) .tube-summary { flex: 1 1 auto; max-height: none; }
+  .tube-player:has(.tube-chapters[hidden]) .tube-resources { flex: 0 0 auto; }
+}
+@media (min-width: 1024px) {
+  .course-page[data-page^="certitube"] #main { margin-left: 0; margin-right: 0; padding: 20px 40px; }
+  .tube-detail { max-width: 1200px; margin-inline: auto; }
+  .course-page[data-page^="certitube"]:has(.certichat-panel:not([hidden])) #main { margin-right: 444px; padding-inline: 24px; }
+  .course-page[data-page^="certitube"] .certichat { right: 24px; }
+  .course-page[data-page^="certitube"] .certichat-panel { position: fixed; inset: calc(var(--header) + 20px) max(24px, calc((100vw - 1644px) / 2)) auto auto; width: 420px; height: max(460px, calc(100dvh - var(--header) - var(--footer-height) - 40px)); }
+  .tube-player { height: max(460px, calc(100dvh - var(--header) - var(--footer-height) - 40px)); }
+}
+@media (min-width: 1101px) and (max-width: 1200px) { .course-page[data-page^="certitube"]:not(:has(.certichat-panel:not([hidden]))) #main { padding-right: 5vw; } }
+@media (min-width: 1024px) and (max-width: 1100px) { .course-page[data-page^="certitube"]:not(:has(.certichat-panel:not([hidden]))) #main { padding-inline: 32px; } }
 @media (max-width: 1000px) {
-  .tube-detail { grid-template-columns: minmax(0, 1fr); gap: 0; }
-  .tube-videos { position: static; max-height: none; scroll-snap-type: x proximity; }
-  .tube-videos ol { display: flex; }
+  .tube-detail { grid-template-columns: minmax(0, 1fr); }
+  .tube-videos { contain: none; }
+  .tube-videos ol { display: flex; scroll-snap-type: x proximity; }
   .tube-videos li { flex: 0 0 280px; }
 }

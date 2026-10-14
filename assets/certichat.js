@@ -6,10 +6,11 @@ const escapeChat = text => String(text).replace(/[&<>"']/g, character => ({ "&":
 
 // ponytail: support only text and validated guide links, without enabling arbitrary Markdown/HTML.
 export function plainChatHTML(text, siteRoot) {
-  return `<p>${String(text).split(/(\[[^\[\]\n]+\]\(https:\/\/[^\s()]+\))/g).map(part => {
+  return `<p>${String(text).replace(/\n\nPara profundizar:\n(?=\[)/g, "\n\nRecursos Relacionados:\n").split(/(\[[^\[\]\n]+\]\(https:\/\/[^\s()]+\))/g).map(part => {
     const link = part.match(/^\[([^\[\]\n]+)\]\((https:\/\/[^\s()]+)\)$/);
     const url = link && safeSourceURL(link[2], siteRoot);
-    return url ? `<a href="${escapeChat(sourcePath(url, siteRoot))}" data-source-url="${escapeChat(url)}">${escapeChat(link[1])}</a>` : escapeChat(part);
+    const kind = url && new URL(url).pathname.startsWith(new URL("certitube/", siteRoot).pathname) ? "certitube" : "certitips";
+    return url ? `<a href="${escapeChat(sourcePath(url, siteRoot))}" data-source-url="${escapeChat(url)}" data-link-kind="${kind}" title="${escapeChat(link[1])}">${escapeChat(link[1])}</a>` : escapeChat(part).replace(/\n\nRecursos Relacionados:\n$/, '\n\n<span class="chat-resource-heading">Recursos Relacionados:</span>\n');
   }).join("").replace(/\n/g, "<br>")}</p>`;
 }
 
@@ -26,7 +27,7 @@ export function answerWithReferences(answer, sources, siteRoot) {
     const url = safeSourceURL(source?.url, siteRoot);
     if (url && typeof source?.title === "string" && source.title.trim() && !links.has(url)) links.set(url, `[${source.title.replace(/[\[\]\r\n]/g, " ").slice(0, 200)}](${url})`);
   }
-  return links.size ? `${answer}\n\nPara profundizar:\n${[...links.values()].slice(0, 8).join("\n")}` : answer;
+  return links.size ? `${answer}\n\nRecursos Relacionados:\n${[...links.values()].slice(0, 8).join("\n")}` : answer;
 }
 
 export function isChatPreview(pageURL, apiURL) {
@@ -194,7 +195,7 @@ if (root) {
     available = session.available !== false;
     updateQuota(session.quota);
     setStatus(session.available === false ? "El servicio está actualizando su contenido o alcanzó su límite de uso. Inténtalo más tarde." : "", session.available === false);
-    clear.disabled = !verified || busy;
+    clear.disabled = busy;
   }
 
   async function verify() {
@@ -248,11 +249,20 @@ if (root) {
           text: { color: "var(--ink)", fontSize: "16px", paddingTop: "11px", paddingBottom: "13px", paddingLeft: "12px", paddingRight: "2.4em" },
         },
       };
-      chat.submitButtonStyles = { submit: { container: { default: { transform: "scale(1.21)", marginBottom: "-3px", marginRight: "0.4em" } }, svg: { styles: { hover: { fill: "var(--red)", color: "var(--red)" } } } } };
+      chat.submitButtonStyles = { submit: { container: { default: { transform: "scale(1.21)", marginBottom: "-3px", marginRight: "0.4em" } } } };
       chat.messageStyles = { default: { shared: { bubble: { maxWidth: "92%", fontSize: "14px", lineHeight: "1.5" } }, ai: { bubble: { backgroundColor: "var(--hover)", color: "var(--ink)" } }, user: { bubble: { backgroundColor: "var(--accent)", color: "var(--on-red)" } } } };
       chat.messageStyles.loading = { message: { styles: { bubble: { display: "flex", alignItems: "center", justifyContent: "center", width: "56px", height: "36px", padding: "0", boxSizing: "border-box" } } } };
       chat.remarkable = { html: false, applyHTML: false };
       chat.auxiliaryStyle = "* { overflow-wrap: anywhere; } #messages, #text-input { scrollbar-color: var(--scrollbar) transparent; scrollbar-width: thin; } #chat-view { grid-template-rows: minmax(0, 1fr) auto auto; } #certichat-quota { color: var(--muted); text-align: center; font-size: 12px; line-height: 1.4; padding: 8px 12px; } #certichat-quota[hidden] { display: none; } a { color: var(--blue); text-decoration: underline; } a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; } @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }";
+      // ponytail: the native completion class also covers restored history; no extra render pass or observers.
+      // ponytail: override the native disabled filter on hover; the submission guard stays unchanged.
+      chat.auxiliaryStyle += `#input .input-button:hover #submit-icon { color: var(--red) !important; filter: none !important; }
+        .chat-resource-heading { color: var(--red); font-size: .75em; font-weight: 750; letter-spacing: 1px; text-transform: uppercase; }
+        .ai-message:not(.streamed-message) a { display: inline-block; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; vertical-align: bottom; color: var(--ink); }
+        .ai-message:not(.streamed-message) a:hover { color: var(--red); }
+        .ai-message:not(.streamed-message) a::before { content: ""; display: inline-block; width: 16px; height: 16px; margin-right: 6px; vertical-align: -3px; background-color: currentColor; mask: url("${new URL("./icons/resource-link.svg", import.meta.url).href}") center / contain no-repeat; }
+        .ai-message:not(.streamed-message) a[data-link-kind="certitips"]::before { mask-image: url("${new URL("./icons/certitips-course.svg", import.meta.url).href}"); }
+        .ai-message:not(.streamed-message) a[data-link-kind="certitube"]::before { mask-image: url("${new URL("./icons/certitube.svg", import.meta.url).href}"); }`;
       if (dock) chat.auxiliaryStyle += `${responseSelector}:not(.streamed-message) { border: 1px solid transparent; cursor: pointer; } ${responseSelector}:not(.streamed-message):hover { border-color: var(--red); } ${responseSelector}:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }`;
       chat.introMessage = { text: "Hola. Resuelve tus dudas sobre las guías y prácticas del sitio." };
       chat.history = saved.messages.map(({ role, text }) => ({ role, text }));
@@ -263,7 +273,7 @@ if (root) {
           if (dock) chat.shadowRoot.querySelectorAll(responseSelector).forEach(bindResponse);
           if (pendingRequest?.requestId === completedRequest) pendingRequest = undefined;
           completedRequest = undefined;
-          busy = false; clear.disabled = !verified;
+          busy = false; clear.disabled = false;
           chat.shadowRoot.querySelector('[aria-label="Detener respuesta"]')?.setAttribute("aria-label", "Enviar consulta");
         }
         persist();
@@ -283,6 +293,7 @@ if (root) {
           chat.shadowRoot.querySelectorAll(responseSelector).forEach(bindResponse);
         }
         updateQuota();
+        clear.disabled = busy;
       };
       chat.addEventListener("keydown", event => {
         const input = event.composedPath()[0];
@@ -338,12 +349,7 @@ if (root) {
     }
     // ponytail: real queries use the published origin; a loopback API remains available for local tests.
     if (preview) {
-      const link = document.createElement("a");
-      link.href = `${document.querySelector('link[rel="canonical"]')?.href || root.dataset.siteRoot}#certichat`;
-      link.textContent = "Abrir chat del sitio publicado"; link.className = "button button-secondary";
-      link.target = "_blank"; link.rel = "noopener noreferrer";
-      verification.replaceChildren(link);
-      setStatus("Esta vista previa no admite consultas. Abre el chat del sitio publicado.", true);
+      setStatus("Esta vista previa no admite consultas.", true);
       return;
     }
     let session = await api("session", undefined, "GET");
@@ -362,7 +368,7 @@ if (root) {
     connecting.hidden = false; messages.hidden = true;
     try { await initialize(); }
     catch { setStatus("Sin conexión. Vuelve a intentarlo.", true); }
-    finally { connecting.hidden = true; messages.hidden = false; retry.disabled = false; }
+    finally { connecting.hidden = true; messages.hidden = false; retry.disabled = false; clear.disabled = !chat || busy; }
   }
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   let panelAnimation, closing = false;
@@ -381,7 +387,7 @@ if (root) {
     panelAnimation?.cancel();
     const finish = () => {
       panel.hidden = true; launcher.hidden = false; launcher.style.removeProperty("visibility");
-      launcher.setAttribute("aria-expanded", "false"); launcher.focus();
+      launcher.setAttribute("aria-expanded", "false"); launcher.focus({ preventScroll: true });
       panelAnimation?.cancel(); panelAnimation = undefined; closing = false;
       positionHomeLauncher();
     };
@@ -444,7 +450,7 @@ if (root) {
     try { sessionStorage.setItem(`${storageKey}:open`, "true"); } catch { /* The panel also works when session storage is blocked. */ }
     fitMobileViewport();
     if (event.isTrusted) panelAnimation = animatePanel(button, false);
-    if (!dock && event.isTrusted) root.querySelector("[data-chat-close]").focus();
+    if (!dock && event.isTrusted) root.querySelector("[data-chat-close]").focus({ preventScroll: true });
     if (!opening) { opening = connect(); await opening; opening = undefined; }
   });
   let wasOpen = false;
@@ -482,15 +488,15 @@ if (root) {
     busy = true; clear.disabled = true; confirmClear.disabled = true; cancelClear.disabled = true;
     confirmation.setAttribute("aria-busy", "true");
     try {
-      const result = await api("conversation", {}, "DELETE");
+      const result = preview ? { quota } : await api("conversation", {}, "DELETE");
       chat.clearMessages(); responseTraces.length = 0; completedTrace = undefined; pendingRequest = undefined; persist();
       publishTrace(root.dataset.siteRoot, "idle");
-      updateQuota(result.quota); setStatus(""); confirmation.close();
+      updateQuota(result.quota); if (!preview) setStatus(""); confirmation.close();
     } catch {
       const error = confirmation.querySelector("[data-chat-clear-error]");
       error.textContent = "No se pudo borrar la conversación. Vuelve a intentarlo."; error.hidden = false;
     } finally {
-      busy = false; clear.disabled = !verified; confirmClear.disabled = false; cancelClear.disabled = false;
+      busy = false; clear.disabled = false; confirmClear.disabled = false; cancelClear.disabled = false;
       confirmation.setAttribute("aria-busy", "false");
     }
   });

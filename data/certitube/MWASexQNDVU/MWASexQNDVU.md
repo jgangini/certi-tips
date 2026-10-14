@@ -1,6 +1,6 @@
 ```json
 {
-  "title": "Oracle AI Data Platform Workbench for VS Code — Community Edition",
+  "title": "AI Data Platform Workbench for VS Code Community Edition",
   "videoId": "MWASexQNDVU",
   "channelUrl": "https://www.youtube.com/@jgangini",
   "publishedAt": "2026-08-15",

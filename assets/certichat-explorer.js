@@ -29,6 +29,7 @@ if (root?.dataset.knowledgeGraph) {
   const selection = root.querySelector("[data-graph-selection]"), activeRelations = root.querySelector("[data-graph-active-relations]");
   const activeFit = root.querySelector("[data-graph-active-fit]");
   const card = root.querySelector("[data-graph-card]"), cardTitle = root.querySelector("[data-graph-card-title]"), cardSources = root.querySelector("[data-graph-card-sources]");
+  const connector = root.querySelector("[data-graph-card-connector]"), connectorLine = connector.querySelector("line");
   const siteRoot = document.querySelector("[data-certichat]")?.dataset.siteRoot;
   const apiOrigin = document.querySelector("[data-certichat]")?.dataset.api;
   const element = (tag, text, className) => {
@@ -94,6 +95,8 @@ if (root?.dataset.knowledgeGraph) {
     if (!sources.length) cardSources.append(element("p", "Sin referencia asociada a esta consulta."));
     for (const source of sources) {
       const link = element("a", source.title); link.href = sourcePath(source.url, siteRoot);
+      link.title = source.title;
+      link.dataset.source = new URL(source.url).pathname.startsWith(new URL("certitube/", siteRoot).pathname) ? "tube" : "tips";
       link.setAttribute("aria-label", `Profundizar: ${source.title}`);
       link.addEventListener("click", event => {
         if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
@@ -106,9 +109,14 @@ if (root?.dataset.knowledgeGraph) {
 
   function anchorCard(anchor) {
     card.hidden = !anchor;
+    connector.toggleAttribute("hidden", !anchor);
     if (!anchor) return;
-    card.style.left = `${Math.max(8, Math.min(anchor.x - card.offsetWidth / 2, anchor.width - card.offsetWidth - 8))}px`;
-    card.style.top = `${Math.max(8, Math.min(anchor.y - card.offsetHeight, anchor.height - card.offsetHeight - 8))}px`;
+    const left = Math.max(8, Math.min(anchor.x - card.offsetWidth / 2, anchor.width - card.offsetWidth - 8));
+    const top = Math.max(8, Math.min(anchor.y - card.offsetHeight, anchor.height - card.offsetHeight - 8));
+    card.style.left = `${left}px`; card.style.top = `${top}px`;
+    connectorLine.setAttribute("x1", Math.max(left + 8, Math.min(anchor.x, left + card.offsetWidth - 8)));
+    connectorLine.setAttribute("y1", top + card.offsetHeight);
+    connectorLine.setAttribute("x2", anchor.x); connectorLine.setAttribute("y2", anchor.nodeY);
   }
 
   function updateTrace() {
@@ -127,6 +135,7 @@ if (root?.dataset.knowledgeGraph) {
     concepts.textContent = `${nodes.length}/${graph.nodes.length.toLocaleString("es")}`;
     relations.textContent = `${edges.length}/${graph.edges.length.toLocaleString("es")}`;
     card.hidden = true;
+    connector.setAttribute("hidden", "");
     network.setTrace(trace);
     active.replaceChildren();
     for (const [index, id] of nodes.entries()) {

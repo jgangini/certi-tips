@@ -78,12 +78,12 @@ async (page) => {
       document.body.classList.remove('is-compact-nav');
       const box = selector => document.querySelector(selector).getBoundingClientRect();
       const article = box('.prose'), pager = box('.page-navigation');
-      const groups = box('.path-nav-mobile > summary'), menu = box('.menu-toggle'), search = box('.search-toggle');
+      const groups = box('.path-nav-mobile > summary'), menu = box('.menu-toggle'), firstApp = box('.header-app-link'), search = box('.search-toggle'), lastApp = box('.header-app-link[aria-label="CertiChat"]');
       const theme = box('.theme-toggle'), chat = box('.certichat-launcher');
       return Math.abs(theme.right - article.right) <= 1 && Math.abs(chat.right - article.right) <= 1 &&
         Math.abs(pager.right - article.right) <= 1 &&
         groups.right < menu.left && menu.right < search.left && search.right < theme.left &&
-        menu.left - groups.right <= 14 && search.left - menu.right <= 14 && theme.left - search.right <= 14 &&
+        menu.left - groups.right <= 14 && firstApp.left - menu.right <= 14 && search.left - lastApp.right <= 14 && theme.left - search.right <= 14 &&
         document.documentElement.scrollWidth <= innerWidth + 1;
     }), `Course header controls or CertiChat miss the article edge at ${width}px`);
   }
@@ -95,16 +95,17 @@ async (page) => {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto(`${base}CDMP-DMF/overview/`);
     await page.evaluate(compact => document.body.classList.toggle('is-compact-nav', compact), compact);
-    await page.waitForFunction(expected => Math.abs(document.querySelector('.course-main').getBoundingClientRect().left - expected) < 1,
-      compact ? 64 : 272);
+    await page.waitForFunction(compact => {
+      const start = compact ? 0 : 272, width = document.body.getBoundingClientRect().width;
+      return Math.abs(document.querySelector('.course-main').getBoundingClientRect().left - start - Math.max(0,(width-start-1280)/2)) < 1;
+    }, compact);
     assert(await page.evaluate(labelVisible => {
       const box = selector => document.querySelector(selector).getBoundingClientRect();
       const launcher = box('.certichat-launcher'), article = box('.prose');
       const visible = getComputedStyle(document.querySelector('.certichat-launcher > span')).clipPath === 'none';
-      const nav = box(document.body.classList.contains('is-compact-nav')
-        ? (innerWidth <= 1200 ? '.path-nav-mobile > summary' : '.path-nav') : '.menu-toggle');
+      const nav = box('.header-app-link[aria-label="CertiChat"]');
       const search = box('.search-toggle'), theme = box('.theme-toggle');
-      return visible === labelVisible && (!visible || launcher.left - article.right >= 20) &&
+      return visible === labelVisible && !(launcher.left < article.right && launcher.right > article.left && launcher.top < article.bottom && launcher.bottom > article.top) &&
         search.left - nav.right >= 11 && search.left - nav.right <= 13 &&
         theme.left - search.right >= 11 && theme.left - search.right <= 13;
     }, labelVisible), `CertiChat label or header spacing is wrong at ${width}px (${compact ? 'compact' : 'expanded'})`);
@@ -114,7 +115,7 @@ async (page) => {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto(`${base}CDMP-DMF/overview/`);
     await page.evaluate(compact => document.body.classList.toggle('is-compact-nav', compact), compact);
-    if (compact) await page.waitForFunction(() => Math.abs(document.querySelector('.course-main').getBoundingClientRect().left - 64) < 1);
+    if (compact) await page.waitForFunction(() => Math.abs(document.querySelector('.course-main').getBoundingClientRect().left) < 1);
     await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
     assert(await page.evaluate(() => {
       const box = selector => document.querySelector(selector).getBoundingClientRect();
@@ -223,30 +224,14 @@ async (page) => {
   const compactToggle = page.locator('.menu-toggle');
   await compactToggle.click();
   await page.waitForFunction(() => {
-    const sidebar = document.querySelector('.sidebar').getBoundingClientRect();
-    const toggleElement = document.querySelector('.menu-toggle');
-    const toggle = toggleElement.getBoundingClientRect();
-    const firstLink = document.querySelector('.sidebar .nav-link').getBoundingClientRect();
-    return Math.abs(sidebar.width - 64) < 1 && Math.abs(document.querySelector('.course-main').getBoundingClientRect().left - 64) < 1 &&
-      Math.abs(toggle.left - firstLink.left) <= 1 && Math.abs(toggle.width - firstLink.width) <= 1 &&
-      Math.abs(firstLink.top - toggle.bottom - 8) <= 1;
+    return getComputedStyle(document.querySelector('.sidebar')).visibility === 'hidden' && Math.abs(document.querySelector('.course-main').getBoundingClientRect().left) < 1;
   });
   assert(await compactToggle.getAttribute('aria-expanded') === 'false' && await page.evaluate(() => {
     const sidebar = document.querySelector('.sidebar'), main = document.querySelector('.course-main');
     const toggleElement = document.querySelector('.menu-toggle');
-    const toggle = toggleElement.getBoundingClientRect();
-    const firstLink = sidebar.querySelector('.nav-link').getBoundingClientRect();
-    const search = document.querySelector('.search-toggle').getBoundingClientRect();
-    const motion = getComputedStyle(sidebar);
-    return document.body.classList.contains('is-compact-nav') && toggleElement.parentElement === sidebar && document.activeElement === toggleElement &&
-      Math.abs(sidebar.getBoundingClientRect().width - 64) < 1 &&
-      Math.abs(main.getBoundingClientRect().left - 64) < 1 && getComputedStyle(sidebar.querySelector('.nav-title')).clipPath === 'inset(50%)' &&
-      getComputedStyle(sidebar.querySelector('.nav-tree:last-child')).display === 'none' &&
-      !sidebar.querySelector('.sidebar-compact-toggle') &&
-      Math.abs(toggle.left - firstLink.left) <= 1 && Math.abs(toggle.width - firstLink.width) <= 1 &&
-      toggle.top >= sidebar.getBoundingClientRect().top && Math.abs(firstLink.top - toggle.bottom - 8) <= 1 && toggle.right < search.left &&
-      (matchMedia('(prefers-reduced-motion: reduce)').matches || motion.transitionProperty.includes('width') && parseFloat(motion.transitionDuration) > 0);
-  }), 'Compact course navigation did not leave a numbered rail or expand reading space');
+    return document.body.classList.contains('is-compact-nav') && toggleElement.parentElement.matches('.site-header') && document.activeElement === toggleElement &&
+      getComputedStyle(sidebar).visibility === 'hidden' && sidebar.getBoundingClientRect().right <= 0 && Math.abs(main.getBoundingClientRect().left) < 1 && toggleElement.getBoundingClientRect().width > 0;
+  }), 'Folded course menu leaves a rail, loses its header button or fails to expand reading space');
   await page.addInitScript(() => {
     const observer = new MutationObserver(() => {
       if (!document.querySelector('.sidebar')) return;
@@ -255,7 +240,7 @@ async (page) => {
     });
     observer.observe(document, { childList: true, subtree: true });
   });
-  await page.locator('.sidebar a.nav-link[href$="/agents/"]').click();
+  await page.goto(`${base}${course}/agents/`);
   await page.waitForURL(`${base}${course}/agents/`);
   assert(await page.evaluate(() => window.__courseNavCompactAtParse === true), 'Compact course navigation expanded before the next lesson rendered');
   assert(await page.locator('body').evaluate(body => body.classList.contains('is-compact-nav')), 'Compact course navigation did not persist between lessons');
@@ -267,10 +252,10 @@ async (page) => {
       width <= 1100 ? 240 : 272);
     assert(await page.evaluate(() => {
       const box = selector => document.querySelector(selector).getBoundingClientRect();
-      const groups = box(innerWidth <= 1200 ? '.path-nav-mobile > summary' : '.path-nav');
-      const toggle = box('.menu-toggle'), search = box('.search-toggle');
-      return groups.right < toggle.left && toggle.right < search.left &&
-        Math.abs(search.left - toggle.right - 12) <= 1 &&
+      const groups = box(innerWidth <= 1360 ? '.path-nav-mobile > summary' : '.path-nav');
+      const toggle = box('.menu-toggle'), app = box('.header-app-link');
+      return groups.right < toggle.left && toggle.right < app.left &&
+        Math.abs(app.left - toggle.right - 12) <= 1 &&
         document.querySelector('.menu-toggle').parentElement === document.querySelector('.site-header') &&
         !document.querySelector('.sidebar-compact-toggle');
     }), `Course toggle misses its header position at ${width}px`);

@@ -9,7 +9,7 @@ async (page) => {
   const guideURL = 'https://jgangini.github.io/certitips/1Z0-1157-26/agents/#conceptos-clave';
   const guidePath = new URL(guideURL).pathname + new URL(guideURL).hash;
   let quota = { remaining: 20, limit: 20, refreshHours: 6, resetAt: null, minuteRemaining: 2, retryAfter: 0 };
-  let authenticated = true, available = true, sessionError = true, rateLimited = false, loseResponse = false, failOnce = 0;
+  let authenticated = true, available = true, sessionError = true, rateLimited = false, loseResponse = false, failOnce = 0, deletionError = false;
   let mode = 'VPS';
   let pendingSession, releaseSession;
   const waitForReply = async (text, canSubmit = true) => page.waitForFunction(({ expected, canSubmit }) => {
@@ -45,6 +45,7 @@ async (page) => {
     }
     if (path === '/api/session' && pendingSession) await pendingSession;
     if (path === '/api/session' && sessionError) return route.abort('failed');
+    if (path === '/api/conversation' && deletionError) return route.fulfill({status:503,headers,json:{detail:'Unavailable'}});
     if (path === '/api/session' && request.method() === 'POST') authenticated = true;
     return route.fulfill({ headers, json: { mode, authenticated, verificationRequired: !authenticated, quota, available } });
   });
@@ -54,12 +55,41 @@ async (page) => {
     return route.fulfill({ response, body: (await response.text()).replace(/data-api="[^"]+"/, 'data-api="https://certichat.cloudtechnext.net"') });
   });
   await page.goto(base);
+  await page.evaluate(() => sessionStorage.clear());
+  await page.evaluate(() => localStorage.setItem('certichat:https://jgangini.github.io/certitips/', JSON.stringify({updatedAt: Date.now(), messages: [{role: 'ai', text: '[Usar modelos con tus datos en OCI · Ejemplo paso a paso con todas las referencias y detalles de la guía](https://jgangini.github.io/certitips/CDMP-DMF/overview/)\n[Video](https://jgangini.github.io/certitips/certitube/Ha74VhpQwQo/#t-61)'}]})));
+  await page.reload();
   await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
-  const publishedChat = page.getByRole('link', { name: 'Abrir chat del sitio publicado' });
-  await publishedChat.waitFor();
-  assert(await publishedChat.getAttribute('href') === 'https://jgangini.github.io/certitips/#certichat', 'Preview does not link to the published chat');
+  await page.waitForFunction(() => document.querySelector('deep-chat') && document.querySelector('.certichat-connecting').hidden);
+  assert(await page.getByRole('link', { name: 'Abrir chat del sitio publicado' }).count() === 0, 'Preview still shows the published-chat link');
+  assert(await page.locator('[data-chat-verification]').isHidden(), 'Preview retains an empty verification block');
   assert(!requests.some(url => /turnstile|certichat\.cloudtechnext/.test(url)), 'Preview attempted a production connection');
   assert(await page.locator('[data-chat-retry]').isHidden(), 'Preview offers a retry that cannot work');
+  const restoredIcons = await page.locator('deep-chat .ai-message a').evaluateAll(links => links.map(link => ({kind: link.dataset.linkKind, mask: getComputedStyle(link, '::before').maskImage, color: getComputedStyle(link, '::before').backgroundColor, size: getComputedStyle(link, '::before').width, content: getComputedStyle(link, '::before').content})));
+  assert(restoredIcons.length === 2 && restoredIcons[0].mask.includes('certitips-course.svg') && restoredIcons[1].mask.includes('certitube.svg'), 'Restored answers do not use the referenced SVGs');
+  assert(restoredIcons.every(icon => icon.size === '16px' && icon.content === '""') && restoredIcons[0].color === restoredIcons[1].color, 'Link icons lack compact size or the resource foreground color');
+  const longReference = await page.locator('deep-chat .ai-message a').first().evaluate(link => ({ellipsis: getComputedStyle(link).textOverflow, nowrap: getComputedStyle(link).whiteSpace, truncated: link.scrollWidth > link.clientWidth, title: link.title, text: link.textContent}));
+  assert(longReference.ellipsis === 'ellipsis' && longReference.nowrap === 'nowrap' && longReference.truncated && longReference.title === longReference.text, 'Chat link lacks ellipsis or its full accessible label');
+  for (const theme of ['light','dark']) {
+    await page.evaluate(theme => document.documentElement.dataset.theme = theme, theme);
+    for (const text of ['', 'Consulta sin enviar']) {
+      await page.getByRole('textbox', {name:'Escribe tu consulta'}).fill(text);
+      await page.locator('deep-chat [aria-label="Enviar consulta"]').hover();
+      assert(await page.locator('deep-chat #submit-icon').evaluate(svg => getComputedStyle(svg).stroke === getComputedStyle(document.querySelector('#certichat-panel')).borderTopColor && getComputedStyle(svg).filter === 'none' && getComputedStyle(svg).fill === 'none'), `Submit hover is not a red outline with ${text ? 'enabled' : 'empty'} input in ${theme}`);
+    }
+  }
+  await page.getByRole('textbox', {name:'Escribe tu consulta'}).fill('');
+  await page.evaluate(() => document.documentElement.dataset.theme = 'light');
+  assert(await page.locator('[data-chat-clear]').isEnabled(), 'Preview cannot clear restored local history');
+  const previewTranscript = await page.locator('deep-chat').evaluate(chat => JSON.stringify(chat.getMessages()));
+  await page.locator('[data-chat-clear]').click(); await page.locator('[data-chat-confirm-no]').click();
+  assert(await page.locator('deep-chat').evaluate(chat => JSON.stringify(chat.getMessages())) === previewTranscript, 'Preview cancel erased history');
+  await page.locator('[data-chat-clear]').click(); await page.locator('[data-chat-confirm-yes]').click();
+  await page.locator('[data-chat-confirm]').waitFor({state:'hidden'});
+  await page.reload();
+  await page.waitForFunction(() => document.querySelector('deep-chat')?.shadowRoot?.querySelector('#certichat-quota') && !document.querySelector('[data-chat-clear]').disabled);
+  assert(await page.locator('deep-chat').evaluate(chat => chat.getMessages().length) === 0, 'Preview clear did not persist');
+  assert(calls.length === 0 && !requests.some(url => /turnstile|certichat\.cloudtechnext/.test(url)), 'Local clear requested production access');
+  await page.evaluate(() => localStorage.removeItem('certichat:https://jgangini.github.io/certitips/'));
   await page.goto(`${base}CDMP-DMF/data-integration/`);
   await page.waitForFunction(() => !document.querySelector('#certichat-panel').hidden);
   assert(await page.locator('[data-chat-close]').evaluate(button => !button.matches(':focus-visible')), 'Restored CertiChat keeps an unwanted blue focus outline');
@@ -106,6 +136,7 @@ async (page) => {
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).fill('Consulta sin conexión');
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).press('Enter');
   await waitForReply('Sin conexión');
+  assert(await page.locator('[data-chat-clear]').isEnabled(), 'Offline local feedback disables history clearing');
   assert(!calls.some(item => item.path === '/api/chat'), 'Offline Enter attempted a paid request');
   sessionError = false;
   pendingSession = new Promise(resolve => { releaseSession = resolve; });
@@ -131,9 +162,10 @@ async (page) => {
   await page.waitForFunction(expected => {
     const chat = document.querySelector('deep-chat');
     const text = [...chat.shadowRoot.querySelectorAll('.ai-message')].at(-1)?.textContent || '';
-    return text.length > 2 && text.length < expected.length / 2 && expected.startsWith(text) && !chat.validateInput('Otra consulta');
+    return text.length > 2 && text.length < expected.length / 2 && expected.replace(/\n/g, '').startsWith(text) && !chat.validateInput('Otra consulta');
   }, answer);
   assert(await page.locator('[data-chat-clear]').isDisabled(), 'Clear is enabled while the answer is streaming');
+  assert(await page.locator('deep-chat .ai-message').last().evaluate(element => element.classList.contains('streamed-message')), 'The native streaming state does not suppress link icons');
   const streamingCalls = calls.filter(item => item.path === '/api/chat').length;
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).fill('No duplicar durante streaming');
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).press('Enter');
@@ -142,6 +174,8 @@ async (page) => {
   await waitForReply(answer);
   await waitForReady();
   const homeResponse = page.locator('deep-chat .outer-message-container:not(.deep-chat-intro) .ai-message').first();
+  const finishedIcon = await page.locator('deep-chat .ai-message a').last().evaluate(link => getComputedStyle(link, '::before').maskImage);
+  assert(finishedIcon.includes('certitips-course.svg'), 'A completed answer does not show its guide icon');
   await homeResponse.hover();
   assert(await homeResponse.evaluate(element => getComputedStyle(element).borderTopWidth === '0px' && element.tabIndex !== 0), 'Graph response selection style leaked onto the home page');
   assert(await quotaNotice.isHidden(), 'Renewal countdown appears while questions remain');
@@ -159,7 +193,7 @@ async (page) => {
   const firstReset = quota.resetAt;
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).fill('¿Dónde puedo profundizar sobre los agentes?');
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).press('Enter');
-  await waitForReply('Para profundizar:');
+  await waitForReply('Recursos Relacionados:');
   await waitForReady();
   const guideLink = page.locator('deep-chat .ai-message').last().locator('a');
   assert(await guideLink.count() === 1 && await guideLink.getAttribute('href') === guidePath && await guideLink.getAttribute('data-source-url') === guideURL, 'Explicit reference request did not preserve its local path and canonical source');
@@ -197,6 +231,11 @@ async (page) => {
   assert(calls.filter(item => item.method === 'DELETE').length === deletes, 'Cancel deleted server history');
   assert(await page.locator('deep-chat').evaluate(element => JSON.stringify(element.getMessages())) === transcript, 'Cancel erased the transcript');
   assert(await page.locator('[data-chat-clear]').evaluate(element => document.activeElement === element), 'Cancel did not restore focus to Clear');
+  deletionError = true;
+  await page.locator('[data-chat-clear]').click(); await page.locator('[data-chat-confirm-yes]').click();
+  await page.locator('[data-chat-clear-error]').waitFor({state:'visible'});
+  assert(await page.locator('deep-chat').evaluate(element => JSON.stringify(element.getMessages())) === transcript, 'Failed server deletion erased local history');
+  await page.locator('[data-chat-confirm-no]').click(); deletionError = false;
   await page.locator('[data-chat-clear]').click();
   await page.locator('[data-chat-confirm-yes]').click();
   await page.locator('[data-chat-confirm]').waitFor({ state: 'hidden' });
@@ -237,7 +276,7 @@ async (page) => {
   await page.waitForFunction(expected => {
     const chat = document.querySelector('deep-chat');
     const text = [...chat.shadowRoot.querySelectorAll('.ai-message')].at(-1)?.textContent || '';
-    return text.length > 2 && text.length < expected.length / 2 && expected.startsWith(text) && !chat.validateInput('Otra consulta');
+    return text.length > 2 && text.length < expected.length / 2 && expected.replace(/\n/g, '').startsWith(text) && !chat.validateInput('Otra consulta');
   }, answer);
   await page.reload();
   await waitForReady();
@@ -296,6 +335,7 @@ async (page) => {
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).fill('Pregunta mientras indexa');
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).press('Enter');
   await waitForReply('actualizando');
+  assert(await page.locator('[data-chat-clear]').isEnabled(), 'Unverified/unavailable feedback disables history clearing');
   assert(calls.filter(item => item.path === '/api/chat').length === beforeUnavailable, 'Unavailable service sends an unverified request');
   authenticated = true;
   await page.getByRole('button', { name: 'Reintentar conexión' }).click();

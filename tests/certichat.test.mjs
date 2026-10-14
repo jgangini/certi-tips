@@ -42,7 +42,9 @@ test("CertiChat includes unique verified section links with every sourced answer
     const answer = answerWithReferences(text, sources, site);
     assert.ok(answer.startsWith(text) && answer.includes(url));
     const html = plainChatHTML(answer, site);
-    assert.match(html, /<a href="\/certitips\/1Z0-1157-26\/agents\/#conceptos-clave" data-source-url="https:\/\/jgangini.github.io\/certitips\/1Z0-1157-26\/agents\/#conceptos-clave">/);
+    assert.match(html, /<span class="chat-resource-heading">Recursos Relacionados:<\/span><br><a /);
+    assert.equal(plainChatHTML(answer.replace("Recursos Relacionados:", "Para profundizar:"), site), html, "saved answers must show the current resource heading without another request");
+    assert.match(html, /<a href="\/certitips\/1Z0-1157-26\/agents\/#conceptos-clave" data-source-url="https:\/\/jgangini.github.io\/certitips\/1Z0-1157-26\/agents\/#conceptos-clave" data-link-kind="certitips" title="[^"]+">/);
     assert.doesNotMatch(html, /<img|attacker\.test/);
     assert.match(html, /&lt;img src=x&gt; &amp; herramientas/);
     assert.equal((html.match(/<a /g) || []).length, 1);
@@ -51,6 +53,21 @@ test("CertiChat includes unique verified section links with every sourced answer
   }
   for (const invalid of [undefined, [], {}, [null, { title: " ", url }, { title: "Unsafe", url: "javascript:alert(1)" }]]) assert.equal(answerWithReferences("Respuesta", invalid, site), "Respuesta");
   assert.doesNotMatch(plainChatHTML('[x](https://attacker.test/) [x](javascript:alert(1)) <a href="https://attacker.test">x</a>', site), /<a /);
+});
+
+test("chat link icons use the validated URL path, including restored video timestamps", () => {
+  const site = "https://jgangini.github.io/certitips/";
+  for (const [path, kind] of [["", "certitips"], ["CDMP-DMF/overview/#certitube", "certitips"], ["certitube/", "certitube"], ["certitube/Ha74VhpQwQo/#t-61", "certitube"], ["certitube-lookalike/", "certitips"]]) {
+    const text = `[Material](${site}${path})`;
+    const restored = restoreChat({updatedAt: 100, messages: [{role: "ai", text}]}, site, 100);
+    const html = plainChatHTML(restored.messages[0].text, site);
+    assert.ok(html.includes(`data-link-kind="${kind}"`));
+    assert.ok(html.includes(`href="${new URL(site + path).pathname + new URL(site + path).hash}"`));
+    assert.equal(html, plainChatHTML(text, site));
+  }
+  for (const url of ["https://attacker.test/certitips/certitube/", `${site}certitube/?token=private`, "javascript:alert(1)"]) {
+    assert.doesNotMatch(plainChatHTML(`[CertiTube](${url})`, site), /<a |data-link-kind/);
+  }
 });
 
 test("guide references navigate on the current origin while retaining canonical evidence and transcript", () => {

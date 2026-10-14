@@ -11,6 +11,18 @@ import { selectedMoment, playbackMoment, mountPlayer } from "../assets/certitube
 import { answerWithReferences, plainChatHTML, restoreChat } from "../assets/certichat.js";
 import { corpusArtifacts } from "../scripts/certichat-corpus.mjs";
 
+test("unsegmented videos hide duplicate controls while retaining their registered citation", () => {
+  const video = parseVideo(readFileSync(new URL("../data/certitube/MWASexQNDVU/MWASexQNDVU.md", import.meta.url), "utf8"), "MWASexQNDVU");
+  const html = videoBody(video, new MarkdownIt(), site);
+  assert.equal(video.title, "AI Data Platform Workbench for VS Code Community Edition");
+  assert.match(html, /class="tube-chapters" hidden/);
+  assert.match(html, /class="tube-description" hidden/);
+  assert.match(html, /href="#t-0" data-tube-time="0"/);
+  assert.ok(videoDocuments(video, site).some(doc => doc.id.endsWith("#t-0")));
+  assert.doesNotMatch(html, /<\/a>\.\s*<\/li>/);
+  assert.doesNotMatch(videoCarousel([video], video.publicPath, site.base).split("<ol>")[1], /<small>/);
+});
+
 const id = "sSQAGSs23uY", site = { origin: "https://jgangini.github.io", base: "/certitips/" };
 // Controlled sample: independent of the published video collection.
 const source = `\`\`\`json
@@ -74,7 +86,7 @@ test("CertiTube omits the fixed sidebar and keeps the ordered video carousel", (
     assert.match(html, /aria-label="Videos de CertiTube"/);
     assert.match(html, new RegExp(`<link rel="canonical" href="${site.origin}${site.base}${slug}/"`));
     assert.doesNotMatch(html, /data-progress|data-completion=|data-mark-complete|tube-grid|tube-card|class="tube-nav"|Biblioteca|tube-search/);
-    assert.match(navigation, new RegExp(`href="${site.base}${slug}/" aria-current="page"`));
+    assert.match(navigation, new RegExp(`href="${site.base}${slug}/" title="[^"]+" aria-current="page"`));
     assert.match(navigation, /i.ytimg.com\/vi\/sSQAGSs23uY\/mqdefault.jpg/);
     assert.doesNotMatch(navigation, /\d\d:\d\d —/);
     assert.match(html, /search-result-icon-video/);
@@ -85,6 +97,15 @@ test("CertiTube omits the fixed sidebar and keeps the ordered video carousel", (
     const header = html.match(/<header class="site-header">[^]*?<\/header>/)[0];
     assert.match(header, /aria-label="CertiQuiz"[^]*?aria-label="CertiTube"[^]*?class="search-toggle"/);
   }
+});
+
+test("summary paragraph breaks retain the complete description and accessible link titles", () => {
+  const original = parseVideo(source, id);
+  const video = parseVideo(source.replace("## Capítulos", "Otro párrafo que explica el video.\n\n## Capítulos"), id);
+  assert.equal(video.summary, `${original.summary} Otro párrafo que explica el video.`);
+  const html = videoBody(video, new MarkdownIt(), site);
+  assert.match(html, /<p>Otro párrafo que explica el video\.<\/p>/);
+  assert.match(html, /<a [^>]*title="[^"]+"/);
 });
 
 test("published video produces matching safe pages, timed evidence and chat references", () => {

@@ -20,7 +20,9 @@
 
 ## Resumen
 
-¿Cómo reunir publicaciones de redes sociales y datos de sensores para entender qué ocurre en una zona? En esta demo te muestro cómo ampliar God's Eye View con Oracle AI Data Platform para analizar eventos sobre un mapa y consultar sus evidencias con un asistente de IA.
+¿Cómo reunir publicaciones de redes sociales y datos de sensores para entender qué ocurre en una zona?
+
+En esta demo te muestro cómo ampliar God's Eye View con Oracle AI Data Platform para analizar eventos sobre un mapa y consultar sus evidencias con un asistente de IA.
 
 ## Capítulos
 

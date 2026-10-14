@@ -1,4 +1,4 @@
-.certiquiz-page .certiquiz-main { --brand-accent: var(--accent); max-width: 1280px; padding-top: 26px; padding-bottom: 48px; }
+.certiquiz-page .certiquiz-main { --brand-accent: var(--accent); max-width: 1280px; padding-top: 20px; padding-bottom: 48px; }
 .certiquiz-page.certiquiz-playing { --header: 0px; }
 .certiquiz-page.certiquiz-playing .site-header { display: none; }
 @media (min-width: 1101px) and (max-width: 1200px) { .certiquiz-page .certiquiz-main { padding-right: 5vw; } }
@@ -13,7 +13,7 @@ html[data-theme="dark"] .certiquiz-app { --shadow: none; }
 .certiquiz-app [hidden] { display: none !important; }
 .certiquiz-app .connection { color: var(--muted); font-size: 13px; margin: 16px 0 0; }
 .certiquiz-app .connection:empty { display: none; }
-.certiquiz-app .welcome { margin: 9px 0 35px; }
+.certiquiz-app .welcome { margin: 0 0 24px; }
 .certiquiz-app .brand-accent { color: var(--brand-accent); }
 .certiquiz-app .eyebrow { color: var(--accent); font-size: 11px; letter-spacing: .16em; font-weight: 750; }
 .certiquiz-app h1, .certiquiz-app h2, .certiquiz-app h3, .certiquiz-app p { overflow-wrap: anywhere; }

@@ -175,7 +175,8 @@ async page => {
     await fixedFooter();
     await composer.fill(''); await fixedFooter();
     checks.push('metadata stays 46 px high with a multiline or scrolling composer');
-    const governance = tab.locator('.path-nav .path-group').filter({ hasText: 'Governance' });
+    await tab.locator('.path-nav-mobile > summary').click();
+    const governance = tab.locator('.path-nav-mobile .path-group').filter({ hasText: 'Governance' });
     await governance.locator('summary').click();
     assert(await governance.locator('.path-group-panel a').first().evaluate(link => {
       const menu = link.getBoundingClientRect(), chat = document.querySelector('#certichat-panel').getBoundingClientRect();
@@ -212,7 +213,7 @@ async page => {
     const makeTrace = edge => ({ version: snapshot.version, nodes: [edge.source, edge.target], edges: [edge], truncated: false });
     const trace1 = makeTrace(first), trace2 = makeTrace(second), empty = { version: snapshot.version, nodes: [], edges: [], truncated: false };
     const siteRoot = await tab.locator('[data-certichat]').getAttribute('data-site-root');
-    trace1.sources = [{ nodeId: first.source, title: 'Guía de la primera consulta · Concepto', url: `${siteRoot}CDMP-DMF/overview/` }];
+    trace1.sources = [{ nodeId: first.source, title: 'Guía de la primera consulta · Concepto con una referencia extensa para mostrar todos los recursos relacionados', url: `${siteRoot}CDMP-DMF/overview/` }];
     const source = new URL(trace1.sources[0].url), guidePath = source.pathname + source.hash, guideURL = new URL(guidePath, base).href;
     await send('Consulta uno', trace1);
     await answered('Respuesta: Consulta uno.');
@@ -251,6 +252,14 @@ async page => {
     assert(await card.locator('strong').evaluate(element => getComputedStyle(element).borderBottomWidth) === '1px', 'Concept card has no separator between title and sources');
     const reference = card.getByRole('link', { name: `Profundizar: ${trace1.sources[0].title}` });
     assert(await reference.getAttribute('href') === guidePath && await card.locator('a').count() === 1, 'Card reference was not restricted to current-query source evidence');
+    assert(await reference.evaluate(link => link.title === link.textContent && link.scrollWidth > link.clientWidth && getComputedStyle(link).whiteSpace === 'nowrap' && getComputedStyle(link).textOverflow === 'ellipsis' && getComputedStyle(link, '::before').maskImage.includes('certitips-course.svg')), 'Concept references lack truncation/full label or the correct guide SVG');
+    assert(await card.evaluate(element => {
+      const connector = element.parentElement.querySelector('[data-graph-card-connector]'), line = connector.querySelector('line'), style = getComputedStyle(element), connectorStyle = getComputedStyle(connector);
+      const box = element.getBoundingClientRect(), parent = element.parentElement.getBoundingClientRect();
+      return !connector.hasAttribute('hidden') && style.borderTopColor === getComputedStyle(document.querySelector('.chat-graph-legend [data-source=tips]')).color && connectorStyle.stroke === style.borderTopColor && connectorStyle.strokeWidth === style.borderTopWidth && Math.abs(Number(line.getAttribute('y1')) - (box.bottom - parent.top)) < 1 && Number(line.getAttribute('y2')) > Number(line.getAttribute('y1')) && connectorStyle.pointerEvents === 'none';
+    }), 'Concept card lacks its red border/connector anchored to the node');
+    const legendIcons = await tab.locator('.chat-graph-legend svg').evaluateAll(icons => icons.map(svg => ({width: svg.getBBox().width, source: svg.querySelector('use').getAttribute('href')})));
+    assert(legendIcons.length === 2 && legendIcons.every(icon => icon.width > 0) && legendIcons[0].source.endsWith('certitips-course.svg#certitips-course') && legendIcons[1].source.endsWith('certitube.svg#certitube'), 'Legend SVGs are empty or use the wrong source glyph');
     await reference.evaluate(link => link.addEventListener('click', event => event.preventDefault(), { once: true }));
     await reference.click();
     assert(await tab.evaluate(root => sessionStorage.getItem(`certichat:${root}:reference`), siteRoot) === guideURL, 'Card source navigation loses the open-chat reference marker');
@@ -268,7 +277,7 @@ async page => {
       }), `${theme}: graph values do not share the answer bubble colors`);
       const tags = await tab.locator('[data-graph-active] button').evaluateAll(items => items.map(element => {
         const s = getComputedStyle(element);
-        return { pressed: element.getAttribute("aria-pressed") === "true", selectedColor: getComputedStyle(document.querySelector("[data-source=tips]")).color, background: s.backgroundColor, border: s.borderTopColor, borderWidth: s.borderTopWidth, radius: s.borderRadius, fontSize: parseFloat(s.fontSize), paddingY: parseFloat(s.paddingTop) + parseFloat(s.paddingBottom) };
+        return { pressed: element.getAttribute("aria-pressed") === "true", selectedColor: getComputedStyle(document.querySelector(".chat-graph-legend [data-source=tips]")).color, background: s.backgroundColor, border: s.borderTopColor, borderWidth: s.borderTopWidth, radius: s.borderRadius, fontSize: parseFloat(s.fontSize), paddingY: parseFloat(s.paddingTop) + parseFloat(s.paddingBottom) };
       }));
       assert(tags.length === trace1.nodes.length && tags.every(tag => {
         const neutral = color => { const rgb = color.match(/[\d.]+/g)?.slice(0, 3).map(Number); return rgb?.length === 3 && Math.max(...rgb) - Math.min(...rgb) <= 20; };
@@ -291,7 +300,7 @@ async page => {
       await composer.fill('Sólo borrador');
       const submit = tab.locator('deep-chat .input-button.inside-end');
       await submit.hover();
-      assert(await submit.locator('svg').evaluate(svg => getComputedStyle(svg).fill) === red, 'Composer send icon is not red on hover');
+      assert(await submit.locator('svg').evaluate(svg => getComputedStyle(svg).stroke) === red && await submit.locator('svg').evaluate(svg => getComputedStyle(svg).filter) === 'none', 'Composer send icon is not red on hover');
       await composer.fill(''); await tab.mouse.move(0, 0);
       const badge = await tab.locator('[data-graph-zoom]').evaluate(node => { const s = getComputedStyle(node); return [s.borderRadius, s.borderTopWidth, s.fontSize, s.padding]; });
       for (const label of await tab.locator('.chat-graph-legend span').all()) assert(JSON.stringify(await label.evaluate(node => { const s = getComputedStyle(node); return [s.borderRadius, s.borderTopWidth, s.fontSize, s.padding]; })) === JSON.stringify(badge), 'Legend does not match zoom badge format');
@@ -299,6 +308,8 @@ async page => {
     const videoTrace = { ...trace1, sources: trace1.nodes.map(nodeId => ({ nodeId, title: 'CertiTube · Sensores', url: `${siteRoot}certitube/Ha74VhpQwQo/#t-61` })) };
     await tab.evaluate(trace => window.dispatchEvent(new CustomEvent('certichat:trace', { detail: { status: 'ready', trace } })), videoTrace);
     await tab.waitForFunction(() => document.querySelector('[data-graph-canvas]').dataset.videoNodeCount === '2' && document.querySelector('[data-graph-canvas]').dataset.videoEdgeCount === '1');
+    await tab.locator(`[data-graph-active] button[data-concept="${first.source}"]`).click();
+    assert(await card.locator('a').first().evaluate(link => getComputedStyle(link, '::before').maskImage.includes('certitube.svg')), 'Video concept uses the wrong source SVG');
     await tab.emulateMedia({ reducedMotion: 'no-preference' });
     await tab.evaluate(trace => window.dispatchEvent(new CustomEvent('certichat:hover', { detail: trace })), videoTrace);
     await tab.waitForFunction(() => document.querySelector('[data-graph-canvas]').dataset.pulseActive === 'true');
@@ -475,7 +486,7 @@ async page => {
     }
     checks.push('source links appear for paraphrased follow-ups and typos, without intent matching');
 
-    for (const width of [1440, 1280, 1024, 800, 360, 320]) {
+    for (const width of [2560, 1992, 1440, 1280, 1024, 800, 360, 320]) {
       await tab.setViewportSize({ width, height: 900 });
       await tab.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
       await tab.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
@@ -496,6 +507,7 @@ async page => {
       assert(Math.abs(measured.mapHeading.height - measured.chatHeading.height) <= 1, `Map/chat header heights diverge at ${width}`);
       assert(Math.abs(measured.canvas.top - measured.mapHeading.bottom) <= 1, `Unwanted gap remains between Cognee header and graph at ${width}`);
       if (width >= 1024) {
+        assert(measured.map.width <= 1200 && Math.abs(measured.chat.left - measured.map.right - 24) <= 1 && Math.abs(measured.map.left - (width - measured.chat.right)) <= 1, `Desktop map/chat exceed the width cap or lose their centered gap at ${width}`);
         assert(measured.map.right <= measured.chat.left && Math.abs(measured.map.top - measured.chat.top) <= 1 && Math.abs(measured.map.height - measured.chat.height) <= 1, `Desktop panels are not aligned side by side at ${width}`);
         assert(Math.abs(measured.mapFooter.height - 46) <= 1 && measured.meta.top >= measured.mapFooter.top && measured.meta.bottom <= measured.mapFooter.bottom, `Graph metadata grows or is clipped at ${width}`);
       } else {
@@ -507,7 +519,7 @@ async page => {
       assert(measured.controls.every((control, index, all) => Math.abs(control.width - 36) <= 1 && Math.abs(control.height - 36) <= 1 && Math.abs(control.left - all[0].left) <= 1 && (!index || Math.abs(control.top - all[index - 1].bottom - 6) <= 1) && control.hasDrawing && control.backgroundImage === 'none' && (control.disabled || control.opacity === '1') && Math.abs((control.svg.left + control.svg.right - control.left - control.right) / 2) <= 1 && Math.abs((control.svg.top + control.svg.bottom - control.top - control.bottom) / 2) <= 1), `Map controls are not centered flat icons in a 36 px vertical column at ${width}: ${JSON.stringify(measured.controls)}`);
       geometry.push(measured);
     }
-    checks.push('aligned desktop map/chat and in-page mobile stack at 1440/1280/1024/800/360/320');
+    checks.push('capped, centered desktop map/chat and in-page mobile stack at 2560/1992/1440/1280/1024/800/360/320');
     checks.push('four named SVG controls float in a 36 px vertical column with 6 px gaps and 12 px inset');
     const many = { version: snapshot.version, nodes: snapshot.nodes.slice(0, 80).map(node => node.id), edges: [], truncated: false };
     await send('Consulta para desplazar conceptos', many); await answered('Respuesta: Consulta para desplazar conceptos.'); await active(many.nodes);
