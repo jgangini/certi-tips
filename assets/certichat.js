@@ -103,6 +103,7 @@ if (root) {
   panel.append(connecting);
   const clear = root.querySelector("[data-chat-clear]"), retry = root.querySelector("[data-chat-retry]");
   const confirmation = root.querySelector("[data-chat-confirm]"), confirmClear = confirmation.querySelector("[data-chat-confirm-yes]"), cancelClear = confirmation.querySelector("[data-chat-confirm-no]");
+  const clearError = root.querySelector("[data-chat-clear-error]"), closeClearError = root.querySelector("[data-chat-clear-error-close]");
   const storageKey = `certichat:${root.dataset.siteRoot}`;
   const quizLockKey = "certitips:certiquiz:active-player";
   const quizApi = root.dataset.quizApi;
@@ -473,9 +474,10 @@ if (root) {
   panel.addEventListener("keydown", event => { if (event.key === "Escape") { event.preventDefault(); closePanel(); } });
   retry.addEventListener("click", connect);
   clear.addEventListener("click", () => {
-    confirmation.querySelector("[data-chat-clear-error]").hidden = true;
+    clearError.hidden = true;
     confirmation.showModal();
   });
+  closeClearError.addEventListener("click", () => { clearError.hidden = true; clear.focus({ preventScroll: true }); });
   cancelClear.addEventListener("click", () => { if (!busy) confirmation.close(); });
   confirmation.addEventListener("cancel", event => { if (busy) event.preventDefault(); });
   confirmation.addEventListener("click", event => {
@@ -493,8 +495,9 @@ if (root) {
       publishTrace(root.dataset.siteRoot, "idle");
       updateQuota(result.quota); if (!preview) setStatus(""); confirmation.close();
     } catch {
-      const error = confirmation.querySelector("[data-chat-clear-error]");
-      error.textContent = "No se pudo borrar la conversación. Vuelve a intentarlo."; error.hidden = false;
+      clearError.querySelector("[data-chat-clear-error-message]").textContent = "No se pudo borrar la conversación. Vuelve a intentarlo.";
+      clearError.hidden = false;
+      confirmation.close();
     } finally {
       busy = false; clear.disabled = false; confirmClear.disabled = false; cancelClear.disabled = false;
       confirmation.setAttribute("aria-busy", "false");

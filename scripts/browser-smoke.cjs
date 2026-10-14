@@ -707,6 +707,8 @@ async (page) => {
   assert(await page.locator('#foundation-sprint').isVisible(), 'Group carousel did not return');
   assert(await page.locator('#foundation-sprint > .group-carousel-controls').count() === 1, 'Controls did not return to Foundation Sprint');
   await page.setViewportSize({ width: 1671, height: 900 });
+  await page.waitForFunction(() => Math.abs(document.querySelector('.brand').getBoundingClientRect().left - document.querySelector('.home-hero h1').getBoundingClientRect().left) < 1);
+  assert(await page.evaluate(() => Math.abs(document.querySelector('.brand').getBoundingClientRect().left - document.querySelector('.home-hero h1').getBoundingClientRect().left) < 1), 'Home brand does not align with the hero text');
   await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
   assert(await page.evaluate(() => {
     const gap = document.querySelector('.site-footer').getBoundingClientRect().top -

@@ -2,7 +2,7 @@
 // DOM and accessible-state checks, isolated mocked API, real public graph; no screenshots or paid calls.
 async page => {
   const assert = (condition, message) => { if (!condition) throw new Error(message); };
-  const base = new URL('/certitips/', page.url()), context = await page.context().browser().newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce', timezoneId: 'UTC' });
+  const base = new URL('/certitips/', page.url()), context = await page.context().browser().newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce', timezoneId: 'UTC' });
   const tab = await context.newPage(), requests = [], calls = [], errors = [], checks = [], geometry = [];
   let snapshot, graphOverride, reply = {}, releaseReply, pendingReply, releaseGraph, pendingGraph;
   let indexing = true, healthAvailable = true, serverGraph, graphAvailable = true, checkedAt = '2026-10-13T16:00:00+00:00';
@@ -175,6 +175,8 @@ async page => {
     await fixedFooter();
     await composer.fill(''); await fixedFooter();
     checks.push('metadata stays 46 px high with a multiline or scrolling composer');
+    await tab.setViewportSize({ width: 1360, height: 900 });
+    await tab.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     await tab.locator('.path-nav-mobile > summary').click();
     const governance = tab.locator('.path-nav-mobile .path-group').filter({ hasText: 'Governance' });
     await governance.locator('summary').click();
@@ -185,6 +187,8 @@ async page => {
     }), 'Governance menu is covered by the overlapping chat panel');
     await governance.locator('summary').click();
     checks.push('graph footer aligns with empty and multiline composer; Governance menu receives pointer above chat');
+    await tab.setViewportSize({ width: 1440, height: 900 });
+    await tab.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     assert(await tab.locator('[data-chat-close]').isHidden() && await tab.locator('.certichat-actions > a').isHidden(), 'Explorer displays its redundant close or graph control');
     assert(await tab.locator('[data-chat-open]').isHidden(), 'Auto-opened chat leaves a redundant launcher');
     await tab.getByRole('textbox', { name: 'Escribe tu consulta', exact: true }).press('Escape');
@@ -486,7 +490,7 @@ async page => {
     }
     checks.push('source links appear for paraphrased follow-ups and typos, without intent matching');
 
-    for (const width of [2560, 1992, 1440, 1280, 1024, 800, 360, 320]) {
+    for (const width of [2560, 1992, 1440, 1361, 1360, 1280, 1024, 800, 360, 320]) {
       await tab.setViewportSize({ width, height: 900 });
       await tab.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
       await tab.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
@@ -500,8 +504,14 @@ async page => {
           const svg = button.querySelector('svg'), bounds = svg.getBBox(), s = getComputedStyle(button);
           return { ...box(button), svg: box(svg), hasDrawing: bounds.width > 0 && bounds.height > 0, backgroundImage: s.backgroundImage, opacity: s.opacity, disabled: button.disabled };
         });
-        return { width: innerWidth, page: document.documentElement.scrollWidth, map: box(map), chat: box(chat), canvas: box(map.querySelector('canvas')), mapHeading: box(map.querySelector('header')), chatHeading: box(chat.querySelector('header')), mapFooter: box(map.querySelector('.chat-graph-footer')), composer: box(chat.querySelector('deep-chat').shadowRoot.querySelector('#input')), meta: box(map.querySelector('[data-graph-meta]')), mapStyle: style(map), chatStyle: style(chat), bodyOverflow: getComputedStyle(document.body).overflow, network: box(network), toolbar: box(toolbar), controls };
+        return { width: innerWidth, page: document.documentElement.scrollWidth, map: box(map), mapDisplay: getComputedStyle(map).display, chat: box(chat), canvas: box(map.querySelector('canvas')), mapHeading: box(map.querySelector('header')), chatHeading: box(chat.querySelector('header')), mapFooter: box(map.querySelector('.chat-graph-footer')), composer: box(chat.querySelector('deep-chat').shadowRoot.querySelector('#input')), meta: box(map.querySelector('[data-graph-meta]')), mapStyle: style(map), chatStyle: style(chat), bodyOverflow: getComputedStyle(document.body).overflow, network: box(network), toolbar: box(toolbar), controls, groupsMenu: getComputedStyle(document.querySelector('.path-nav-mobile')).display };
       });
+      if (width <= 1360) {
+        assert(measured.page <= width + 1 && measured.mapDisplay === 'none' && measured.groupsMenu !== 'none', `Knowledge graph should hide with the compact groups menu at ${width}: ${JSON.stringify(measured)}`);
+        assert(measured.chat.width >= width - 50 && Math.abs(measured.chat.left - measured.composer.left) <= 1, `CertiChat does not use the available compact layout at ${width}: ${JSON.stringify(measured)}`);
+        geometry.push(measured);
+        continue;
+      }
       assert(measured.page <= width + 1 && measured.canvas.left >= -1 && measured.canvas.right <= width + 1 && measured.canvas.height >= 200, `Map overflows or collapses at ${width}: ${JSON.stringify(measured)}`);
       assert(measured.mapStyle.border === '4px' && measured.chatStyle.border === '4px' && measured.mapStyle.color === measured.chatStyle.color, `Map and chat lost their matching red top borders at ${width}`);
       assert(Math.abs(measured.mapHeading.height - measured.chatHeading.height) <= 1, `Map/chat header heights diverge at ${width}`);
@@ -519,7 +529,9 @@ async page => {
       assert(measured.controls.every((control, index, all) => Math.abs(control.width - 36) <= 1 && Math.abs(control.height - 36) <= 1 && Math.abs(control.left - all[0].left) <= 1 && (!index || Math.abs(control.top - all[index - 1].bottom - 6) <= 1) && control.hasDrawing && control.backgroundImage === 'none' && (control.disabled || control.opacity === '1') && Math.abs((control.svg.left + control.svg.right - control.left - control.right) / 2) <= 1 && Math.abs((control.svg.top + control.svg.bottom - control.top - control.bottom) / 2) <= 1), `Map controls are not centered flat icons in a 36 px vertical column at ${width}: ${JSON.stringify(measured.controls)}`);
       geometry.push(measured);
     }
-    checks.push('capped, centered desktop map/chat and in-page mobile stack at 2560/1992/1440/1280/1024/800/360/320');
+    await tab.setViewportSize({ width: 1440, height: 900 });
+    await tab.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    checks.push('capped, centered desktop map/chat at 2560/1992/1440/1361; graph hides and CertiChat fills the compact layout at 1360px and below');
     checks.push('four named SVG controls float in a 36 px vertical column with 6 px gaps and 12 px inset');
     const many = { version: snapshot.version, nodes: snapshot.nodes.slice(0, 80).map(node => node.id), edges: [], truncated: false };
     await send('Consulta para desplazar conceptos', many); await answered('Respuesta: Consulta para desplazar conceptos.'); await active(many.nodes);

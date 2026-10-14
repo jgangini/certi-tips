@@ -59,6 +59,10 @@
 .chat-graph-status { margin: 8px 16px; padding: 18px; border-radius: 8px; background: var(--hover); }
 .chat-graph-status.is-loading { flex: 1; display: grid; place-items: center; margin: 0; background: none; }
 [data-graph-workspace][hidden], .chat-graph-status[hidden] { display: none; }
+@media (max-width: 1360px) {
+  .chat-explorer-page { grid-template-columns: minmax(0, 1fr); }
+  .chat-explorer-section { display: none; }
+}
 @media (max-width: 1023px) {
   .certichat-main.home-main { padding-inline: 12px; }
   .chat-explorer-page { grid-template-columns: minmax(0, 1fr); gap: 16px; padding-block: 16px; }

@@ -132,6 +132,7 @@ async (page) => {
   await waitForRetry();
   assert(await page.locator('[data-chat-status]').count() === 0, 'Opening offline shows an error banner');
   assert(await page.locator('[data-chat-retry]').isVisible(), 'Offline status does not show Retry');
+  assert(await page.locator('[data-chat-retry] svg').evaluate(svg => svg.getAttribute('viewBox') === '0 0 24 24' && svg.querySelector('path')?.getAttribute('d').includes('a8 8 0 0 0')), 'Retry connection does not use a refresh icon');
   assert(await page.locator('deep-chat').evaluate(element => element.getMessages().length) === 0, 'Opening offline adds an unsolicited error message');
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).fill('Consulta sin conexión');
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).press('Enter');
@@ -234,8 +235,12 @@ async (page) => {
   deletionError = true;
   await page.locator('[data-chat-clear]').click(); await page.locator('[data-chat-confirm-yes]').click();
   await page.locator('[data-chat-clear-error]').waitFor({state:'visible'});
+  assert(await page.locator('[data-chat-confirm]').evaluate(dialog => !dialog.open), 'Failed deletion leaves the alert inside the confirmation dialog');
+  assert(await page.locator('[data-chat-clear-error]').evaluate(node => !node.closest('dialog') && getComputedStyle(node).position === 'fixed'), 'Failed deletion alert is not a separate floating popup');
   assert(await page.locator('deep-chat').evaluate(element => JSON.stringify(element.getMessages())) === transcript, 'Failed server deletion erased local history');
-  await page.locator('[data-chat-confirm-no]').click(); deletionError = false;
+  await page.getByRole('button', { name: 'Cerrar aviso' }).click();
+  assert(await page.locator('[data-chat-clear-error]').isHidden() && await page.locator('[data-chat-clear]').evaluate(element => document.activeElement === element), 'Closing the floating alert did not restore focus');
+  deletionError = false;
   await page.locator('[data-chat-clear]').click();
   await page.locator('[data-chat-confirm-yes]').click();
   await page.locator('[data-chat-confirm]').waitFor({ state: 'hidden' });

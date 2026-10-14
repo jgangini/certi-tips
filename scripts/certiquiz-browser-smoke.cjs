@@ -146,6 +146,10 @@ async (page) => {
     assert(await host.locator('.welcome > :is(h1, .lead, .eyebrow)').count() === 0, 'Entry retains removed CertiQuiz heading, lead or eyebrow');
     const breadcrumb = host.getByRole('navigation', { name: 'Ruta de navegación' });
     assert(await breadcrumb.getByRole('link', { name: 'Home' }).getAttribute('href') === '/certitips/' && await breadcrumb.locator('[aria-current="page"]').textContent() === 'CertiQuiz', 'CertiQuiz lacks its home breadcrumb');
+    await host.setViewportSize({ width: 1671, height: 900 });
+    await host.waitForFunction(() => Math.abs(document.querySelector('.brand').getBoundingClientRect().left - document.querySelector('.certiquiz-breadcrumb').getBoundingClientRect().left) < 1);
+    assert(await host.evaluate(() => Math.abs(document.querySelector('.brand').getBoundingClientRect().left - document.querySelector('.certiquiz-breadcrumb').getBoundingClientRect().left) < 1), 'CertiQuiz brand does not align with the breadcrumb');
+    await host.setViewportSize({ width: 1280, height: 900 });
     const roleCards = host.locator('.role-options > .role-card');
     assert(await roleCards.count() === 2 && await roleCards.evaluateAll(nodes => nodes.every(node => node.tagName === 'BUTTON' && node.getAttribute('data-role'))), 'Role choices are not full-card buttons');
     assert(await host.locator('.role-card .role-action').count() === 0, 'Role cards retain duplicate action buttons');

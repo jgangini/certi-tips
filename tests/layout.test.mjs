@@ -367,6 +367,10 @@ test("CertiQuiz host lobby keeps facts beside its actions and uses a compact con
   assert.match(chatHtml, /data-quiz-api="https:\/\/quiz\.example\.test"/);
   assert.doesNotMatch(chatHtml, /data-chat-status|Preparando el asistente|Completa la verificación/);
   assert.match(chatHtml, /data-chat-verification/);
+  const chatDialog = chatHtml.match(/<dialog class="confirmation" data-chat-confirm[^]*?<\/dialog>/)[0];
+  assert.doesNotMatch(chatDialog, /data-chat-clear-error/);
+  assert.match(chatHtml, /class="notice warning chat-clear-toast" data-chat-clear-error role="alert" hidden><span data-chat-clear-error-message><\/span><button type="button" data-chat-clear-error-close aria-label="Cerrar aviso">/);
+  assert.match(chatHtml, /data-chat-retry[^]*?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"/);
   assert.match(chatHtml, /<h2 id="chat-confirm-title" tabindex="-1" autofocus>/);
   assert.match(chatHtml, /data-chat-confirm-yes>Aceptar<\/button>/);
   assert.match(script, /<h2 id="confirmation-title" tabindex="-1" autofocus>/);
@@ -456,6 +460,11 @@ test("mobile path navigation uses a menu icon and a responsive panel below the h
   assert.match(css, /\.path-nav-mobile \.path-group-panel a:is\(:hover, :focus-visible\) \.path-title\s*\{\s*text-decoration: underline;/);
   assert.match(css, /html\[data-theme="dark"\] \.path-nav-mobile \.path-group-panel a:is\(:hover, :focus-visible\)\s*\{\s*background: var\(--hover\);/);
   assert.match(css, /\.path-nav-mobile \.path-group summary:is\(:hover, :focus-visible\)\s*\{\s*background: var\(--selected-surface\);\s*color: var\(--selected-ink\);/);
+});
+
+test("desktop site brand aligns with the shared content edge", () => {
+  const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
+  assert.match(css, /@media \(min-width: 1361px\)\s*\{\s*\.home-page:not\(\.certichat-page\) \.site-header \.brand,\s*\.course-page\[data-page\^="certitube"\] \.site-header \.brand\s*\{\s*transform: translateX\(max\(0px, calc\(\(100vw - 1200px\) \/ 2 - 36px\)\)\);/);
 });
 
 test("course menu follows certification groups and precedes search", () => {

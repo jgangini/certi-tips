@@ -51,6 +51,10 @@ async (page) => {
   const chatReady = () => tab.waitForFunction(() => document.querySelector('deep-chat')?.shadowRoot?.querySelector('#certichat-quota') && !document.querySelector('[data-chat-clear]').disabled);
   try {
     await tab.goto(base);
+    await tab.setViewportSize({ width: 1671, height: 900 });
+    await tab.waitForFunction(() => Math.abs(document.querySelector('.brand').getBoundingClientRect().left - document.querySelector('.home-hero h1').getBoundingClientRect().left) < 1);
+    assert(await tab.evaluate(() => Math.abs(document.querySelector('.brand').getBoundingClientRect().left - document.querySelector('.home-hero h1').getBoundingClientRect().left) < 1), 'Home brand does not align with the content block');
+    await tab.setViewportSize({ width: 1280, height: 900 });
     const sharing = await tab.evaluate(async () => {
       const url = document.querySelector('meta[property="og:image"]').content;
       const pixels = async path => {
@@ -73,6 +77,10 @@ async (page) => {
     assert(homeButtons[2].left > homeButtons[1].left, 'CertiTube is not to the right of CertiQuiz on desktop');
     await tab.locator('.hero-actions .certitube-link').click();
     await tab.waitForURL(`${base}certitube/`);
+    await tab.setViewportSize({ width: 1671, height: 900 });
+    await tab.waitForFunction(() => Math.abs(document.querySelector('.brand').getBoundingClientRect().left - document.querySelector('.tube-detail').getBoundingClientRect().left) < 1);
+    assert(await tab.evaluate(() => Math.abs(document.querySelector('.brand').getBoundingClientRect().left - document.querySelector('.tube-detail').getBoundingClientRect().left) < 1), 'CertiTube brand does not align with the content block');
+    await tab.setViewportSize({ width: 1280, height: 900 });
     await readyPlayer(); assert(await lastSeek() === undefined, 'Default entry auto-started');
     assert(await tab.locator('#course-navigation, .menu-toggle').count() === 0, 'Removed fixed menu remains');
     const videoOrder = await tab.locator('.tube-videos a').evaluateAll(links => links.map(link => link.pathname.split('/').filter(Boolean).at(-1)));

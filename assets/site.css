@@ -168,6 +168,12 @@ strong {
 .brand:hover {
   color: var(--ink);
 }
+@media (min-width: 1361px) {
+  .home-page:not(.certichat-page) .site-header .brand,
+  .course-page[data-page^="certitube"] .site-header .brand {
+    transform: translateX(max(0px, calc((100vw - 1200px) / 2 - 36px)));
+  }
+}
 .brand-accent {
   color: var(--accent);
 }
