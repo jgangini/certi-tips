@@ -42,11 +42,12 @@
 .chat-graph-active::-webkit-scrollbar { display: none; }
 .chat-graph-active li { flex-shrink: 0; }
 .chat-graph-active:empty { display: none; }
-.chat-graph-active button { display: inline-flex; align-items: stretch; font: inherit; font-size: 13px; line-height: 1.4; border: 1px solid var(--muted); border-radius: 4px; background: var(--chrome-bg); color: var(--ink); padding: 0; white-space: nowrap; cursor: pointer; }
-.chat-graph-number { min-width: 2ch; padding: 3px 6px; border-right: 1px solid currentColor; font-variant-numeric: tabular-nums; text-align: center; }
+.chat-graph-active button { display: inline-flex; align-items: stretch; font: inherit; font-size: 13px; line-height: 1.4; border: 1px solid var(--line); border-radius: 4px; background: var(--hover); color: var(--ink); padding: 0; white-space: nowrap; cursor: pointer; }
+.chat-graph-number { min-width: 2ch; margin: 3px 0; padding: 0 6px; border-right: 1px solid var(--line); font-variant-numeric: tabular-nums; text-align: center; }
 .chat-graph-label { padding: 3px 6px; }
 .chat-graph-active button:focus-visible { outline-offset: -2px; }
 .chat-graph-active button[aria-pressed="true"] { background: var(--red); border-color: var(--red); color: var(--on-red); }
+.chat-graph-active button[aria-pressed="true"] .chat-graph-number { border-color: currentColor; }
 .chat-graph-status { margin: 8px 16px; padding: 18px; border-radius: 8px; background: var(--hover); }
 .chat-graph-status.is-loading { flex: 1; display: grid; place-items: center; margin: 0; background: none; }
 [data-graph-workspace][hidden], .chat-graph-status[hidden] { display: none; }
