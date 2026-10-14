@@ -671,6 +671,13 @@ test("lesson completion follows the article before next-page navigation", () => 
   assert.match(css, /\.course-main\.lesson-main\s*\{\s*padding-bottom:\s*16px;/);
   assert.match(css, /\.course-page:not\(\[data-page\^="certitube"\]\) \.course-main\s*\{[^}]*--reading-width:\s*900px;/s);
   assert.match(css, /\.course-page:not\(\[data-page\^="certitube"\]\) \.course-main\s*\{[^}]*border-radius:\s*16px;[^}]*backdrop-filter:\s*blur\(16px\) saturate\(160%\);/s);
+  assert.doesNotMatch(css.match(/\.course-page:not\(\[data-page\^="certitube"\]\) \.course-main\s*\{([^}]*)\}/s)?.[1] ?? "", /\bborder\s*:/);
+  assert.match(css, /\.course-page:not\(\[data-page\^="certitube"\]\):not\(\.is-compact-nav\) \.sidebar\s*\{\s*left:\s*var\(--course-sidebar-offset\);/);
+  assert.doesNotMatch(css.match(/\.course-page:not\(\[data-page\^="certitube"\]\):not\(\.is-compact-nav\) \.sidebar\s*\{([^}]*)\}/)?.[1] ?? "", /\bwidth\s*:/);
+  assert.match(css, /--course-sidebar-offset:\s*max\(0px,/);
+  assert.match(css, /background-image:\s*linear-gradient\(to right, var\(--sidebar-bg\) 0 var\(--course-sidebar-offset\)/);
+  assert.match(css, /\.course-page:not\(\[data-page\^="certitube"\]\) \.site-header \.brand\s*\{[^}]*transform:\s*translateX\(calc\(var\(--course-sidebar-offset\)/s);
+  assert.doesNotMatch(css, /\.course-page \.site-footer\s*\{[^}]*margin-left:/);
   assert.match(css, /\.course-main\s*\{[^}]*--course-frame-width:\s*calc\(var\(--reading-width\) \+ 80px\);/s);
 });
 

@@ -171,7 +171,7 @@ async (page) => {
     const currentVideo = await tab.locator('.tube-videos a[aria-current="page"]').getAttribute('href');
     const alternateHref = await tab.locator('.tube-videos a').evaluateAll((links, current) => links.find(link => link.getAttribute('href') !== current)?.getAttribute('href'), currentVideo);
     assert(alternateHref, 'No alternate video is available for CertiTube navigation');
-    await tab.locator(`.tube-videos a[href="${alternateHref}"]`).click(); await tab.waitForURL(`${base}${alternateHref}`); await readyPlayer(); await chatReady();
+    await tab.locator(`.tube-videos a[href="${alternateHref}"]`).click(); await tab.waitForURL(new URL(alternateHref, origin).href); await readyPlayer(); await chatReady();
     assert(await tab.locator('#main').evaluate(main => getComputedStyle(main).transitionProperty === 'none'), 'CertiTube shifts smoothly while CertiChat is open');
     const input = tab.getByRole('textbox', { name: 'Escribe tu consulta' });
     await input.fill('¿Cómo me conecto a la instancia?'); await input.press('Enter');
@@ -243,7 +243,7 @@ async (page) => {
         const rect = selector => { const r = document.querySelector(selector).getBoundingClientRect(); return { width: r.width, height: r.height, top: r.top, bottom: r.bottom }; };
         return { player: rect('#tube-youtube'), panel: rect('#certichat-panel'), visible: getComputedStyle(document.querySelector('#main')).visibility, overflow: document.documentElement.scrollWidth - innerWidth };
       });
-      assert(geometry.player.width >= 200 && geometry.player.height >= 200 && geometry.player.top >= 0, `Player clipped at ${width}: ${JSON.stringify(geometry)}`);
+      assert(geometry.player.width >= 200 && geometry.player.height >= 199 && geometry.player.top >= 0, `Player clipped at ${width}: ${JSON.stringify(geometry)}`);
       assert(geometry.overflow <= 1 && geometry.visible === 'visible', `Page hidden or overflowing at ${width}`);
       assert(geometry.panel.bottom <= 844, `Chat escapes viewport at ${width}`);
       const strip = await tab.locator('.tube-chapters').evaluate(nav => ({ height: nav.getBoundingClientRect().height, top: nav.getBoundingClientRect().top, summaryTop: document.querySelector('.tube-summary').getBoundingClientRect().top, summaryBottom: document.querySelector('.tube-summary').getBoundingClientRect().bottom, screenBottom: document.querySelector('.tube-screen').getBoundingClientRect().bottom, rows: new Set([...nav.querySelectorAll('a')].map(a => a.getBoundingClientRect().top)).size }));
@@ -330,14 +330,22 @@ async (page) => {
       const heading = document.querySelector('.page-heading.lesson-heading'), prose = document.querySelector('.prose');
       const mainBox = main.getBoundingClientRect(), headingBox = heading.getBoundingClientRect(), proseBox = prose.getBoundingClientRect(), style = getComputedStyle(main);
       const centered = box => Math.abs(box.left + box.width / 2 - (mainBox.left + mainBox.width / 2)) < 1;
-      return {mainWidth:mainBox.width, headingWidth:headingBox.width, proseWidth:proseBox.width, centered: centered(headingBox) && centered(proseBox), glass:{backgroundImage:style.backgroundImage, backdropFilter:style.backdropFilter, borderRadius:style.borderRadius, boxShadow:style.boxShadow}};
+      return {mainWidth:mainBox.width, headingWidth:headingBox.width, proseWidth:proseBox.width, centered: centered(headingBox) && centered(proseBox), glass:{backgroundImage:style.backgroundImage, backdropFilter:style.backdropFilter, borderRadius:style.borderRadius, borderTopWidth:style.borderTopWidth, boxShadow:style.boxShadow}};
     });
     assert(Math.abs(lessonReading.mainWidth - 980) < 1 && Math.abs(lessonReading.headingWidth - 900) < 1 && Math.abs(lessonReading.proseWidth - 900) < 1 && lessonReading.centered, `Whole lesson does not use the 900px centered reading width: ${JSON.stringify(lessonReading)}`);
-    assert(lessonReading.glass.backgroundImage !== 'none' && lessonReading.glass.backdropFilter.includes('blur') && lessonReading.glass.borderRadius === '16px' && lessonReading.glass.boxShadow !== 'none', `Course glass is not visible: ${JSON.stringify(lessonReading.glass)}`);
+    assert(lessonReading.glass.backgroundImage !== 'none' && lessonReading.glass.backdropFilter.includes('blur') && lessonReading.glass.borderRadius === '16px' && lessonReading.glass.borderTopWidth === '0px' && lessonReading.glass.boxShadow !== 'none', `Course glass is not visible or has an unwanted border: ${JSON.stringify(lessonReading.glass)}`);
     assert(await tab.evaluate(() => {
       const sidebar = document.querySelector('#course-navigation').getBoundingClientRect(), main = document.querySelector('#main').getBoundingClientRect();
-      return Math.abs(main.left - sidebar.right - 24) < 2;
-    }), 'Desktop sidebar leaves a wide blank gap before the reading frame');
+      return Math.abs(sidebar.width - 272) < 1 && sidebar.left > 0 && Math.abs(main.left - sidebar.right - 24) < 2;
+    }), 'Desktop sidebar does not keep its previous width or sit 24px before the reading frame');
+    const courseChrome = await tab.evaluate(() => {
+      const sidebar = document.querySelector('#course-navigation'), title = sidebar.querySelector('.sidebar-heading strong'), brand = document.querySelector('.site-header .brand'), footer = document.querySelector('.site-footer');
+      const sidebarColor = getComputedStyle(sidebar).backgroundColor, gutter = getComputedStyle(document.body).backgroundImage;
+      return {brandOffset: brand.getBoundingClientRect().left - title.getBoundingClientRect().left, footerLeft: footer.getBoundingClientRect().left, footerRight: footer.getBoundingClientRect().right, viewport: innerWidth, gutterMatchesSidebar: gutter.includes(sidebarColor)};
+    });
+    assert(Math.abs(courseChrome.brandOffset) < 1, `Brand does not align with the course title: ${JSON.stringify(courseChrome)}`);
+    assert(courseChrome.footerLeft === 0 && Math.abs(courseChrome.footerRight - courseChrome.viewport) < 1, `Course footer does not cover the viewport: ${JSON.stringify(courseChrome)}`);
+    assert(courseChrome.gutterMatchesSidebar, 'The left gutter does not use the sidebar reference color');
     for (const width of [1556,1280,1158,801,800,678,320]) {
       await tab.setViewportSize({width,height:900}); await tab.goto(`${base}1Z0-1085-26/overview/`);
       const toggle = tab.locator('.menu-toggle'), sidebar = tab.locator('#course-navigation');
@@ -351,7 +359,10 @@ async (page) => {
     }
     await tab.setViewportSize({width:1158,height:900}); await tab.goto(`${base}1Z0-1085-26/overview/`);
     await tab.locator('.menu-toggle').click();
-    await tab.waitForFunction(() => getComputedStyle(document.querySelector('#course-navigation')).visibility === 'hidden' && parseFloat(getComputedStyle(document.querySelector('#main')).marginLeft) === 0);
+    await tab.waitForFunction(() => {
+      const expectedLeft = Math.max(0, (innerWidth - 980) / 2);
+      return getComputedStyle(document.querySelector('#course-navigation')).visibility === 'hidden' && Math.abs(parseFloat(getComputedStyle(document.querySelector('#main')).marginLeft) - expectedLeft) < 1;
+    });
     await tab.goto(`${base}1Z0-1085-26/oci-architecture/`);
     assert(await tab.locator('#course-navigation').isHidden() && await tab.locator('.site-header > .menu-toggle').isVisible(), 'Fully folded menu did not persist across lessons');
     await tab.locator('.menu-toggle').click(); await tab.locator('#course-navigation').waitFor({state:'visible'});

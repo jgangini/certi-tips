@@ -754,7 +754,7 @@ html[data-theme="dark"] .hero-actions .button-secondary:is(:hover, :focus-visibl
   padding: 26px 18px 0;
   overflow: hidden;
   z-index: 20;
-  transition: transform 220ms ease, opacity 180ms ease, visibility 0s linear 0s;
+  transition: left 220ms ease, transform 220ms ease, opacity 180ms ease, visibility 0s linear 0s;
 }
 .sidebar-heading {
   padding: 0 10px;
@@ -928,7 +928,10 @@ progress::-webkit-progress-value {
   flex-shrink: 0;
   opacity: 0.85;
 }
-.course-page:not([data-page^="certitube"]) { --course-frame-width: 980px; }
+.course-page:not([data-page^="certitube"]) {
+  --course-frame-width: 980px;
+  --course-sidebar-offset: max(0px, (100vw - var(--sidebar-width) - var(--course-frame-width)) / 2 - 24px);
+}
 .course-main {
   --chat-space: 0px;
   --reading-width: 1200px;
@@ -943,7 +946,6 @@ progress::-webkit-progress-value {
 .course-page:not([data-page^="certitube"]) .course-main {
   --reading-width: 900px;
   background: linear-gradient(135deg, color-mix(in srgb, var(--paper) 78%, transparent), color-mix(in srgb, var(--hover) 68%, transparent));
-  border: 1px solid color-mix(in srgb, var(--line) 72%, var(--paper));
   border-radius: 16px;
   -webkit-backdrop-filter: blur(16px) saturate(160%);
   backdrop-filter: blur(16px) saturate(160%);
@@ -965,11 +967,22 @@ progress::-webkit-progress-value {
   .course-main.lesson-main { padding-bottom: 91px; }
 }
 @media (min-width: 801px) {
+  body.course-page:not([data-page^="certitube"]):not(.is-compact-nav) {
+    background-image: linear-gradient(to right, var(--sidebar-bg) 0 var(--course-sidebar-offset), transparent var(--course-sidebar-offset) 100%);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+  }
   .course-page:not([data-page^="certitube"]):not(.is-compact-nav) .sidebar {
-    width: calc(var(--sidebar-width) + max(0px, (100vw - var(--sidebar-width) - var(--course-frame-width)) / 2 - 24px));
+    left: var(--course-sidebar-offset);
+  }
+  .course-page:not([data-page^="certitube"]) .site-header .brand {
+    transform: translateX(calc(var(--course-sidebar-offset) + 28px - 36px));
+    transition: transform 220ms ease;
   }
   .course-page.is-compact-nav { --sidebar: 0px; }
+  .course-page.is-compact-nav:not([data-page^="certitube"]) .site-header .brand { transform: none; }
   .course-page.is-compact-nav .sidebar {
+    left: 0;
     transform: translateX(-100%);
     opacity: 0;
     visibility: hidden;
@@ -1235,10 +1248,6 @@ html[data-theme="dark"] .site-footer a {
 }
 .site-footer a:hover {
   text-decoration: underline;
-}
-.course-page .site-footer {
-  margin-left: var(--sidebar);
-  transition: margin-left 220ms ease;
 }
 :is(.certiquiz-app, .certichat, .quiz-shell) { --surface: var(--hover); --accent: var(--red); --accent-hover: var(--red-dark); --success: #22684c; --success-bg: #eaf6ef; --warning: #8a5a00; --warning-bg: #fff7db; --error: #a52f2c; --error-bg: #fff0ef; }
 html[data-theme="dark"] :is(.certiquiz-app, .certichat, .quiz-shell) { --success: #9bd8b8; --success-bg: #1b352b; --warning: #ffdc82; --warning-bg: #44330c; --error: #ffb0a8; --error-bg: #382322; }
@@ -1905,6 +1914,8 @@ html[data-theme="dark"] .quiz-heading .eyebrow {
 }
 @media (min-width: 801px) and (max-width: 1100px) {
   .site-header, .course-main { padding-right: 32px; }
+  .course-page:not([data-page^="certitube"]) .site-header .brand { transform: translateX(calc(var(--course-sidebar-offset) + 22px - 24px)); }
+  .course-page.is-compact-nav:not([data-page^="certitube"]) .site-header .brand { transform: none; }
 }
 @media (max-width: 800px) {
   :root {
@@ -1947,9 +1958,6 @@ html[data-theme="dark"] .quiz-heading .eyebrow {
   .course-main {
     margin-left: 0;
     padding: 24px;
-  }
-  .course-page .site-footer {
-    margin-left: 0;
   }
   .home-main {
     padding: 0 24px;
