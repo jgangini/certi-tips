@@ -2,6 +2,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { courseRoute } from './layout.mjs';
+import { isDiagramFontData } from './diagram-fonts.mjs';
 
 const diagramNames = ['agent-loop', 'guardrails', 'langchain-flow', 'mcp-architecture', 'openai-stack', 'handoffs', 'oci-runtime', 'vector-search', 'database-capabilities'];
 const diagramFile = /^(?:(?:es|en|pt|it)\/)?[^/]+\/[^/]+\/img\/[^/]+\.svg$/i;
@@ -97,7 +98,8 @@ function validateFiles(context) {
     if (/\.html$/i.test(file)) validateHtml(context, file, source);
     if (/\.svg$/i.test(file)) {
       for (const { tag, attributes } of context.parsed.get(file) || []) validateSvgElement(file, tag, attributes, error);
-      if (/@import\b/i.test(source) || /url\(\s*["']?(?!#)[^\s"')]+/i.test(source)) error(file, 'external SVG stylesheet or resource');
+      const resources = source.replace(/url\(\s*(['"]?)data:font\/woff2;base64,([A-Za-z0-9+/]+=*)\1\s*\)/gi, (value, _quote, data) => isDiagramFontData(data) ? 'url(#embedded-font)' : value);
+      if (/@import\b/i.test(resources) || /url\(\s*["']?(?!#)[^\s"')]+/i.test(resources)) error(file, 'external SVG stylesheet or resource');
     }
     if (/\.css$/i.test(file)) for (const match of source.matchAll(/url\(\s*["']?([^\s"')]+)["']?\s*\)/gi)) validateReference(context, file, match[1], true);
     // ponytail: literal module specifiers only; use an AST parser if imports become computed.

@@ -1,4 +1,5 @@
 import { localizeSite } from './localize.mjs';
+import { withDiagramFonts } from './diagram-fonts.mjs';
 import { readFile, readdir, mkdir, writeFile, cp, realpath, rm } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -215,5 +216,10 @@ await save(
   }),
 );
 await localizeSite(root, output, site, preparing);
+if (!preparing) for (const file of await readdir(output, { recursive: true })) {
+  if (!file.endsWith('.svg') || file.startsWith(`assets${path.sep}`)) continue;
+  const target = path.join(output, file);
+  await writeFile(target, withDiagramFonts(await readFile(target, 'utf8')));
+}
 await save(".nojekyll", "");
 console.log(`Built ${site.courses.length} course(s) at ${site.base} in ${preparing ? 'output/i18n-source' : 'dist'}/.`);

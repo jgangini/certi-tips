@@ -8,7 +8,7 @@ Los idiomas publicados son `es`, `en`, `pt` (portugués de Brasil, `pt-BR`) e `i
 
 `data/en/`, `data/pt/`, `data/it/`, `.cache/i18n/`, `output/` y `dist/` son resultados regenerables ignorados por Git. No escribir Markdown traducido ni editar traducciones generadas. Las correcciones se registran en `data/i18n.json`, por texto español exacto e idioma. Una modificación del original invalida su corrección anterior.
 
-Todos los gráficos son SVG nativos con texto editable; no rasterizar texto ni incrustar PNG/JPEG/WebP/base64. Única excepción raster publicada: `assets/icons/share-logo-square.png`, para compartir enlaces. El favicon usa SVG. Los videos y las miniaturas oficiales de YouTube siguen siendo medios externos/originales; esta funcionalidad no dobla ni genera subtítulos.
+Todos los gráficos son SVG nativos con texto editable; no rasterizar texto ni incrustar imágenes PNG/JPEG/WebP mediante archivos, URL o base64. La publicación y las comprobaciones incrustan únicamente las fuentes WOFF2 abiertas existentes para que la geometría no dependa del sistema operativo; los originales permanecen intactos. Única excepción raster publicada: `assets/icons/share-logo-square.png`, para compartir enlaces. El favicon usa SVG. Los videos y las miniaturas oficiales de YouTube siguen siendo medios externos/originales; esta funcionalidad no dobla ni genera subtítulos.
 
 ## Preparar y comprobar
 

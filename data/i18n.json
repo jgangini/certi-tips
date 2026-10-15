@@ -201,7 +201,9 @@
     "Code Interpreter",
     "MCP Server",
     "steward",
-    "Oracle Cloud Infrastructure Identity and Access Management"
+    "Oracle Cloud Infrastructure Identity and Access Management",
+    "tools/call",
+    "tools/list"
   ],
   "glossary": {
     "recurso": {

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { globSync, readFileSync } from 'node:fs';
 import { validateSite } from '../scripts/check-site.mjs';
+import { withDiagramFonts } from '../scripts/diagram-fonts.mjs';
 import { courseRoute } from '../scripts/layout.mjs';
 import { loadVideos } from '../scripts/certitube.mjs';
 import { fileURLToPath } from 'node:url';
@@ -199,6 +200,22 @@ test('SVG illustrations reject all raster content, active elements and external 
   const icons = fixture();
   icons.files.set('assets/icons/raster.svg', diagram(`<image href="${png}"/>`));
   includesIssue(validateSite(icons), /assets\/icons\/raster\.svg: active or embedded SVG element <image> is not allowed/);
+});
+
+test('self-contained editable SVG fonts are accepted while external and disguised raster resources fail', () => {
+  const input = fixture();
+  const file = 'course/agents/img/oci-runtime.svg';
+  const source = '<svg><title>Runtime</title><desc>Illustrated runtime.</desc><text font-family="Segoe UI">Identidad</text></svg>';
+  const embedded = withDiagramFonts(source);
+  input.files.set(file, embedded);
+  assert.deepEqual(validateSite(input), []);
+  assert.equal(withDiagramFonts(embedded), embedded);
+  assert.match(embedded, /<text font-family="Segoe UI">Identidad<\/text>/);
+  assert.equal(withDiagramFonts('<svg><path d="M0 0h1"/></svg>'), '<svg><path d="M0 0h1"/></svg>');
+  for (const resource of ['https://remote.test/font.woff2', 'data:font/woff2;base64,iVBORw0KGgo=', 'data:font/woff2;base64,d09GMmZha2U=']) {
+    input.files.set(file, source.replace('</svg>', `<style>@font-face{src:url(${resource})}</style></svg>`));
+    includesIssue(validateSite(input), /external SVG stylesheet or resource/);
+  }
 });
 
 test('validates newly added diagrams as well as the required originals', () => {

@@ -19,6 +19,7 @@ async (page, options = {}) => {
     const name = source.split('/').pop();
     const response = await page.goto(source);
     if (!response || !response.ok() && !source.startsWith('file:')) throw new Error(`Missing diagram: ${source}`);
+    await page.evaluate(() => document.fonts.ready);
     const report = await page.evaluate(({ name, referenceRegions }) => {
       const root = document.querySelector('svg');
       if (!root || document.querySelector('parsererror')) throw new Error(`Invalid SVG: ${name}`);

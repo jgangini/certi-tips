@@ -12,14 +12,16 @@ Esta guía define cómo construir, revisar y mejorar los diagramas de cualquier 
 
 ## 2. Lienzo, color y jerarquía
 
+La publicación y la validación incrustan las fuentes abiertas existentes: Didact Gothic para texto y JetBrains Mono para código. Las familias históricas Segoe UI, Oracle Sans y Consolas se adaptan a esas fuentes sin cambiar los originales. Los SVG publicados permanecen autocontenidos y con texto editable; no dependen de fuentes instaladas en el equipo. Se admiten únicamente fuentes WOFF2 internas válidas, sin recursos externos ni raster. Medir después de `document.fonts.ready`.
+
 Las unidades siguientes pertenecen al SVG. Son parámetros base de autoría para mantener coherencia; no requieren copiar medidas de otra figura. El tamaño de los contenedores se ajusta al contenido. La paleta y la jerarquía son comunes; alturas, anchos y separaciones iniciales se ajustan para cumplir significado, legibilidad y rellenos, sin recortar ni reducir texto para encajarlo.
 
 | Elemento | Criterio |
 | --- | --- |
 | Lienzo | `viewBox="0 0 1920 1080"`, fondo `#F1EFED`. |
-| Título | Segoe UI/Arial, tamaño 56, peso 700, color `#3C4545`, origen (96,99). |
+| Título | Didact Gothic, tamaño 56, peso 700, color `#3C4545`, origen (96,99). |
 | Acento del título | Rectángulo `#C74634`, 88×6, origen (96,128). |
-| Texto de contenido | Segoe UI/Arial, mínimo 25.5; `#3C4545` para texto general y `#181818` para valores y etiquetas. |
+| Texto de contenido | Didact Gothic, mínimo 25.5; `#3C4545` para texto general y `#181818` para valores y etiquetas. |
 | Superficie de contenido | Blanco `#FFFFFF`; el fondo oscuro de una cabecera no debe extenderse al cuerpo. |
 | Cabeceras y estructura | Gris `#59616E`; texto e iconos blancos sobre cabeceras oscuras. |
 | Notas explicativas | Fondo neutro `#F1EFED`, borde gris, texto oscuro. |
