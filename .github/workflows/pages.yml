@@ -39,7 +39,7 @@ jobs:
         id: translation-cache
         with:
           path: .cache/i18n/phrases
-          key: i18n-phrases-v2-${{ runner.os }}-${{ hashFiles('data/i18n.json', 'requirements-i18n.txt') }}-${{ github.sha }}
+          key: i18n-phrases-v2-${{ runner.os }}-${{ hashFiles('data/i18n.json', 'requirements-i18n.txt') }}-${{ github.sha }}-${{ github.run_attempt }}
           restore-keys: |
             i18n-phrases-v2-${{ runner.os }}-${{ hashFiles('data/i18n.json', 'requirements-i18n.txt') }}-
             i18n-phrases-v2-${{ runner.os }}-

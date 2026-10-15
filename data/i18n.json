@@ -1080,7 +1080,12 @@
       "una prueba de acceso permitido y administración no concedida, con identidad y resultado, permite demostrarla.": "un test di accesso consentito e amministrazione negata, con identità e risultato, permette di dimostrarla.",
       "dominio de identidad": "dominio di identità",
       "Plan": "Piano",
-      "¿Cómo detectas retrasos, recuperas una versión y atribuyes el gasto?": "Come rilevi i ritardi, ripristini una versione e attribuisci i costi?"
+      "¿Cómo detectas retrasos, recuperas una versión y atribuyes el gasto?": "Come rilevi i ritardi, ripristini una versione e attribuisci i costi?",
+      "función de activación": "funzione di attivazione",
+      "rlhf": "rlhf",
+      "mitiga": "mitiga",
+      "sustituye": "sostituisce",
+      "gods eye view": "gods eye view"
     }
   }
 }
