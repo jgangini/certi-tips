@@ -59,15 +59,25 @@ async (page) => {
     if (pagesFallback) await page.unroute(missing);
   }
   for (const locale of ['es', 'en', 'pt', 'it']) {
-    for (const theme of ['light', 'dark']) {
-      await page.setViewportSize({ width: 375, height: 1019 });
-      await page.evaluate(theme => localStorage.setItem('certitips:theme', theme), theme);
-      await page.goto('about:blank');
-      await page.goto(`${root}${locale}/certiquiz/`);
-      await page.locator('.loading-error kbd').waitFor();
-      check(await page.locator('.loading-error h1 svg').count() === 1, `CertiQuiz/${locale}/${theme}: rocket remains present on service failure`);
-      check(await page.locator('.loading-error kbd').textContent() === 'F5', `CertiQuiz/${locale}/${theme}: reload hint`);
-      cases++;
+    for (const width of [375, 1315]) {
+      for (const theme of ['light', 'dark']) {
+        await page.setViewportSize({ width, height: 1019 });
+        await page.evaluate(theme => localStorage.setItem('certitips:theme', theme), theme);
+        await page.goto('about:blank');
+        await page.goto(`${root}${locale}/certiquiz/`);
+        await page.locator('.loading-error kbd').waitFor();
+        const centered = await page.evaluate(() => {
+          const card = document.querySelector('.loading-error');
+          const bounds = card.getBoundingClientRect();
+          const header = document.querySelector('.site-header').getBoundingClientRect();
+          const footer = document.querySelector('.site-footer').getBoundingClientRect();
+          return getComputedStyle(card).margin === '0px' && Math.abs((bounds.top + bounds.bottom) / 2 - (header.bottom + footer.top) / 2) < 3;
+        });
+        check(centered, `CertiQuiz/${locale}/${width}/${theme}: full-height centered error without margins`);
+        check(await page.locator('.loading-error h1 svg').count() === 1, `CertiQuiz/${locale}/${theme}: rocket remains present on service failure`);
+        check(await page.locator('.loading-error kbd').textContent() === 'F5', `CertiQuiz/${locale}/${theme}: reload hint`);
+        cases++;
+      }
     }
   }
   check(!errors.length, `Browser errors: ${errors.join('; ')}`);

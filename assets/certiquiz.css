@@ -211,7 +211,7 @@ html:not([data-theme="dark"]) .certiquiz-app .result-banner .result-course { bac
 @keyframes certiquiz-confetti-fall { 0% { opacity: 0; transform: translate(0, -20px); } 5%, 60% { opacity: 1; } 85%, 100% { opacity: 0; } 100% { transform: translate(var(--drift), calc(100% + 40px)); } }
 @keyframes certiquiz-confetti-spin { to { transform: rotate(720deg); } }
 @media (max-width: 720px) { .certiquiz-app .podium { gap: 8px; margin-top: 28px; } .certiquiz-app .podium-step { padding: 10px 5px; } .certiquiz-app .podium-1 { --step-height: 208px; } .certiquiz-app .podium-2 { --step-height: 176px; } .certiquiz-app .podium-3 { --step-height: 144px; } .certiquiz-app .podium-medal { width: 64px; height: 64px; margin-bottom: 8px; } .certiquiz-app .podium-step > span { font-size: 12px; } }
-.certiquiz-app .loading { margin: 50px 0; }
+.certiquiz-app .loading:not(.loading-full) { margin: 50px 0; }
 .certiquiz-page .certiquiz-main:has(.loading-full) { max-width: none; padding: 0; }
 @media (max-width: 720px) { .certiquiz-app .host-entry .certification-item { grid-template-columns: minmax(0, 1fr); gap: 14px; padding-left: 28px; } .certiquiz-app .host-entry .certification-item input { max-width: none; } .certiquiz-app .setup-actions .certification-number { top: 23px; transform: none; } }
 @media (max-width: 800px) {

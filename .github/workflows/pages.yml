@@ -35,7 +35,8 @@ jobs:
           key: argos-models-v1-${{ runner.os }}-${{ steps.translation-models.outputs.digest }}
           restore-keys: |
             argos-models-v1-${{ runner.os }}-
-      - uses: actions/cache@v4
+      - uses: actions/cache/restore@v4
+        id: translation-cache
         with:
           path: .cache/i18n/phrases
           key: i18n-phrases-v2-${{ runner.os }}-${{ hashFiles('data/i18n.json', 'requirements-i18n.txt') }}-${{ github.sha }}
@@ -55,6 +56,12 @@ jobs:
           path: output/i18n-*-issues.json
           if-no-files-found: ignore
           retention-days: 7
+      - name: Keep completed inference batches for retries
+        if: always() && steps.translation-cache.outputs.cache-primary-key != '' && steps.translation-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .cache/i18n/phrases
+          key: ${{ steps.translation-cache.outputs.cache-primary-key }}
       - run: npm run i18n:check
       - name: Install isolated diagram validation browser
         run: |

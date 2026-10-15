@@ -199,7 +199,9 @@
     "Endpoint",
     "endpoint",
     "Code Interpreter",
-    "MCP Server"
+    "MCP Server",
+    "steward",
+    "Oracle Cloud Infrastructure Identity and Access Management"
   ],
   "glossary": {
     "recurso": {
@@ -612,7 +614,9 @@
       "La documentación de": "The documentation for",
       "Aporta evidencia actual sin entrenar para memorizar cada cambio.": "It provides current evidence without training the model to memorize every change.",
       "OCI Enterprise AI Models proporciona acceso administrado a modelos alojados, ajustados e importados compatibles, sin que los clientes tengan que gestionar directamente la infraestructura de GPU.": "OCI Enterprise AI Models provides managed access to supported hosted, fine-tuned and imported models, without customers having to manage GPU infrastructure directly.",
-      "una prueba de acceso permitido y administración no concedida, con identidad y resultado, permite demostrarla.": "a test showing permitted access and denied administration, with the identity and result, demonstrates it."
+      "una prueba de acceso permitido y administración no concedida, con identidad y resultado, permite demostrarla.": "a test showing permitted access and denied administration, with the identity and result, demonstrates it.",
+      "dominio de identidad": "identity domain",
+      "Plan": "Plan"
     },
     "pt": {
       "Cuando se necesitan flujos de procesamiento por lotes sin conexión, sin ninguna interacción activa con el usuario ni conversación.": "Quando é necessário processar dados em lotes offline, sem interação ativa com o usuário nem conversa.",
@@ -810,7 +814,9 @@
       "La documentación de": "A documentação de",
       "Aporta evidencia actual sin entrenar para memorizar cada cambio.": "Fornece evidências atuais sem treinar o modelo para memorizar cada alteração.",
       "OCI Enterprise AI Models proporciona acceso administrado a modelos alojados, ajustados e importados compatibles, sin que los clientes tengan que gestionar directamente la infraestructura de GPU.": "OCI Enterprise AI Models fornece acesso gerenciado a modelos hospedados, ajustados e importados compatíveis, sem que os clientes precisem gerenciar diretamente a infraestrutura de GPU.",
-      "una prueba de acceso permitido y administración no concedida, con identidad y resultado, permite demostrarla.": "um teste de acesso permitido e administração negada, com identidade e resultado, permite demonstrá-la."
+      "una prueba de acceso permitido y administración no concedida, con identidad y resultado, permite demostrarla.": "um teste de acesso permitido e administração negada, com identidade e resultado, permite demonstrá-la.",
+      "dominio de identidad": "domínio de identidade",
+      "Plan": "Plano"
     },
     "it": {
       "Cuando se necesitan flujos de procesamiento por lotes sin conexión, sin ninguna interacción activa con el usuario ni conversación.": "Quando è necessaria l'elaborazione offline in batch, senza interazione attiva con l'utente né conversazione.",
@@ -1069,7 +1075,9 @@
       "La documentación de": "La documentazione di",
       "Aporta evidencia actual sin entrenar para memorizar cada cambio.": "Fornisce evidenze aggiornate senza addestrare il modello a memorizzare ogni modifica.",
       "OCI Enterprise AI Models proporciona acceso administrado a modelos alojados, ajustados e importados compatibles, sin que los clientes tengan que gestionar directamente la infraestructura de GPU.": "OCI Enterprise AI Models offre accesso gestito ai modelli ospitati, ottimizzati e importati supportati, senza richiedere ai clienti di gestire direttamente l’infrastruttura GPU.",
-      "una prueba de acceso permitido y administración no concedida, con identidad y resultado, permite demostrarla.": "un test di accesso consentito e amministrazione negata, con identità e risultato, permette di dimostrarla."
+      "una prueba de acceso permitido y administración no concedida, con identidad y resultado, permite demostrarla.": "un test di accesso consentito e amministrazione negata, con identità e risultato, permette di dimostrarla.",
+      "dominio de identidad": "dominio di identità",
+      "Plan": "Piano"
     }
   }
 }
