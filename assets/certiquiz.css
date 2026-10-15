@@ -220,7 +220,18 @@ html:not([data-theme="dark"]) .certiquiz-app .result-banner .result-course { bac
 .certiquiz-app kbd { display: inline-flex; align-items: center; padding: 2px 5px; border: 1px solid var(--line); border-radius: 4px; background: var(--chrome-bg); color: var(--muted); font-size: 0.62rem; white-space: nowrap; }
 @keyframes certiquiz-rocket-float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(2px, -3px); } }
 @media (max-width: 720px) { .certiquiz-app .host-entry .certification-item { grid-template-columns: minmax(0, 1fr); gap: 14px; padding-left: 28px; } .certiquiz-app .host-entry .certification-item input { max-width: none; } .certiquiz-app .setup-actions .certification-number { top: 23px; transform: none; } }
-@media (max-width: 800px) { .certiquiz-app .room-grid { grid-template-columns: minmax(0, 1fr); } .certiquiz-app .room-side { display: none; } }
+@media (max-width: 800px) {
+  .certiquiz-app .welcome { display: none; }
+  .certiquiz-page .certiquiz-main { padding: 0; }
+  .certiquiz-app .entry-card { max-width: none; }
+  .certiquiz-app .join-card:not(.role-card) { min-height: calc(100dvh - var(--header) - var(--footer-height)); padding: 20px var(--content-gutter); border: 0; border-radius: 0; box-shadow: none; }
+  .certiquiz-app .role-options { padding: 20px var(--content-gutter); }
+  .certiquiz-app .player-entry, .certiquiz-app .player-entry #join-form { display: flex; flex-direction: column; }
+  .certiquiz-app .player-entry #join-form { flex: 1; }
+  .certiquiz-app .player-entry .join-actions { margin-top: auto; }
+  .certiquiz-app .room-grid { grid-template-columns: minmax(0, 1fr); }
+  .certiquiz-app .room-side { display: none; }
+}
 @media (max-width: 720px) { .certiquiz-app .invite-code { grid-template-columns: minmax(0, 1fr) 52px; } .certiquiz-app .player-lobby-footer .fact-row { flex: 1; min-width: 0; } }
 @media (max-width: 720px) { .certiquiz-app .host-entry .setup-actions .button { width: 100%; } }
 @media (max-width: 720px) { .certiquiz-app .entry-grid, .certiquiz-app .options { grid-template-columns: 1fr; } .certiquiz-app .entry-card { max-width: none; } .certiquiz-app .card { padding: 23px; } .certiquiz-app .pin { font-size: 48px; } .certiquiz-app input.code-input { height: 74px !important; font-size: 48px !important; } .certiquiz-app .option { min-height: 80px; padding: 15px; } .certiquiz-app .result-banner { padding: 23px; } }

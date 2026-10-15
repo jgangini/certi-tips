@@ -141,6 +141,9 @@ if (root) {
   const preview = isChatPreview(location.href, root.dataset.api);
   let chat, opening, verifying = false, verified = false, available = false, busy = false, turnstileId, turnstileLoad;
   addEventListener("pagehide", () => {
+    if (dock) {
+      try { sessionStorage.removeItem(`${storageKey}:open`); sessionStorage.removeItem(`${storageKey}:reference`); } catch { /* Navigation also works without session storage. */ }
+    }
     const scroller = chat?.shadowRoot?.querySelector("#messages");
     if (scroller && !panel.hidden) {
       try { sessionStorage.setItem(`${storageKey}:scroll`, String(scroller.scrollTop)); } catch { /* Reading position is optional. */ }

@@ -45,7 +45,7 @@ async page => {
       const state = await reference.evaluate(headerState);
       assert([state.overflow, state.overlap].every(flag => !flag), `Catalog header does not fit at ${width}: ${JSON.stringify(state)}`);
     }
-    await reference.setViewportSize({ width: 798, height: 1004 });
+    await reference.setViewportSize({ width: 801, height: 1004 });
     const compactPreference = await reference.evaluate(() => sessionStorage.getItem('certitips:course-nav:compact'));
     await reference.locator('.path-nav-mobile > summary').click();
     await reference.keyboard.press('Escape');

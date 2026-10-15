@@ -50,6 +50,7 @@
 }
 @media (max-width: 800px) {
   .certichat { right: var(--content-gutter); bottom: calc(var(--footer-height) + 10px); }
+  .home-page .certichat { bottom: calc(var(--footer-height) + var(--layout-gap)); }
   .certichat-actions > a { display: none; }
   .certichat .certichat-launcher { width: 44px; height: 44px; min-height: 44px; padding: 0; }
   body:not(.certichat-page):has(.certichat-panel:not([hidden])) { overflow: hidden; }

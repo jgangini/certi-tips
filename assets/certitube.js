@@ -105,8 +105,9 @@ export function mountPlayer(root) {
     const displayed = moment ?? moments.values().next().value;
     showChapter(root, displayed.seconds, Boolean(moment));
     if (!moment) { if (ready) player.pauseVideo(); return; }
-    root.scrollIntoView({ block: "start", behavior: "instant" });
-    root.focus({ preventScroll: true });
+    const focusTarget = window.matchMedia("(max-width: 800px)").matches ? root.querySelector(".tube-watch") || root : root;
+    focusTarget.scrollIntoView({ block: "start", behavior: "instant" });
+    focusTarget.focus({ preventScroll: true });
     playMoment();
   }
 
@@ -157,7 +158,27 @@ function mountChapterScroll(root) {
   update();
 }
 
+function mountMobileLayout(root) {
+  const mobile = matchMedia("(max-width: 800px)");
+  const videos = root.parentElement.querySelector(".tube-videos");
+  const content = [...root.children].filter(node => !node.matches(".tube-watch"));
+  const browse = document.createElement("div");
+  browse.className = "tube-browse";
+  function sync() {
+    if (mobile.matches) {
+      root.append(browse);
+      browse.append(...content, videos);
+    } else {
+      root.append(...content);
+      root.after(videos);
+      browse.remove();
+    }
+  }
+  mobile.addEventListener("change", sync);
+  sync();
+}
+
 if (typeof document !== "undefined") {
   const root = document.querySelector("[data-tube-player]");
-  if (root) { mountChapterScroll(root); mountPlayer(root); }
+  if (root) { mountMobileLayout(root); mountChapterScroll(root); mountPlayer(root); }
 }

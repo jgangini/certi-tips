@@ -75,6 +75,12 @@
 @media (min-width: 801px) and (max-width: 1023px) {
   .certichat-main.home-main { padding-inline: var(--frame-left); }
 }
+@media (max-width: 800px) {
+  .certichat-page { overflow: hidden; }
+  .certichat-main.home-main { width: 100%; max-width: none; margin: 0; padding: 0; }
+  .chat-explorer-page { --explorer-height: calc(100dvh - var(--header) - var(--footer-height)); padding: 0; gap: 0; }
+  .certichat-page .certichat-panel { border: 0; border-radius: 0; box-shadow: none; }
+}
 
 .chat-graph-legend { position: absolute; left: 12px; bottom: 12px; display: flex; gap: 6px; }
 .chat-graph-legend > span { display: inline-flex; align-items: center; gap: 4px; }

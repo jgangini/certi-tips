@@ -1,8 +1,9 @@
 .tube-player { margin: 0; border: 1px solid var(--line); border-top: 4px solid var(--red); border-radius: var(--radius); overflow: hidden; background: var(--white); }
 .tube-player, .tube-videos { box-shadow: 0 8px 36px var(--shadow); }
 /* ponytail: the noninteractive card receives citation focus; its controls keep keyboard outlines. */
-.tube-player:focus { outline: none; }
+.tube-player:focus, .tube-watch:focus { outline: none; }
 .tube-heading { margin-bottom: 0; }
+.tube-watch { display: contents; }
 .tube-heading strong, .tube-videos header strong { display: block; line-height: 1.05; }
 .tube-screen { position: relative; width: 100%; aspect-ratio: 16 / 9; min-height: 200px; background: #111; }
 .tube-screen > * { display: block; width: 100%; height: 100%; border: 0; }
@@ -52,7 +53,7 @@
 .tube-summary, .tube-description, .tube-resources, .tube-videos ol { scrollbar-color: var(--scrollbar) transparent; scrollbar-width: thin; }
 @media (min-width: 801px) {
   .tube-player { height: var(--panel-height); display: flex; flex-direction: column; }
-  .tube-player > header, .tube-chapters { flex-shrink: 0; }
+  .tube-heading, .tube-chapters { flex-shrink: 0; }
   .tube-screen { flex-shrink: 1; min-height: 0; max-height: 40%; }
   .tube-summary { flex: 0 1 auto; min-height: 100px; max-height: 25%; overflow: auto; padding-bottom: 24px; mask-image: linear-gradient(#000 calc(100% - 14px), transparent); }
   .tube-description { flex-shrink: 0; min-height: 0; max-height: 25%; overflow: auto; }
@@ -76,4 +77,28 @@
   .tube-videos a { margin-bottom: 0; }
   .tube-videos img { width: auto; height: 2lh; }
   .tube-videos a strong { -webkit-line-clamp: 2; }
+}
+@media (max-width: 800px) {
+  .course-page[data-page^="certitube"] { overflow: hidden; }
+  .course-page[data-page^="certitube"] #main { position: fixed; inset: var(--header) 0 var(--footer-height); width: auto; margin: 0; padding: 0; }
+  .course-page[data-page^="certitube"] .prose { height: 100%; }
+  .tube-detail { display: flex; flex-direction: column; gap: 0; width: 100%; min-width: 0; height: 100%; overflow: hidden; }
+  /* ponytail: reuse the player section's data hooks while its two mobile children fill the content area. */
+  .tube-player { display: contents; }
+  .tube-watch { flex: none; display: flex; flex-direction: column; width: 100%; min-width: 0; max-height: 50%; border-top: 4px solid var(--red); background: var(--white); }
+  .tube-heading { flex: none; }
+  .tube-heading strong { font-size: 1.25rem; }
+  .tube-browse { flex: 1; width: 100%; min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; padding-bottom: calc(2 * var(--layout-gap) + var(--chat-launcher-size)); scrollbar-color: var(--scrollbar) transparent; scrollbar-width: thin; }
+  .tube-chapters { position: sticky; top: 0; z-index: 2; background: var(--white); }
+  .tube-screen { flex-shrink: 1; min-height: 0; max-height: 40dvh; }
+  .tube-summary h2 { position: static; }
+  .tube-summary h2::after { display: none; }
+  .tube-videos { margin: 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; box-shadow: none; overflow: visible; }
+  .tube-videos > header { display: none; }
+  .tube-videos ol { display: block; padding: 0; overflow: visible; scroll-snap-type: none; }
+  .tube-videos li { margin: 0 0 20px; }
+  .tube-videos a { display: block; padding: 0; border-radius: 0; font-size: .9rem; }
+  .tube-videos img { display: block; width: 100%; height: auto; border-radius: 0; }
+  .tube-videos a > span { display: block; padding: 10px var(--content-gutter); }
+  .tube-videos a strong { display: block; overflow: visible; }
 }
