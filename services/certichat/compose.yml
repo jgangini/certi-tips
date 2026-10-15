@@ -54,6 +54,7 @@ services:
     command: [uvicorn, app.knowledge:app, --host, 0.0.0.0, --port, "8001", --workers, "1", --limit-concurrency, "64", --no-access-log, --no-server-header, --timeout-graceful-shutdown, "45"]
     environment:
       CERTICHAT_CHAT_INTERNAL_TOKEN: ${CERTICHAT_CHAT_INTERNAL_TOKEN:?Generate the private chat token}
+      CERTICHAT_DATA_DIR: ${CERTICHAT_DATA_DIR:-/data}
     volumes: [knowledge_data:/data]
     networks: [knowledge]
     restart: unless-stopped
@@ -75,6 +76,7 @@ services:
     command: [build]
     environment:
       CERTICHAT_INDEX_INTERNAL_TOKEN: ${CERTICHAT_INDEX_INTERNAL_TOKEN:?Generate the private index token}
+      CERTICHAT_DATA_DIR: ${CERTICHAT_DATA_DIR:-/data}
     volumes: [knowledge_data:/data]
     networks: [app, knowledge]
     cpus: 1.5
@@ -89,6 +91,7 @@ services:
     environment:
       CERTICHAT_MODE: ${CERTICHAT_MODE:-VPS}
       CERTICHAT_INDEX_REFRESH_MINUTES: ${CERTICHAT_INDEX_REFRESH_MINUTES:-5}
+      CERTICHAT_DATA_DIR: ${CERTICHAT_DATA_DIR:-/data}
     volumes: [knowledge_data:/data]
     networks: [app]
     restart: unless-stopped

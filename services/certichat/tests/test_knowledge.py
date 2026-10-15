@@ -86,6 +86,7 @@ def test_lifespan_keeps_both_stores_warm_until_shutdown(tmp_path, monkeypatch, v
             assert active == {"dataset"}
             assert events == ["configure", "pin", "graph", "vector", "projection"]
             assert (await knowledge.health())["status"] == "ready"
+            assert knowledge.app.state.graph_version == digest(version + knowledge.app.state.graph_generated_at)
 
     if vector_ready:
         asyncio.run(run())
@@ -100,6 +101,19 @@ def empty_graph(monkeypatch):
     async def read():
         return [], []
     monkeypatch.setattr(knowledge, "read_graph", read)
+
+
+def test_rebuilt_graph_invalidates_trace_for_the_same_corpus(monkeypatch):
+    corpus_version = "a" * 64
+    versions = [digest(corpus_version + stamp) for stamp in ("2026-10-14T01:00:00Z", "2026-10-14T02:00:00Z")]
+    state = SimpleNamespace(version=corpus_version, graph_version=versions[0], graph_generated_at="first")
+    monkeypatch.setattr(knowledge.app, "state", state)
+    first = asyncio.run(knowledge.cached_graph())
+    assert first["version"] == versions[0]
+    state.graph_version, state.graph_generated_at = versions[1], "second"
+    second = asyncio.run(knowledge.cached_graph())
+    assert second["version"] == versions[1] != first["version"]
+    assert second["generatedAt"] == "second"
 
 
 @pytest.mark.parametrize("page_url", [None, SITE + "changed/", SITE + "removed/"])

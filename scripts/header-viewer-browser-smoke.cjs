@@ -4,8 +4,9 @@
 async (page) => {
   const base = `${new URL(page.url()).origin}/certitips/`;
   const assert = (value, message) => { if (!value) throw new Error(message); };
-  const routes = ['', '1Z0-1122-26/practice/', 'certiquiz/'];
-  for (const width of [1280, 1195, 1188, 900, 619, 320]) {
+  await page.addInitScript(() => sessionStorage.clear());
+  const routes = ['certiquiz/', '', 'cursos/', '1Z0-1122-26/practice/', 'certitube/', 'certichat/'];
+  for (const width of [1576, 1280, 1195, 900, 798, 619, 480, 320]) {
     await page.setViewportSize({ width, height: 1000 });
     const positions = [];
     for (const route of routes) {
@@ -16,19 +17,20 @@ async (page) => {
       }
       const geometry = await page.locator('.site-header').evaluate(header => {
         const headerBox = header.getBoundingClientRect();
-        const brand = header.querySelector('.brand').getBoundingClientRect();
-        const search = header.querySelector('.search-toggle').getBoundingClientRect();
         const theme = header.querySelector('.theme-toggle').getBoundingClientRect();
-        const pathMenu = header.querySelector('.path-nav-mobile');
-        return { left: brand.left - headerBox.left, right: headerBox.right - theme.right, searchGap: theme.left - search.right, padRight: parseFloat(getComputedStyle(header).paddingRight), mobile: getComputedStyle(pathMenu).display !== 'none', overflow: document.documentElement.scrollWidth > innerWidth + 1 };
+        const panel = document.querySelector('#certichat-panel');
+        const logo = header.querySelector('.brand img').getBoundingClientRect(), launcher = document.querySelector('[data-chat-open]')?.getBoundingClientRect();
+        if (logo.width !== 36 || logo.height !== 36) throw new Error(`Logo shrinks at ${innerWidth}px: ${logo.width}x${logo.height}`);
+        if (innerWidth <= 800 && launcher?.width && (launcher.width !== theme.width || launcher.height !== theme.height)) throw new Error(`Chat button differs from header controls at ${innerWidth}px`);
+        return { right: headerBox.right - theme.right, edgeRight: theme.right, chatRight: innerWidth > 800 && panel && !panel.hidden ? panel.getBoundingClientRect().right : null, padRight: parseFloat(getComputedStyle(header).paddingRight), overflow: document.documentElement.scrollWidth > innerWidth + 1 };
       });
       assert(!geometry.overflow && Math.abs(geometry.right - geometry.padRight) < 1, `Header exceeds the viewport or right padding at ${width}px ${route}: ${JSON.stringify(geometry)}`);
-      if (route === 'certiquiz/' && width <= 1200) {
+      if (route === 'certiquiz/') {
         const edges = await page.locator('.certiquiz-breadcrumb').evaluate(node => ({ breadcrumb: node.getBoundingClientRect().right, theme: document.querySelector('.site-header .theme-toggle').getBoundingClientRect().right }));
         assert(Math.abs(edges.breadcrumb - edges.theme) < 1, `CertiQuiz breadcrumb and theme button differ at ${width}px: ${JSON.stringify(edges)}`);
       }
       positions.push(geometry);
-      if (width <= 1200) {
+      if (await page.locator('.path-nav-mobile > summary').isVisible()) {
         const menu = page.locator('.path-nav-mobile');
         await page.locator('.path-nav-mobile > summary').click();
         assert(await menu.evaluate(node => node.open), `Course groups do not open at ${width}px ${route}`);
@@ -38,7 +40,7 @@ async (page) => {
       assert(await page.locator('#site-search').evaluate(node => node.open), `Search does not open at ${width}px ${route}`);
       await page.keyboard.press('Escape');
     }
-    assert(positions.every(item => ['left', 'padRight', 'searchGap'].every(key => Math.abs(item[key] - positions[0][key]) < 0.01) && item.mobile === positions[0].mobile), `Header geometry differs among page types at ${width}px: ${JSON.stringify(positions)}`);
+    assert(positions.every(item => Math.abs(item.edgeRight - (item.chatRight ?? positions[0].edgeRight)) < 1), `Header geometry differs from content/chat at ${width}px: ${JSON.stringify(positions)}`);
   }
   for (const route of ['1Z0-1122-26/generative-ai/', 'CDMP-DMF/governance/']) {
     for (const [theme, background] of [['light', 'rgb(255, 255, 255)'], ['dark', 'rgb(0, 0, 0)']]) {
@@ -56,5 +58,5 @@ async (page) => {
       }
     }
   }
-  return 'PASS: shared header alignment and controls at six widths; CertiQuiz breadcrumb aligns with theme button; diagram viewer and presentation backgrounds match light/dark mode in two courses.';
+  return 'PASS: shared header edges, 36px logo and matching mobile chat button across six page types at eight widths; CertiQuiz breadcrumb aligns with theme button; diagram viewer backgrounds match both themes.';
 }

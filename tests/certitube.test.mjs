@@ -95,7 +95,7 @@ test("CertiTube omits the fixed sidebar and keeps the ordered video carousel", (
     assert.match(html, /class="certichat-heading tube-heading"[^]*?class="tube-screen"[^]*?class="tube-chapters"/);
     assert.doesNotMatch(html.match(/<header class="site-header">[^]*?<\/header>/)[0], /class="menu-toggle"/);
     const header = html.match(/<header class="site-header">[^]*?<\/header>/)[0];
-    assert.match(header, /aria-label="CertiQuiz"[^]*?aria-label="CertiTube"[^]*?class="search-toggle"/);
+    assert.match(header, /aria-label="CertiTips"[^]*?aria-label="CertiQuiz"[^]*?aria-label="CertiTube"[^]*?aria-label="CertiChat"[^]*?class="search-toggle"/);
   }
 });
 

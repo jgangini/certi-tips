@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import MarkdownIt from "markdown-it";
-import { layout, sidebar, homeBody, certiquizBody, courseRoute } from "../scripts/layout.mjs";
+import { layout, sidebar, homeBody, coursesBody, certiquizBody, courseRoute } from "../scripts/layout.mjs";
 
 test("the image viewer refreshes its group, source heading and description when switching diagrams", () => {
   const caption = { textContent: "" }, group = { textContent: "" }, description = { textContent: "" }, enlarged = { addEventListener() {} };
@@ -103,7 +103,7 @@ test("an applied course without practice continues to its case study", () => {
   assert.match(html, /rel="canonical" href="https:\/\/example.test\/certitips\/data-governance\/agents\/"/);
   assert.match(html, /data-course="data-governance" data-course-route="data-governance" data-course-has-exam="false"/);
   assert.doesNotMatch(html, /<nav class="breadcrumb"/);
-  assert.match(html, /<summary>Governance<\/summary>/);
+  assert.match(layout({ site: catalog, course: workshop, page: { slug: "cursos", title: "CertiTips" }, body: "" }), /<summary>Governance<\/summary>/);
   assert.match(html, /<small>Curso · Governance<\/small>/);
   assert.match(html, /href="\/certitips\/data-governance\/case-study\/"/);
   assert.doesNotMatch(html, /href="\/certitips\/data-governance\/practice\/"/);
@@ -115,7 +115,7 @@ test("an applied course without practice continues to its case study", () => {
   assert.match(sidebar(site, course, "overview"), /<strong>Curso de prueba 2026<\/strong>/);
   assert.match(navigation, /href="\/certitips\/data-governance\/agents\/#conceptos-clave"/);
   assert.doesNotMatch(navigation, /EXAM-1|exam-checklist|undefined/);
-  const card = homeBody(catalog).match(/<li class="certification-item has-guide" id="data-governance">[\s\S]*?<\/li>/)[0];
+  const card = coursesBody(catalog).match(/<li class="certification-item has-guide" id="data-governance">[\s\S]*?<\/li>/)[0];
   assert.match(card, /<span class="certification-level">Taller aplicado<\/span>/);
   assert.match(card, /href="\/certitips\/data-governance\/overview\/"/);
   assert.doesNotMatch(card, /Ruta de Oracle|undefined|Nivel /);
@@ -192,7 +192,7 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.match(css, /\.certiquiz-app \.role-card:is\(:hover, :focus-visible\):not\(:disabled\)\s*\{[^}]*border-color:\s*var\(--accent\);/);
   assert.match(css, /\.certiquiz-page \.certiquiz-main\s*\{[^}]*max-width:\s*1280px;/);
   assert.match(css, /\.certiquiz-app \.welcome\s*\{\s*margin:\s*0 0 24px;/);
-  assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb\s*\{[^}]*width:\s*100%;[^}]*padding:\s*18px 24px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*var\(--radius\);[^}]*font-weight:\s*400;/);
+  assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb\s*\{[^}]*width:\s*100%;[^}]*height:\s*var\(--section-nav-height\);[^}]*padding:\s*0 24px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*var\(--radius\);[^}]*font-weight:\s*400;/);
   assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb a\s*\{[^}]*color:\s*var\(--ink\);[^}]*font-weight:\s*inherit;/);
   assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb \.certiquiz-mark\s*\{[^}]*color:\s*var\(--ink\);[^}]*font-weight:\s*inherit;/);
   assert.match(css, /\.certiquiz-app \.player-entry input:focus-visible\s*\{\s*outline:\s*none;\s*box-shadow:\s*none;/);
@@ -446,34 +446,33 @@ const tocByPage = new Map([
   ["review", [{ id: "practicar", title: "Antes de practicar" }]],
 ]);
 
-test("mobile path navigation uses a menu icon and a responsive panel below the header", () => {
-  const html = layout({ site, course, page: course.modules[0], body: "", home: true });
+test("mobile path navigation uses a menu icon in the course groups bar", () => {
+  const html = layout({ site, course, page: { slug: "cursos", title: "CertiTips" }, body: coursesBody(site) });
   const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
   assert.match(html, /<details class="path-nav-mobile"><summary aria-label="Abrir grupos de cursos"><svg[^>]*width="22" height="22"[^>]*><path d="M4 6h16M4 12h10M4 18h5"\/><\/svg><span class="visually-hidden">Grupos de cursos<\/span><\/summary><div class="path-nav-mobile-panel"><nav aria-label="Grupos de cursos">/);
   assert.doesNotMatch(html, /<summary>Paths<\/summary>/);
   assert.match(html, /<g class="theme-sun"><circle cx="12" cy="12" r="3\.5"\/><path d="M12 5V3M12 21v-2/);
   assert.doesNotMatch(html, /M12 2v2m0 16v2/);
   assert.match(css, /\.path-nav-mobile summary \{[\s\S]*?width: 44px;[\s\S]*?height: 44px;/);
-  assert.match(css, /\.path-nav-mobile-panel \{[\s\S]*?top: 100%;[\s\S]*?left: 0;[\s\S]*?width: 100%;[\s\S]*?max-height: calc\(100dvh - var\(--header\) - var\(--footer-height\)\);[\s\S]*?background: var\(--sidebar-bg\);[\s\S]*?border-radius: 0;/);
+  assert.match(css, /\.path-nav-mobile-panel \{[\s\S]*?position: static;[\s\S]*?width: 100%;[\s\S]*?max-height: calc\(100dvh - var\(--header\) - 20px - var\(--section-nav-height\) - var\(--footer-height\)\);[\s\S]*?background: var\(--paper\);/);
   assert.match(css, /\.path-nav-mobile \.path-group-panel \{[\s\S]*?background: transparent;/);
-  assert.match(css, /\.path-nav-mobile \.path-group-panel a:is\(:hover, :focus-visible\)\s*\{\s*background: transparent;\s*color: var\(--ink\);\s*text-decoration: none;/);
-  assert.match(css, /\.path-nav-mobile \.path-group-panel a:is\(:hover, :focus-visible\) \.path-title\s*\{\s*text-decoration: underline;/);
-  assert.match(css, /html\[data-theme="dark"\] \.path-nav-mobile \.path-group-panel a:is\(:hover, :focus-visible\)\s*\{\s*background: var\(--hover\);/);
-  assert.match(css, /\.path-nav-mobile \.path-group summary:is\(:hover, :focus-visible\)\s*\{\s*background: var\(--selected-surface\);\s*color: var\(--selected-ink\);/);
+  assert.match(css, /\.path-nav-mobile \.path-group summary:is\(:hover, :focus-visible\),\s*\.path-nav-mobile \.path-group\[open\] > summary\s*\{\s*background: transparent;\s*color: var\(--red\);/);
 });
 
 test("desktop site brand aligns with the shared content edge", () => {
   const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
-  assert.match(css, /@media \(min-width: 1361px\)\s*\{\s*\.home-page:not\(\.certichat-page\) \.site-header \.brand,\s*\.course-page\[data-page\^="certitube"\] \.site-header \.brand\s*\{\s*transform: translateX\(max\(0px, calc\(\(100vw - 1200px\) \/ 2 - 36px\)\)\);/);
+  assert.match(css, /\.site-header \{ padding-inline: var\(--frame-left\);/);
+  assert.match(css, /\.home-main:not\(\.certichat-main\) \{[^}]*margin-left: var\(--frame-left\);/);
 });
 
-test("course menu follows certification groups and precedes search", () => {
+test("course menu stays in the header without a course-groups bar", () => {
   const html = layout({ site, course, page: course.modules[0], body: "" });
   const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
   const courseMenu = html.indexOf('class="menu-toggle"');
-  const pathMenu = html.indexOf('class="path-nav-mobile"');
   const search = html.indexOf('class="search-toggle"');
-  assert.ok(pathMenu > 0 && pathMenu < courseMenu && courseMenu < search);
+  assert.ok(courseMenu > 0 && courseMenu < search && search < html.indexOf('<main id="main"'));
+  assert.doesNotMatch(html, /class="course-groups"|has-course-groups|class="path-nav-mobile"/);
+  assert.doesNotMatch(html.match(/<header class="site-header">(.*?)<\/header>/s)[1], /path-nav/);
   assert.doesNotMatch(html, /sidebar-compact-toggle|data-course-nav-compact/);
   assert.match(html, /<button class="menu-toggle" type="button" aria-expanded="true" aria-controls="course-navigation" aria-label="Contraer menú del curso"><svg viewBox="0 0 21 21" width="21" height="21"[^>]*><rect x="2\.5" y="2\.5" width="6" height="6" rx="1"\/><rect x="12\.5" y="2\.5" width="6" height="6" rx="1"\/><rect x="2\.5" y="12\.5" width="6" height="6" rx="1"\/><rect x="12\.5" y="12\.5" width="6" height="6" rx="1"\/><\/svg><span class="visually-hidden">Contenido del curso<\/span><\/button>/);
   assert.doesNotMatch(html, /aria-controls="course-navigation">Menú<\/button>/);
@@ -490,9 +489,7 @@ test("mobile home groups header controls and hides the suggested certification f
 
 test("desktop path navigation opens the category reached by a pointing device", () => {
   const script = readFileSync(new URL("../assets/site.js", import.meta.url), "utf8");
-  assert.match(script, /const desktopPathNav = document\.querySelector\("\.path-nav"\);/);
-  assert.match(script, /desktopPathNav\?\.addEventListener\("pointerover", \(event\) => \{[\s\S]*?group\?\.parentElement === desktopPathNav\) group\.open = true;/);
-  assert.doesNotMatch(script, /desktopPathNav\?\.addEventListener\("pointerleave"/);
+  assert.doesNotMatch(script, /desktopPathNav|canHoverPathNav/);
 });
 
 test("course navigation keeps its scrollbar within the narrower sidebar padding", () => {
@@ -640,7 +637,7 @@ test("practice in Prepárate opens the simulator landing directly", () => {
 
 test("layout moves the contents into the sidebar while preserving reading and site controls", () => {
   const html = layout({ site, course, page: course.modules[1], tocByPage, body: '<h2 id="conceptos-clave">Conceptos</h2>' });
-  assert.doesNotMatch(html, /breadcrumb|Ruta de navegación/);
+  assert.doesNotMatch(html.match(/<main id="main"[^>]*>(.*?)<\/main>/s)[1], /breadcrumb|Ruta de navegación/);
   assert.doesNotMatch(html, /Todas las certificaciones/);
   assert.doesNotMatch(html, /class="contents"|En este apartado/);
   assert.match(html, /<aside[^]*href="\/certitips\/EXAM-1\/agents\/#conceptos-clave"[^]*<\/aside>/);
@@ -652,10 +649,11 @@ test("layout moves the contents into the sidebar while preserving reading and si
   assert.match(html, /data-mark-complete="agents"/);
   assert.doesNotMatch(html, /MÓDULO 01 \/ 06|LECTURA ·/);
   assert.match(html, /<article class="prose">[^]*<\/article><button[^>]+data-mark-complete="agents"[^>]+role="switch" aria-checked="false">/);
-  assert.match(html, /<summary>Foundation Sprint<\/summary>/);
+  const navigation = layout({ site, course, page: { slug: "cursos", title: "CertiTips" }, body: "" });
+  assert.match(navigation, /<summary>Foundation Sprint<\/summary>/);
   assert.doesNotMatch(html, /Ver grupo completo/);
-  assert.match(html, /href="\/certitips\/EXAM-1\/overview\/"><span class="path-title">Course<\/span><\/a>/);
-  assert.match(html, /href="https:\/\/mylearn\.oracle\.com\/pending" target="_blank" rel="noopener noreferrer"[^>]*><span class="path-title">Pending course<\/span><span class="coming-soon"/);
+  assert.match(navigation, /href="\/certitips\/EXAM-1\/overview\/"><span class="path-title">Course<\/span><\/a>/);
+  assert.match(navigation, /href="https:\/\/mylearn\.oracle\.com\/pending" target="_blank" rel="noopener noreferrer"[^>]*><span class="path-title">Pending course<\/span><span class="coming-soon"/);
   assert.doesNotMatch(html, /href="\/certitips\/#(?:course|pending)"/);
   assert.match(html, /data-theme-toggle aria-pressed="false"/);
   assert.doesNotMatch(html, /data-theme-label|>Dark mode<\/span>/);
@@ -678,14 +676,11 @@ test("lesson completion follows the article before next-page navigation", () => 
   assert.match(rule, /background:\s*var\(--selected-surface\);/);
   assert.match(css, /\.complete-button\[aria-checked="true"\]\s*\{\s*background:\s*var\(--red\);/);
   assert.match(css, /\.course-main\.lesson-main\s*\{\s*padding-bottom:\s*16px;/);
-  assert.match(css, /\.course-page:not\(\[data-page\^="certitube"\]\) \.course-main\s*\{[^}]*--reading-width:\s*900px;/s);
-  assert.match(css, /\.course-page:not\(\[data-page\^="certitube"\]\) \.course-main\s*\{[^}]*border-radius:\s*16px;[^}]*backdrop-filter:\s*blur\(16px\) saturate\(160%\);/s);
-  assert.doesNotMatch(css.match(/\.course-page:not\(\[data-page\^="certitube"\]\) \.course-main\s*\{([^}]*)\}/s)?.[1] ?? "", /\bborder\s*:/);
-  assert.match(css, /\.course-page:not\(\[data-page\^="certitube"\]\):not\(\.is-compact-nav\) \.sidebar\s*\{\s*left:\s*var\(--course-sidebar-offset\);/);
-  assert.doesNotMatch(css.match(/\.course-page:not\(\[data-page\^="certitube"\]\):not\(\.is-compact-nav\) \.sidebar\s*\{([^}]*)\}/)?.[1] ?? "", /\bwidth\s*:/);
-  assert.match(css, /--course-sidebar-offset:\s*max\(0px,/);
-  assert.match(css, /background-image:\s*linear-gradient\(to right, var\(--sidebar-bg\) 0 var\(--course-sidebar-offset\)/);
-  assert.match(css, /\.course-page:not\(\[data-page\^="certitube"\]\) \.site-header \.brand\s*\{[^}]*transform:\s*translateX\(calc\(var\(--course-sidebar-offset\)/s);
+  assert.match(css, /\.course-page:not\(\[data-page\^="certitube"\]\) \.course-main\s*\{[^}]*--course-frame-width:\s*calc\(var\(--course-layout-width\) - var\(--sidebar\)\);[^}]*--reading-width:\s*100%;/s);
+  assert.doesNotMatch(css.match(/\.course-page:not\(\[data-page\^="certitube"\]\) \.course-main\s*\{([^}]*)\}/s)?.[1] ?? "", /\b(?:border(?:-radius)?|background(?:-image)?|box-shadow|(?:-webkit-)?backdrop-filter)\s*:/);
+  assert.match(css, /\.course-page:not\(\[data-page\^="certitube"\]\) \.sidebar\s*\{\s*left:\s*var\(--course-sidebar-offset\);/);
+  assert.doesNotMatch(css.match(/\.course-page:not\(\[data-page\^="certitube"\]\) \.sidebar\s*\{([^}]*)\}/)?.[1] ?? "", /\bwidth\s*:/);
+  assert.match(css, /--course-sidebar-offset:\s*var\(--frame-left\);/);
   assert.doesNotMatch(css, /\.course-page \.site-footer\s*\{[^}]*margin-left:/);
   assert.match(css, /\.course-main\s*\{[^}]*--course-frame-width:\s*calc\(var\(--reading-width\) \+ 80px\);/s);
 });
@@ -719,13 +714,13 @@ test("path menu headings change on interaction without retaining an open-state f
   const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
   assert.match(css, /--selected-surface:\s*#59616e;\s*--selected-ink:\s*#fff;/);
   assert.match(css, /html\[data-theme="dark"\]\s*\{[^}]*--selected-surface:\s*#414653;/);
-  assert.match(css, /\.path-group summary:hover\s*\{\s*background:\s*var\(--selected-surface\);\s*color:\s*var\(--selected-ink\);/);
-  assert.match(css, /\.path-nav \.path-group\[open\] > summary\s*\{\s*background:\s*var\(--selected-surface\);\s*color:\s*var\(--selected-ink\);/);
+  assert.match(css, /\.path-group summary:is\(:hover, :focus-visible\)\s*\{\s*background:\s*transparent;\s*color:\s*var\(--red\);/);
+  assert.match(css, /\.path-nav \.path-group\[open\] > summary\s*\{\s*background:\s*transparent;\s*color:\s*var\(--red\);/);
   assert.doesNotMatch(css, /\.path-group\[open\] summary\s*\{\s*background:/);
   assert.match(css, /\.path-nav-mobile \.path-group summary\s*\{[\s\S]*?justify-content:\s*flex-start;[\s\S]*?text-align:\s*left;/);
   assert.match(css, /\.path-nav-mobile \.path-group-panel\s*\{[\s\S]*?padding:\s*6px 0 6px 12px;[\s\S]*?margin:\s*6px 12px 8px;/);
-  assert.match(css, /\.path-group-panel a:is\(:hover, :focus-visible\)\s*\{\s*background:\s*var\(--selected-surface\);\s*color:\s*var\(--selected-ink\);/);
-  assert.match(css, /\.path-group-panel\s*\{[^}]*position:\s*absolute;[^}]*top:\s*calc\(100% \+ 8px\);[^}]*right:\s*auto;[^}]*left:\s*0;/);
+  assert.match(css, /\.path-group-panel a:is\(:hover, :focus-visible\)\s*\{\s*background:\s*var\(--hover\);\s*color:\s*var\(--ink\);/);
+  assert.match(css, /\.path-group-panel\s*\{[^}]*position:\s*absolute;[^}]*top:\s*calc\(100% \+ 8px\);[^}]*right:\s*0;[^}]*left:\s*auto;/);
   assert.match(css, /\.nav-link\[aria-current="page"\]\s*\{\s*background:\s*var\(--selected-surface\);\s*color:\s*var\(--selected-ink\);/);
   assert.match(css, /\.nav-section-link:hover\s*\{\s*color:\s*var\(--ink\);\s*background:\s*var\(--hover\);/);
 });
@@ -736,7 +731,7 @@ test("the certification lesson identifies LangChain without a breadcrumb row", (
   assert.equal(`${currentCourse.title} ${currentCourse.edition}`, catalog.paths[0].items.find((item) => item.guide === currentCourse.id).title);
   const html = layout({ site: catalog, course: currentCourse, page: currentCourse.modules.find((item) => item.slug === "langchain"), body: "" });
   assert.match(html, /<h1>Construir con LangChain<\/h1>/);
-  assert.doesNotMatch(html, /breadcrumb|Ruta de navegación/);
+  assert.doesNotMatch(html.match(/<main id="main"[^>]*>(.*?)<\/main>/s)[1], /breadcrumb|Ruta de navegación/);
   assert.match(html, /<body[^>]* data-course="agentic-ai-foundations-2026"/);
 });
 
@@ -785,7 +780,7 @@ test("home shows each certification and applied course once and links every avai
   assert.equal(platform.officialUrl, "https://mylearn.oracle.com/ou/learning-path/become-an-oracle-ai-data-platform-professional/164914");
   assert.deepEqual(items.filter((item) => item.guide).map((item) => item.guide).sort(), catalog.courses.map((item) => item.id).sort());
   assert.ok(items.filter((item) => item.officialUrl).every((item) => item.officialUrl.startsWith("https://mylearn.oracle.com/")));
-  const html = homeBody(catalog);
+  const html = homeBody(catalog) + coursesBody(catalog);
   assert.equal((html.match(/class="certification-item/g) || []).length, items.length);
   assert.equal((html.match(/class="button button-small certitips-button" href=/g) || []).length, catalog.courses.length);
   assert.equal((html.match(/class="button button-small certitips-button" type="button" disabled/g) || []).length, 8);
@@ -848,11 +843,40 @@ test("home shows each certification and applied course once and links every avai
   assert.equal(catalog.paths[4].label, "Governance");
   assert.equal(catalog.paths[0].label, "Foundation");
   assert.match(catalog.paths[0].items[1].officialUrl, /associate-2026\/163544$/);
-  const navigation = layout({ site: catalog, course, page: course.modules[0], body: html, home: true }).match(/<nav class="path-nav"[^>]*>(.*?)<\/nav>/s)[1];
+  const navigation = layout({ site: catalog, course, page: { slug: "cursos", title: "CertiTips" }, body: html }).match(/<nav class="path-nav"[^>]*>(.*?)<\/nav>/s)[1];
   assert.match(navigation, /<summary>Foundation<\/summary>/);
   for (const item of items) {
     const destination = item.guide ? `${catalog.base}${courseRoute(catalog.courses.find((course) => course.id === item.guide))}/overview/` : item.officialUrl;
     assert.ok(navigation.includes(`href="${destination}"`), `${item.title} does not link directly to its certification`);
   }
   assert.equal((navigation.match(/class="coming-soon"/g) || []).length, 8);
+});
+
+
+test("CertiTips has an independent catalog with the original Foundation block and shared icon", () => {
+  const catalog = coursesBody(site);
+  const html = layout({ site, course, page: { slug: "cursos", title: "CertiTips" }, body: catalog });
+  assert.match(html, /class="home-page certitips-page has-course-groups"/);
+  assert.match(html, /rel="canonical" href="https:\/\/example.test\/certitips\/cursos\/"/);
+  assert.match(html, /<h1 class="visually-hidden">CertiTips · Cursos<\/h1>/);
+  assert.match(html, /<nav class="course-breadcrumb"[^>]*>[^]*?Certi<span class="brand-accent">Tips<\/span><\/a><\/nav>/);
+  assert.match(catalog, /path-foundation is-active/);
+  assert.doesNotMatch(homeBody(site), /path-carousel|certification-list/);
+  const withChat = layout({ site: { ...site, certichat: { apiOrigin: "https://chat.example.test" } }, course, page: { slug: "cursos", title: "CertiTips" }, body: catalog });
+  assert.match(withChat, /sessionStorage\.getItem\("certichat:https:\/\/example\.test\/certitips\/:open"\).*classList\.add\("chat-restoring"\)/);
+  assert.doesNotMatch(html, /classList\.add\("chat-restoring"\)/);
+  const header = html.match(/<header class="site-header">(.*?)<\/header>/s)[1];
+  assert.deepEqual([...header.matchAll(/class="header-app-link"[^>]*aria-label="([^"]+)"/g)].map(match => match[1]), ["CertiTips", "CertiQuiz", "CertiTube", "CertiChat"]);
+  for (const [slug, label] of [["cursos", "CertiTips"], ["certiquiz", "CertiQuiz"], ["certitube", "CertiTube"], ["certitube/video", "CertiTube"], ["certichat", "CertiChat"]]) {
+    const moduleHtml = layout({ site, course, page: { slug, title: label }, body: "" });
+    const moduleHeader = moduleHtml.match(/<header class="site-header">(.*?)<\/header>/s)[1];
+    assert.deepEqual([...moduleHeader.matchAll(/<span class="header-app-link" role="img" aria-current="page" aria-label="([^"]+)"/g)].map(match => match[1]), [label]);
+    assert.equal((moduleHeader.match(/<a class="header-app-link"/g) || []).length, 3);
+  }
+  const cap = html.match(/aria-label="CertiTips"[^>]*><svg[^>]*><path d="([^"]+)"/)[1];
+  assert.ok(catalog.includes(`<path d="${cap}"`));
+  for (const page of [{ slug: "home" }, { slug: "certiquiz" }, { slug: "certichat" }, { slug: "certitube" }]) {
+    const other = layout({ site, course, page, body: "", home: page.slug === "home" });
+    assert.doesNotMatch(other, /class="course-groups"|class="path-nav"/);
+  }
 });

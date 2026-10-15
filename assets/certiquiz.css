@@ -1,7 +1,6 @@
 .certiquiz-page .certiquiz-main { --brand-accent: var(--accent); max-width: 1280px; padding-top: 20px; padding-bottom: 48px; }
 .certiquiz-page.certiquiz-playing { --header: 0px; }
 .certiquiz-page.certiquiz-playing .site-header { display: none; }
-@media (min-width: 1101px) and (max-width: 1200px) { .certiquiz-page .certiquiz-main { padding-right: 5vw; } }
 @media (max-width: 480px) { .certiquiz-page .certiquiz-main { padding-right: 18px; } }
 .certiquiz-app { --shadow: 0 14px 44px #31333f09; }
 html[data-theme="dark"] .certiquiz-app { --shadow: none; }
@@ -22,14 +21,14 @@ html[data-theme="dark"] .certiquiz-app { --shadow: none; }
 .certiquiz-app h3 { font-size: 17px; margin: 0 0 12px; }
 .certiquiz-app p { margin: 0 0 18px; }
 .certiquiz-app .lead { font-size: 18px; color: var(--muted); max-width: 640px; }
-.certiquiz-app .certiquiz-breadcrumb { display: flex; width: 100%; align-items: center; gap: 8px; padding: 18px 24px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); color: var(--muted); font-size: 0.82rem; font-weight: 400; }
+.certiquiz-app .certiquiz-breadcrumb { display: flex; width: 100%; height: var(--section-nav-height); align-items: center; gap: 8px; padding: 0 24px; border: 1px solid var(--line); border-top: 4px solid var(--red); border-radius: var(--radius); background: var(--paper); box-shadow: var(--panel-shadow); color: var(--muted); font-size: 0.82rem; font-weight: 400; }
 .certiquiz-app .certiquiz-breadcrumb a { color: var(--ink); font-weight: inherit; }
 .certiquiz-app .certiquiz-breadcrumb .certiquiz-mark { color: var(--ink); font-weight: inherit; }
 .certiquiz-app .entry-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
 .certiquiz-app .card { padding: 30px; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); box-shadow: var(--shadow); min-width: 0; }
 .certiquiz-app .join-card { border-top: 4px solid var(--accent); }
-.certiquiz-app .role-card { display: flex; width: 100%; align-items: center; gap: 20px; appearance: none; cursor: pointer; text-align: left; color: var(--ink); transition: border-color .2s ease, box-shadow .2s ease; }
-.certiquiz-app .role-card:is(:hover, :focus-visible):not(:disabled) { border-color: var(--accent); box-shadow: 0 18px 44px #31333f14; }
+.certiquiz-app .role-card { display: flex; width: 100%; align-items: center; gap: 20px; appearance: none; cursor: pointer; text-align: left; color: var(--ink); border-top: 1px solid var(--line); box-shadow: var(--panel-shadow); transition: border-color .2s ease, box-shadow .2s ease; }
+.certiquiz-app .role-card:is(:hover, :focus-visible):not(:disabled) { border-color: var(--accent); box-shadow: var(--panel-shadow); }
 .certiquiz-app .role-card:disabled { cursor: not-allowed; }
 .certiquiz-app .role-card:focus-visible { outline-offset: 3px; }
 .certiquiz-app .role-icon { display: grid; place-items: center; flex: 0 0 64px; width: 64px; height: 64px; color: var(--ink); }

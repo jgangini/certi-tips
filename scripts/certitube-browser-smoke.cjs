@@ -68,9 +68,9 @@ async (page) => {
     });
     assert(sharing.path.endsWith('/share-logo-square.png') && sharing.opaque && sharing.preserved && sharing.corners.every(pixel => JSON.stringify(pixel) === '[199,70,52,255]'), `Shared image has empty corners or changed original logo pixels: ${JSON.stringify(sharing)}`);
     const appLinks = tab.locator('.header-app-link');
-    assert(await appLinks.count() === 3, 'Header navigation icons are missing');
+    assert(await appLinks.count() === 4, 'Header navigation icons are missing');
     assert(await appLinks.allTextContents().then(values => values.every(text => !text.trim())), 'Header icons have visible text');
-    assert(await tab.locator('.header-app-link[aria-label="CertiTube"] + .header-app-link[aria-label="CertiChat"] + [data-search-open]').count() === 1, 'CertiChat is not between CertiTube and Search');
+    assert(await tab.locator('.header-app-link[aria-label="CertiQuiz"] + .header-app-link[aria-label="CertiTube"] + .header-app-link[aria-label="CertiChat"] + [data-search-open]').count() === 1, 'CertiQuiz does not precede CertiTube before CertiChat and Search');
     assert(await tab.locator('.header-app-link[aria-label="CertiChat"]').getAttribute('href') === '/certitips/certichat/' && (await tab.locator('.header-app-link[aria-label="CertiChat"] use').getAttribute('href')).endsWith('certichat-brain.svg#certichat-brain'), 'CertiChat header link does not reuse the graph action');
     assert(await tab.locator('.hero-actions .certiquiz-link + .certitube-link').count() === 1, 'Home button is not after CertiQuiz');
     const homeButtons = await tab.locator('.hero-actions').evaluate(row => [...row.children].map(link => ({ label: link.textContent.trim(), left: link.getBoundingClientRect().left })));
@@ -180,7 +180,7 @@ async (page) => {
     const alternateHref = await tab.locator('.tube-videos a').evaluateAll((links, current) => links.find(link => link.getAttribute('href') !== current)?.getAttribute('href'), currentVideo);
     assert(alternateHref, 'No alternate video is available for CertiTube navigation');
     await tab.locator(`.tube-videos a[href="${alternateHref}"]`).click(); await tab.waitForURL(new URL(alternateHref, origin).href); await readyPlayer(); await chatReady();
-    assert(await tab.locator('#main').evaluate(main => getComputedStyle(main).transitionProperty === 'none'), 'CertiTube shifts smoothly while CertiChat is open');
+    assert(await tab.locator('#main').evaluate(main => main.getAnimations().length === 0), 'CertiTube resizes after navigating with CertiChat open');
     const input = tab.getByRole('textbox', { name: 'Escribe tu consulta' });
     await input.fill('¿Cómo me conecto a la instancia?'); await input.press('Enter');
     const reference = tab.locator(`deep-chat a[href="/certitips/${path}#t-243"]`);
@@ -306,7 +306,7 @@ async (page) => {
         const apps = [...node.querySelectorAll('.header-app-link')].map(link => ({ label: link.getAttribute('aria-label'), title: link.title, text: link.textContent.trim(), width: link.getBoundingClientRect().width, height: link.getBoundingClientRect().height }));
         const menu = getComputedStyle(node.querySelector('.menu-toggle')), app = getComputedStyle(node.querySelector('.header-app-link'));
         const menuMatches = ['borderTopColor', 'borderTopWidth', 'borderRadius', 'padding'].every(key => menu[key] === app[key]) && (node.querySelector('.menu-toggle').getAttribute('aria-expanded') === 'true' || menu.backgroundColor === app.backgroundColor);
-        return { apps, menuMatches, compactGroups: getComputedStyle(node.querySelector('.path-nav')).display === 'none' && getComputedStyle(node.querySelector('.path-nav-mobile')).display !== 'none', overflow: document.documentElement.scrollWidth - innerWidth, overlap: boxes.some((box, i) => i && box.left < boxes[i - 1].right - 1), right: boxes.at(-1).right, viewport: innerWidth };
+        return { apps, menuMatches, compactGroups: getComputedStyle(document.querySelector('.path-nav')).display === 'none' && getComputedStyle(document.querySelector('.path-nav-mobile')).display !== 'none', overflow: document.documentElement.scrollWidth - innerWidth, overlap: boxes.some((box, i) => i && box.left < boxes[i - 1].right - 1), right: boxes.at(-1).right, viewport: innerWidth };
       });
       assert(header.overflow <= 1 && !header.overlap && header.right <= header.viewport, `Header does not fit at ${width}: ${JSON.stringify(header)}`);
       assert(header.apps.every(app => app.label && app.title && !app.text && app.width === app.height), `Header buttons are not accessible square icons at ${width}`);
@@ -320,7 +320,7 @@ async (page) => {
     await tab.goto(`${base}1Z0-1085-26/overview/`);
     const courseToggle = tab.locator('.menu-toggle'), courseSidebar = tab.locator('#course-navigation');
     assert(await courseToggle.getAttribute('aria-expanded') === 'true' && await courseSidebar.isVisible(), 'Course menu is not expanded by default');
-    assert(await tab.locator('#main').evaluate(main => getComputedStyle(main).backdropFilter.includes('blur')), 'Course content lacks the requested glass treatment');
+    assert(await tab.locator('#main').evaluate(main => { const style = getComputedStyle(main); return style.backgroundImage === 'none' && style.backgroundColor === 'rgba(0, 0, 0, 0)' && style.backdropFilter === 'none' && style.borderRadius === '0px' && style.boxShadow === 'none'; }), 'Course content retains an unwanted panel background or rounded frame');
     await tab.locator('.path-nav-mobile > summary').click();
     await tab.waitForFunction(() => document.querySelector('.path-nav-mobile').open && document.body.classList.contains('is-compact-nav') && getComputedStyle(document.querySelector('#course-navigation')).visibility === 'hidden');
     const courseMotion = await tab.evaluate(() => ({ sidebar: getComputedStyle(document.querySelector('#course-navigation')).transitionProperty, main: getComputedStyle(document.querySelector('#main')).transitionProperty }));
@@ -338,20 +338,20 @@ async (page) => {
       const heading = document.querySelector('.page-heading.lesson-heading'), prose = document.querySelector('.prose');
       const mainBox = main.getBoundingClientRect(), headingBox = heading.getBoundingClientRect(), proseBox = prose.getBoundingClientRect(), style = getComputedStyle(main);
       const centered = box => Math.abs(box.left + box.width / 2 - (mainBox.left + mainBox.width / 2)) < 1;
-      return {mainWidth:mainBox.width, headingWidth:headingBox.width, proseWidth:proseBox.width, centered: centered(headingBox) && centered(proseBox), glass:{backgroundImage:style.backgroundImage, backdropFilter:style.backdropFilter, borderRadius:style.borderRadius, borderTopWidth:style.borderTopWidth, boxShadow:style.boxShadow}};
+      return {mainWidth:mainBox.width, headingWidth:headingBox.width, proseWidth:proseBox.width, centered: centered(headingBox) && centered(proseBox), surface:{backgroundImage:style.backgroundImage, backdropFilter:style.backdropFilter, borderRadius:style.borderRadius, borderTopWidth:style.borderTopWidth, boxShadow:style.boxShadow}};
     });
-    assert(Math.abs(lessonReading.mainWidth - 980) < 1 && Math.abs(lessonReading.headingWidth - 900) < 1 && Math.abs(lessonReading.proseWidth - 900) < 1 && lessonReading.centered, `Whole lesson does not use the 900px centered reading width: ${JSON.stringify(lessonReading)}`);
-    assert(lessonReading.glass.backgroundImage !== 'none' && lessonReading.glass.backdropFilter.includes('blur') && lessonReading.glass.borderRadius === '16px' && lessonReading.glass.borderTopWidth === '0px' && lessonReading.glass.boxShadow !== 'none', `Course glass is not visible or has an unwanted border: ${JSON.stringify(lessonReading.glass)}`);
+    assert(Math.abs(lessonReading.mainWidth - 904) < 1 && Math.abs(lessonReading.headingWidth - 824) < 1 && Math.abs(lessonReading.proseWidth - 824) < 1 && lessonReading.centered, `Lesson does not fit beside the 272px menu and 24px gap inside the 1200px Home reference: ${JSON.stringify(lessonReading)}`);
+    assert(lessonReading.surface.backgroundImage === 'none' && lessonReading.surface.backdropFilter === 'none' && lessonReading.surface.borderRadius === '0px' && lessonReading.surface.borderTopWidth === '0px' && lessonReading.surface.boxShadow === 'none', `Course content retains an unwanted frame: ${JSON.stringify(lessonReading.surface)}`);
     assert(await tab.evaluate(() => {
       const sidebar = document.querySelector('#course-navigation').getBoundingClientRect(), main = document.querySelector('#main').getBoundingClientRect();
       return Math.abs(sidebar.width - 272) < 1 && sidebar.left > 0 && Math.abs(main.left - sidebar.right - 24) < 2;
     }), 'Desktop sidebar does not keep its previous width or sit 24px before the reading frame');
     const courseChrome = await tab.evaluate(() => {
-      const sidebar = document.querySelector('#course-navigation'), title = sidebar.querySelector('.sidebar-heading strong'), brand = document.querySelector('.site-header .brand'), footer = document.querySelector('.site-footer');
+      const sidebar = document.querySelector('#course-navigation'), brand = document.querySelector('.site-header .brand'), footer = document.querySelector('.site-footer');
       const sidebarColor = getComputedStyle(sidebar).backgroundColor, gutter = getComputedStyle(document.body).backgroundImage;
-      return {brandOffset: brand.getBoundingClientRect().left - title.getBoundingClientRect().left, footerLeft: footer.getBoundingClientRect().left, footerRight: footer.getBoundingClientRect().right, viewport: innerWidth, gutterMatchesSidebar: gutter.includes(sidebarColor)};
+      return {brandOffset: brand.getBoundingClientRect().left - sidebar.getBoundingClientRect().left, footerLeft: footer.getBoundingClientRect().left, footerRight: footer.getBoundingClientRect().right, viewport: innerWidth, gutterMatchesSidebar: gutter.includes(sidebarColor)};
     });
-    assert(Math.abs(courseChrome.brandOffset) < 1, `Brand does not align with the course title: ${JSON.stringify(courseChrome)}`);
+    assert(Math.abs(courseChrome.brandOffset) < 1, `Brand does not align with the Home reference: ${JSON.stringify(courseChrome)}`);
     assert(courseChrome.footerLeft === 0 && Math.abs(courseChrome.footerRight - courseChrome.viewport) < 1, `Course footer does not cover the viewport: ${JSON.stringify(courseChrome)}`);
     assert(courseChrome.gutterMatchesSidebar, 'The left gutter does not use the sidebar reference color');
     for (const width of [1556,1280,1158,801,800,678,320]) {
@@ -382,15 +382,17 @@ async (page) => {
     await tab.locator('[data-chat-open]').click(); await chatReady();
     await tab.waitForFunction(() => document.querySelector('.tube-player').getBoundingClientRect().right <= document.querySelector('#certichat-panel').getBoundingClientRect().left);
     const playerLayout = await tab.evaluate(() => {
-      const player = document.querySelector('.tube-player'), chat = document.querySelector('#certichat-panel'), summary = document.querySelector('.tube-summary'), menu = getComputedStyle(document.querySelector('.path-nav-mobile > summary')), app = getComputedStyle(document.querySelector('.header-app-link'));
+      const player = document.querySelector('.tube-player'), chat = document.querySelector('#certichat-panel'), summary = document.querySelector('.tube-summary');
       const message = document.querySelector('deep-chat').shadowRoot.querySelector('.ai-message');
       const resources = document.querySelector('.tube-resources');
-      return { height: player.clientHeight, chatHeight: chat.clientHeight, stickySummaryTitle: getComputedStyle(summary.querySelector('h2')).position === 'sticky', summaryGrows: getComputedStyle(summary).flexGrow === '1' && getComputedStyle(summary).maxHeight === 'none', resourcesFollowSummary: getComputedStyle(resources).flexGrow === '0', menuMatches: ['backgroundColor','borderTopColor','borderTopWidth','borderRadius','padding','width','height'].every(key => menu[key] === app[key]), bubbleMatches: getComputedStyle(message).backgroundColor === getComputedStyle(document.querySelector('.tube-videos a')).backgroundColor, punctuation: [...resources.querySelectorAll('li')].every(row => row.textContent.trim() === row.querySelector('a').textContent) };
+      return { height: player.clientHeight, chatHeight: chat.clientHeight, stickySummaryTitle: getComputedStyle(summary.querySelector('h2')).position === 'sticky', summaryGrows: getComputedStyle(summary).flexGrow === '1' && getComputedStyle(summary).maxHeight === 'none', resourcesFollowSummary: getComputedStyle(resources).flexGrow === '0', groupsAbsent: !document.querySelector('.course-groups'), bubbleMatches: getComputedStyle(message).backgroundColor === getComputedStyle(document.querySelector('.tube-videos a')).backgroundColor, punctuation: [...resources.querySelectorAll('li')].every(row => row.textContent.trim() === row.querySelector('a').textContent) };
     });
-    assert(Math.abs(playerLayout.height - playerLayout.chatHeight) < 1 && playerLayout.stickySummaryTitle && playerLayout.summaryGrows && playerLayout.resourcesFollowSummary && playerLayout.menuMatches && playerLayout.bubbleMatches && playerLayout.punctuation, `Player/menu/resource layout mismatch: ${JSON.stringify(playerLayout)}`);
+    assert(Math.abs(playerLayout.height - playerLayout.chatHeight) < 1 && playerLayout.stickySummaryTitle && playerLayout.summaryGrows && playerLayout.resourcesFollowSummary && playerLayout.groupsAbsent && playerLayout.bubbleMatches && playerLayout.punctuation, `Player/menu/resource layout mismatch: ${JSON.stringify(playerLayout)}`);
     const summary = tab.locator('.tube-summary');
+    const summaryTitleTop = await summary.locator('h2').evaluate(node => node.getBoundingClientRect().top);
     await summary.evaluate(node => node.scrollTop = node.scrollHeight);
     assert(await summary.evaluate(node => node.scrollTop) > 0, 'Summary cannot scroll vertically');
+    assert(Math.abs(await summary.locator('h2').evaluate(node => node.getBoundingClientRect().top) - summaryTitleTop) < 1, 'Summary heading moves while its text scrolls');
     await tab.locator('[data-chat-close]').click();
     await tab.setViewportSize({ width: 1280, height: 900 });
     await tab.goto(`${base}certitube/MWASexQNDVU/#t-0`); await readyPlayer();
@@ -463,9 +465,10 @@ async (page) => {
           if (open) await chatReady();
           await tab.waitForFunction(() => {
             const main = document.querySelector('#main'), prose = main.querySelector('.prose'), sidebar = document.querySelector('#course-navigation'), chat = document.querySelector('#certichat-panel');
-            const box = prose.getBoundingClientRect(), style = getComputedStyle(main), start = getComputedStyle(sidebar).visibility === 'hidden' ? 0 : sidebar.getBoundingClientRect().width;
+            const box = prose.getBoundingClientRect(), style = getComputedStyle(main), start = getComputedStyle(sidebar).visibility === 'hidden' ? 0 : sidebar.getBoundingClientRect().width + 24;
             const end = document.body.getBoundingClientRect().width - (chat.hidden ? 0 : chat.getBoundingClientRect().width + 40);
-            return box.width <= 1200 && Math.abs(box.left + box.width / 2 - ((start + end) / 2 + (parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)) / 2)) < 1;
+            const outerWidth = Math.min(1200, end - 2 * parseFloat(style.getPropertyValue('--course-gutter'))), outerLeft = (end - outerWidth) / 2;
+            return box.width <= outerWidth - start && Math.abs(box.left + box.width / 2 - (outerLeft + (start + outerWidth) / 2 + (parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)) / 2)) < 1;
           });
           const reading = await tab.locator('.prose').evaluate(prose => {
             const box = prose.getBoundingClientRect();
@@ -566,15 +569,18 @@ async (page) => {
       await tab.locator('[data-theme-toggle]').hover();
       const referenceBorder = await tab.locator('[data-theme-toggle]').evaluate(button => getComputedStyle(button).borderTopColor);
       const referenceColor = await tab.locator('[data-theme-toggle]').evaluate(button => getComputedStyle(button).color);
-      await tab.locator('.header-app-link[aria-label="CertiTube"]').hover();
-      assert(await tab.locator('.header-app-link[aria-label="CertiTube"]').evaluate(link => getComputedStyle(link).color) === referenceColor, 'Theme icon hover differs from CertiTube');
+      const currentIcon = tab.locator('.header-app-link[aria-label="CertiTube"]');
+      const selectedStyle = await currentIcon.evaluate(icon => ({ tag: icon.tagName, href: icon.getAttribute('href'), background: getComputedStyle(icon).backgroundColor, color: getComputedStyle(icon).color }));
+      assert(selectedStyle.tag === 'SPAN' && selectedStyle.href === null, 'Current module icon is still a link');
+      await currentIcon.hover();
+      assert(await currentIcon.evaluate(icon => getComputedStyle(icon).backgroundColor === selectedStyle.background && getComputedStyle(icon).color === selectedStyle.color), 'Current module icon changes on hover');
       for (const button of await tab.locator('.certichat-actions > :is(a, button:enabled):visible').all()) {
         await button.hover();
         assert(await button.evaluate(node => getComputedStyle(node).borderTopColor) === referenceBorder, `Chat action hover differs from the theme border in ${theme}`);
-        assert(await button.evaluate(node => getComputedStyle(node.querySelector('svg')).color) === referenceColor, `Chat icon hover differs from CertiTube in ${theme}`);
+        assert(await button.evaluate(node => getComputedStyle(node.querySelector('svg')).color) === referenceColor, `Chat icon hover differs from the theme icon in ${theme}`);
       }
     }
-    checks.push('theme and chat header actions match the CertiTube red border/icon hover in light and dark modes');
+    checks.push('current module icon stays selected while theme and chat header actions match in light and dark modes');
     assert(calls.filter(url => url.endsWith('/chat')).length === 1, 'Navigation sent another chat request');
     assert(errors.length === 0, errors.join('\n'));
     return { passed: true, checks, referenceGeometry, paidCalls: 0, screenshots: 0 };

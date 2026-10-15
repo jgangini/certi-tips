@@ -1,6 +1,13 @@
 import { readStored, writeStored } from "./storage.js";
 import { indexSearchEntry, searchContent, corpusSearchEntries, searchExcerpt } from "./site-search.js";
 
+let resizeTimer;
+addEventListener("resize", () => {
+  document.documentElement.classList.add("is-resizing");
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => document.documentElement.classList.remove("is-resizing"), 120);
+});
+
 const footer = document.querySelector(".site-footer");
 const footerCredit = footer?.querySelector(".footer-credit");
 // Measure one line before hiding the credit; its visibility cannot resize the footer.
@@ -11,6 +18,12 @@ if (footer) new ResizeObserver(() => {
   }
   document.documentElement.style.setProperty("--footer-height", `${footer.getBoundingClientRect().height}px`);
 }).observe(footer, { box: "border-box" });
+
+const courseGroups = document.querySelector(".course-groups");
+if (courseGroups) new ResizeObserver(() => {
+  courseGroups.classList.toggle("is-compact-groups", courseGroups.getBoundingClientRect().width <= 800);
+  document.documentElement.style.setProperty("--course-groups-height", `${courseGroups.getBoundingClientRect().height + 44}px`);
+}).observe(courseGroups, { box: "border-box" });
 
 const course = document.body.dataset.course;
 const heroFlow = document.querySelector("[data-hero-flow]");
@@ -75,7 +88,6 @@ const toggle = document.querySelector(".menu-toggle");
 const navigation = document.querySelector(".sidebar");
 const menuName = navigation?.dataset.menuName || "del curso";
 const courseNavMedia = matchMedia("(max-width: 800px)");
-const compactGroupsMedia = matchMedia("(max-width: 1360px)");
 function syncCourseMenu() {
   if (!toggle || !navigation) return;
   const mobile = courseNavMedia.matches;
@@ -219,24 +231,11 @@ const pathGroups = [...document.querySelectorAll(".path-group")];
 for (const group of pathGroups) group.addEventListener("toggle", () => {
   if (group.open) for (const other of pathGroups) if (other !== group && other.parentElement === group.parentElement) other.open = false;
 });
-const desktopPathNav = document.querySelector(".path-nav");
-const canHoverPathNav = () => matchMedia("(hover: hover) and (min-width: 1101px)").matches;
-desktopPathNav?.addEventListener("pointerover", (event) => {
-  if (!canHoverPathNav() || event.pointerType === "touch") return;
-  const group = event.target.closest(".path-group");
-  if (group?.parentElement === desktopPathNav) group.open = true;
-});
-desktopPathNav?.addEventListener("click", (event) => {
-  if (!canHoverPathNav() || event.detail === 0) return;
-  const summary = event.target.closest("summary");
-  if (summary?.parentElement?.parentElement !== desktopPathNav) return;
-  event.preventDefault();
-  summary.parentElement.open = true;
-});
 pathMenu?.addEventListener("click", (event) => {
   if (event.target.closest("a")) pathMenu.open = false;
 });
 function setDesktopCourseMenu(compact) {
+  if (!navigation) return;
   document.body.classList.toggle("is-compact-nav", compact);
   try { sessionStorage.setItem("certitips:course-nav:compact", String(compact)); } catch { /* Keep the current page usable without storage. */ }
   syncCourseMenu();
@@ -245,18 +244,10 @@ function closeMenu() {
   navigation?.classList.remove("is-open");
   syncCourseMenu();
 }
-pathMenu?.addEventListener("toggle", () => {
-  if (!pathMenu.open) return;
-  if (courseNavMedia.matches) closeMenu();
-  else setDesktopCourseMenu(true);
-});
 toggle?.addEventListener("click", () => {
   if (courseNavMedia.matches) navigation.classList.toggle("is-open");
   else setDesktopCourseMenu(!document.body.classList.contains("is-compact-nav"));
   syncCourseMenu();
-});
-document.querySelector("#main")?.addEventListener("click", () => {
-  if (compactGroupsMedia.matches && !courseNavMedia.matches) setDesktopCourseMenu(true);
 });
 navigation?.addEventListener("click", (event) => {
   if (event.target.closest("a") && navigation.classList.contains("is-open")) {

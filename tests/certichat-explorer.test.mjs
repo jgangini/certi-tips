@@ -58,7 +58,7 @@ test("the explorer is a standalone site page and offers an honest missing-snapsh
   assert.match(loading, /data-graph-trace role="status" hidden><\/p>/);
   assert.doesNotMatch(loading, /class="chat-graph-trace"/);
   const css = readFileSync(new URL("../assets/certichat-explorer.css", import.meta.url), "utf8");
-  assert.match(css, /@media \(max-width: 1360px\)\s*\{\s*\.chat-explorer-page\s*\{\s*grid-template-columns: minmax\(0, 1fr\);\s*\}\s*\.chat-explorer-section\s*\{\s*display: none;\s*\}\s*\}/);
+  assert.match(css, /@media \(max-width: 1023px\)\s*\{\s*\.chat-explorer-page\s*\{\s*grid-template-columns: minmax\(0, 1fr\);\s*\}\s*\.chat-explorer-section\s*\{\s*display: none;\s*\}\s*\}/);
 });
 
 test("the published graph is a faithful static copy of the exported snapshot", () => {

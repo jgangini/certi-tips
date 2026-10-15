@@ -5,8 +5,7 @@ from decimal import Decimal
 import os
 from urllib.parse import urlsplit
 
-MODEL = "qwen/qwen3-235b-a22b-2507"
-CHAT_MODEL = "openai/gpt-5.4"
+MODEL = CHAT_MODEL = "qwen/qwen3.8-max-0902"
 EMBEDDING_MODEL = "openai/text-embedding-3-small"
 
 

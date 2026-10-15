@@ -57,6 +57,7 @@ Elegir el archivo según el cambio y usar una sesión nueva por comprobación:
 
 | Archivo en `scripts/` | Cuándo ejecutarlo |
 | --- | --- |
+| `course-layout-smoke.cjs` | Catálogo independiente, Foundation, SVG y barra fija de grupos; logo/ancho de cursos y estados de menú/chat, DOM sin capturas. Añadir `?compact-check` al preview de la sesión para repetir solo los anchos afectados por controles móviles. |
 | `browser-smoke.cjs` | Portada, Agentic AI, progreso, práctica y repaso. |
 | `ai-foundations-smoke.cjs` | Curso AI Foundations y separación de datos entre cursos. |
 | `governance-smoke.cjs` | CDMP-DMF, tablas móviles y práctica. |

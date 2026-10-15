@@ -13,7 +13,7 @@ from pathlib import Path
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
-from .corpus import (DATASET, SITE, public_url, read_json,
+from .corpus import (DATASET, SITE, digest, public_url, read_json,
                      snapshot_path, supported_fragments, validate_manifest)
 from .graph import current_evidence, graph_trace, node_documents, public_graph, read_graph
 
@@ -118,6 +118,7 @@ async def lifespan(app: FastAPI):
     app.state.sources = read_json(snapshot / "sources.json")
     app.state.graph_generated_at = (read_json(snapshot / "ready.json").get("generatedAt")
                                    or datetime.fromtimestamp((snapshot / "ready.json").stat().st_mtime, timezone.utc).isoformat())
+    app.state.graph_version = digest(version + app.state.graph_generated_at)
     app.state.version, app.state.snapshot = version, snapshot
     stores_lock = (root / "stores.lock").open("a")
     try:
@@ -170,9 +171,10 @@ async def health():
 async def cached_graph():
     # The owning process has one immutable active snapshot; callers hold its graph lock.
     cached = getattr(app.state, "public_graph", None)
-    if cached is None or cached["version"] != app.state.version:
+    version = getattr(app.state, "graph_version", app.state.version)
+    if cached is None or cached["version"] != version:
         nodes, edges = await asyncio.wait_for(read_graph(), timeout=30)
-        cached = public_graph(nodes, edges, app.state.version)
+        cached = public_graph(nodes, edges, version)
         cached["generatedAt"] = getattr(app.state, "graph_generated_at", cached["generatedAt"])
         app.state.node_documents = node_documents(nodes, edges)
         app.state.public_graph = cached

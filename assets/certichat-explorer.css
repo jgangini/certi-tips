@@ -1,6 +1,6 @@
-.certichat-main.home-main { max-width: 1692px; padding-inline: 24px; }
-.chat-explorer-page { --explorer-height: max(460px, calc(100dvh - var(--header) - var(--footer-height) - 40px)); display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 24px; padding-block: 20px; }
-.chat-explorer-section, .certichat-page .certichat-panel { height: var(--explorer-height); min-width: 0; background: var(--paper); border: 1px solid var(--line); border-top: 4px solid var(--red); border-radius: var(--radius); box-shadow: 0 8px 36px var(--shadow); overflow: hidden; }
+.certichat-main.home-main { max-width: calc(var(--content-width) + var(--dock-width) + 3 * var(--layout-gap)); padding-inline: 24px; }
+.chat-explorer-page { --explorer-height: var(--panel-height); display: grid; grid-template-columns: minmax(0, 1fr) var(--dock-width); gap: var(--layout-gap); padding-block: 20px; }
+.chat-explorer-section, .certichat-page .certichat-panel { height: var(--explorer-height); min-width: 0; background: var(--paper); border: 1px solid var(--line); border-top: 4px solid var(--red); border-radius: var(--radius); box-shadow: var(--panel-shadow); overflow: hidden; }
 .chat-explorer-section { display: flex; flex-direction: column; }
 .chat-explorer-section > .certichat-heading { flex-shrink: 0; margin-bottom: 0; }
 .chat-graph-heading h1 { margin: 0; font-size: inherit; font-weight: 650; letter-spacing: inherit; line-height: 1.05; }
@@ -59,7 +59,7 @@
 .chat-graph-status { margin: 8px 16px; padding: 18px; border-radius: 8px; background: var(--hover); }
 .chat-graph-status.is-loading { flex: 1; display: grid; place-items: center; margin: 0; background: none; }
 [data-graph-workspace][hidden], .chat-graph-status[hidden] { display: none; }
-@media (max-width: 1360px) {
+@media (max-width: 1023px) {
   .chat-explorer-page { grid-template-columns: minmax(0, 1fr); }
   .chat-explorer-section { display: none; }
 }
@@ -68,9 +68,12 @@
   .chat-explorer-page { grid-template-columns: minmax(0, 1fr); gap: 16px; padding-block: 16px; }
   .certichat-page .certichat-heading { padding-top: 12px; }
 }
+@media (min-width: 801px) and (max-width: 1023px) {
+  .certichat-main.home-main { padding-inline: var(--frame-left); }
+}
 
 .chat-graph-legend { position: absolute; left: 12px; bottom: 12px; display: flex; gap: 6px; }
 .chat-graph-legend > span { display: inline-flex; align-items: center; gap: 4px; }
 .chat-graph-legend svg { width: 12px; height: 12px; }
-.chat-graph-legend [data-source="tips"] { color: var(--red); border-color: var(--red); }
-.chat-graph-legend [data-source="tube"] { color: var(--blue); border-color: var(--blue); }
+.chat-graph-legend [data-source="tips"] { background: var(--red); border-color: var(--red); color: var(--on-red); }
+.chat-graph-legend [data-source="tube"] { background: #0d65ad; border-color: #0d65ad; color: var(--on-red); }

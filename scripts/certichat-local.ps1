@@ -45,6 +45,7 @@ $values = @{
     CERTICHAT_REFRESH = '6'
     CERTICHAT_QUESTIONS = '20'
     CERTICHAT_INDEX_REFRESH_MINUTES = '5'
+    CERTICHAT_DATA_DIR = '/data/qwen38'
     CERTICHAT_INDEX_BUDGET_USD = '10'
     CERTICHAT_CHAT_BUDGET_USD = '10'
 }
@@ -118,8 +119,9 @@ if ($Test) {
         # A snapshot must be exported after its writer stops; never copy an open Cognee database.
         $importSnapshot = @'
 import tarfile
+import os
 from pathlib import Path, PurePosixPath
-root = Path('/data')
+root = Path(os.environ['CERTICHAT_DATA_DIR'])
 if (root / 'active.json').exists():
     raise SystemExit('A local snapshot is already active; refusing to overwrite it.')
 with tarfile.open('/snapshot.tar') as archive:
@@ -132,6 +134,7 @@ with tarfile.open('/snapshot.tar') as archive:
             raise SystemExit('Unexpected snapshot archive path')
     if not any(member.name == 'active.json' and member.isfile() for member in members):
         raise SystemExit('Snapshot archive has no active index')
+    root.mkdir(parents=True, exist_ok=True)
     archive.extractall(root, members=sorted(members, key=lambda item: item.name == 'active.json'), filter='data')
 '@
         $importFailed = $false

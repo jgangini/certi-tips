@@ -20,7 +20,7 @@ Aprende conceptos, explora diagramas y practica para preparar tus certificacione
 | [Oracle Agentic AI Foundations Associate](https://jgangini.github.io/certitips/1Z0-1157-26/overview/) | `1Z0-1157-26` | Agentes, herramientas, MCP, LangChain y OCI Enterprise AI. |
 | [Data Management Fundamentals](https://jgangini.github.io/certitips/CDMP-DMF/overview/) | `CDMP-DMF` | Las once áreas de DAMA y su aplicación con Oracle Cloud. |
 
-La portada también muestra rutas recomendadas cuya guía está marcada como **próximamente**.
+El [catálogo CertiTips](https://jgangini.github.io/certitips/cursos/) conserva Foundation y el carrusel de especialidades, incluidas las rutas cuya guía está marcada como **próximamente**.
 
 ## Ejecutar localmente
 

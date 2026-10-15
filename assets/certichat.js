@@ -460,6 +460,7 @@ if (root) {
     sessionStorage.removeItem(`${storageKey}:reference`);
   } catch { /* Browsers may disable session storage. */ }
   if (!quizCode && (dock || location.hash === "#certichat" || wasOpen)) launcher.click();
+  document.documentElement.classList.remove("chat-restoring");
   window.addEventListener("pageshow", event => {
     syncQuizLock();
     if (quizCode) refreshQuizLock();

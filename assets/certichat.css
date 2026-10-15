@@ -18,7 +18,7 @@
 .certichat button { font-family: inherit; cursor: pointer; }
 .certichat button:disabled { cursor: default; opacity: .55; }
 .certichat button:focus-visible, .certichat a:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
-.certichat-panel { position: absolute; right: 0; bottom: 0; width: min(420px, calc(100vw - 32px)); height: calc(100dvh - var(--header) - var(--footer-height) - 40px); display: flex; flex-direction: column; overflow: hidden; background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-top: 4px solid var(--red); border-radius: var(--radius); box-shadow: 0 8px 36px var(--shadow); transform-origin: right bottom; }
+.certichat-panel { position: absolute; right: 0; bottom: 0; width: min(420px, calc(100vw - 32px)); height: calc(100dvh - var(--header) - var(--footer-height) - 36px); display: flex; flex-direction: column; overflow: hidden; background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-top: 4px solid var(--red); border-radius: var(--radius); box-shadow: var(--panel-shadow); transform-origin: right bottom; }
 .certichat-panel > :not(.certichat-messages) { flex-shrink: 0; }
 .certichat-heading #certichat-title { display: block; line-height: 1.05; }
 .certichat-actions { display: flex; align-items: center; gap: 8px; padding-top: 3px; }
@@ -41,10 +41,15 @@
 .certichat-messages:empty { display: none; }
 .certichat-messages deep-chat { display: block; width: 100%; height: 100%; min-height: 0; min-width: 0; }
 @media (min-width: 801px) {
-  .course-page .course-main { transition: margin-left 220ms ease, margin-right 360ms cubic-bezier(.22, 1, .36, 1), padding 360ms cubic-bezier(.22, 1, .36, 1); }
-  .course-page:has(.certichat-panel:not([hidden])) .course-main { --chat-space: calc(min(420px, 30vw) + 40px); }
-  .course-page[data-page^="certitube"]:has(.certichat-panel:not([hidden])) .course-main { transition: none; }
-  .course-page .certichat-panel { width: min(420px, 30vw); }
+  .course-page .course-main { transition: width 360ms ease, margin-left 360ms ease, margin-right 360ms ease; }
+  .certichat-panel {
+    position: fixed;
+    inset: calc(var(--header) + 20px) var(--frame-left) auto auto;
+    width: var(--dock-width);
+    height: var(--panel-height);
+  }
+  .certitips-page .certichat-launcher { width: auto; height: auto; padding: 11px 22px; gap: 10px; }
+  .certitips-page .certichat-launcher > span { position: static; width: auto; height: auto; overflow: visible; clip-path: none; white-space: normal; }
 }
 @media (max-width: 800px) {
   .certichat { right: 24px; bottom: calc(var(--footer-height) + 10px); }

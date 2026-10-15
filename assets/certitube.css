@@ -1,4 +1,5 @@
 .tube-player { margin: 0; border: 1px solid var(--line); border-top: 4px solid var(--red); border-radius: var(--radius); overflow: hidden; background: var(--white); }
+.tube-player, .tube-videos { box-shadow: 0 8px 36px var(--shadow); }
 /* ponytail: the noninteractive card receives citation focus; its controls keep keyboard outlines. */
 .tube-player:focus { outline: none; }
 .tube-heading { margin-bottom: 0; }
@@ -21,8 +22,10 @@
 .tube-scroll:disabled { display: none; }
 .tube-summary, .tube-resources, .tube-chapter-description { border-top: 1px solid var(--line); padding: 12px 20px; background: var(--white); color: var(--muted); font-size: .8rem; line-height: 1.5; }
 .tube-summary h2, .tube-resources h2, .tube-chapter-description h3 { margin: 0 0 4px; color: var(--red); font-size: .65rem; font-weight: 750; letter-spacing: 1px; text-transform: uppercase; line-height: 1.6; }
-.tube-summary h2 { position: sticky; top: -12px; z-index: 1; margin: -12px -20px 4px; padding: 12px 20px 4px; background: var(--white); }
-.tube-summary > :first-child, .tube-resources > :first-child, .tube-chapter-description > :first-child { margin-top: 0; }
+.tube-summary { padding-top: 0; }
+.tube-summary h2 { position: sticky; top: 0; z-index: 1; margin: 0 -20px 12px; padding: 12px 20px 4px; background: var(--white); }
+.tube-summary h2::after { content: ""; position: absolute; inset: 100% 0 auto; height: 12px; background: linear-gradient(var(--white), transparent); pointer-events: none; }
+.tube-resources > :first-child, .tube-chapter-description > :first-child { margin-top: 0; }
 .tube-summary > p:first-of-type, .tube-chapter-description > p:first-of-type { margin-top: 0; }
 .tube-summary > :last-child, .tube-resources > :last-child, .tube-chapter-description > :last-child { margin-bottom: 0; }
 .tube-description { overflow: hidden; }
@@ -50,25 +53,19 @@
 .tube-videos a strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; font-size: .85rem; line-height: 1.4; }
 .tube-summary, .tube-description, .tube-resources, .tube-videos ol { scrollbar-color: var(--scrollbar) transparent; scrollbar-width: thin; }
 @media (min-width: 801px) {
-  .tube-player { height: calc(100dvh - var(--header) - var(--footer-height) - 40px); display: flex; flex-direction: column; }
+  .tube-player { height: var(--panel-height); display: flex; flex-direction: column; }
   .tube-player > header, .tube-chapters { flex-shrink: 0; }
   .tube-screen { flex-shrink: 1; min-height: 0; max-height: 40%; }
-  .tube-summary { flex: 0 1 auto; min-height: 0; max-height: 25%; overflow: auto; }
+  .tube-summary { flex: 0 1 auto; min-height: 100px; max-height: 25%; overflow: auto; padding-bottom: 24px; mask-image: linear-gradient(#000 calc(100% - 14px), transparent); }
   .tube-description { flex-shrink: 0; min-height: 0; max-height: 25%; overflow: auto; }
   .tube-resources { flex: 1 0 auto; min-height: 0; overflow: auto; }
   .tube-player:has(.tube-chapters[hidden]) .tube-summary { flex: 1 1 auto; max-height: none; }
   .tube-player:has(.tube-chapters[hidden]) .tube-resources { flex: 0 0 auto; }
 }
-@media (min-width: 1024px) {
-  .course-page[data-page^="certitube"] #main { margin-left: 0; margin-right: 0; padding: 20px 40px; }
-  .tube-detail { max-width: 1200px; margin-inline: auto; }
-  .course-page[data-page^="certitube"]:has(.certichat-panel:not([hidden])) #main { margin-right: 444px; padding-inline: 24px; }
-  .course-page[data-page^="certitube"] .certichat { right: 24px; }
-  .course-page[data-page^="certitube"] .certichat-panel { position: fixed; inset: calc(var(--header) + 20px) max(24px, calc((100vw - 1644px) / 2)) auto auto; width: 420px; height: max(460px, calc(100dvh - var(--header) - var(--footer-height) - 40px)); }
-  .tube-player { height: max(460px, calc(100dvh - var(--header) - var(--footer-height) - 40px)); }
+@media (min-width: 801px) {
+  .course-page[data-page^="certitube"] #main { width: var(--frame-width); margin-left: var(--frame-left); margin-right: 0; padding: 20px 0; }
+  .tube-detail { max-width: var(--content-width); margin-inline: auto; }
 }
-@media (min-width: 1101px) and (max-width: 1200px) { .course-page[data-page^="certitube"]:not(:has(.certichat-panel:not([hidden]))) #main { padding-right: 5vw; } }
-@media (min-width: 1024px) and (max-width: 1100px) { .course-page[data-page^="certitube"]:not(:has(.certichat-panel:not([hidden]))) #main { padding-inline: 32px; } }
 @media (max-width: 1000px) {
   .tube-detail { grid-template-columns: minmax(0, 1fr); }
   .tube-videos { contain: none; }

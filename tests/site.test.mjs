@@ -11,7 +11,7 @@ test('publishes only current pages without course aliases or redirects', async (
   const dist = new URL('../dist/', import.meta.url);
   const pages = globSync('**/*.html', { cwd: dist }).map(file => file.replaceAll('\\', '/'));
   const videos = await loadVideos(fileURLToPath(new URL('../', import.meta.url)), catalog.base);
-  const expected = ['index.html', '404.html', 'certichat/index.html', 'certiquiz/index.html', 'certitube/index.html',
+  const expected = ['index.html', '404.html', 'certichat/index.html', 'certiquiz/index.html', 'certitube/index.html', 'cursos/index.html',
     ...videos.map(video => `${video.publicPath}/index.html`),
     ...catalog.courses.flatMap(course => [...course.modules, ...course.resources].map(page => `${courseRoute(course)}/${page.slug}/index.html`))];
   assert.deepEqual(pages.sort(), expected.sort());

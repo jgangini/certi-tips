@@ -78,7 +78,7 @@ def prepare_request(kind, data, purpose):
         if isinstance(maximum, bool) or not isinstance(maximum, int) or maximum < 1:
             raise ChatError("Límite de respuesta no válido.", 422)
         maximum = min(maximum, 4096)
-        prompt_price, completion_price = ("0.20", "0.80") if purpose == "index" else ("3", "16")
+        prompt_price, completion_price = "2", "6"
         payload = {"model": model, "messages": [{"role": m["role"], "content": m["content"]} for m in messages],
                    "max_tokens": maximum, "stream": False,
                    "provider": {"max_price": {"prompt": float(prompt_price), "completion": float(completion_price), "request": 0}, "data_collection": "deny",
@@ -92,8 +92,7 @@ def prepare_request(kind, data, purpose):
         if purpose == "index":
             payload["temperature"] = 0
             payload["provider"]["sort"] = "throughput"
-        else:
-            payload["reasoning"] = {"effort": "medium", "exclude": True}
+        payload["reasoning"] = {"effort": "medium", "exclude": True}
         tokens = len(encoded(payload)) + 1024 + 32 * len(messages)
         if tokens > (32768 if purpose == "index" else 24000):
             raise ChatError("El contexto supera el límite permitido.", 413)

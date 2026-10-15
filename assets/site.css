@@ -20,13 +20,21 @@
   --code-ink: #a82727;
   --note: #aa2828;
   --shadow: #31333f1c;
+  --panel-shadow: 0 8px 36px var(--shadow);
   --on-red: #fff;
   --chrome-bg: #f1efed;
   --sidebar-width: 272px;
   --sidebar: var(--sidebar-width);
   --header: 76px;
+  --section-nav-height: 44px;
+  --course-groups-height: calc(20px + var(--section-nav-height) + 24px);
   --radius: 12px;
   --footer-height: 110px;
+  --content-width: 1200px;
+  --content-gutter: 40px;
+  --dock-width: 420px;
+  --layout-gap: 24px;
+  --panel-height: max(460px, calc(100dvh - var(--header) - var(--footer-height) - 40px));
 }
 html[data-theme="dark"] {
   color-scheme: dark;
@@ -61,6 +69,9 @@ html {
   scroll-padding-bottom: calc(var(--footer-height) + 16px);
 }
 body {
+  --chat-space: 0px;
+  --frame-left: max(var(--content-gutter), calc((100% - var(--content-width) - var(--chat-space)) / 2));
+  --frame-width: min(var(--content-width), calc(100% - var(--chat-space) - 2 * var(--content-gutter)));
   margin: 0;
   padding-bottom: var(--footer-height);
   color: var(--ink);
@@ -150,7 +161,7 @@ strong {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px 0 36px;
+  padding: 0 max(40px, calc((100% - 1200px) / 2)) 0 36px;
   gap: 12px;
 }
 .brand, .certichat-brand {
@@ -168,12 +179,7 @@ strong {
 .brand:hover {
   color: var(--ink);
 }
-@media (min-width: 1361px) {
-  .home-page:not(.certichat-page) .site-header .brand,
-  .course-page[data-page^="certitube"] .site-header .brand {
-    transform: translateX(max(0px, calc((100vw - 1200px) / 2 - 36px)));
-  }
-}
+.site-header > .brand { margin-right: auto; }
 .brand-accent {
   color: var(--accent);
 }
@@ -191,6 +197,30 @@ strong {
   gap: 5px;
   margin-left: auto;
 }
+.course-groups {
+  position: fixed;
+  top: calc(var(--header) + 20px);
+  left: max(40px, (100% - 1200px) / 2);
+  width: min(1200px, calc(100% - 80px));
+  height: var(--section-nav-height);
+  z-index: 65;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 24px;
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--red);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: var(--panel-shadow);
+}
+.course-breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--muted); white-space: nowrap; }
+.course-breadcrumb a { color: var(--ink); }
+.course-breadcrumb a[aria-current] { text-decoration: none; }
+.has-course-groups #main { margin-top: var(--course-groups-height); }
+.has-course-groups .sidebar { top: calc(var(--header) + var(--course-groups-height)); }
+html:has(.has-course-groups) { scroll-padding-top: calc(var(--header) + var(--course-groups-height) + 24px); }
+.certitips-page .path-section { scroll-margin-top: 0; }
 .path-group {
   position: relative;
 }
@@ -207,6 +237,7 @@ strong {
   cursor: pointer;
   list-style: none;
 }
+.path-nav .path-group summary { min-height: calc(var(--section-nav-height) - 5px); }
 .path-group summary::-webkit-details-marker { display: none; }
 .path-group summary::after {
   content: "";
@@ -218,23 +249,23 @@ strong {
   transform: rotate(45deg);
 }
 .path-group[open] summary::after { transform: rotate(225deg); margin-top: 3px; }
-.path-group summary:hover {
-  background: var(--selected-surface);
-  color: var(--selected-ink);
+.path-group summary:is(:hover, :focus-visible) {
+  background: transparent;
+  color: var(--red);
 }
 .path-nav .path-group[open] > summary {
-  background: var(--selected-surface);
-  color: var(--selected-ink);
+  background: transparent;
+  color: var(--red);
 }
 .path-group-panel a:is(:hover, :focus-visible) {
-  background: var(--selected-surface);
-  color: var(--selected-ink);
+  background: var(--hover);
+  color: var(--ink);
 }
 .path-group-panel {
   position: absolute;
   top: calc(100% + 8px);
-  right: auto;
-  left: 0;
+  right: 0;
+  left: auto;
   width: min(340px, calc(100vw - 24px));
   display: grid;
   gap: 2px;
@@ -249,6 +280,7 @@ strong {
   align-items: center;
   min-height: 44px;
   padding: 9px 12px;
+  border: 1px solid transparent;
   color: var(--ink);
   text-decoration: none;
   border-radius: 6px;
@@ -267,10 +299,6 @@ strong {
   font-size: 0.7rem;
   font-weight: 400;
   white-space: nowrap;
-}
-.path-group-panel a:has(.coming-soon):is(:hover, :focus-visible) {
-  background: var(--hover);
-  color: var(--muted);
 }
 .path-group-panel a:hover .coming-soon,
 .path-group-panel a:focus-visible .coming-soon { visibility: visible; }
@@ -294,6 +322,7 @@ strong {
   color: var(--ink);
   background: var(--paper);
 }
+.course-groups .path-nav-mobile > summary { height: calc(var(--section-nav-height) - 5px); min-height: 0; }
 .path-nav-mobile summary:is(:hover, :focus-visible),
 .path-nav-mobile[open] summary {
   border-color: var(--red);
@@ -303,18 +332,14 @@ strong {
   display: none;
 }
 .path-nav-mobile-panel {
-  position: absolute;
-  top: 100%;
-  left: 0;
+  position: static;
   width: 100%;
-  max-height: calc(100dvh - var(--header) - var(--footer-height));
+  max-height: calc(100dvh - var(--header) - 20px - var(--section-nav-height) - var(--footer-height));
   overflow-y: auto;
   padding: 8px;
-  background: var(--sidebar-bg);
-  border: 1px solid var(--line);
-  border-top: 0;
-  border-radius: 0;
-  box-shadow: 0 14px 32px var(--shadow);
+  background: var(--paper);
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 11px 11px;
 }
 .path-nav-mobile-panel > nav { display: grid; }
 .path-nav-mobile .path-group-panel {
@@ -328,17 +353,6 @@ strong {
   padding: 6px 0 6px 12px;
   margin: 6px 12px 8px;
 }
-.path-nav-mobile .path-group-panel a:is(:hover, :focus-visible) {
-  background: transparent;
-  color: var(--ink);
-  text-decoration: none;
-}
-.path-nav-mobile .path-group-panel a:is(:hover, :focus-visible) .path-title {
-  text-decoration: underline;
-}
-html[data-theme="dark"] .path-nav-mobile .path-group-panel a:is(:hover, :focus-visible) {
-  background: var(--hover);
-}
 .path-nav-mobile .path-group summary {
   border: 0;
   width: 100%;
@@ -347,9 +361,10 @@ html[data-theme="dark"] .path-nav-mobile .path-group-panel a:is(:hover, :focus-v
   background: transparent;
   color: var(--ink);
 }
-.path-nav-mobile .path-group summary:is(:hover, :focus-visible) {
-  background: var(--selected-surface);
-  color: var(--selected-ink);
+.path-nav-mobile .path-group summary:is(:hover, :focus-visible),
+.path-nav-mobile .path-group[open] > summary {
+  background: transparent;
+  color: var(--red);
 }
 .theme-toggle {
   display: inline-flex;
@@ -369,6 +384,7 @@ html[data-theme="dark"] .path-nav-mobile .path-group-panel a:is(:hover, :focus-v
 .theme-toggle:hover { border-color: var(--red); color: var(--red); }
 .header-app-link { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); color: var(--ink); text-decoration: none; }
 .header-app-link:hover { border-color: var(--red); color: var(--red); }
+.header-app-link[aria-current="page"], .header-app-link[aria-current="page"]:hover { border-color: var(--red); background: var(--red); color: #fff; cursor: default; }
 @media (min-width: 481px) and (max-width: 600px) { .site-header .brand > span { display: none; } }
 .site-header .menu-toggle { background: var(--paper); border-radius: 7px; }
 .site-header .menu-toggle:hover { background: var(--paper); border-color: var(--red); color: var(--red); }
@@ -490,7 +506,7 @@ html[data-theme="dark"] .theme-moon { display: none; }
   background: var(--selected-surface);
   color: var(--selected-ink);
 }
-.menu-toggle[aria-expanded="true"] { background: var(--selected-surface); color: var(--selected-ink); }
+.site-header .menu-toggle[aria-expanded="true"] { background: var(--red); border-color: var(--red); color: var(--on-red); }
 .home-main {
   max-width: 1280px;
   margin: auto;
@@ -608,9 +624,10 @@ html[data-theme="dark"] .hero-actions .button-secondary:is(:hover, :focus-visibl
   border-radius: var(--radius);
   background: var(--white);
 }
+.certitips-page .path-section { padding-bottom: 0; box-shadow: var(--panel-shadow); }
 .has-js .path-carousel > .path-section:not(.is-active) { display: none; }
 .path-carousel > .path-section.is-active { animation: group-enter 220ms ease-out both; }
-@keyframes group-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes group-enter { from { opacity: 0; } to { opacity: 1; } }
 .path-section-heading {
   grid-column: 1 / -1;
   grid-row: 1;
@@ -636,7 +653,7 @@ html[data-theme="dark"] .hero-actions .button-secondary:is(:hover, :focus-visibl
   color: var(--muted);
   font-size: 0.78rem;
 }
-.path-carousel { touch-action: pan-y; padding-bottom: 32px; }
+.path-carousel { touch-action: pan-y; padding-bottom: 32px; container-type: inline-size; }
 .group-carousel-controls button {
   display: grid;
   place-items: center;
@@ -654,7 +671,7 @@ html[data-theme="dark"] .hero-actions .button-secondary:is(:hover, :focus-visibl
 .page-navigation-arrow svg { display: block; }
 .group-carousel-controls button:not(:disabled):hover { border-color: var(--red); color: var(--red); }
 .group-carousel-controls button:disabled { opacity: 0.4; }
-@media (max-width: 700px) {
+@container (max-width: 700px) {
   .path-section { grid-template-columns: 1fr; }
   .group-carousel-controls { grid-column: 1; grid-row: 1; justify-self: end; margin-bottom: 16px; }
   .path-section-heading { grid-row: 2; }
@@ -669,7 +686,7 @@ html[data-theme="dark"] .hero-actions .button-secondary:is(:hover, :focus-visibl
 .certification-item {
   counter-increment: certification;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(190px, auto);
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 20px;
   border-top: 1px solid var(--line);
@@ -729,6 +746,10 @@ html[data-theme="dark"] .hero-actions .button-secondary:is(:hover, :focus-visibl
 .certification-actions > a:not(.button) {
   color: var(--muted);
 }
+@container (max-width: 500px) {
+  .certification-item { grid-template-columns: 1fr; gap: 12px; }
+  .certification-actions { align-items: flex-start; text-align: left; }
+}
 .certitips-button:disabled {
   opacity: 1;
   background: var(--hover);
@@ -760,7 +781,7 @@ html[data-theme="dark"] .hero-actions .button-secondary:is(:hover, :focus-visibl
   padding: 26px 18px 0;
   overflow: hidden;
   z-index: 20;
-  transition: left 220ms ease, transform 220ms ease, opacity 180ms ease, visibility 0s linear 0s;
+  transition: left 360ms ease, transform 220ms ease, opacity 180ms ease, visibility 0s linear 0s;
 }
 .sidebar-heading {
   padding: 0 10px;
@@ -869,6 +890,7 @@ progress::-webkit-progress-value {
 .nav-branch[open] > .nav-toggle::after {
   transform: rotate(45deg);
 }
+.nav-branch { interpolate-size: allow-keywords; }
 .nav-link:hover {
   background: var(--hover);
   color: var(--ink);
@@ -913,9 +935,9 @@ progress::-webkit-progress-value {
 .nav-section-link {
   display: flex;
   align-items: center;
-  min-height: 44px;
+  min-height: 36px;
   border-radius: 5px;
-  padding: 10px 8px;
+  padding: 6px 8px;
   color: var(--muted);
   font-size: 0.77rem;
   line-height: 1.5;
@@ -935,11 +957,10 @@ progress::-webkit-progress-value {
   opacity: 0.85;
 }
 .course-page:not([data-page^="certitube"]) {
-  --course-frame-width: 980px;
-  --course-sidebar-offset: max(0px, (100vw - var(--sidebar-width) - var(--course-frame-width)) / 2 - 24px);
+  --course-layout-width: var(--frame-width);
+  --course-sidebar-offset: var(--frame-left);
 }
 .course-main {
-  --chat-space: 0px;
   --reading-width: 1200px;
   --course-frame-width: calc(var(--reading-width) + 80px);
   margin-left: calc(var(--sidebar) + max(0px, (100% - var(--sidebar) - var(--chat-space) - var(--course-frame-width)) / 2));
@@ -950,12 +971,8 @@ progress::-webkit-progress-value {
   transition: margin-left 220ms ease, margin-right 220ms ease;
 }
 .course-page:not([data-page^="certitube"]) .course-main {
-  --reading-width: 900px;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--paper) 78%, transparent), color-mix(in srgb, var(--hover) 68%, transparent));
-  border-radius: 16px;
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
-  backdrop-filter: blur(16px) saturate(160%);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--paper) 72%, transparent), 0 18px 44px rgba(49, 51, 63, .12);
+  --course-frame-width: calc(var(--course-layout-width) - var(--sidebar));
+  --reading-width: 100%;
 }
 .course-main.lesson-main {
   padding-bottom: 16px;
@@ -969,31 +986,63 @@ progress::-webkit-progress-value {
 @media (max-width: 800px) {
   .course-main.lesson-main { padding-bottom: 104px; }
 }
+@media (max-width: 680px) {
+  .site-header .brand > span { display: none; }
+}
 @media (max-width: 480px) {
   .course-main.lesson-main { padding-bottom: 91px; }
 }
 @media (min-width: 801px) {
-  body.course-page:not([data-page^="certitube"]):not(.is-compact-nav) {
-    background-image: linear-gradient(to right, var(--sidebar-bg) 0 var(--course-sidebar-offset), transparent var(--course-sidebar-offset) 100%);
+  body:has(.certichat-panel:not([hidden])), html.chat-restoring body {
+    --chat-space: calc(var(--dock-width) + var(--layout-gap));
+    --content-gutter: 24px;
+  }
+  .site-header { padding-inline: var(--frame-left); transition: padding-left 360ms ease, padding-right 360ms ease; }
+  .home-main:not(.certichat-main) {
+    width: var(--frame-width);
+    max-width: none;
+    margin-left: var(--frame-left);
+    margin-right: 0;
+    padding-inline: 0;
+    transition: width 360ms ease, margin-left 360ms ease;
+  }
+  .course-page:not([data-page^="certitube"]) { --sidebar: calc(var(--sidebar-width) + 24px); }
+  .course-page:not([data-page^="certitube"]) .course-main {
+    margin-left: calc(var(--sidebar) + var(--course-sidebar-offset));
+    margin-right: calc(var(--chat-space) + var(--course-sidebar-offset));
+    max-width: none;
+    padding-inline: 0;
+    transition: margin-left 360ms ease, margin-right 360ms ease;
+  }
+  .course-groups {
+    left: var(--frame-left);
+    width: var(--frame-width);
+    max-width: var(--content-width);
+    transition: left 360ms ease, width 360ms ease;
+  }
+  body.course-page:not([data-page^="certitube"]) {
+    background-image: linear-gradient(var(--sidebar-bg), var(--sidebar-bg));
+    background-size: calc(var(--course-sidebar-offset) + var(--sidebar-width)) 100%;
     background-attachment: fixed;
     background-repeat: no-repeat;
+    transition: background-size 360ms ease;
   }
-  .course-page:not([data-page^="certitube"]):not(.is-compact-nav) .sidebar {
+  body.course-page.is-compact-nav { background-size: 0 100%; }
+  .course-page:not([data-page^="certitube"]) .sidebar {
     left: var(--course-sidebar-offset);
+    padding-left: 0;
+    transition: left 360ms ease, transform 360ms ease, visibility 0s linear 0s;
   }
-  .course-page:not([data-page^="certitube"]) .site-header .brand {
-    transform: translateX(calc(var(--course-sidebar-offset) + 28px - 36px));
-    transition: transform 220ms ease;
-  }
+  .course-page .sidebar-heading { padding-left: 0; }
+  .course-page .course-progress { margin-left: 0; }
+  .course-page .sidebar .nav-label { padding-left: 0; }
   .course-page.is-compact-nav { --sidebar: 0px; }
-  .course-page.is-compact-nav:not([data-page^="certitube"]) .site-header .brand { transform: none; }
   .course-page.is-compact-nav .sidebar {
     left: 0;
     transform: translateX(-100%);
-    opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    transition: transform 220ms ease, opacity 180ms ease, visibility 0s linear 220ms;
+    transition: left 360ms ease, transform 360ms ease, visibility 0s linear 360ms;
   }
 }
 .page-heading {
@@ -1504,10 +1553,12 @@ html:not([data-theme="dark"]) :is(.dialog-content, .dialog-content img) { backgr
 #diagram-viewer.is-presenting .diagram-slide-count.is-visible { opacity: 1; visibility: visible; }
 @media (max-width: 700px) { #diagram-viewer.is-presenting .diagram-presentation-nav { width: 82px; padding: 5px; } .diagram-presentation-group h3 { font-size: .6rem; } }
 @media (max-width: 700px) { .dialog-toolbar #diagram-caption { font-size: .85rem; } }
+html.is-resizing :is(.course-page, .site-header, .home-main, .course-groups, .sidebar, .course-main, .site-footer) { transition: none !important; }
 @media (prefers-reduced-motion: reduce) {
   #diagram-viewer::backdrop { animation: none; }
   .diagram-slide-count, .diagram-presentation-nav { transition: none !important; }
-  .sidebar, .course-main, .course-page .site-footer { transition: none !important; }
+  .site-header, .home-main, .course-groups, .sidebar, .course-main, .course-page .site-footer { transition: none !important; }
+  .course-groups details::details-content, .nav-branch::details-content { transition: none !important; }
 }
 #diagram-viewer[open][aria-describedby] {
   display: flex;
@@ -1889,9 +1940,7 @@ html[data-theme="dark"] .quiz-heading .eyebrow {
 @media (max-width: 1100px) {
   :root {
     --sidebar-width: 240px;
-  }
-  .site-header {
-    padding: 0 20px 0 24px;
+    --content-gutter: 32px;
   }
   .home-main {
     padding: 0 32px;
@@ -1907,21 +1956,40 @@ html[data-theme="dark"] .quiz-heading .eyebrow {
     padding-right: 12px;
   }
 }
-@media (max-width: 1360px) {
-  .path-nav {
+.course-groups.is-compact-groups .path-nav {
     display: none;
-  }
-  .path-nav-mobile {
+}
+.course-groups.is-compact-groups .path-nav-mobile {
     display: block;
-  }
+}
+.course-groups.is-compact-groups { display: block; height: auto; min-height: var(--section-nav-height); padding: 0; interpolate-size: allow-keywords; }
+.course-groups.is-compact-groups details::details-content,
+.nav-branch::details-content {
+    block-size: 0;
+    content-visibility: hidden;
+    overflow: clip;
+    transition: block-size 240ms ease, content-visibility 240ms allow-discrete;
+}
+.course-groups.is-compact-groups details[open]::details-content,
+.nav-branch[open]::details-content { block-size: auto; content-visibility: visible; }
+.course-groups.is-compact-groups .course-breadcrumb { position: relative; z-index: 1; height: calc(var(--section-nav-height) - 5px); padding: 0 24px; pointer-events: none; }
+.course-groups.is-compact-groups .course-breadcrumb a { pointer-events: auto; }
+.course-groups.is-compact-groups > .path-nav-mobile { margin: 0; }
+.course-groups.is-compact-groups > .path-nav-mobile > summary {
+    position: absolute;
+    inset: 0 0 auto;
+    width: 100%;
+    padding: 0 24px;
+    justify-content: flex-end;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
 }
 @media (min-width: 801px) and (max-width: 1200px) {
-  .site-header, .course-main { padding-right: 5vw; }
+  .course-main { padding-right: 5vw; }
 }
 @media (min-width: 801px) and (max-width: 1100px) {
-  .site-header, .course-main { padding-right: 32px; }
-  .course-page:not([data-page^="certitube"]) .site-header .brand { transform: translateX(calc(var(--course-sidebar-offset) + 22px - 24px)); }
-  .course-page.is-compact-nav:not([data-page^="certitube"]) .site-header .brand { transform: none; }
+  .course-main { padding-right: 32px; }
 }
 @media (max-width: 800px) {
   :root {
@@ -1930,13 +1998,6 @@ html[data-theme="dark"] .quiz-heading .eyebrow {
   .site-header {
     padding: 0 24px 0 20px;
     gap: 14px;
-  }
-  .brand {
-    font-size: 1.3rem;
-  }
-  .brand img {
-    width: 31px;
-    height: 31px;
   }
   .search-toggle { justify-content: center; }
   .menu-toggle, .path-nav-mobile > summary, .header-app-link, .search-toggle, .theme-toggle {
@@ -1968,6 +2029,7 @@ html[data-theme="dark"] .quiz-heading .eyebrow {
   .home-main {
     padding: 0 24px;
   }
+  .course-groups { left: 24px; width: calc(100% - 48px); }
   .home-hero {
     grid-template-columns: 1fr;
     padding: 44px 0 50px;
@@ -2014,9 +2076,6 @@ html[data-theme="dark"] .quiz-heading .eyebrow {
   .home-hero h1 {
     font-size: 2.5rem;
   }
-  .brand {
-    font-size: 1.16rem;
-  }
   .brand small {
     display: none;
   }
@@ -2025,6 +2084,8 @@ html[data-theme="dark"] .quiz-heading .eyebrow {
     padding: 0 18px 0 12px;
     gap: 9px;
   }
+  .course-page .site-header { gap: 5px; }
+  .course-groups { left: 20px; width: calc(100% - 40px); }
   .menu-toggle, .path-nav-mobile > summary, .header-app-link, .search-toggle, .theme-toggle {
     width: 31px;
     height: 31px;
@@ -2116,6 +2177,7 @@ html[data-theme="dark"] .quiz-heading .eyebrow {
 }
 @media print {
   .site-header,
+  .course-groups,
   .sidebar,
   .site-footer,
   .complete-button,

@@ -43,17 +43,17 @@ def test_model_price_output_and_encoding_are_enforced():
                                "messages": [{"role": "user", "content": "hola"}], "tools": ["ignored"],
                                "provider": {"max_price": {"prompt": 100}}}, "index")
     assert payload["model"] == MODEL and payload["max_tokens"] == 4096
-    assert "tools" not in payload and payload["provider"]["max_price"] == {"prompt": .2, "completion": .8, "request": 0}
-    assert payload["provider"]["data_collection"] == "deny" and cost > 4096*.8
+    assert "tools" not in payload and payload["provider"]["max_price"] == {"prompt": 2, "completion": 6, "request": 0}
+    assert payload["provider"]["data_collection"] == "deny" and cost > 4096*6
     assert payload["provider"]["sort"] == "throughput" and payload["temperature"] == 0
-    assert "reasoning" not in payload
+    assert payload["reasoning"] == {"effort": "medium", "exclude": True}
     chat, _ = prepare_request("chat/completions", {"model": CHAT_MODEL, "messages": [{"role": "user", "content": "hola"}]}, "chat")
     assert chat["model"] == CHAT_MODEL and payload["model"] == MODEL
-    for purpose, model in (("chat", MODEL), ("index", CHAT_MODEL)):
+    for purpose, model in (("chat", "openai/gpt-5.4"), ("index", "qwen/qwen3-235b-a22b-2507")):
         with pytest.raises(ChatError, match="Modelo no permitido"):
             prepare_request("chat/completions", {"model": model, "messages": [{"role": "user", "content": "hola"}]}, purpose)
-    assert chat["model"] == "openai/gpt-5.4" and "temperature" not in chat
-    assert "sort" not in chat["provider"] and chat["provider"]["max_price"] == {"prompt": 3, "completion": 16, "request": 0}
+    assert chat["model"] == MODEL == "qwen/qwen3.8-max-0902" and "temperature" not in chat
+    assert "sort" not in chat["provider"] and chat["provider"]["max_price"] == {"prompt": 2, "completion": 6, "request": 0}
     assert chat["reasoning"] == {"effort": "medium", "exclude": True}
     payload, cost = prepare_request("embeddings", {"model": "text-embedding-3-small", "input": ["hola"], "encoding_format": "base64"}, "index")
     assert payload["encoding_format"] == "float" and payload["model"] == "openai/text-embedding-3-small" and cost > 0
@@ -68,17 +68,18 @@ def test_model_price_output_and_encoding_are_enforced():
 
 
 @pytest.mark.parametrize("requested,maximum", [(None, 4096), (37, 37), (999999, 4096)])
-def test_reasoning_chat_reserves_the_complete_payload_at_enforced_prices(requested, maximum):
+@pytest.mark.parametrize("purpose", ["chat", "index"])
+def test_reasoning_chat_reserves_the_complete_payload_at_enforced_prices(requested, maximum, purpose):
     messages = [{"role": "system", "content": "Usa evidencia."}, {"role": "user", "content": "¿Qué es una región?"}]
     data = {"model": CHAT_MODEL, "messages": messages, "temperature": 0,
             "reasoning": {"effort": "high", "exclude": False}, "provider": {"max_price": {"prompt": 0}}}
     if requested is not None:
         data["max_tokens"] = requested
-    payload, cost = prepare_request("chat/completions", data, "chat")
-    assert payload["max_tokens"] == maximum and "temperature" not in payload
+    payload, cost = prepare_request("chat/completions", data, purpose)
+    assert payload["max_tokens"] == maximum and ("temperature" in payload) is (purpose == "index")
     assert payload["reasoning"] == {"effort": "medium", "exclude": True}
     tokens = len(provider_module.encoded(payload)) + 1024 + 32 * len(messages)
-    assert cost == int((Decimal(tokens) * 3 + Decimal(maximum) * 16).to_integral_value(rounding=ROUND_CEILING))
+    assert cost == int((Decimal(tokens) * 2 + Decimal(maximum) * 6).to_integral_value(rounding=ROUND_CEILING))
     assert cost <= 137536
 
 
