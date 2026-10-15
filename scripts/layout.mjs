@@ -102,8 +102,8 @@ export function certiquizBody(apiOrigin) {
   return `<section class="certiquiz-app" data-api-origin="${escapeHtml(apiOrigin)}"><template id="certiquiz-rocket">${rocket}</template><div id="app" aria-busy="true"><section class="loading loading-full"><h1>${rocket}<span>Preparando la partida</span></h1><p role="status">Conectando con la sala de práctica.</p></section></div></section>`;
 }
 
-export function notFoundBody(site) {
-  return `<section class="status-page"><section class="loading-full loading-error"><h1>${quizIcon(46)}<span>No encontramos ese apartado.</span></h1><p>Vuelve a la ruta de aprendizaje para continuar.</p><p class="hint">Recarga la página desde tu navegador o pulsa <kbd>F5</kbd> para volver a intentarlo.</p><a class="status-link" href="${site.base}courses/">Ir a CertiTips</a></section></section>`;
+export function notFoundBody() {
+  return `<section class="status-page"><section class="loading-full loading-error"><h1>${quizIcon(46)}<span>Página no encontrada</span></h1><p>La página que buscas no existe o ha cambiado de dirección.</p><p class="hint">Pulsa <kbd>F5</kbd> para volver al inicio.</p></section></section>`;
 }
 
 export function homeBody(site, motionReady = false) {

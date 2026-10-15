@@ -469,6 +469,10 @@
   },
   "overrides": {
     "en": {
+      "Página no encontrada": "Page not found",
+      "La página que buscas no existe o ha cambiado de dirección.": "The page you are looking for does not exist or has moved.",
+      "Pulsa": "Press",
+      "para volver al inicio.": "to return to the home page.",
       "Cuando se necesitan flujos de procesamiento por lotes sin conexión, sin ninguna interacción activa con el usuario ni conversación.": "When offline batch processing is needed, with no active user interaction or conversation.",
       "Ampliar: Tools exponen operaciones, resources aportan contexto y prompts ofrecen plantillas; cada capacidad conserva su patrón de control.": "Learn more: Tools expose operations, resources provide context and prompts offer templates; each capability retains its control pattern.",
       "identifica de forma única un recurso; su nombre visible sirve para reconocerlo, pero no reemplaza ese identificador.": "uniquely identifies a resource; its display name helps you recognize it but does not replace that identifier.",
@@ -622,6 +626,10 @@
       "¿Cómo detectas retrasos, recuperas una versión y atribuyes el gasto?": "How do you detect delays, restore a version and attribute costs?"
     },
     "pt": {
+      "Página no encontrada": "Página não encontrada",
+      "La página que buscas no existe o ha cambiado de dirección.": "A página que você procura não existe ou mudou de endereço.",
+      "Pulsa": "Pressione",
+      "para volver al inicio.": "para voltar à página inicial.",
       "Cuando se necesitan flujos de procesamiento por lotes sin conexión, sin ninguna interacción activa con el usuario ni conversación.": "Quando é necessário processar dados em lotes offline, sem interação ativa com o usuário nem conversa.",
       "Ampliar: Tools exponen operaciones, resources aportan contexto y prompts ofrecen plantillas; cada capacidad conserva su patrón de control.": "Saiba mais: Tools expõem operações, os recursos fornecem contexto e os prompts oferecem modelos; cada capacidade mantém seu padrão de controle.",
       "identifica de forma única un recurso; su nombre visible sirve para reconocerlo, pero no reemplaza ese identificador.": "identifica um recurso de forma única; seu nome de exibição ajuda a reconhecê-lo, mas não substitui esse identificador.",
@@ -823,6 +831,10 @@
       "¿Cómo detectas retrasos, recuperas una versión y atribuyes el gasto?": "Como você detecta atrasos, restaura uma versão e atribui os custos?"
     },
     "it": {
+      "Página no encontrada": "Pagina non trovata",
+      "La página que buscas no existe o ha cambiado de dirección.": "La pagina che cerchi non esiste o è stata spostata.",
+      "Pulsa": "Premi",
+      "para volver al inicio.": "per tornare alla pagina iniziale.",
       "Cuando se necesitan flujos de procesamiento por lotes sin conexión, sin ninguna interacción activa con el usuario ni conversación.": "Quando è necessaria l'elaborazione offline in batch, senza interazione attiva con l'utente né conversazione.",
       "Ampliar: Tools exponen operaciones, resources aportan contexto y prompts ofrecen plantillas; cada capacidad conserva su patrón de control.": "Approfondimento: Tools espongono operazioni, le risorse forniscono contesto e i prompts offrono modelli; ogni capacità mantiene il proprio schema di controllo.",
       "identifica de forma única un recurso; su nombre visible sirve para reconocerlo, pero no reemplaza ese identificador.": "identifica una risorsa in modo univoco; il nome visualizzato aiuta a riconoscerla, ma non sostituisce tale identificatore.",

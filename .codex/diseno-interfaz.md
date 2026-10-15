@@ -1,6 +1,6 @@
 # Diseño de interfaz de CertiTips
 
-- Las páginas inexistentes reutilizan la presentación centrada de carga/error de CertiQuiz: cohete SVG, mensaje y tecla F5, cabecera y pie compartidos y ambos temas. Conservar el estado HTTP 404, la URL solicitada y su idioma también cuando GitHub Pages entregue el `404.html` raíz. El selector cambia únicamente el idioma de esa ruta.
+- Las páginas inexistentes reutilizan la presentación centrada de carga/error de CertiQuiz: cohete SVG, «Página no encontrada», mensaje breve y tecla F5, cabecera y pie compartidos y ambos temas, sin enlace adicional «Ir a CertiTips». Conservar el estado HTTP 404, la URL solicitada y su idioma al entrar, también cuando GitHub Pages entregue el `404.html` raíz. El selector cambia únicamente el idioma de esa ruta. Recargar con F5 o con el botón del navegador lleva al inicio del idioma activo; los errores de servicio de CertiQuiz conservan su reintento.
 
 Aplicar al cambiar componentes compartidos, estilos, navegación, chat y visor. Reutilizar `scripts/layout.mjs`, los módulos del navegador, las variables de tema y los diálogos nativos. El contenido Markdown no define controles ni estilos; los diagramas tienen su propia guía en [diagram-design.md](diagram-design.md).
 

@@ -211,8 +211,8 @@ await save(
   layout({
     site: { ...site, certichat: null },
     course: site.courses[0],
-    page: { slug: "404", title: "Página no encontrada", description: "No encontramos ese apartado." },
-    body: notFoundBody(site),
+    page: { slug: "404", title: "Página no encontrada", description: "La página que buscas no existe o ha cambiado de dirección." },
+    body: notFoundBody(),
   }),
 );
 await localizeSite(root, output, site, preparing);

@@ -30,7 +30,8 @@ async (page) => {
             return {
               lang: document.documentElement.lang,
               theme: document.documentElement.dataset.theme || 'light',
-              title: heading.textContent,
+              title: heading.querySelector("span").textContent,
+              extraLink: Boolean(card.querySelector("a")),
               centered: getComputedStyle(card).justifyContent === 'center' && Math.abs((bounds.top + bounds.bottom) / 2 - (header.bottom + footer.top) / 2) < 3,
               overflow: document.documentElement.scrollWidth > innerWidth,
               f5: card.querySelector('kbd')?.textContent,
@@ -46,17 +47,27 @@ async (page) => {
           check(state.centered && !state.overflow, `${label}: centered responsive layout`);
           check(state.f5 === 'F5' && state.robots === 'noindex' && !state.sidebar && !state.game, `${label}: error semantics`);
           check(state.links.every(link => link.href === `${root}${link.locale}/missing-status-check/nested/?room=ABC123#section`), `${label}: equivalent language links`);
-          if (locale !== 'es') check(!state.title.includes('No encontramos'), `${label}: translated heading`);
+          check(state.title === { es: 'Página no encontrada', en: 'Page not found', pt: 'Página não encontrada', it: 'Pagina non trovata' }[locale] && !state.extraLink, `${label}: standard heading without extra link`);
           if (width === 375 && theme === 'dark') {
             await page.reload();
-            await page.waitForFunction(locale => document.body.dataset.locale === locale, locale);
-            check(page.url() === url, `${label}: reload preserves URL`);
+            await page.waitForURL(`${root}${locale}/`);
+            check(await page.locator('.home-hero').count() === 1, `${label}: reload returns to localized home`);
           }
           cases++;
         }
       }
     }
-    if (pagesFallback) await page.unroute(missing);
+    if (pagesFallback) {
+      for (const locale of ['es', 'en', 'pt', 'it']) {
+        await page.goto(`${root}/${locale}/missing-status-check/?room=ABC123#section`);
+        await page.waitForFunction(locale => document.body.dataset.locale === locale, locale);
+        await page.reload();
+        await page.waitForURL(`${root}${locale}/`);
+        check(await page.locator('.home-hero').count() === 1, `Pages/${locale}: extra slash still returns to localized home`);
+        cases++;
+      }
+      await page.unroute(missing);
+    }
   }
   for (const locale of ['es', 'en', 'pt', 'it']) {
     for (const width of [375, 1315]) {

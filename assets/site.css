@@ -2392,5 +2392,4 @@ html[data-theme="dark"] .quiz-heading .eyebrow {
 .status-page .loading-full h1 { line-height: 1.08; letter-spacing: -.045em; margin: 14px 0 20px; }
 .status-page p { color: var(--muted); overflow-wrap: anywhere; }
 .status-page .hint { font-size: 13px; margin-top: 7px; }
-.status-page .status-link { margin-top: 24px; text-underline-offset: 4px; }
 @media (prefers-reduced-motion: reduce) { .status-page .loading-full h1 svg { animation: none; } }
