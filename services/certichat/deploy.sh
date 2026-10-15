@@ -43,6 +43,15 @@ for name, default in (('CERTICHAT_INDEX_BUDGET_USD', '10'), ('CERTICHAT_CHAT_BUD
     if not value.is_finite() or not 0 < value <= 1000000 or value.normalize().as_tuple().exponent < -2:
         raise SystemExit(f'{name} must be a positive USD amount up to 1000000 with at most two decimal places.')
     production[name] = format(value, 'f')
+for name, default in (('CERTICHAT_INDEX_MODEL', 'anthropic/claude-haiku-5.5'),
+                      ('CERTICHAT_CHAT_MODEL', 'openai/gpt-5.4'),
+                      ('CERTICHAT_INDEX_REASONING', 'high'), ('CERTICHAT_CHAT_REASONING', 'medium'),
+                      ('CERTICHAT_INDEX_MAX_TOKENS', '16384'), ('CERTICHAT_CHAT_MAX_TOKENS', '8192'),
+                      ('CERTICHAT_DATA_DIR', '/data/claude55-haiku')):
+    value = os.environ.get(name, existing.get(name, default)).strip("'\"")
+    if any(char not in 'abcdefghijklmnopqrstuvwxyz0123456789/._-' for char in value) or not value:
+        raise SystemExit(f'Invalid model/index setting: {name}')
+    production[name] = value
 lines = [line for line in env.read_text().splitlines() if line.split('=', 1)[0].strip() not in production]
 lines.extend(f"{name}='{value}'" for name, value in values.items() if name not in existing)
 lines.extend(f"{name}='{value}'" for name, value in production.items())

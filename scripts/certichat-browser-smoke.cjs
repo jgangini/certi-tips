@@ -5,7 +5,7 @@ async (page) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   const assert = (condition, message) => { if (!condition) throw new Error(message); };
   const calls = [], requests = [], errors = [], responses = new Map();
-  const answer = '<img src="https://evil.invalid/leak" onerror="alert(1)">\n![imagen](https://evil.invalid/) [enlace](javascript:alert(1))\nLos agentes utilizan herramientas y consultan las guías para resolver una tarea. Revisa las fuentes de esta respuesta para ampliar los conceptos y practicar con los ejemplos publicados en el sitio.';
+  const answer = '<img src="https://evil.invalid/leak" onerror="alert(1)">\n![imagen](https://evil.invalid/) [enlace](javascript:alert(1))\nLos agentes utilizan herramientas y consultan las guías para resolver una tarea. Revisa las fuentes de esta respuesta para ampliar los conceptos y practicar con los ejemplos publicados en el sitio.\n\n1. **DAMA**\n2. `OCI`';
   const guideURL = 'https://jgangini.github.io/certitips/1Z0-1157-26/agents/#conceptos-clave';
   const guidePath = new URL(guideURL).pathname + new URL(guideURL).hash;
   let quota = { remaining: 20, limit: 20, refreshHours: 6, resetAt: null, minuteRemaining: 2, retryAfter: 0 };
@@ -56,7 +56,7 @@ async (page) => {
   });
   await page.goto(base);
   await page.evaluate(() => sessionStorage.clear());
-  await page.evaluate(() => localStorage.setItem('certichat:https://jgangini.github.io/certitips/', JSON.stringify({updatedAt: Date.now(), messages: [{role: 'ai', text: '[Usar modelos con tus datos en OCI · Ejemplo paso a paso con todas las referencias y detalles de la guía](https://jgangini.github.io/certitips/CDMP-DMF/overview/)\n[Video](https://jgangini.github.io/certitips/certitube/Ha74VhpQwQo/#t-61)'}]})));
+  await page.evaluate(() => localStorage.setItem('certichat:https://jgangini.github.io/certitips/', JSON.stringify({updatedAt: Date.now(), messages: [{role: 'ai', text: '***Conceptos***\n\n1. **DAMA**\n2. `OCI`\n\n[Usar modelos con tus datos en OCI · Ejemplo paso a paso con todas las referencias y detalles de la guía](https://jgangini.github.io/certitips/CDMP-DMF/overview/)\n[Video](https://jgangini.github.io/certitips/certitube/Ha74VhpQwQo/#t-61)'}]})));
   await page.reload();
   await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
   await page.waitForFunction(() => document.querySelector('deep-chat') && document.querySelector('.certichat-connecting').hidden);
@@ -64,6 +64,8 @@ async (page) => {
   assert(await page.locator('[data-chat-verification]').isHidden(), 'Preview retains an empty verification block');
   assert(!requests.some(url => /turnstile|certichat\.cloudtechnext/.test(url)), 'Preview attempted a production connection');
   assert(await page.locator('[data-chat-retry]').isHidden(), 'Preview offers a retry that cannot work');
+  assert(await page.locator('deep-chat .ai-message strong').first().textContent() === 'Conceptos' && await page.locator('deep-chat .ai-message ol li strong').textContent() === 'DAMA' && await page.locator('deep-chat .ai-message code').textContent() === 'OCI', 'Restored Markdown is shown as literal markers');
+  assert(await page.locator('deep-chat .ai-message ol').evaluate(list => parseFloat(getComputedStyle(list).paddingInlineStart) < 30 && getComputedStyle(list).listStyleType === 'decimal'), 'Chat list indentation wastes reading width or hides numbering');
   const restoredIcons = await page.locator('deep-chat .ai-message a').evaluateAll(links => links.map(link => ({kind: link.dataset.linkKind, mask: getComputedStyle(link, '::before').maskImage, color: getComputedStyle(link, '::before').backgroundColor, size: getComputedStyle(link, '::before').width, content: getComputedStyle(link, '::before').content})));
   assert(restoredIcons.length === 2 && restoredIcons[0].mask.includes('certitips-course.svg') && restoredIcons[1].mask.includes('certitube.svg'), 'Restored answers do not use the referenced SVGs');
   assert(restoredIcons.every(icon => icon.size === '16px' && icon.content === '""') && restoredIcons[0].color === restoredIcons[1].color, 'Link icons lack compact size or the resource foreground color');
@@ -163,7 +165,7 @@ async (page) => {
   await page.waitForFunction(expected => {
     const chat = document.querySelector('deep-chat');
     const text = [...chat.shadowRoot.querySelectorAll('.ai-message')].at(-1)?.textContent || '';
-    return text.length > 2 && text.length < expected.length / 2 && expected.replace(/\n/g, '').startsWith(text) && !chat.validateInput('Otra consulta');
+    return text.length > 2 && text.length < expected.length / 2 && expected.replace(/\s/g, '').startsWith(text.replace(/\s/g, '')) && !chat.validateInput('Otra consulta');
   }, answer);
   assert(await page.locator('[data-chat-clear]').isDisabled(), 'Clear is enabled while the answer is streaming');
   assert(await page.locator('deep-chat .ai-message').last().evaluate(element => element.classList.contains('streamed-message')), 'The native streaming state does not suppress link icons');
@@ -185,6 +187,7 @@ async (page) => {
   assert(await submit.count() === 1, 'Submit name lost after response');
   assert(await page.locator('[data-chat-sources]').count() === 0, 'Removed sources block is still present');
   assert(!(await page.locator('deep-chat img, deep-chat script, deep-chat a[href*="evil.invalid"], deep-chat a[href^="javascript:"]').count()), 'Messages rendered unsafe active content');
+  assert(await page.locator('deep-chat .ai-message ol li strong').textContent() === 'DAMA' && await page.locator('deep-chat .ai-message code').textContent() === 'OCI', 'New answers do not render Markdown');
   assert(await page.locator('deep-chat .ai-message a').getAttribute('href') === guidePath, 'A sourced answer requires an exact question phrase to show its guide link');
   assert(!requests.some(url => url.includes('evil.invalid')), 'Message caused external resource request');
   const sent = calls.find(item => item.path === '/api/chat');
@@ -281,7 +284,7 @@ async (page) => {
   await page.waitForFunction(expected => {
     const chat = document.querySelector('deep-chat');
     const text = [...chat.shadowRoot.querySelectorAll('.ai-message')].at(-1)?.textContent || '';
-    return text.length > 2 && text.length < expected.length / 2 && expected.replace(/\n/g, '').startsWith(text) && !chat.validateInput('Otra consulta');
+    return text.length > 2 && text.length < expected.length / 2 && expected.replace(/\s/g, '').startsWith(text.replace(/\s/g, '')) && !chat.validateInput('Otra consulta');
   }, answer);
   await page.reload();
   await waitForReady();
@@ -316,7 +319,7 @@ async (page) => {
     if (width <= 800) {
       assert(Math.abs(geometry.left) < 1 && Math.abs(geometry.top) < 1 && Math.abs(geometry.right - geometry.viewport) < 1 && Math.abs(geometry.bottom - geometry.height) < 1, `Mobile panel is not fullscreen at ${width}`);
       assert(geometry.border === '0px' && geometry.radius === '0px' && geometry.overflow === 'hidden', `Mobile panel keeps borders or background scrolling at ${width}`);
-    } else assert(geometry.left >= 0 && geometry.right <= width && Math.abs(geometry.top - geometry.header - 24) < 1 && Math.abs(geometry.footer - geometry.bottom - 16) < 1, `Desktop panel does not fill the space between header and footer at ${width}×${height}`);
+    } else assert(geometry.left >= 0 && geometry.right <= width && Math.abs(geometry.top - geometry.header - 20) < 1 && Math.abs(geometry.bottom - geometry.top - Math.max(460, geometry.footer - geometry.header - 40)) < 1, `Desktop panel does not follow the shared frame at ${width}×${height}`);
   }
   await page.getByRole('button', { name: 'Cerrar CertiChat', exact: true }).press('Escape');
   await page.locator('#certichat-panel').waitFor({ state: 'hidden' });
@@ -416,5 +419,5 @@ async (page) => {
   await waitForReady();
   assert(calls.filter(item => item.path === '/api/chat').length === exhaustedCalls + 1, 'Renewed allowance did not submit exactly one question');
   assert(errors.length === 0, `Page errors: ${errors.join('; ')}`);
-  return { checks: ['lazy local bundle', 'home answer hover has no graph selection border or tab stop', 'offline opens without banner or unsolicited error', 'offline Enter returns local feedback without API call', 'named submit and keyboard activation', 'Shift+Enter newline', 'incremental streaming locks repeated submit and clear', 'safe plaintext with verified guide links on every sourced answer', 'guide links retain anchors and the open conversation', 'removed sources block stays absent', 'API contract', 'countdown only for exhausted allowance; input and submit block until expiry', 'minute rate limit does not exhaust the six-hour allowance', 'completed streaming history persists across navigation and reload without automatic submission', 'cancel preserves conversation', 'confirmed clear persists and preserves quota', 'errors inside chat and retry visibility', 'idempotent transport retry after reload', 'reload during streaming preserves UUID and avoids another generation', 'definitive failure retry', 'mobile fullscreen and desktop geometry', 'launcher visibility and close controls', 'Escape focus', 'unavailable answers locally without Turnstile or chat call', 'missing Turnstile fails closed with local feedback', 'Turnstile server handshake', 'dark theme', 'completion control coexistence'], requests: calls.length, errors };
+  return { checks: ['lazy local bundle', 'home answer hover has no graph selection border or tab stop', 'offline opens without banner or unsolicited error', 'offline Enter returns local feedback without API call', 'named submit and keyboard activation', 'Shift+Enter newline', 'incremental streaming locks repeated submit and clear', 'safe Markdown with compact lists and verified guide links in new and restored answers', 'guide links retain anchors and the open conversation', 'removed sources block stays absent', 'API contract', 'countdown only for exhausted allowance; input and submit block until expiry', 'minute rate limit does not exhaust the six-hour allowance', 'completed streaming history persists across navigation and reload without automatic submission', 'cancel preserves conversation', 'confirmed clear persists and preserves quota', 'errors inside chat and retry visibility', 'idempotent transport retry after reload', 'reload during streaming preserves UUID and avoids another generation', 'definitive failure retry', 'mobile fullscreen and desktop geometry', 'launcher visibility and close controls', 'Escape focus', 'unavailable answers locally without Turnstile or chat call', 'missing Turnstile fails closed with local feedback', 'Turnstile server handshake', 'dark theme', 'completion control coexistence'], requests: calls.length, errors };
 }

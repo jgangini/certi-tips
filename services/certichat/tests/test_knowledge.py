@@ -182,7 +182,8 @@ def test_current_page_precedes_graph_results_with_existing_source_limit(tmp_path
 
 
 @pytest.mark.parametrize("fresh", [True, False])
-def test_chat_page_includes_published_navigation_only_while_its_hash_matches(tmp_path, monkeypatch, fresh):
+@pytest.mark.parametrize("navigation_url", [SITE, SITE + "cursos/"])
+def test_chat_page_includes_published_navigation_only_while_its_hash_matches(tmp_path, monkeypatch, fresh, navigation_url):
     documents = [{"id": "home", "title": "Oferta y rutas", "courseId": "site", "url": SITE,
                   "text": "Curso publicado: Fundamentos. Curso futuro: Diseño."},
                  {"id": "guide", "title": "Guía", "courseId": "course", "url": SITE + "guide/#concept",
@@ -193,6 +194,7 @@ def test_chat_page_includes_published_navigation_only_while_its_hash_matches(tmp
                               {"hash": digest(doc["text"])} for doc in documents]}
     if not fresh:
         manifest["documents"][0]["hash"] = digest("Nueva oferta publicada")
+    manifest["documents"][0]["url"] = navigation_url
     atomic_json(tmp_path / "latest.json", manifest)
     monkeypatch.setattr(knowledge.app, "state", SimpleNamespace(
         root=tmp_path, token="test-token", snapshot=tmp_path, version="a"*64, sources=sources, manifest=manifest, lock=asyncio.Lock()))

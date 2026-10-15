@@ -13,17 +13,23 @@ $archive = Join-Path ([IO.Path]::GetTempPath()) "certichat-$id.tar.gz"
 $remoteArchive = "/tmp/certichat-$id.tar.gz"
 $target = "$User@$SshHost"
 $options = @('-i', $KeyPath, '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'ConnectTimeout=10', '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=3')
-$parameters = @{ CERTICHAT_REFRESH = '6'; CERTICHAT_QUESTIONS = '20'; CERTICHAT_INDEX_REFRESH_MINUTES = '5'; CERTICHAT_INDEX_BUDGET_USD = '10'; CERTICHAT_CHAT_BUDGET_USD = '10' }
-$maximums = @{ CERTICHAT_REFRESH = 24; CERTICHAT_QUESTIONS = 100; CERTICHAT_INDEX_REFRESH_MINUTES = 15 }
+$parameters = @{ CERTICHAT_REFRESH = '6'; CERTICHAT_QUESTIONS = '20'; CERTICHAT_INDEX_REFRESH_MINUTES = '5'; CERTICHAT_INDEX_BUDGET_USD = '10'; CERTICHAT_CHAT_BUDGET_USD = '10'; CERTICHAT_INDEX_MODEL = 'anthropic/claude-haiku-5.5'; CERTICHAT_CHAT_MODEL = 'openai/gpt-5.4'; CERTICHAT_INDEX_REASONING = 'high'; CERTICHAT_CHAT_REASONING = 'medium'; CERTICHAT_INDEX_MAX_TOKENS = '16384'; CERTICHAT_CHAT_MAX_TOKENS = '8192'; CERTICHAT_DATA_DIR = '/data/claude55-haiku' }
+$maximums = @{ CERTICHAT_REFRESH = 24; CERTICHAT_QUESTIONS = 100; CERTICHAT_INDEX_REFRESH_MINUTES = 15; CERTICHAT_INDEX_MAX_TOKENS = 16384; CERTICHAT_CHAT_MAX_TOKENS = 8192 }
 $privateFile = Join-Path $repo '.private/certichat.env'
 if (Test-Path -LiteralPath $privateFile) {
     foreach ($line in [IO.File]::ReadAllLines($privateFile)) {
-        if ($line -match '^\s*(CERTICHAT_REFRESH|CERTICHAT_QUESTIONS|CERTICHAT_INDEX_REFRESH_MINUTES|CERTICHAT_INDEX_BUDGET_USD|CERTICHAT_CHAT_BUDGET_USD)\s*=\s*(.*?)\s*$') {
+        if ($line -match '^\s*([A-Z_]+)\s*=\s*(.*?)\s*$' -and $parameters.ContainsKey($Matches[1])) {
             $name, $value = $Matches[1], $Matches[2]
             if ($value.Length -ge 2 -and $value[0] -in @("'", '"') -and $value[-1] -eq $value[0]) { $value = $value.Substring(1, $value.Length - 2) }
             if ($maximums.ContainsKey($name)) {
-                if ($value -notmatch '^[0-9]{1,3}$' -or [int]$value -lt 1 -or [int]$value -gt $maximums[$name]) { throw "$name must be an integer from 1 to $($maximums[$name])." }
+                if ($value -notmatch '^[0-9]{1,5}$' -or [int]$value -lt 1 -or [int]$value -gt $maximums[$name]) { throw "$name must be an integer from 1 to $($maximums[$name])." }
                 $value = ([int]$value).ToString()
+            } elseif ($name.EndsWith('_MODEL')) {
+                if ($value -cne $parameters[$name]) { throw "Unreviewed model: $name" }
+            } elseif ($name.EndsWith('_REASONING')) {
+                if ($value -cnotin @('medium', 'high')) { throw "$name must be medium or high." }
+            } elseif ($name -eq 'CERTICHAT_DATA_DIR') {
+                if ($value -cnotmatch '^/data(/[a-z0-9_-]+)?$') { throw 'The index root must be /data or one named child.' }
             } elseif ($value -notmatch '^\d{1,7}(?:\.\d{1,2})?$' -or [decimal]::Parse($value, [Globalization.CultureInfo]::InvariantCulture) -le 0 -or [decimal]::Parse($value, [Globalization.CultureInfo]::InvariantCulture) -gt 1000000) {
                 throw "$name must be a positive USD amount up to 1000000 with at most two decimal places."
             }
@@ -147,7 +153,7 @@ if ! mv "$stage" "$app"; then
 fi
 promoted=true
 if [ "$had_previous" = true ]; then mv "$app/.predeploy.dump" "$backup/certichat.dump"; fi
-CERTICHAT_REFRESH=__REFRESH__ CERTICHAT_QUESTIONS=__QUESTIONS__ CERTICHAT_INDEX_REFRESH_MINUTES=__INDEX_REFRESH__ CERTICHAT_INDEX_BUDGET_USD=__INDEX_BUDGET__ CERTICHAT_CHAT_BUDGET_USD=__CHAT_BUDGET__ CERTICHAT_PUBLISH_PROXY=__PUBLISH_PROXY__ bash "$app/services/certichat/deploy.sh" </dev/null
+__PARAMETERS__ CERTICHAT_PUBLISH_PROXY=__PUBLISH_PROXY__ bash "$app/services/certichat/deploy.sh" </dev/null
 if [ "$had_previous" = true ]; then
   echo "CertiChat release completed. Previous release preserved at $backup"
 else
@@ -155,7 +161,7 @@ else
 fi
 '@
 $remote = $remote.Replace('__ARCHIVE__', $remoteArchive).Replace('__ID__', $id).Replace('__PUBLISH_PROXY__', $(if ($SkipProxy) { 'false' } else { 'true' })).Replace("`r", '')
-$remote = $remote.Replace('__REFRESH__', $parameters.CERTICHAT_REFRESH).Replace('__QUESTIONS__', $parameters.CERTICHAT_QUESTIONS).Replace('__INDEX_REFRESH__', $parameters.CERTICHAT_INDEX_REFRESH_MINUTES).Replace('__INDEX_BUDGET__', $parameters.CERTICHAT_INDEX_BUDGET_USD).Replace('__CHAT_BUDGET__', $parameters.CERTICHAT_CHAT_BUDGET_USD)
+$remote = $remote.Replace('__PARAMETERS__', (($parameters.Keys | Sort-Object | ForEach-Object { "$_='$($parameters[$_])'" }) -join ' '))
 Invoke-Checked { $remote | & $ssh @options $target 'tr -d "\r" | bash -s' }
 Remove-Item -LiteralPath $archive
 Write-Output 'CertiChat deployed; public content synchronization uses the systemd timer.'

@@ -1,11 +1,37 @@
 from dataclasses import replace
 from decimal import Decimal
+import os
+import subprocess
+import sys
 
 from fastapi import Response
 import pytest
 
 from app.security import COOKIE, LOCAL_COOKIE, cookie_name, network_digest, new_token, set_cookie, token_digest
 from app.settings import Settings
+
+
+def test_model_environment_reaches_gateway_and_rejects_unpriced_or_invalid_configuration():
+    check = '''
+from app.settings import Settings, MODEL, CHAT_MODEL
+from app.provider import prepare_request
+Settings("postgresql://test/test", "a"*32, "b"*32, "c"*32, "d"*32, "e"*32).validate()
+for purpose, model, maximum in (("index", MODEL, 1024), ("chat", CHAT_MODEL, 4096)):
+    payload, _ = prepare_request("chat/completions", {"model": model, "messages": [{"role": "user", "content": "hola"}]}, purpose)
+    assert payload["max_tokens"] == maximum
+    assert payload["reasoning"] == {"effort": "high", "exclude": True}
+'''
+    env = {**os.environ, "CERTICHAT_INDEX_MODEL": "anthropic/claude-haiku-5.5",
+           "CERTICHAT_CHAT_MODEL": "openai/gpt-5.4", "CERTICHAT_INDEX_REASONING": "high",
+           "CERTICHAT_CHAT_REASONING": "high", "CERTICHAT_INDEX_MAX_TOKENS": "1024",
+           "CERTICHAT_CHAT_MAX_TOKENS": "4096"}
+    result = subprocess.run([sys.executable, "-c", check], env=env, capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    for name, value in (("CERTICHAT_INDEX_MODEL", "unpriced"), ("CERTICHAT_CHAT_MODEL", "unpriced"),
+                        ("CERTICHAT_CHAT_REASONING", "low"), ("CERTICHAT_INDEX_REASONING", "low"),
+                        ("CERTICHAT_INDEX_MAX_TOKENS", "16385"), ("CERTICHAT_CHAT_MAX_TOKENS", "0")):
+        result = subprocess.run([sys.executable, "-c", check], env={**env, name: value}, capture_output=True, text=True)
+        assert result.returncode != 0, name
 
 
 def test_session_and_network_identity():

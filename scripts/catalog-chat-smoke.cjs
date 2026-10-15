@@ -48,7 +48,7 @@ async page => {
     return samples;
   }, selector);
   try {
-    await tab.goto(new URL('cursos/', base).href);
+    await tab.goto(new URL('courses/', base).href);
     await tab.bringToFront();
     for (const theme of ['light', 'dark']) {
       if ((await tab.locator('html').getAttribute('data-theme') === 'dark') !== (theme === 'dark')) await tab.locator('[data-theme-toggle]').click();

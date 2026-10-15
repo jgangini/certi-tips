@@ -99,6 +99,14 @@ function syncCourseMenu() {
 if (toggle && navigation) {
   syncCourseMenu();
   courseNavMedia.addEventListener("change", () => { navigation.classList.remove("is-open"); syncCourseMenu(); });
+  const main = document.querySelector(".course-main"), chat = document.querySelector("#certichat-panel");
+  if (main && chat) {
+    const observer = new ResizeObserver(() => requestAnimationFrame(() => {
+      if (!courseNavMedia.matches && !chat.hidden && !document.body.classList.contains("is-compact-nav") && main.getBoundingClientRect().width < chat.offsetWidth) setDesktopCourseMenu(true);
+    }));
+    observer.observe(main);
+    observer.observe(chat);
+  }
 }
 const pathMenu = document.querySelector(".path-nav-mobile");
 const themeToggle = document.querySelector("[data-theme-toggle]");
@@ -236,6 +244,7 @@ pathMenu?.addEventListener("click", (event) => {
 });
 function setDesktopCourseMenu(compact) {
   if (!navigation) return;
+  if (compact && navigation.contains(document.activeElement)) toggle?.focus({ preventScroll: true });
   document.body.classList.toggle("is-compact-nav", compact);
   try { sessionStorage.setItem("certitips:course-nav:compact", String(compact)); } catch { /* Keep the current page usable without storage. */ }
   syncCourseMenu();
@@ -391,7 +400,7 @@ async function showSlide(index) {
   if (description) description.textContent = item.caption;
   filmstrip.querySelectorAll("button").forEach((button, position) => button.setAttribute("aria-current", String(position === index)));
   const selected = filmstrip.querySelector('[aria-current="true"]');
-  if (selected) filmstrip.scrollTop = selected.offsetTop - filmstrip.offsetTop - (filmstrip.clientHeight - selected.clientHeight) / 2;
+  if (selected) filmstrip.scrollTo({ top: selected.offsetTop - filmstrip.offsetTop - (filmstrip.clientHeight - selected.clientHeight) / 2, behavior: reduceViewerMotion.matches ? "instant" : "smooth" });
   if (!reduceViewerMotion.matches && image.animate) image.animate([{ opacity: 0, transform: "translateX(18px)" }, { opacity: 1, transform: "none" }], { duration: 260, easing: "ease-out" });
   slideCount.textContent = `${index + 1}/${gallery.length}`;
   slideCount.classList.add("is-visible");
@@ -452,7 +461,7 @@ present.addEventListener("click", async () => {
   const current = gallery.findIndex(item => new URL(item.src, location.href).href === dialog.querySelector(".dialog-content img").src);
   await showSlide(Math.max(0, current));
 });
-dialog.querySelector(".dialog-content img").addEventListener("click", () => {
+dialog.querySelector(".dialog-content").addEventListener("click", () => {
   if (dialog.classList.contains("is-presenting")) {
     if (filmstrip.classList.contains("is-open")) { slideToken++; setPresentationMenu(false); }
     else showSlide(slideIndex + 1);
@@ -512,6 +521,8 @@ dialog
   .querySelector("[data-close-diagram]")
   .addEventListener("click", closeViewer);
 dialog.addEventListener("click", (event) => {
-  if (event.target === dialog) closeViewer();
+  if (event.target !== dialog) return;
+  if (filmstrip.classList.contains("is-open")) { slideToken++; setPresentationMenu(false); }
+  else closeViewer();
 });
 dialog.addEventListener("cancel", event => { event.preventDefault(); closeViewer(); });

@@ -13,9 +13,10 @@ from pathlib import Path
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
-from .corpus import (DATASET, SITE, digest, public_url, read_json,
+from .corpus import (DATASET, digest, public_url, read_json,
                      snapshot_path, supported_fragments, validate_manifest)
 from .graph import current_evidence, graph_trace, node_documents, public_graph, read_graph
+from .settings import INDEX_MAX_TOKENS
 
 
 def configure_cognee(snapshot: Path, token: str) -> None:
@@ -32,7 +33,7 @@ def configure_cognee(snapshot: Path, token: str) -> None:
         "GRAPH_DATABASE_PROVIDER": "ladybug", "ENABLE_BACKEND_ACCESS_CONTROL": "true",
         "KUZU_BUFFER_POOL_SIZE": "536870912", "KUZU_NUM_THREADS": "2",
         "LLM_PROVIDER": "custom", "LLM_MODEL": "openai/certichat-extract",
-        "LLM_ENDPOINT": endpoint, "LLM_API_KEY": token, "LLM_MAX_COMPLETION_TOKENS": "4096",
+        "LLM_ENDPOINT": endpoint, "LLM_API_KEY": token, "LLM_MAX_COMPLETION_TOKENS": str(INDEX_MAX_TOKENS),
         "LLM_RATE_LIMIT_ENABLED": "true", "LLM_RATE_LIMIT_REQUESTS": "60",
         "EMBEDDING_PROVIDER": "openai", "EMBEDDING_MODEL": "openai/text-embedding-3-small",
         "EMBEDDING_ENDPOINT": endpoint, "EMBEDDING_API_KEY": token,
@@ -222,11 +223,11 @@ async def retrieve(body: Retrieval, authorization: str = Header(default="")):
             raise HTTPException(503, "Knowledge retrieval unavailable") from None
     # Re-read after search so removals published during retrieval are excluded too.
     latest = validate_manifest(read_json(latest_path))
-    # The published root describes site navigation; both it and the current page obey source/freshness limits.
+    # The stable home ID supplies navigation even when its public URL moves; freshness still applies.
     current = {doc["id"]: doc for doc in latest["documents"]}
     page_context = [{"kind": "segment", "document_name": name}
                     for name, source in app.state.sources.items()
-                    if source["id"] in current and current[source["id"]]["url"] in (SITE, body.pageUrl)]
+                    if source["id"] in current and (source["id"] == "home" or current[source["id"]]["url"] == body.pageUrl)]
     fragments = supported_fragments(page_context + evidence, app.state.sources, latest)
     # Unrelated edits must not hide valid evidence; accepted fragments already exclude stale content.
     documents = getattr(app.state, "node_documents", {})

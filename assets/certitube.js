@@ -80,11 +80,12 @@ function trackPlayback(root, player, moments, duration, external) {
 
 export function mountPlayer(root) {
   const external = root.querySelector("[data-tube-external]"), status = root.querySelector("[data-tube-status]"), message = root.querySelector("[data-tube-message]");
+  const spinner = root.querySelector("[data-tube-loading]");
   const duration = Number(root.dataset.duration), videoId = root.dataset.videoId;
   const moments = new Map([...document.querySelectorAll("[data-tube-time]")].map(link => [Number(link.dataset.tubeTime), { seconds: Number(link.dataset.tubeTime), label: link.querySelector("span").textContent }]));
   let player, playback, ready = false, pending, wanted = false, failed = false;
   const inform = (text, link = false) => { message.textContent = text; status.hidden = !text; external.hidden = !link; };
-  const fallback = text => { clearTimeout(loading); playback?.stop(); failed = true; inform(text, true); };
+  const fallback = text => { clearTimeout(loading); spinner.hidden = true; playback?.stop(); failed = true; inform(text, true); };
   const loading = setTimeout(() => fallback("YouTube está tardando en responder. Puedes abrir el video con el enlace."), 20000);
 
   function playMoment() {
@@ -116,7 +117,7 @@ export function mountPlayer(root) {
 
   const events = {
     onReady(event) {
-      clearTimeout(loading); failed = false;
+      clearTimeout(loading); spinner.hidden = true; failed = false;
       player = event.target; ready = true;
       playback = trackPlayback(root, player, moments, duration, external);
       player.getIframe().title = "Video del caso en YouTube";
@@ -135,7 +136,6 @@ export function mountPlayer(root) {
   });
   window.addEventListener("pagehide", () => { if (ready) player.pauseVideo(); });
   fromHash();
-  inform("Preparando el reproductor…");
   loadYouTube().then(YT => {
     player = new YT.Player("tube-youtube", {
       videoId, width: "100%", height: "100%",

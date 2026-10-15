@@ -2,7 +2,7 @@
 @media (min-width: 1101px) and (max-width: 1200px) { .course-page .certichat { right: 5vw; } }
 @media (min-width: 801px) and (max-width: 1100px) { .course-page .certichat { right: 32px; } }
 @media (min-width: 801px) and (max-width: 1380px) { .home-page[data-page="home"] .path-carousel { padding-bottom: 84px; } }
-@media (max-width: 1580px) {
+@media (max-width: 800px) {
   .home-page .certichat-launcher { width: 48px; height: 48px; padding: 0; gap: 0; }
   .home-page .certichat-launcher > span { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
@@ -21,20 +21,16 @@
 .certichat-panel { position: absolute; right: 0; bottom: 0; width: min(420px, calc(100vw - 32px)); height: calc(100dvh - var(--header) - var(--footer-height) - 36px); display: flex; flex-direction: column; overflow: hidden; background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-top: 4px solid var(--red); border-radius: var(--radius); box-shadow: var(--panel-shadow); transform-origin: right bottom; }
 .certichat-panel > :not(.certichat-messages) { flex-shrink: 0; }
 .certichat-heading #certichat-title { display: block; line-height: 1.05; }
-.certichat-actions { display: flex; align-items: center; gap: 8px; padding-top: 3px; }
-.certichat-actions :is(button, a) { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 19px; width: 19px; height: 19px; padding: 0; border: 1px solid var(--line); border-radius: 4px; }
-.certichat-actions :is(button, a)::after { content: ""; position: absolute; inset: -3px; }
+.certichat-actions { display: flex; align-items: center; gap: 8px; }
+.certichat-actions :is(button, a) { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 31px; height: 31px; padding: 4px; border: 1px solid var(--line); border-radius: 7px; }
+.certichat-actions svg { width: 17px; height: 17px; }
 .certichat-actions :is(button, a):not(.warning) { background: var(--paper); color: var(--ink); }
 .certichat-actions :is(button:enabled, a):hover { border-color: var(--red); color: var(--red); }
-.certichat-actions svg { width: 12px; height: 12px; }
-.certichat-actions [data-chat-close] svg { width: 10px; height: 10px; }
 .certichat .chat-clear-toast { position: fixed; z-index: 80; top: calc(var(--header) + 16px); right: 24px; width: min(420px, calc(100vw - 48px)); margin: 0; padding: 14px 44px 14px 18px; box-shadow: 0 8px 36px var(--shadow); }
 .certichat .chat-clear-toast > button { position: absolute; top: 7px; right: 7px; display: grid; place-items: center; width: 28px; height: 28px; padding: 4px; border: 1px solid transparent; border-radius: 4px; background: transparent; color: inherit; }
 .certichat .chat-clear-toast > button:hover { border-color: currentColor; }
 .certichat .chat-clear-toast > button svg { width: 16px; height: 16px; }
 .certichat-connecting { flex: 1; min-height: 0; display: grid; place-items: center; }
-.certichat-spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid var(--line); border-top-color: var(--red); border-radius: 50%; animation: certichat-spin .8s linear infinite; }
-@keyframes certichat-spin { to { transform: rotate(360deg); } }
 .certichat-verification { padding: 0 12px; }
 .certichat-verification:empty { display: none; }
 .certichat-messages { min-height: 0; min-width: 0; flex: 1; display: flex; overflow: hidden; }
@@ -56,8 +52,8 @@
   .course-page .certichat { bottom: calc(var(--footer-height) + 30px); }
   .certichat-actions > a { display: none; }
   .certichat .certichat-launcher { width: 44px; height: 44px; min-height: 44px; padding: 0; }
-  body:not(.certichat-page):not([data-page^="certitube/"]):has(.certichat-panel:not([hidden])) { overflow: hidden; }
-  body:not(.certichat-page):not([data-page^="certitube/"]):has(.certichat-panel:not([hidden])) > :not(.certichat), body:not(.certichat-page):not([data-page^="certitube/"]):has(.certichat-panel:not([hidden])) > :not(.certichat) * { visibility: hidden !important; }
+  body:not(.certichat-page):has(.certichat-panel:not([hidden])) { overflow: hidden; }
+  body:not(.certichat-page):has(.certichat-panel:not([hidden])) > :not(.certichat), body:not(.certichat-page):has(.certichat-panel:not([hidden])) > :not(.certichat) * { visibility: hidden !important; }
   .certichat-panel { position: fixed; inset: var(--chat-top, 0px) auto auto var(--chat-left, 0px); width: var(--chat-width, 100%); height: var(--chat-height, 100dvh); padding-bottom: env(safe-area-inset-bottom); border: 0; border-radius: 0; box-shadow: none; }
   .certichat-heading { padding-top: max(12px, env(safe-area-inset-top)); }
 }

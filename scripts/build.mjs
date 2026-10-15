@@ -161,7 +161,7 @@ for (const course of site.courses) {
     });
   }
 }
-knowledge.push({ id: "home", title: "CertiTips · Rutas de aprendizaje", url: `${site.origin}${site.base}cursos/`, courseId: "site", text: site.paths.map(group => `${group.title}\n${group.description}\n${group.items.map(item => `${item.title}: ${item.description}${item.guide ? "" : " (guía próximamente)"}`).join("\n")}`).join("\n\n") });
+knowledge.push({ id: "home", title: "CertiTips · Rutas de aprendizaje", url: `${site.origin}${site.base}courses/`, courseId: "site", text: site.paths.map(group => `${group.title}\n${group.description}\n${group.items.map(item => `${item.title}: ${item.description}${item.guide ? "" : " (guía próximamente)"}`).join("\n")}`).join("\n\n") });
 const tubeCourse = { id: "site", route: "certitube", title: "CertiTube", modules: [], resources: [], description: "Explora proyectos de inteligencia artificial y Oracle Cloud. Comprende el caso y reproduce cada momento de la demostración." };
 if (!site.videos.length) await save("certitube/index.html", layout({ site, course: tubeCourse, page: { slug: "certitube", title: "CertiTube", description: "No hay videos publicados todavía." }, body: "<p>No hay videos publicados todavía.</p>" }));
 for (const video of site.videos) {
@@ -189,8 +189,8 @@ await save(
   }),
 );
 await save(
-  "cursos/index.html",
-  layout({ site, course: site.courses[0], page: { slug: "cursos", title: "Cursos", description: "Elige tu ruta de aprendizaje, desde Foundation hasta tu especialidad." }, body: coursesBody(site) }),
+  "courses/index.html",
+  layout({ site, course: site.courses[0], page: { slug: "courses", title: "Cursos", description: "Elige tu ruta de aprendizaje, desde Foundation hasta tu especialidad." }, body: coursesBody(site) }),
 );
 await save(
   "certiquiz/index.html",

@@ -11,10 +11,12 @@ test('publishes only current pages without course aliases or redirects', async (
   const dist = new URL('../dist/', import.meta.url);
   const pages = globSync('**/*.html', { cwd: dist }).map(file => file.replaceAll('\\', '/'));
   const videos = await loadVideos(fileURLToPath(new URL('../', import.meta.url)), catalog.base);
-  const expected = ['index.html', '404.html', 'certichat/index.html', 'certiquiz/index.html', 'certitube/index.html', 'cursos/index.html',
+  const expected = ['index.html', '404.html', 'certichat/index.html', 'certiquiz/index.html', 'certitube/index.html', 'courses/index.html',
     ...videos.map(video => `${video.publicPath}/index.html`),
     ...catalog.courses.flatMap(course => [...course.modules, ...course.resources].map(page => `${courseRoute(course)}/${page.slug}/index.html`))];
   assert.deepEqual(pages.sort(), expected.sort());
+  const corpus = JSON.parse(readFileSync(new URL('assets/certichat/corpus.json', dist), 'utf8'));
+  assert.equal(corpus.documents.find(document => document.id === 'home').url, `${catalog.origin}${catalog.base}courses/`);
   if (videos.length) assert.equal(readFileSync(new URL('certitube/index.html', dist), 'utf8'), readFileSync(new URL(`${videos[0].publicPath}/index.html`, dist), 'utf8'));
   for (const file of pages) assert.doesNotMatch(readFileSync(new URL(file, dist), 'utf8'), /http-equiv=["']refresh["']/i, file);
 });

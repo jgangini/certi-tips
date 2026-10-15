@@ -10,6 +10,14 @@ x-hardened: &hardened
     driver: json-file
     options: {max-size: 10m, max-file: "3"}
 
+x-models: &models
+  CERTICHAT_INDEX_MODEL: ${CERTICHAT_INDEX_MODEL:-anthropic/claude-haiku-5.5}
+  CERTICHAT_CHAT_MODEL: ${CERTICHAT_CHAT_MODEL:-openai/gpt-5.4}
+  CERTICHAT_INDEX_REASONING: ${CERTICHAT_INDEX_REASONING:-high}
+  CERTICHAT_CHAT_REASONING: ${CERTICHAT_CHAT_REASONING:-medium}
+  CERTICHAT_INDEX_MAX_TOKENS: ${CERTICHAT_INDEX_MAX_TOKENS:-16384}
+  CERTICHAT_CHAT_MAX_TOKENS: ${CERTICHAT_CHAT_MAX_TOKENS:-8192}
+
 services:
   api:
     <<: *hardened
@@ -17,6 +25,7 @@ services:
     build: {context: ., dockerfile: services/certichat/Dockerfile, target: runtime}
     command: [uvicorn, app.main:app, --host, 0.0.0.0, --port, "8000", --workers, "1", --proxy-headers, --forwarded-allow-ips, "${CERTICHAT_TRUSTED_PROXY_IPS:-127.0.0.1}", --limit-concurrency, "64", --no-access-log, --no-server-header, --timeout-graceful-shutdown, "50"]
     environment:
+      <<: *models
       CERTICHAT_MODE: ${CERTICHAT_MODE:-VPS}
       CERTICHAT_REFRESH: ${CERTICHAT_REFRESH:-6}
       CERTICHAT_QUESTIONS: ${CERTICHAT_QUESTIONS:-20}
@@ -53,6 +62,7 @@ services:
     build: {context: ., dockerfile: services/certichat/Dockerfile, target: knowledge}
     command: [uvicorn, app.knowledge:app, --host, 0.0.0.0, --port, "8001", --workers, "1", --limit-concurrency, "64", --no-access-log, --no-server-header, --timeout-graceful-shutdown, "45"]
     environment:
+      <<: *models
       CERTICHAT_CHAT_INTERNAL_TOKEN: ${CERTICHAT_CHAT_INTERNAL_TOKEN:?Generate the private chat token}
       CERTICHAT_DATA_DIR: ${CERTICHAT_DATA_DIR:-/data}
     volumes: [knowledge_data:/data]
@@ -75,6 +85,7 @@ services:
     entrypoint: [python, -m, app.indexer]
     command: [build]
     environment:
+      <<: *models
       CERTICHAT_INDEX_INTERNAL_TOKEN: ${CERTICHAT_INDEX_INTERNAL_TOKEN:?Generate the private index token}
       CERTICHAT_DATA_DIR: ${CERTICHAT_DATA_DIR:-/data}
     volumes: [knowledge_data:/data]

@@ -24,9 +24,12 @@ def test_deployment_forces_vps_and_preserves_private_credentials(tmp_path):
     names = ("CERTICHAT_MODE", "CERTICHAT_PUBLIC_ORIGIN", "CERTICHAT_ALLOWED_ORIGINS",
              "CERTICHAT_TURNSTILE_HOSTNAME", "CERTICHAT_SECURE_COOKIES", "CERTICHAT_PORT",
              "CERTICHAT_REFRESH", "CERTICHAT_QUESTIONS", "CERTICHAT_INDEX_REFRESH_MINUTES",
-             "CERTICHAT_INDEX_BUDGET_USD", "CERTICHAT_CHAT_BUDGET_USD")
+             "CERTICHAT_INDEX_BUDGET_USD", "CERTICHAT_CHAT_BUDGET_USD",
+             "CERTICHAT_INDEX_MODEL", "CERTICHAT_CHAT_MODEL", "CERTICHAT_INDEX_REASONING",
+             "CERTICHAT_CHAT_REASONING", "CERTICHAT_INDEX_MAX_TOKENS", "CERTICHAT_CHAT_MAX_TOKENS", "CERTICHAT_DATA_DIR")
     expected = ("VPS", "https://certichat.cloudtechnext.net", "https://jgangini.github.io",
-                "jgangini.github.io", "true", "18741", "12", "42", "7", "12.50", "9.25")
+                "jgangini.github.io", "true", "18741", "12", "42", "7", "12.50", "9.25",
+                "anthropic/claude-haiku-5.5", "openai/gpt-5.4", "high", "medium", "16384", "8192", "/data/claude55-haiku")
     script = tmp_path / "deploy-config.sh"
     script.write_text(setup + "\nprintf '%s\\n' " + " ".join(f'"${{{name}}}"' for name in names) + "\n")
     private = tmp_path / "services/certichat/.env"
@@ -38,7 +41,11 @@ def test_deployment_forces_vps_and_preserves_private_credentials(tmp_path):
                        "CERTICHAT_POSTGRES_RUNTIME_PASSWORD='preserved-runtime'\n")
     env = {**os.environ, **dict.fromkeys(names, "LOCAL"), "CERTICHAT_REFRESH": "12", "CERTICHAT_QUESTIONS": "42",
            "CERTICHAT_INDEX_REFRESH_MINUTES": "7",
-           "CERTICHAT_INDEX_BUDGET_USD": "12.50", "CERTICHAT_CHAT_BUDGET_USD": "9.25"}
+           "CERTICHAT_INDEX_BUDGET_USD": "12.50", "CERTICHAT_CHAT_BUDGET_USD": "9.25",
+           "CERTICHAT_INDEX_MODEL": "anthropic/claude-haiku-5.5", "CERTICHAT_CHAT_MODEL": "openai/gpt-5.4",
+           "CERTICHAT_INDEX_REASONING": "high", "CERTICHAT_CHAT_REASONING": "medium",
+           "CERTICHAT_INDEX_MAX_TOKENS": "16384", "CERTICHAT_CHAT_MAX_TOKENS": "8192",
+           "CERTICHAT_DATA_DIR": "/data/claude55-haiku"}
     for _ in range(2):
         result = subprocess.run(["bash", str(script)], env=env, capture_output=True, text=True, timeout=15)
         assert result.returncode == 0, result.stderr

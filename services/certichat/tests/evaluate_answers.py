@@ -168,7 +168,7 @@ async def evaluate(output_path, case=None):
     settings.validate()
     manifest = validate_manifest(json.loads(await download(MANIFEST_URL, 2_000_000)))
     documents = validate_corpus(await download(CORPUS_URL, 16_000_000), manifest)
-    navigation = "\n".join(doc["text"] for doc in documents if doc["url"] == settings.site_url)
+    navigation = "\n".join(doc["text"] for doc in documents if doc["id"] == "home")
     published = {name.removesuffix(".txt"): source for name, source in segments(documents).items()}
     report = {"started_at": datetime.now(timezone.utc).isoformat(), "corpus_version": manifest["contentHash"],
               "cost_scope": "Reported answer generation only; retrieval embeddings also use the persisted budget but are not included here.",

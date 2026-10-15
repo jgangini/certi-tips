@@ -4,10 +4,11 @@
 .tube-player:focus { outline: none; }
 .tube-heading { margin-bottom: 0; }
 .tube-heading strong, .tube-videos header strong { display: block; line-height: 1.05; }
-.tube-screen { width: 100%; aspect-ratio: 16 / 9; min-height: 200px; background: #111; }
+.tube-screen { position: relative; width: 100%; aspect-ratio: 16 / 9; min-height: 200px; background: #111; }
 .tube-screen > * { display: block; width: 100%; height: 100%; border: 0; }
+.tube-screen .tube-loading { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
 .tube-player [hidden] { display: none; }
-.tube-player [role="status"] { margin: 0; padding: 10px 16px; color: var(--muted); }
+.tube-player [data-tube-status] { margin: 0; padding: 10px 16px; color: var(--muted); }
 .tube-chapters { display: flex; align-items: center; gap: 6px; padding: 0 8px; border-top: 1px solid var(--line); }
 .tube-chapter-list { display: flex; flex: 1; min-width: 0; gap: 6px; margin: 6px 0; padding: 2px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
 .tube-chapter-list::-webkit-scrollbar { display: none; }
@@ -35,10 +36,6 @@
 .tube-resources li, .tube-resources a { color: var(--ink); }
 .tube-resources a { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .tube-resources a:hover { color: var(--red); }
-@media (max-width: 800px) {
-  body[data-page^="certitube/"]:has(.certichat-panel:not([hidden])) .course-main { padding-bottom: calc(40dvh + 80px); }
-  body[data-page^="certitube/"] .certichat .certichat-panel { inset: auto 16px max(calc(var(--footer-height) + 10px), calc(100dvh - var(--chat-top, 0px) - var(--chat-height, 100dvh) + 8px)); width: calc(100% - 32px); height: min(40dvh, 360px); max-height: calc(var(--chat-height, 100dvh) - var(--footer-height) - 24px); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 8px 36px var(--shadow); }
-}
 .course-page[data-page^="certitube"] { --sidebar: 0px; }
 .course-page[data-page^="certitube"] :is(.course-main, .prose) { max-width: none; }
 .tube-detail { display: grid; grid-template-columns: minmax(0, 1fr) clamp(300px, 30%, 360px); gap: 24px; align-items: start; }
@@ -46,11 +43,11 @@
 .tube-videos > header { flex-shrink: 0; }
 .tube-videos ol { flex: 1; min-height: 0; list-style: none; padding: 8px; margin: 0; overflow: auto; scroll-snap-type: y proximity; }
 .tube-videos li { scroll-snap-align: start; }
-.tube-videos a { display: flex; gap: 10px; padding: 8px; margin-bottom: 8px; border: 1px solid transparent; border-radius: 7px; background: var(--hover); color: var(--ink); text-decoration: none; }
+.tube-videos a { display: flex; gap: 10px; padding: 8px; margin-bottom: 8px; border: 1px solid transparent; border-radius: 7px; background: var(--hover); color: var(--ink); font-size: .85rem; line-height: 1.4; text-decoration: none; }
 .tube-videos a:hover, .tube-videos a:focus-visible { border-color: var(--red); }
 .tube-videos img { flex-shrink: 0; width: clamp(120px, 45%, 144px); height: auto; aspect-ratio: 16 / 9; align-self: flex-start; border-radius: 5px; background: var(--hover); }
 .tube-videos a > span { min-width: 0; align-self: center; }
-.tube-videos a strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; font-size: .85rem; line-height: 1.4; }
+.tube-videos a strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
 .tube-summary, .tube-description, .tube-resources, .tube-videos ol { scrollbar-color: var(--scrollbar) transparent; scrollbar-width: thin; }
 @media (min-width: 801px) {
   .tube-player { height: var(--panel-height); display: flex; flex-direction: column; }
@@ -69,6 +66,10 @@
 @media (max-width: 1000px) {
   .tube-detail { grid-template-columns: minmax(0, 1fr); }
   .tube-videos { contain: none; }
-  .tube-videos ol { display: flex; scroll-snap-type: x proximity; }
-  .tube-videos li { flex: 0 0 280px; }
+  .tube-videos > header { display: none; }
+  .tube-videos ol { display: flex; gap: 8px; padding: 8px 16px; scroll-padding-inline: 16px; scroll-snap-type: x proximity; }
+  .tube-videos li { flex: 0 0 280px; margin: 0; }
+  .tube-videos a { margin-bottom: 0; }
+  .tube-videos img { width: auto; height: 2lh; }
+  .tube-videos a strong { -webkit-line-clamp: 2; }
 }

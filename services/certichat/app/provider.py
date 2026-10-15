@@ -9,7 +9,7 @@ import anyio
 import httpx
 
 from .security import ChatError
-from .settings import CHAT_MODEL, EMBEDDING_MODEL, MODEL
+from .settings import CHAT_MAX_TOKENS, CHAT_MODEL, CHAT_REASONING, EMBEDDING_MODEL, INDEX_MAX_TOKENS, INDEX_REASONING, MODEL
 
 REFUSAL = "No dispongo de información suficiente para responder esa consulta."
 SYSTEM = """Eres CertiChat, asistente en español del sitio CertiTips. Toda explicación factual o técnica debe basarse exclusivamente en los fragmentos proporcionados y usar kind grounded.
@@ -74,11 +74,12 @@ def prepare_request(kind, data, purpose):
                 or any(not isinstance(message, dict) or message.get("role") not in ("system", "user", "assistant")
                        or not isinstance(message.get("content"), str) for message in messages)):
             raise ChatError("Mensajes internos no válidos.", 422)
-        maximum = data.get("max_tokens", data.get("max_completion_tokens", 4096))
+        ceiling = INDEX_MAX_TOKENS if purpose == "index" else CHAT_MAX_TOKENS
+        maximum = data.get("max_tokens", data.get("max_completion_tokens", ceiling))
         if isinstance(maximum, bool) or not isinstance(maximum, int) or maximum < 1:
             raise ChatError("Límite de respuesta no válido.", 422)
-        maximum = min(maximum, 4096)
-        prompt_price, completion_price = "2", "6"
+        maximum = min(maximum, ceiling)
+        prompt_price, completion_price = ("0.1", "0.5") if purpose == "index" else ("2.5", "15")
         payload = {"model": model, "messages": [{"role": m["role"], "content": m["content"]} for m in messages],
                    "max_tokens": maximum, "stream": False,
                    "provider": {"max_price": {"prompt": float(prompt_price), "completion": float(completion_price), "request": 0}, "data_collection": "deny",
@@ -90,9 +91,8 @@ def prepare_request(kind, data, purpose):
                 raise ChatError("Formato de respuesta no válido.", 422)
             payload["response_format"] = response_format
         if purpose == "index":
-            payload["temperature"] = 0
-            payload["provider"]["sort"] = "throughput"
-        payload["reasoning"] = {"effort": "medium", "exclude": True}
+            payload["provider"].update(sort="throughput", only=["anthropic"], allow_fallbacks=False)
+        payload["reasoning"] = {"effort": INDEX_REASONING if purpose == "index" else CHAT_REASONING, "exclude": True}
         tokens = len(encoded(payload)) + 1024 + 32 * len(messages)
         if tokens > (32768 if purpose == "index" else 24000):
             raise ChatError("El contexto supera el límite permitido.", 413)
@@ -119,7 +119,7 @@ class Provider:
                 response = await client.post(f"https://openrouter.ai/api/v1/{kind}", json=payload,
                                                  headers={"Authorization": f"Bearer {self.settings.openrouter_api_key}",
                                                           "HTTP-Referer": self.settings.site_url, "X-Title": "CertiChat"},
-                                                 timeout=35 if purpose == "chat" else 90)
+                                                 timeout=35 if purpose == "chat" else 300)
                 response.raise_for_status()
                 result = response.json()
                 if not isinstance(result, dict):

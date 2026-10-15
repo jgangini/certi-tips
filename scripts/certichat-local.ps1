@@ -45,9 +45,15 @@ $values = @{
     CERTICHAT_REFRESH = '6'
     CERTICHAT_QUESTIONS = '20'
     CERTICHAT_INDEX_REFRESH_MINUTES = '5'
-    CERTICHAT_DATA_DIR = '/data/qwen38'
+    CERTICHAT_DATA_DIR = '/data/claude55-haiku'
     CERTICHAT_INDEX_BUDGET_USD = '10'
     CERTICHAT_CHAT_BUDGET_USD = '10'
+    CERTICHAT_INDEX_MODEL = 'anthropic/claude-haiku-5.5'
+    CERTICHAT_CHAT_MODEL = 'openai/gpt-5.4'
+    CERTICHAT_INDEX_REASONING = 'high'
+    CERTICHAT_CHAT_REASONING = 'medium'
+    CERTICHAT_INDEX_MAX_TOKENS = '16384'
+    CERTICHAT_CHAT_MAX_TOKENS = '8192'
 }
 if ($Test) {
     # Isolated tmpfs database and dummy values: local tests cannot consume the real OpenRouter key.
@@ -64,10 +70,20 @@ if ($Test) {
         CERTICHAT_DATABASE_URL = 'postgresql://unused:unused@unused/unused'
     }
 } else {
-    $private = Read-PrivateValues (Join-Path $repo '.private/certichat.env') @('CERTICHAT_MODE', 'OPENROUTER_API_KEY', 'CERTICHAT_REFRESH', 'CERTICHAT_QUESTIONS', 'CERTICHAT_INDEX_REFRESH_MINUTES', 'CERTICHAT_INDEX_BUDGET_USD', 'CERTICHAT_CHAT_BUDGET_USD')
+    $private = Read-PrivateValues (Join-Path $repo '.private/certichat.env') @('CERTICHAT_MODE', 'OPENROUTER_API_KEY', 'CERTICHAT_REFRESH', 'CERTICHAT_QUESTIONS', 'CERTICHAT_INDEX_REFRESH_MINUTES', 'CERTICHAT_INDEX_BUDGET_USD', 'CERTICHAT_CHAT_BUDGET_USD', 'CERTICHAT_INDEX_MODEL', 'CERTICHAT_CHAT_MODEL', 'CERTICHAT_INDEX_REASONING', 'CERTICHAT_CHAT_REASONING', 'CERTICHAT_INDEX_MAX_TOKENS', 'CERTICHAT_CHAT_MAX_TOKENS', 'CERTICHAT_DATA_DIR')
     if ($private.CERTICHAT_MODE -cne 'LOCAL') { throw 'Set CERTICHAT_MODE=LOCAL in .private/certichat.env before starting the local API.' }
     if (-not $private.OPENROUTER_API_KEY -or $private.OPENROUTER_API_KEY -match "['\r\n]") {
         throw 'A valid OPENROUTER_API_KEY is required in .private/certichat.env.'
+    }
+    foreach ($name in @('CERTICHAT_INDEX_MODEL', 'CERTICHAT_CHAT_MODEL', 'CERTICHAT_INDEX_REASONING', 'CERTICHAT_CHAT_REASONING', 'CERTICHAT_INDEX_MAX_TOKENS', 'CERTICHAT_CHAT_MAX_TOKENS')) {
+        if ($private.ContainsKey($name)) {
+            if ($private[$name] -notmatch '^[a-z0-9/.-]+$') { throw "Invalid model setting: $name" }
+            $values[$name] = $private[$name]
+        }
+    }
+    if ($private.ContainsKey('CERTICHAT_DATA_DIR')) {
+        if ($private.CERTICHAT_DATA_DIR -cnotmatch '^/data(/[a-z0-9_-]+)?$') { throw 'The index root must be /data or one named child.' }
+        $values.CERTICHAT_DATA_DIR = $private.CERTICHAT_DATA_DIR
     }
     $maximums = @{ CERTICHAT_REFRESH = 24; CERTICHAT_QUESTIONS = 100; CERTICHAT_INDEX_REFRESH_MINUTES = 15 }
     foreach ($name in $maximums.Keys) {

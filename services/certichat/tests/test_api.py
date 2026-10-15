@@ -64,7 +64,8 @@ def clients(database_url, request):
         payload = json.loads(request.content)
         if request.url.path.endswith("embeddings"):
             return httpx.Response(200, json={"usage": {"cost": .000001}, "data": [{"embedding": [0.0]}]})
-        assert payload["max_tokens"] <= 4096
+        assert payload["model"] == "openai/gpt-5.4" and payload["max_tokens"] == 8192
+        assert payload["reasoning"] == {"effort": "medium", "exclude": True}
         content = payload["messages"][-1]["content"]
         supported = not content.startswith("{") or json.loads(content).get("fragments") != []
         return httpx.Response(200, json={"usage": {"cost": .0001}, "choices": [{"message": {"content": json.dumps(

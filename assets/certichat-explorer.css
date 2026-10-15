@@ -76,4 +76,4 @@
 .chat-graph-legend > span { display: inline-flex; align-items: center; gap: 4px; }
 .chat-graph-legend svg { width: 12px; height: 12px; }
 .chat-graph-legend [data-source="tips"] { background: var(--red); border-color: var(--red); color: var(--on-red); }
-.chat-graph-legend [data-source="tube"] { background: #0d65ad; border-color: #0d65ad; color: var(--on-red); }
+.chat-graph-legend [data-source="tube"] { background: var(--video-accent); border-color: var(--video-accent); color: var(--on-red); }

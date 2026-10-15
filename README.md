@@ -20,7 +20,7 @@ Aprende conceptos, explora diagramas y practica para preparar tus certificacione
 | [Oracle Agentic AI Foundations Associate](https://jgangini.github.io/certitips/1Z0-1157-26/overview/) | `1Z0-1157-26` | Agentes, herramientas, MCP, LangChain y OCI Enterprise AI. |
 | [Data Management Fundamentals](https://jgangini.github.io/certitips/CDMP-DMF/overview/) | `CDMP-DMF` | Las once áreas de DAMA y su aplicación con Oracle Cloud. |
 
-El [catálogo CertiTips](https://jgangini.github.io/certitips/cursos/) conserva Foundation y el carrusel de especialidades, incluidas las rutas cuya guía está marcada como **próximamente**.
+El [catálogo CertiTips](https://jgangini.github.io/certitips/courses/) conserva Foundation y el carrusel de especialidades, incluidas las rutas cuya guía está marcada como **próximamente**.
 
 ## Ejecutar localmente
 
@@ -36,8 +36,8 @@ Abrir [localhost:4173/certitips](http://127.0.0.1:4173/certitips/). Para configu
 
 ## Contribuir
 
-- [Editar un curso o añadir otra certificación](docs/courses.md).
-- [Incorporar un video a CertiTube](docs/certitube.md).
+- [Editar un curso o añadir otra certificación](.codex/contenido-markdown.md).
+- [Incorporar un video a CertiTube](.codex/certitube.md).
 - [Ejecutar pruebas y herramientas de mantenimiento](.codex/validation.md).
 - [Instrucciones para agentes y reglas de diseño](.codex/AGENTS.md).
 

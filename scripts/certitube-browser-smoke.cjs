@@ -96,12 +96,12 @@ async (page) => {
     });
     assert(Math.abs(videoBlocks.player.height - videoBlocks.videos.height) < 1 && Math.abs(videoBlocks.player.top - videoBlocks.videos.top) < 1, 'Video playlist does not align with the player height');
     assert(videoBlocks.border === '4px' && videoBlocks.radius === videoBlocks.playerRadius, 'Video playlist does not match the player card');
-    assert(videoBlocks.videos.width > 300 && videoBlocks.image.width > 120 && videoBlocks.player.width < 876, 'Wider videoteca/larger thumbnails did not reduce the player width');
+    assert(videoBlocks.videos.width > 300 && videoBlocks.player.width < 876 && videoBlocks.image.width > 120, 'Videoteca does not retain its wider column and thumbnails');
     assert(videoBlocks.titleMatches && await tab.locator('.tube-videos header strong').textContent() === 'CertiTube' && await tab.locator('.tube-videos header small').textContent() === 'VIDEOTECA', 'Videoteca heading does not match the shared CertiChat format');
     assert(await tab.locator('.tube-heading small').textContent() === 'CERTITUBE', 'Player heading still repeats the channel');
     assert(await tab.locator('.tube-videos li small').count() === 0, 'Playlist repeats ordinal/channel metadata');
     const playlistTitle = tab.locator('.tube-videos li').nth(1).locator('strong');
-    assert(await playlistTitle.evaluate(node => getComputedStyle(node).webkitLineClamp === '3' && node.clientHeight <= 3 * parseFloat(getComputedStyle(node).lineHeight) + 1 && node.closest('a').title === node.textContent), 'Playlist names exceed three lines or lose their full title');
+    assert(await playlistTitle.evaluate(node => getComputedStyle(node).webkitLineClamp === '3' && node.clientHeight <= 3 * parseFloat(getComputedStyle(node).lineHeight) + 1 && node.closest('a').title === node.textContent), 'Vertical playlist names exceed three lines or lose their full title');
     const playlistCard = tab.locator('.tube-videos li').nth(1).locator('a');
     const beforeHover = await playlistCard.evaluate(node => ({background: getComputedStyle(node).backgroundColor, border: getComputedStyle(node).borderTopColor}));
     assert(beforeHover.border === 'rgba(0, 0, 0, 0)', 'Playlist default border is visible');
@@ -526,7 +526,7 @@ async (page) => {
       assert(await tab.locator('.tube-resources a').first().evaluate(link => getComputedStyle(link).color === getComputedStyle(document.querySelector('.tube-heading strong')).color), 'Resource text differs from theme foreground');
       await tab.locator('[data-search-open]').click();
       assert(await tab.locator('.search-result-icon-video').first().evaluate(icon => {
-        const swatch = document.createElement('span'); swatch.style.color = 'var(--blue)'; icon.append(swatch);
+        const swatch = document.createElement('span'); swatch.style.color = 'var(--video-accent)'; icon.append(swatch);
         const matches = getComputedStyle(icon).backgroundColor === getComputedStyle(swatch).color;
         swatch.remove(); return matches;
       }), 'Video search icon is not blue');
@@ -556,6 +556,11 @@ async (page) => {
     const previousViewport = tab.viewportSize();
     await tab.setViewportSize({width: 390, height: 844});
     await tab.waitForFunction(() => innerWidth === 390 && document.querySelector('.tube-videos').getBoundingClientRect().top >= document.querySelector('.tube-player').getBoundingClientRect().bottom);
+    const horizontalPlaylist = await tab.locator('.tube-videos ol').evaluate(list => {
+      const first = list.querySelector('a'), title = first.querySelector('strong'), image = first.querySelector('img'), r = list.getBoundingClientRect(), card = first.getBoundingClientRect(), line = parseFloat(getComputedStyle(title).lineHeight);
+      return getComputedStyle(list.previousElementSibling).display === 'none' && getComputedStyle(title).webkitLineClamp === '2' && title.clientHeight <= 2 * line + 1 && Math.abs(image.getBoundingClientRect().height - 2 * line) < 1 && card.left - r.left >= 15 && r.height - card.height <= 24;
+    });
+    assert(horizontalPlaylist, 'Horizontal playlist loses its compact cards or leading inset');
     const longResource = await tab.locator('.tube-resources a').nth(1).evaluate(link => ({ellipsis: getComputedStyle(link).textOverflow, nowrap: getComputedStyle(link).whiteSpace, truncated: link.scrollWidth > link.clientWidth, title: link.title, text: link.textContent}));
     assert(longResource.ellipsis === 'ellipsis' && longResource.nowrap === 'nowrap' && longResource.truncated && longResource.title === longResource.text, 'Long resource link lacks ellipsis or its complete tooltip');
     await tab.setViewportSize(previousViewport);

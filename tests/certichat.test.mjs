@@ -2,8 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import MarkdownIt from "markdown-it";
+import { Remarkable } from "remarkable";
 import { annotateHeadings, pageDocuments, corpusArtifacts, contentHash } from "../scripts/certichat-corpus.mjs";
-import { plainChatHTML, safeSourceURL, quotaText, restoreChat, isChatPreview, answerWithReferences } from "../assets/certichat.js";
+import { configureChatMarkdown, safeSourceURL, quotaText, restoreChat, isChatPreview, answerWithReferences } from "../assets/certichat.js";
+const plainChatHTML = (text, siteRoot) => configureChatMarkdown(new Remarkable(), siteRoot).render(text);
 
 test("CertiChat separates local previews from published and local API sessions", () => {
   const api = "https://certichat.cloudtechnext.net";
@@ -16,13 +18,29 @@ test("CertiChat separates local previews from published and local API sessions",
   assert.equal(isChatPreview("https://localhost.example/certitips/", api), false);
 });
 
-test("CertiChat renders untrusted messages as inert text and sources stay inside the published site", () => {
+test("CertiChat renders Markdown while keeping HTML inert and sources inside the published site", () => {
   const attack = '<img src="https://attacker.test/leak" onerror="alert(1)">\n![leak](https://attacker.test/) [click](javascript:alert(1))';
   assert.doesNotMatch(plainChatHTML(attack), /<img|<a |onerror="/);
   assert.match(plainChatHTML(attack), /&lt;img/);
   const site = "https://jgangini.github.io/certitips/";
   assert.equal(safeSourceURL(`${site}1Z0-1157-26/agents/#conceptos-clave`, site), `${site}1Z0-1157-26/agents/#conceptos-clave`);
   for (const url of ["javascript:alert(1)", "https://attacker.test/certitips/", "https://jgangini.github.io/another/", `${site}?secret=1`, "https://user:pass@jgangini.github.io/certitips/", `${site}../another/`]) assert.equal(safeSourceURL(url, site), null, url);
+});
+
+test("chat Markdown formats emphasis, lists, quotes and code in current and restored answers", () => {
+  const site = "https://jgangini.github.io/certitips/";
+  const text = '***Conceptos***\n\n1. **DAMA** y *Oracle*\n2. `OCI`\n\n- Gobierno\n- Calidad\n\n> Una evidencia\n\n```html\n<script>alert(1)</script>\n```';
+  const html = plainChatHTML(text, site);
+  for (const tag of ["strong", "em", "ol", "ul", "blockquote", "code"]) assert.ok(html.includes(`<${tag}>`), tag);
+  assert.match(html, /<pre><code class="language-html">&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
+  assert.doesNotMatch(html, /\*\*Conceptos|<script>/);
+  const saved = restoreChat({ updatedAt: 100, messages: [{ role: "ai", text }] }, site, 100);
+  assert.equal(plainChatHTML(saved.messages[0].text, site), html);
+  for (const attack of [`![image](${site}assets/icons/favicon.svg)`, '[x](//attacker.test)', '[x](data:text/html,attack)', '<svg onload="alert(1)">']) {
+    const markdown = configureChatMarkdown(new Remarkable(), site);
+    markdown.inline.validateLink = () => true;
+    assert.doesNotMatch(markdown.render(attack), /<(?:img|svg|script|a)\b/);
+  }
 });
 
 test("CertiChat countdown appears only for an exhausted quota until its server renewal time", () => {
@@ -42,7 +60,7 @@ test("CertiChat includes unique verified section links with every sourced answer
     const answer = answerWithReferences(text, sources, site);
     assert.ok(answer.startsWith(text) && answer.includes(url));
     const html = plainChatHTML(answer, site);
-    assert.match(html, /<span class="chat-resource-heading">Recursos Relacionados:<\/span><br><a /);
+    assert.match(html, /<span class="chat-resource-heading">Recursos Relacionados:<\/span><br>\s*<a /);
     assert.equal(plainChatHTML(answer.replace("Recursos Relacionados:", "Para profundizar:"), site), html, "saved answers must show the current resource heading without another request");
     assert.match(html, /<a href="\/certitips\/1Z0-1157-26\/agents\/#conceptos-clave" data-source-url="https:\/\/jgangini.github.io\/certitips\/1Z0-1157-26\/agents\/#conceptos-clave" data-link-kind="certitips" title="[^"]+">/);
     assert.doesNotMatch(html, /<img|attacker\.test/);

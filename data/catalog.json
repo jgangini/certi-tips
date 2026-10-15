@@ -124,6 +124,7 @@
       "items": [
         {
           "id": "data-governance",
+          "level": 1,
           "title": "Data Management Fundamentals",
           "description": "Fundamentos de gestión de datos con DAMA y Oracle Cloud: once áreas y casos aplicados.",
           "guide": "data-governance"

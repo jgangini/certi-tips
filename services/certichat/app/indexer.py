@@ -15,7 +15,7 @@ from .corpus import (CORPUS_URL, DATASET, MANIFEST_URL, atomic_json, download,
                      read_json, same_indexed_content, segments, snapshot_path,
                      supported_fragments, validate_corpus, validate_manifest)
 from .knowledge import close_cognee, configure_cognee
-from .settings import MODEL
+from .settings import INDEX_MAX_TOKENS, INDEX_REASONING, MODEL
 
 
 async def refresh(root: Path) -> dict:
@@ -189,7 +189,8 @@ async def build(root: Path) -> None:
     atomic_json(snapshot / "manifest.json", manifest)
     atomic_json(snapshot / "changes.json", counts)
     atomic_json(snapshot / "ready.json", {"version": version, "documents": len(documents),
-                                         "model": MODEL, "reasoning": "medium",
+                                         "model": MODEL, "reasoning": INDEX_REASONING,
+                                         "maxTokens": INDEX_MAX_TOKENS,
                                          "generatedAt": datetime.now(timezone.utc).isoformat()})
     atomic_json(root / "candidate.json", {"version": version})
     print(f"Candidate validated: {version}; {counts}")

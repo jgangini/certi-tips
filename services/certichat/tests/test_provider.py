@@ -42,18 +42,27 @@ def test_model_price_output_and_encoding_are_enforced():
     payload, cost = prepare_request("chat/completions", {"model": "certichat-extract", "max_tokens": 999999,
                                "messages": [{"role": "user", "content": "hola"}], "tools": ["ignored"],
                                "provider": {"max_price": {"prompt": 100}}}, "index")
-    assert payload["model"] == MODEL and payload["max_tokens"] == 4096
-    assert "tools" not in payload and payload["provider"]["max_price"] == {"prompt": 2, "completion": 6, "request": 0}
-    assert payload["provider"]["data_collection"] == "deny" and cost > 4096*6
-    assert payload["provider"]["sort"] == "throughput" and payload["temperature"] == 0
-    assert payload["reasoning"] == {"effort": "medium", "exclude": True}
+    assert payload["model"] == MODEL == "anthropic/claude-haiku-5.5"
+    assert payload["max_tokens"] == 16384
+    assert "tools" not in payload
+    assert payload["provider"]["max_price"] == {"prompt": 0.1, "completion": 0.5, "request": 0}
+    assert payload["provider"]["data_collection"] == "deny"
+    assert cost > 16384*0.5
+    assert payload["provider"]["sort"] == "throughput"
+    assert payload["provider"]["only"] == ["anthropic"]
+    assert payload["provider"]["allow_fallbacks"] is False
+    assert "temperature" not in payload
+    assert payload["reasoning"] == {"effort": "high", "exclude": True}
     chat, _ = prepare_request("chat/completions", {"model": CHAT_MODEL, "messages": [{"role": "user", "content": "hola"}]}, "chat")
-    assert chat["model"] == CHAT_MODEL and payload["model"] == MODEL
-    for purpose, model in (("chat", "openai/gpt-5.4"), ("index", "qwen/qwen3-235b-a22b-2507")):
+    assert chat["model"] == CHAT_MODEL
+    for purpose, model in (("chat", MODEL), ("index", CHAT_MODEL), ("index", "qwen/qwen3.8-max-0902")):
         with pytest.raises(ChatError, match="Modelo no permitido"):
             prepare_request("chat/completions", {"model": model, "messages": [{"role": "user", "content": "hola"}]}, purpose)
-    assert chat["model"] == MODEL == "qwen/qwen3.8-max-0902" and "temperature" not in chat
-    assert "sort" not in chat["provider"] and chat["provider"]["max_price"] == {"prompt": 2, "completion": 6, "request": 0}
+    assert chat["model"] == CHAT_MODEL == "openai/gpt-5.4"
+    assert "temperature" not in chat
+    assert "sort" not in chat["provider"]
+    assert "only" not in chat["provider"]
+    assert chat["provider"]["max_price"] == {"prompt": 2.5, "completion": 15, "request": 0}
     assert chat["reasoning"] == {"effort": "medium", "exclude": True}
     payload, cost = prepare_request("embeddings", {"model": "text-embedding-3-small", "input": ["hola"], "encoding_format": "base64"}, "index")
     assert payload["encoding_format"] == "float" and payload["model"] == "openai/text-embedding-3-small" and cost > 0
@@ -67,20 +76,26 @@ def test_model_price_output_and_encoding_are_enforced():
         prepare_request("chat/completions", {"model": CHAT_MODEL, "messages": [{"role": "user", "content": "x"*24000}]}, "chat")
 
 
-@pytest.mark.parametrize("requested,maximum", [(None, 4096), (37, 37), (999999, 4096)])
-@pytest.mark.parametrize("purpose", ["chat", "index"])
-def test_reasoning_chat_reserves_the_complete_payload_at_enforced_prices(requested, maximum, purpose):
+@pytest.mark.parametrize("requested", [None, 37, 4096, 16384, 999999])
+@pytest.mark.parametrize("field", ["max_tokens", "max_completion_tokens"])
+@pytest.mark.parametrize("purpose,model,ceiling,prompt_price,completion_price,effort,bound", [
+    ("index", MODEL, 16384, "0.1", "0.5", "high", 11469),
+    ("chat", CHAT_MODEL, 8192, "2.5", "15", "medium", 182880),
+])
+def test_reasoning_chat_reserves_the_complete_payload_at_enforced_prices(
+        requested, field, purpose, model, ceiling, prompt_price, completion_price, effort, bound):
     messages = [{"role": "system", "content": "Usa evidencia."}, {"role": "user", "content": "¿Qué es una región?"}]
-    data = {"model": CHAT_MODEL, "messages": messages, "temperature": 0,
+    data = {"model": model, "messages": messages, "temperature": 0,
             "reasoning": {"effort": "high", "exclude": False}, "provider": {"max_price": {"prompt": 0}}}
     if requested is not None:
-        data["max_tokens"] = requested
+        data[field] = requested
     payload, cost = prepare_request("chat/completions", data, purpose)
-    assert payload["max_tokens"] == maximum and ("temperature" in payload) is (purpose == "index")
-    assert payload["reasoning"] == {"effort": "medium", "exclude": True}
+    maximum = ceiling if requested is None else min(requested, ceiling)
+    assert payload["max_tokens"] == maximum and "temperature" not in payload
+    assert payload["reasoning"] == {"effort": effort, "exclude": True}
     tokens = len(provider_module.encoded(payload)) + 1024 + 32 * len(messages)
-    assert cost == int((Decimal(tokens) * 2 + Decimal(maximum) * 6).to_integral_value(rounding=ROUND_CEILING))
-    assert cost <= 137536
+    assert cost == int((Decimal(tokens) * Decimal(prompt_price) + Decimal(maximum) * Decimal(completion_price)).to_integral_value(rounding=ROUND_CEILING))
+    assert cost <= bound
 
 
 def test_each_attempt_reserved_and_uncertain_cost_is_retained():
@@ -279,7 +294,7 @@ def test_spanish_fragments_fit_and_links_come_only_from_sources():
         payload = json.loads(request.content)
         evidence = json.loads(payload["messages"][1]["content"])
         assert evidence["fragments"][0]["id"] == "S1"
-        assert payload["max_tokens"] == 4096
+        assert payload["max_tokens"] == 8192
         return httpx.Response(200, json={"usage": {"cost": .0001}, "choices": [{"message": {"content": json.dumps(
             {"kind": "grounded", "answer": "Oracle almacena datos.", "citations": ["S1"]})}}]})
 
@@ -314,7 +329,7 @@ def test_simple_and_compound_questions_keep_evidence_after_prefix_and_later_sour
 
     result, ledger = run_provider(handler, lambda provider: provider.answer(question, fragments, []))
     assert [source["id"] for source in result[1]] == cited and result[0] != REFUSAL
-    assert len(ledger.reservations) == 1 and ledger.reservations[0][1] <= 137536
+    assert len(ledger.reservations) == 1 and ledger.reservations[0][1] <= 182880
 
 
 def test_full_unicode_context_remains_bounded_and_skips_oversize_before_later_small_fragment():
@@ -329,12 +344,12 @@ def test_full_unicode_context_remains_bounded_and_skips_oversize_before_later_sm
         assert evidence["fragments"][0]["text"] == fragments[0]["text"]
         assert evidence["history"] == []
         _, cost = prepare_request("chat/completions", payload, "chat")
-        assert cost <= 137536
+        assert cost <= 182880
         return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(
             {"kind": "grounded", "answer": "Dato final relevante.", "citations": ["S2"]})}}]})
 
     result, ledger = run_provider(handler, lambda provider: provider.answer("🙂"*1500, fragments, history))
-    assert result[1][0]["id"] == "doc-7" and ledger.reservations[0][1] <= 137536
+    assert result[1][0]["id"] == "doc-7" and ledger.reservations[0][1] <= 182880
 
 
 def test_compact_citation_ids_map_back_to_exact_sources():

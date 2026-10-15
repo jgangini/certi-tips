@@ -5,7 +5,12 @@ from decimal import Decimal
 import os
 from urllib.parse import urlsplit
 
-MODEL = CHAT_MODEL = "qwen/qwen3.8-max-0902"
+MODEL = os.environ.get("CERTICHAT_INDEX_MODEL", "anthropic/claude-haiku-5.5")
+CHAT_MODEL = os.environ.get("CERTICHAT_CHAT_MODEL", "openai/gpt-5.4")
+INDEX_REASONING = os.environ.get("CERTICHAT_INDEX_REASONING", "high")
+CHAT_REASONING = os.environ.get("CERTICHAT_CHAT_REASONING", "medium")
+INDEX_MAX_TOKENS = int(os.environ.get("CERTICHAT_INDEX_MAX_TOKENS", "16384"))
+CHAT_MAX_TOKENS = int(os.environ.get("CERTICHAT_CHAT_MAX_TOKENS", "8192"))
 EMBEDDING_MODEL = "openai/text-embedding-3-small"
 
 
@@ -29,6 +34,12 @@ class Settings:
     chat_budget_usd: Decimal = Decimal("10")
 
     def validate(self):
+        if (MODEL, CHAT_MODEL) != ("anthropic/claude-haiku-5.5", "openai/gpt-5.4"):
+            raise ValueError("Model changes require reviewed provider prices and compatibility.")
+        if not {INDEX_REASONING, CHAT_REASONING} <= {"medium", "high"}:
+            raise ValueError("CertiChat reasoning must be medium or high.")
+        if not 1 <= INDEX_MAX_TOKENS <= 16384 or not 1 <= CHAT_MAX_TOKENS <= 8192:
+            raise ValueError("CertiChat output limits must be positive and within index/chat ceilings.")
         if self.mode not in ("LOCAL", "VPS"):
             raise ValueError("CERTICHAT_MODE must be LOCAL or VPS.")
         if type(self.refresh_hours) is not int or not 1 <= self.refresh_hours <= 24:

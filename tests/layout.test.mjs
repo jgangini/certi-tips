@@ -9,7 +9,7 @@ test("the image viewer refreshes its group, source heading and description when 
   const caption = { textContent: "" }, group = { textContent: "" }, description = { textContent: "" }, enlarged = { addEventListener() {} };
   const close = { focus() {}, addEventListener() {} };
   const dialog = {
-    querySelector: selector => ({ "img": enlarged, ".dialog-content img": enlarged, "[data-diagram-present]": close, "[data-diagram-menu]": close, ".diagram-presentation-nav": {}, ".diagram-slide-count": {}, button: close, "[data-close-diagram]": close, "#diagram-description": description })[selector],
+    querySelector: selector => ({ "img": enlarged, ".dialog-content img": enlarged, ".dialog-content": enlarged, "[data-diagram-present]": close, "[data-diagram-menu]": close, ".diagram-presentation-nav": {}, ".diagram-slide-count": {}, button: close, "[data-close-diagram]": close, "#diagram-description": description })[selector],
     showModal() {}, addEventListener() {},
   };
   const buttons = [
@@ -103,7 +103,7 @@ test("an applied course without practice continues to its case study", () => {
   assert.match(html, /rel="canonical" href="https:\/\/example.test\/certitips\/data-governance\/agents\/"/);
   assert.match(html, /data-course="data-governance" data-course-route="data-governance" data-course-has-exam="false"/);
   assert.doesNotMatch(html, /<nav class="breadcrumb"/);
-  assert.match(layout({ site: catalog, course: workshop, page: { slug: "cursos", title: "CertiTips" }, body: "" }), /<summary>Governance<\/summary>/);
+  assert.match(layout({ site: catalog, course: workshop, page: { slug: "courses", title: "CertiTips" }, body: "" }), /<summary>Governance<\/summary>/);
   assert.match(html, /<small>Curso · Governance<\/small>/);
   assert.match(html, /href="\/certitips\/data-governance\/case-study\/"/);
   assert.doesNotMatch(html, /href="\/certitips\/data-governance\/practice\/"/);
@@ -192,7 +192,7 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.match(css, /\.certiquiz-app \.role-card:is\(:hover, :focus-visible\):not\(:disabled\)\s*\{[^}]*border-color:\s*var\(--accent\);/);
   assert.match(css, /\.certiquiz-page \.certiquiz-main\s*\{[^}]*max-width:\s*1280px;/);
   assert.match(css, /\.certiquiz-app \.welcome\s*\{\s*margin:\s*0 0 24px;/);
-  assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb\s*\{[^}]*width:\s*100%;[^}]*height:\s*var\(--section-nav-height\);[^}]*padding:\s*0 24px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*var\(--radius\);[^}]*font-weight:\s*400;/);
+  assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb\s*\{[^}]*width:\s*100%;[^}]*height:\s*var\(--section-nav-height\);[^}]*padding:\s*0 24px 3px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*var\(--radius\);[^}]*font-weight:\s*400;/);
   assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb a\s*\{[^}]*color:\s*var\(--ink\);[^}]*font-weight:\s*inherit;/);
   assert.match(css, /\.certiquiz-app \.certiquiz-breadcrumb \.certiquiz-mark\s*\{[^}]*color:\s*var\(--ink\);[^}]*font-weight:\s*inherit;/);
   assert.match(css, /\.certiquiz-app \.player-entry input:focus-visible\s*\{\s*outline:\s*none;\s*box-shadow:\s*none;/);
@@ -447,7 +447,7 @@ const tocByPage = new Map([
 ]);
 
 test("mobile path navigation uses a menu icon in the course groups bar", () => {
-  const html = layout({ site, course, page: { slug: "cursos", title: "CertiTips" }, body: coursesBody(site) });
+  const html = layout({ site, course, page: { slug: "courses", title: "CertiTips" }, body: coursesBody(site) });
   const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
   assert.match(html, /<details class="path-nav-mobile"><summary aria-label="Abrir grupos de cursos"><svg[^>]*width="22" height="22"[^>]*><path d="M4 6h16M4 12h10M4 18h5"\/><\/svg><span class="visually-hidden">Grupos de cursos<\/span><\/summary><div class="path-nav-mobile-panel"><nav aria-label="Grupos de cursos">/);
   assert.doesNotMatch(html, /<summary>Paths<\/summary>/);
@@ -649,7 +649,7 @@ test("layout moves the contents into the sidebar while preserving reading and si
   assert.match(html, /data-mark-complete="agents"/);
   assert.doesNotMatch(html, /MÓDULO 01 \/ 06|LECTURA ·/);
   assert.match(html, /<article class="prose">[^]*<\/article><button[^>]+data-mark-complete="agents"[^>]+role="switch" aria-checked="false">/);
-  const navigation = layout({ site, course, page: { slug: "cursos", title: "CertiTips" }, body: "" });
+  const navigation = layout({ site, course, page: { slug: "courses", title: "CertiTips" }, body: "" });
   assert.match(navigation, /<summary>Foundation Sprint<\/summary>/);
   assert.doesNotMatch(html, /Ver grupo completo/);
   assert.match(navigation, /href="\/certitips\/EXAM-1\/overview\/"><span class="path-title">Course<\/span><\/a>/);
@@ -763,8 +763,8 @@ test("home shows each certification and applied course once and links every avai
   const items = catalog.paths.flatMap((path) => path.items);
   assert.deepEqual(catalog.paths.map((path) => path.id), ["foundation-sprint", "ai-first", "ai-data-layer", "oci-enablers", "governance"]);
   assert.equal(catalog.paths[0].title, "Foundation");
-  assert.equal(items.filter((item) => item.level).length, 11);
-  assert.equal(items.filter((item) => !item.level).length, 1);
+  assert.ok(items.every((item) => [1, 2, 3].includes(item.level)));
+  assert.equal(items.find((item) => item.id === "data-governance").level, 1);
   assert.equal(new Set(items.map((item) => item.title)).size, items.length);
   assert.equal(new Set(items.map((item) => item.id)).size, items.length);
   assert.deepEqual(catalog.paths[0].items.map((item) => item.level), [1, 1, 1]);
@@ -843,7 +843,7 @@ test("home shows each certification and applied course once and links every avai
   assert.equal(catalog.paths[4].label, "Governance");
   assert.equal(catalog.paths[0].label, "Foundation");
   assert.match(catalog.paths[0].items[1].officialUrl, /associate-2026\/163544$/);
-  const navigation = layout({ site: catalog, course, page: { slug: "cursos", title: "CertiTips" }, body: html }).match(/<nav class="path-nav"[^>]*>(.*?)<\/nav>/s)[1];
+  const navigation = layout({ site: catalog, course, page: { slug: "courses", title: "CertiTips" }, body: html }).match(/<nav class="path-nav"[^>]*>(.*?)<\/nav>/s)[1];
   assert.match(navigation, /<summary>Foundation<\/summary>/);
   for (const item of items) {
     const destination = item.guide ? `${catalog.base}${courseRoute(catalog.courses.find((course) => course.id === item.guide))}/overview/` : item.officialUrl;
@@ -855,19 +855,19 @@ test("home shows each certification and applied course once and links every avai
 
 test("CertiTips has an independent catalog with the original Foundation block and shared icon", () => {
   const catalog = coursesBody(site);
-  const html = layout({ site, course, page: { slug: "cursos", title: "CertiTips" }, body: catalog });
+  const html = layout({ site, course, page: { slug: "courses", title: "CertiTips" }, body: catalog });
   assert.match(html, /class="home-page certitips-page has-course-groups"/);
-  assert.match(html, /rel="canonical" href="https:\/\/example.test\/certitips\/cursos\/"/);
+  assert.match(html, /rel="canonical" href="https:\/\/example.test\/certitips\/courses\/"/);
   assert.match(html, /<h1 class="visually-hidden">CertiTips · Cursos<\/h1>/);
   assert.match(html, /<nav class="course-breadcrumb"[^>]*>[^]*?Certi<span class="brand-accent">Tips<\/span><\/a><\/nav>/);
   assert.match(catalog, /path-foundation is-active/);
   assert.doesNotMatch(homeBody(site), /path-carousel|certification-list/);
-  const withChat = layout({ site: { ...site, certichat: { apiOrigin: "https://chat.example.test" } }, course, page: { slug: "cursos", title: "CertiTips" }, body: catalog });
+  const withChat = layout({ site: { ...site, certichat: { apiOrigin: "https://chat.example.test" } }, course, page: { slug: "courses", title: "CertiTips" }, body: catalog });
   assert.match(withChat, /sessionStorage\.getItem\("certichat:https:\/\/example\.test\/certitips\/:open"\).*classList\.add\("chat-restoring"\)/);
   assert.doesNotMatch(html, /classList\.add\("chat-restoring"\)/);
   const header = html.match(/<header class="site-header">(.*?)<\/header>/s)[1];
   assert.deepEqual([...header.matchAll(/class="header-app-link"[^>]*aria-label="([^"]+)"/g)].map(match => match[1]), ["CertiTips", "CertiQuiz", "CertiTube", "CertiChat"]);
-  for (const [slug, label] of [["cursos", "CertiTips"], ["certiquiz", "CertiQuiz"], ["certitube", "CertiTube"], ["certitube/video", "CertiTube"], ["certichat", "CertiChat"]]) {
+  for (const [slug, label] of [["courses", "CertiTips"], ["certiquiz", "CertiQuiz"], ["certitube", "CertiTube"], ["certitube/video", "CertiTube"], ["certichat", "CertiChat"]]) {
     const moduleHtml = layout({ site, course, page: { slug, title: label }, body: "" });
     const moduleHeader = moduleHtml.match(/<header class="site-header">(.*?)<\/header>/s)[1];
     assert.deepEqual([...moduleHeader.matchAll(/<span class="header-app-link" role="img" aria-current="page" aria-label="([^"]+)"/g)].map(match => match[1]), [label]);

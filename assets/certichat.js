@@ -4,14 +4,25 @@ export { safeSourceURL } from "./certichat-trace.js";
 
 const escapeChat = text => String(text).replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
-// ponytail: support only text and validated guide links, without enabling arbitrary Markdown/HTML.
-export function plainChatHTML(text, siteRoot) {
-  return `<p>${String(text).replace(/\n\nPara profundizar:\n(?=\[)/g, "\n\nRecursos Relacionados:\n").split(/(\[[^\[\]\n]+\]\(https:\/\/[^\s()]+\))/g).map(part => {
-    const link = part.match(/^\[([^\[\]\n]+)\]\((https:\/\/[^\s()]+)\)$/);
-    const url = link && safeSourceURL(link[2], siteRoot);
-    const kind = url && new URL(url).pathname.startsWith(new URL("certitube/", siteRoot).pathname) ? "certitube" : "certitips";
-    return url ? `<a href="${escapeChat(sourcePath(url, siteRoot))}" data-source-url="${escapeChat(url)}" data-link-kind="${kind}" title="${escapeChat(link[1])}">${escapeChat(link[1])}</a>` : escapeChat(part).replace(/\n\nRecursos Relacionados:\n$/, '\n\n<span class="chat-resource-heading">Recursos Relacionados:</span>\n');
-  }).join("").replace(/\n/g, "<br>")}</p>`;
+export function configureChatMarkdown(markdown, siteRoot) {
+  markdown.set({ html: false, breaks: true });
+  const render = markdown.render.bind(markdown);
+  // Deep Chat replaces the validator after plugins; enforce it at the render boundary.
+  markdown.render = (text, environment) => {
+    markdown.inline.validateLink = value => Boolean(safeSourceURL(value, siteRoot));
+    return render(text, environment);
+  };
+  markdown.renderer.rules.image = (tokens, index) => escapeChat(tokens[index].alt || "");
+  markdown.renderer.rules.text = (tokens, index) => ["Para profundizar:", "Recursos Relacionados:"].includes(tokens[index].content)
+    ? '<span class="chat-resource-heading">Recursos Relacionados:</span>' : escapeChat(tokens[index].content);
+  markdown.renderer.rules.link_open = (tokens, index) => {
+    const url = safeSourceURL(tokens[index].href, siteRoot);
+    const kind = new URL(url).pathname.startsWith(new URL("certitube/", siteRoot).pathname) ? "certitube" : "certitips";
+    const end = tokens.findIndex((token, position) => position > index && token.type === "link_close");
+    const title = tokens.slice(index + 1, end).map(token => token.content || "").join("");
+    return `<a href="${escapeChat(sourcePath(url, siteRoot))}" data-source-url="${escapeChat(url)}" data-link-kind="${kind}" title="${escapeChat(title)}">`;
+  };
+  return markdown;
 }
 
 export function quotaText(quota, now = Date.now()) {
@@ -240,7 +251,7 @@ if (root) {
   async function initialize() {
     if (!chat) {
       await import("./deep-chat.js");
-      window.remarkable_plugins = [{ plugin: markdown => { markdown.render = text => plainChatHTML(text, root.dataset.siteRoot); } }];
+      window.remarkable_plugins = [{ plugin: markdown => configureChatMarkdown(markdown, root.dataset.siteRoot) }];
       chat = document.createElement("deep-chat");
       chat.chatStyle = { border: "none", width: "100%", height: "100%", backgroundColor: "var(--paper)", color: "var(--ink)", fontFamily: "inherit" };
       chat.textInput = {
@@ -257,7 +268,9 @@ if (root) {
       chat.auxiliaryStyle = "* { overflow-wrap: anywhere; } #messages, #text-input { scrollbar-color: var(--scrollbar) transparent; scrollbar-width: thin; } #chat-view { grid-template-rows: minmax(0, 1fr) auto auto; } #certichat-quota { color: var(--muted); text-align: center; font-size: 12px; line-height: 1.4; padding: 8px 12px; } #certichat-quota[hidden] { display: none; } a { color: var(--blue); text-decoration: underline; } a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; } @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }";
       // ponytail: the native completion class also covers restored history; no extra render pass or observers.
       // ponytail: override the native disabled filter on hover; the submission guard stays unchanged.
-      chat.auxiliaryStyle += `#input .input-button:hover #submit-icon { color: var(--red) !important; filter: none !important; }
+      chat.auxiliaryStyle += `.outer-message-container:last-child { margin-bottom: 10px; }
+        #input .input-button:hover #submit-icon { color: var(--red) !important; filter: none !important; }
+        .ai-message :is(ol, ul) { padding-inline-start: 1.6em; }
         .chat-resource-heading { color: var(--red); font-size: .75em; font-weight: 750; letter-spacing: 1px; text-transform: uppercase; }
         .ai-message:not(.streamed-message) a { display: inline-block; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; vertical-align: bottom; color: var(--ink); }
         .ai-message:not(.streamed-message) a:hover { color: var(--red); }

@@ -5,10 +5,11 @@ import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import MarkdownIt from "markdown-it";
+import { Remarkable } from "remarkable";
 import { parseVideo, loadVideos, chapterTime, videoDocuments, videoBody, videoCarousel } from "../scripts/certitube.mjs";
 import { layout } from "../scripts/layout.mjs";
 import { selectedMoment, playbackMoment, mountPlayer } from "../assets/certitube.js";
-import { answerWithReferences, plainChatHTML, restoreChat } from "../assets/certichat.js";
+import { answerWithReferences, configureChatMarkdown, restoreChat } from "../assets/certichat.js";
 import { corpusArtifacts } from "../scripts/certichat-corpus.mjs";
 
 test("unsegmented videos hide duplicate controls while retaining their registered citation", () => {
@@ -125,7 +126,7 @@ test("published video produces matching safe pages, timed evidence and chat refe
   assert.match(moment.text, /conexión a la instancia Linux/);
   const answer = answerWithReferences("Consulta este momento.", [moment], site.origin + site.base);
   const restored = restoreChat({ updatedAt: 100, messages: [{ role: "ai", text: answer }] }, site.origin + site.base, 100);
-  assert.match(plainChatHTML(restored.messages[0].text, site.origin + site.base), /href="\/certitips\/certitube\/sSQAGSs23uY\/#t-332"/);
+  assert.match(configureChatMarkdown(new Remarkable(), site.origin + site.base).render(restored.messages[0].text), /href="\/certitips\/certitube\/sSQAGSs23uY\/#t-332"/);
   assert.deepEqual(corpusArtifacts(docs, "unused"), corpusArtifacts(videoDocuments(parseVideo(source, id), site), "unused"));
 });
 
@@ -199,11 +200,11 @@ test("playback selects the chapter interval, including exact boundaries and back
 function playerFixture(hash = "#t-332") {
   const calls = [], handlers = {};
   const timers = new Map(); let timerId = 0, scrolls = 0;
-  const external = {}, status = {}, message = {};
+  const external = { hidden: true }, status = { hidden: true }, message = {}, spinner = { hidden: false };
   const strip = { getBoundingClientRect: () => ({ left: 0, right: 100 }), scrollBy() {} };
   const links = [0, 49, 332].map(seconds => ({ dataset: { tubeTime: String(seconds) }, querySelector: () => ({ textContent: String(seconds) }), setAttribute() {}, removeAttribute() {}, parentElement: strip, getBoundingClientRect: () => ({ left: 0, right: 10 }) }));
   const panels = [0, 49, 332].map(seconds => ({ dataset: { tubeDescription: String(seconds) }, hidden: true }));
-  const root = { dataset: { duration: "450", videoId: id }, querySelector: name => ({ "[data-tube-external]": external, "[data-tube-status]": status, "[data-tube-message]": message })[name], querySelectorAll: name => name === "[data-tube-time]" ? links : panels, scrollIntoView() { scrolls++; }, focus() {} };
+  const root = { dataset: { duration: "450", videoId: id }, querySelector: name => ({ "[data-tube-external]": external, "[data-tube-status]": status, "[data-tube-message]": message, "[data-tube-loading]": spinner })[name], querySelectorAll: name => name === "[data-tube-time]" ? links : panels, scrollIntoView() { scrolls++; }, focus() {} };
   const location = new URL(`https://jgangini.github.io/certitips/certitube/${id}/${hash}`);
   const frame = {};
   const player = { time: 0, state: 5, getCurrentTime() { return this.time; }, getPlayerState() { return this.state; }, getDuration: () => 450, seekTo(seconds) { this.time = seconds; calls.push(["seek", seconds]); }, playVideo() { this.state = 1; calls.push(["play"]); }, pauseVideo() { this.state = 2; calls.push(["pause"]); }, getIframe: () => frame };
@@ -211,7 +212,7 @@ function playerFixture(hash = "#t-332") {
   const window = { matchMedia: () => ({ matches: true }), setInterval: fn => { timers.set(++timerId, fn); return timerId; }, clearInterval: id => timers.delete(id), requestAnimationFrame: fn => fn(), addEventListener: (type, fn) => { handlers[type] = fn; }, YT: { Player: function (_id, opts) { options = opts; return player; } } };
   const document = { querySelectorAll: () => links, addEventListener: (type, fn) => { handlers[type] = fn; } };
   const history = { pushState(_a, _b, hash) { location.hash = hash; } };
-  return { root, location, window, document, history, handlers, calls, external, status, message, panels, player, timers, get scrolls() { return scrolls; }, get options() { return options; } };
+  return { root, location, window, document, history, handlers, calls, external, status, message, spinner, panels, player, timers, get scrolls() { return scrolls; }, get options() { return options; } };
 }
 
 async function withPlayer(hash, check) {
@@ -223,10 +224,12 @@ async function withPlayer(hash, check) {
 
 test("loading keeps the latest selection; repeated clicks and history seek the same player", async () => {
   await withPlayer("#t-49", async f => {
+    assert.equal(f.spinner.hidden, false); assert.equal(f.status.hidden, true);
     f.location.hash = "#t-332"; f.handlers.hashchange();
     assert.deepEqual(f.calls, []);
     assert.deepEqual(f.panels.filter(panel => !panel.hidden).map(panel => panel.dataset.tubeDescription), ["332"]);
     f.options.events.onReady({ target: f.player });
+    assert.equal(f.spinner.hidden, true);
     assert.deepEqual(f.calls, [["seek", 332], ["play"]]);
     const click = { button: 0, composedPath: () => [{ tagName: "A", href: f.location.href }], preventDefault() {} };
     f.handlers.click(click); f.handlers.click(click);
@@ -239,6 +242,15 @@ test("loading keeps the latest selection; repeated clicks and history seek the s
     assert.match(f.external.href, /t=49s$/);
     f.location.hash = "#t-999"; f.handlers.hashchange();
     assert.deepEqual(f.calls.at(-1), ["pause"]);
+  });
+});
+
+test("player failure before readiness replaces the loading indicator with the external fallback", async () => {
+  await withPlayer("#t-49", async f => {
+    f.options.events.onError();
+    assert.equal(f.spinner.hidden, true);
+    assert.equal(f.status.hidden, false); assert.equal(f.external.hidden, false);
+    assert.match(f.external.href, /t=49s$/);
   });
 });
 

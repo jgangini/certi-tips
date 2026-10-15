@@ -16,7 +16,7 @@ async page => {
   });
   const cases = [
     ['certitube/', '.tube-detail'], ['certitube/ZjfQUwUdpbI/', '.tube-detail'],
-    ['cursos/', '.course-groups'], ['1Z0-1085-26/overview/', '#main'],
+    ['courses/', '.course-groups'], ['1Z0-1085-26/overview/', '#main'],
     ['', '.home-hero'], ['certiquiz/', '.certiquiz-breadcrumb'], ['certichat/', '.chat-explorer-section'],
   ];
   const measure = selector => tab.evaluate(selector => {
@@ -27,7 +27,7 @@ async page => {
     const frame = rect(document.querySelector(selector));
     if (selector === '#main') {
       if (document.querySelector('.course-groups') || document.body.classList.contains('has-course-groups')) throw new Error('Course groups remain on a lesson');
-      frame.left = rect(document.querySelector('.sidebar')).left;
+      frame.left = document.body.classList.contains('is-compact-nav') ? frame.left : rect(document.querySelector('.sidebar')).left;
       frame.width = frame.right - frame.left;
     }
     return { frame, border: accent.borderTopWidth, borderColor: accent.borderTopColor, shadow: accent.boxShadow, cardShadows: [...document.querySelectorAll('.role-card, .certitips-page .path-section.is-active')].map(node => getComputedStyle(node).boxShadow), brand: rect(header.querySelector('.brand')), edge: rect(header.querySelector('.theme-toggle')).right, panel: panel && !panel.hidden ? rect(panel) : null, panelShadow: panel && getComputedStyle(panel).boxShadow, overflow: document.documentElement.scrollWidth - innerWidth, overlap: boxes.some((box, index) => index && box.left < boxes[index - 1].right - 1) };
@@ -70,7 +70,7 @@ async page => {
     }
     await tab.emulateMedia({ reducedMotion: 'no-preference' });
     await tab.setViewportSize({ width: 1671, height: 1004 });
-    for (const [route, selector] of [['cursos/', '.course-groups'], ['certitube/', '.tube-detail']]) {
+    for (const [route, selector] of [['courses/', '.course-groups'], ['certitube/', '.tube-detail']]) {
       await tab.evaluate(() => sessionStorage.clear());
       await tab.goto(new URL(route, base).href);
       for (const control of ['data-chat-open', 'data-chat-close']) {

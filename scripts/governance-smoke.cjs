@@ -44,7 +44,7 @@ async (page) => {
     await page.goto(`${base}#governance`);
     const card = page.locator('#governance .certification-item');
     assert(await card.count() === 1 && await card.isVisible(), 'Governance carousel group is unavailable');
-    assert(await card.locator('.certification-level').textContent() === 'Taller aplicado', 'Workshop must not have an exam level');
+    assert(await card.locator('.certification-level').textContent() === 'Nivel 1', 'Governance must show its introductory course level');
     assert(await card.locator('.certification-actions a').count() === 1, 'Workshop must not invent an official certification route');
     await card.locator('.certitips-button').click();
     await page.waitForURL(`${route}overview/`);
