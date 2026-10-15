@@ -39,7 +39,7 @@ async (page) => {
       assert(solutionsAligned, `Solution panels exceed the diagram column at ${width}px: ${slug}`);
       if (!slug) {
         const controls = await page.evaluate(() => {
-          const nav = document.querySelector('.path-section.is-active > .group-carousel-controls').getBoundingClientRect();
+          const nav = document.querySelector('.path-section.is-active .group-carousel-controls').getBoundingClientRect();
           const section = document.querySelector('.path-section.is-active').getBoundingClientRect();
           const heading = document.querySelector('.path-section.is-active .path-section-heading');
           const walker = document.createTreeWalker(heading, NodeFilter.SHOW_TEXT);
@@ -670,9 +670,10 @@ async (page) => {
   assert(!await page.locator('.hero-flow').evaluate(element => element.classList.contains('is-unavailable')), 'Animated path fell back to static text');
   const palette = await page.evaluate(() => {
     const style = selector => getComputedStyle(document.querySelector(selector));
-    return { oracleIcon: style('.home-hero .oracle-badge svg').color, github: style('.github-link').color,
-      githubBackground: style('.github-link').backgroundColor,
-      githubIcon: style('.github-link svg').color,
+    return { oracleIcon: style('.home-hero .oracle-badge svg').color, tips: style('.certitips-link').color,
+      tipsBackground: style('.certitips-link').backgroundColor,
+      tipsIcon: style('.certitips-link svg').color, tipsLabel: style('.certitips-link > span').color,
+      quiz: style('.certiquiz-link').color, quizBackground: style('.certiquiz-link').backgroundColor,
       level: style('.certification-level').color,
       guide: style('#agentic-ai-foundations-2026 .certitips-button').color,
       guideIcon: style('#agentic-ai-foundations-2026 .certitips-button svg').color,
@@ -681,12 +682,12 @@ async (page) => {
       toggleText: document.querySelector('[data-theme-toggle]').textContent.trim() };
   });
   assert(palette.oracleIcon === 'rgb(199, 70, 52)' && palette.level === 'rgb(199, 70, 52)', 'Oracle corporate red is not applied to the badge and levels');
-  assert(palette.github === 'rgb(255, 255, 255)' && palette.githubIcon === palette.github && palette.githubBackground === 'rgb(199, 70, 52)' && await page.getByRole('link', { name: 'GitHub', exact: true }).count() === 1, 'GitHub button needs red background, white icon and concise label');
+  assert(palette.tips === palette.quiz && palette.tipsIcon === palette.tipsLabel && palette.tipsBackground === palette.quizBackground && await page.locator('.hero-actions').getByRole('link', { name: 'CertiTips Guías De Estudio', exact: true }).count() === 1, 'CertiTips button differs from the CertiQuiz design');
   assert(palette.guide === 'rgb(255, 255, 255)' && palette.guideIcon === palette.guide, 'Red guide button needs white text and icon');
   assert(palette.header === 'rgb(241, 239, 237)' && palette.footer === palette.header && palette.body !== palette.header, 'Header and footer are not differentiated by neutral gray');
   assert(palette.toggleText === '' && await page.locator('[data-theme-toggle]').getAttribute('aria-label') === 'Activar modo oscuro', 'Theme toggle should be icon-only and labelled for assistive technology');
   assert(await page.locator('[data-hero-replay]').count() === 0, 'Replay control should not be shown');
-  assert(await page.locator('.path-section.is-active > .group-carousel-controls').count() === 1, 'Group controls must sit inside the active section');
+  assert(await page.locator('.path-section.is-active .group-carousel-controls').count() === 1, 'Group controls must sit inside the active section');
   await page.setViewportSize({ width: 1280, height: 900 });
   assert(await page.locator('.path-section').count() === 5, 'Expected Foundation, three certification specializations and Governance');
   assert(await page.locator('.certification-item').count() === 12, 'Missing or duplicated courses');
@@ -750,7 +751,7 @@ async (page) => {
   await page.locator('[data-theme-toggle]').click();
   assert(await page.locator('[data-theme-toggle]').getAttribute('aria-pressed') === 'true', 'Dark toggle did not activate');
   assert(await page.evaluate(() => getComputedStyle(document.body).backgroundColor) !== lightBackground, 'Dark palette did not apply');
-  assert(await page.locator('.github-link').evaluate(button => getComputedStyle(button).color === 'rgb(255, 255, 255)' && getComputedStyle(button).backgroundColor === 'rgb(199, 70, 52)'), 'Dark mode lost the GitHub button contrast');
+  assert(await page.locator('.certitips-link').evaluate(button => getComputedStyle(button).color === getComputedStyle(document.querySelector('.certiquiz-link')).color && getComputedStyle(button).backgroundColor === getComputedStyle(document.querySelector('.certiquiz-link')).backgroundColor), 'Dark mode changed the CertiTips reference design');
   await page.locator('[data-search-open]').click();
   assert(await page.locator('#site-search').evaluate(dialog => getComputedStyle(dialog).backgroundColor === 'rgb(38, 39, 48)'), 'Search dialog did not adopt the dark surface');
   await page.keyboard.press('Escape');

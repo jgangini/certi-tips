@@ -87,15 +87,16 @@ export function createNetwork(canvas, graph, onSelect, onAnchor, onZoom) {
   if (!canvas.hasAttribute("tabindex")) canvas.tabIndex = 0;
 
   function invalidate() { if (!frame && !destroyed) frame = requestAnimationFrame(draw); }
+  function stopPulse() { if (!pulse?.nodes) pulse = undefined; }
   function moveTo(target, animate, via, duration = 420) {
-    pulse = undefined;
+    stopPulse();
     const points = [{ ...view }, via, target].filter(Boolean);
     camera = animate && !reducedMotion.matches && Object.keys(target).some(key => target[key] !== view[key]) ? { points, target, duration } : undefined;
     if (!camera) Object.assign(view, target);
     invalidate();
   }
   function fit(activeOnly = false) {
-    camera = pulse = undefined;
+    camera = undefined; stopPulse();
     const points = activeOnly ? layout.nodes.filter(node => activeNodes.has(node.id)) : layout.nodes;
     if (!points.length || !width || !height) return;
     const xs = points.map(node => node.x), ys = points.map(node => node.y);
@@ -107,7 +108,7 @@ export function createNetwork(canvas, graph, onSelect, onAnchor, onZoom) {
   }
   function zoomAt(factor, x = width / 2, y = height / 2) {
     if (!Number.isFinite(factor) || factor <= 0) return;
-    camera = pulse = undefined;
+    camera = undefined; stopPulse();
     const scale = clamp(view.scale * factor, 0.04, 12), ratio = scale / view.scale;
     view.x = x - (x - view.x) * ratio; view.y = y - (y - view.y) * ratio; view.scale = scale;
     invalidate();
@@ -184,7 +185,7 @@ export function createNetwork(canvas, graph, onSelect, onAnchor, onZoom) {
         }
         else context.lineTo(b.x, b.y);
       }
-      context.strokeStyle = active ? (blue ? color("--blue", "#0074b9") : color("--red", "#c74634")) : color("--muted", "#747680");
+      context.strokeStyle = active ? (blue ? color("--video-accent", "#0d65ad") : color("--red", "#c74634")) : color("--muted", "#747680");
       context.globalAlpha = active ? 0.95 : 0.12; context.lineWidth = (active ? 1.6 : 0.55) / view.scale; context.stroke();
     };
     lines(false); lines(true); lines(true, true);
@@ -197,9 +198,9 @@ export function createNetwork(canvas, graph, onSelect, onAnchor, onZoom) {
         context.moveTo(node.x + radius, node.y); context.arc(node.x, node.y, radius, 0, Math.PI * 2);
       }
       context.globalAlpha = active ? 1 : 0.5;
-      context.fillStyle = active ? (blue ? color("--blue", "#0074b9") : color("--red", "#c74634")) : color("--muted", "#747680"); context.fill();
+      context.fillStyle = active ? (blue ? color("--video-accent", "#0d65ad") : color("--red", "#c74634")) : color("--muted", "#747680"); context.fill();
     }
-    drawPulse(time, color("--red", "#c74634"), color("--blue", "#0074b9"));
+    drawPulse(time, color("--red", "#c74634"), color("--video-accent", "#0d65ad"));
     context.globalAlpha = 1;
     const node = layout.nodes[layout.indexes.get(selected)];
     let anchor = null;
@@ -209,9 +210,9 @@ export function createNetwork(canvas, graph, onSelect, onAnchor, onZoom) {
       if (screenX + radius >= 0 && screenX - radius <= width && screenY + radius >= 0 && screenY - radius <= height) {
         if (reducedMotion.matches) {
           context.beginPath(); context.arc(node.x, node.y, (radius + 3) / view.scale, 0, Math.PI * 2);
-          context.strokeStyle = videoNodes.has(selected) ? color("--blue", "#0074b9") : color("--red", "#c74634"); context.lineWidth = 2 / view.scale; context.stroke();
+          context.strokeStyle = videoNodes.has(selected) ? color("--video-accent", "#0d65ad") : color("--red", "#c74634"); context.lineWidth = 2 / view.scale; context.stroke();
         }
-        anchor = { id: selected, x: screenX, y: screenY - radius - 8, nodeY: screenY - radius, width, height };
+        anchor = { id: selected, source: videoNodes.has(selected) ? "tube" : "tips", x: screenX, y: screenY - radius - 8, nodeY: screenY - radius, width, height };
       }
     }
     onAnchor?.(anchor);
@@ -220,7 +221,7 @@ export function createNetwork(canvas, graph, onSelect, onAnchor, onZoom) {
     if (camera || pulse) invalidate();
   }
   function resize() {
-    camera = pulse = undefined;
+    camera = undefined; stopPulse();
     const first = !width || !height, oldWidth = width, oldHeight = height;
     width = canvas.clientWidth; height = canvas.clientHeight;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -233,7 +234,7 @@ export function createNetwork(canvas, graph, onSelect, onAnchor, onZoom) {
   listen("wheel", event => { event.preventDefault(); const p = point(event); zoomAt(Math.exp(clamp(-event.deltaY * 0.002, -0.4, 0.4)), p.x, p.y); }, { passive: false });
   listen("pointerdown", event => {
     if (event.button !== 0) return;
-    camera = pulse = undefined;
+    camera = undefined; stopPulse();
     invalidate();
     canvas.focus({ preventScroll: true }); canvas.setPointerCapture(event.pointerId);
     if (!pointers.size) pressPosition = point(event);
@@ -262,7 +263,7 @@ export function createNetwork(canvas, graph, onSelect, onAnchor, onZoom) {
     else if (event.key.toLowerCase() === "f") fit(true);
     else if (event.key === "Enter") hit(width / 2, height / 2);
     else if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
-      camera = pulse = undefined;
+      camera = undefined; stopPulse();
       view.x += event.key === "ArrowLeft" ? 40 : event.key === "ArrowRight" ? -40 : 0;
       view.y += event.key === "ArrowUp" ? 40 : event.key === "ArrowDown" ? -40 : 0; invalidate();
     } else return;
@@ -284,10 +285,10 @@ export function createNetwork(canvas, graph, onSelect, onAnchor, onZoom) {
     },
     pulse(repeat = false) {
       if (destroyed || reducedMotion.matches || !activeNodes.size) return;
-      // ponytail: repeat within the existing frame loop; hover exit and camera controls cancel it.
-      pulse = { repeat }; invalidate();
+      // ponytail: reuse the frame loop; camera controls cancel only transient answer waves.
+      if (!pulse?.nodes) pulse = { repeat }; invalidate();
     },
-    stopPulse() { pulse = undefined; invalidate(); },
+    stopPulse() { stopPulse(); invalidate(); },
     select, fit, zoom: zoomAt,
     destroy() { destroyed = true; camera = pulse = undefined; canvas.dataset.pulseActive = "false"; onAnchor?.(null); cancelAnimationFrame(frame); events.abort(); observer.disconnect(); theme.disconnect(); pointers.clear(); },
   };

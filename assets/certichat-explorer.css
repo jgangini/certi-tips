@@ -18,6 +18,8 @@
 .chat-graph-network canvas:focus-visible { outline: 3px solid var(--blue); outline-offset: -4px; }
 .chat-graph-card { position: absolute; z-index: 1; width: max-content; max-width: min(280px, calc(100% - 16px)); max-height: calc(100% - 16px); overflow: auto; padding: 10px 12px; border: 1px solid var(--red); border-radius: 6px; background: var(--paper); color: var(--ink); box-shadow: 0 3px 16px var(--shadow); font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
 .chat-graph-card-connector { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; stroke: var(--red); stroke-width: 1px; }
+.chat-graph-card[data-source="tube"] { border-color: var(--video-accent); }
+.chat-graph-card-connector[data-source="tube"] { stroke: var(--video-accent); }
 .chat-graph-card-connector[hidden] { display: none; }
 .chat-graph-card strong { display: block; margin-bottom: 5px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
 .chat-graph-card p { margin: 4px 0 0; color: var(--muted); }
@@ -30,15 +32,16 @@
 .chat-graph-evidence:has(.chat-graph-active:not(:empty)) { border-top: 1px solid var(--line); }
 .chat-graph-scroll { flex-shrink: 0; width: 32px; height: 32px; min-height: 32px; padding: 0; }
 .chat-graph-scroll svg { width: 14px; height: 14px; }
-.chat-graph-scroll:disabled { display: none; }
+.chat-graph-scroll:disabled { visibility: hidden; }
+.chat-graph-evidence:not(:has(.chat-graph-scroll:enabled)) .chat-graph-scroll { display: none; }
 .chat-graph-toolbar .button:enabled:hover, .chat-graph-scroll:enabled:hover { border-color: var(--red); color: var(--red); }
-.chat-graph-footer { flex-shrink: 0; min-height: 46px; display: flex; border-top: 1px solid var(--line); container-type: inline-size; }
+.chat-graph-footer { flex-shrink: 0; min-height: 46px; display: flex; border-top: 1px solid var(--line); background: var(--white); container-type: inline-size; }
 .chat-graph-meta { display: grid; grid-template-columns: max-content max-content minmax(max-content, 1fr) max-content; width: 100%; color: var(--muted); font-size: 12px; line-height: 1.5; margin: 0; }
 .chat-graph-meta > div { display: flex; min-height: 23px; }
 .chat-graph-meta > div + div, .chat-graph-meta dd { border-left: 1px solid var(--line); }
 .chat-graph-meta > div:nth-child(2) { border-right: 1px solid var(--line); }
 .chat-graph-meta dt, .chat-graph-meta dd { display: flex; align-items: center; padding: 2px 8px; margin: 0; }
-.chat-graph-meta dd { flex: 1; justify-content: flex-end; background: var(--hover); color: var(--ink); white-space: nowrap; }
+.chat-graph-meta dd { flex: 1; justify-content: flex-end; color: var(--ink); white-space: nowrap; }
 .chat-graph-stamp { justify-self: end; }
 .chat-graph-updating { flex-shrink: 0; width: 12px; height: 12px; margin-left: 6px; border-width: 2px; }
 .chat-graph-updating[hidden] { display: none; }
@@ -55,6 +58,7 @@
 .chat-graph-active button:hover { border-color: var(--red); }
 .chat-graph-active button:not([aria-pressed="true"]):hover .chat-graph-number { border-color: var(--red); }
 .chat-graph-active button[aria-pressed="true"] { background: var(--red); border-color: var(--red); color: var(--on-red); }
+.chat-graph-active button[data-source="tube"][aria-pressed="true"] { background: var(--video-accent); border-color: var(--video-accent); }
 .chat-graph-active button[aria-pressed="true"] .chat-graph-number { border-color: currentColor; }
 .chat-graph-status { margin: 8px 16px; padding: 18px; border-radius: 8px; background: var(--hover); }
 .chat-graph-status.is-loading { flex: 1; display: grid; place-items: center; margin: 0; background: none; }
@@ -64,8 +68,8 @@
   .chat-explorer-section { display: none; }
 }
 @media (max-width: 1023px) {
-  .certichat-main.home-main { padding-inline: 12px; }
-  .chat-explorer-page { grid-template-columns: minmax(0, 1fr); gap: 16px; padding-block: 16px; }
+  .certichat-main.home-main { padding-inline: var(--content-gutter); }
+  .chat-explorer-page { grid-template-columns: minmax(0, 1fr); gap: 16px; padding-block: 20px; }
   .certichat-page .certichat-heading { padding-top: 12px; }
 }
 @media (min-width: 801px) and (max-width: 1023px) {

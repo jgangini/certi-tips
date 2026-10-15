@@ -35,7 +35,7 @@
 .tube-resources li svg { flex-shrink: 0; width: 12px; height: 12px; fill: currentColor; }
 .tube-resources li, .tube-resources a { color: var(--ink); }
 .tube-resources a { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.tube-resources a:hover { color: var(--red); }
+.tube-resources li:is(:hover, :focus-within), .tube-resources li:is(:hover, :focus-within) a { color: var(--red); }
 .course-page[data-page^="certitube"] { --sidebar: 0px; }
 .course-page[data-page^="certitube"] :is(.course-main, .prose) { max-width: none; }
 .tube-detail { display: grid; grid-template-columns: minmax(0, 1fr) clamp(300px, 30%, 360px); gap: 24px; align-items: start; }
@@ -44,7 +44,8 @@
 .tube-videos ol { flex: 1; min-height: 0; list-style: none; padding: 8px; margin: 0; overflow: auto; scroll-snap-type: y proximity; }
 .tube-videos li { scroll-snap-align: start; }
 .tube-videos a { display: flex; gap: 10px; padding: 8px; margin-bottom: 8px; border: 1px solid transparent; border-radius: 7px; background: var(--hover); color: var(--ink); font-size: .85rem; line-height: 1.4; text-decoration: none; }
-.tube-videos a:hover, .tube-videos a:focus-visible { border-color: var(--red); }
+.tube-videos a:hover, .tube-videos a:focus-visible { border-color: var(--red); color: var(--ink); }
+.tube-videos a[aria-current="page"] { border-color: var(--red); }
 .tube-videos img { flex-shrink: 0; width: clamp(120px, 45%, 144px); height: auto; aspect-ratio: 16 / 9; align-self: flex-start; border-radius: 5px; background: var(--hover); }
 .tube-videos a > span { min-width: 0; align-self: center; }
 .tube-videos a strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
@@ -62,6 +63,9 @@
 @media (min-width: 801px) {
   .course-page[data-page^="certitube"] #main { width: var(--frame-width); margin-left: var(--frame-left); margin-right: 0; padding: 20px 0; }
   .tube-detail { max-width: var(--content-width); margin-inline: auto; }
+}
+@media (min-width: 1001px) {
+  .course-page[data-page^="certitube"]:has(.certichat:not(.is-beside-content) [data-chat-open]:not([hidden])) .tube-videos { max-height: calc(var(--panel-height) + 20px - 2 * var(--layout-gap) - var(--chat-launcher-size)); }
 }
 @media (max-width: 1000px) {
   .tube-detail { grid-template-columns: minmax(0, 1fr); }

@@ -1,7 +1,6 @@
 .certiquiz-page .certiquiz-main { --brand-accent: var(--accent); max-width: 1280px; padding-top: 20px; padding-bottom: 48px; }
 .certiquiz-page.certiquiz-playing { --header: 0px; }
 .certiquiz-page.certiquiz-playing .site-header { display: none; }
-@media (max-width: 480px) { .certiquiz-page .certiquiz-main { padding-right: 18px; } }
 .certiquiz-app { --shadow: 0 14px 44px #31333f09; }
 html[data-theme="dark"] .certiquiz-app { --shadow: none; }
 .certiquiz-app * { box-sizing: border-box; }
@@ -224,7 +223,7 @@ html:not([data-theme="dark"]) .certiquiz-app .result-banner .result-course { bac
 @media (max-width: 800px) { .certiquiz-app .room-grid { grid-template-columns: minmax(0, 1fr); } .certiquiz-app .room-side { display: none; } }
 @media (max-width: 720px) { .certiquiz-app .invite-code { grid-template-columns: minmax(0, 1fr) 52px; } .certiquiz-app .player-lobby-footer .fact-row { flex: 1; min-width: 0; } }
 @media (max-width: 720px) { .certiquiz-app .host-entry .setup-actions .button { width: 100%; } }
-@media (max-width: 720px) { .certiquiz-app .entry-grid, .certiquiz-app .options { grid-template-columns: 1fr; } .certiquiz-app .entry-card { max-width: none; } .certiquiz-app .welcome { margin-top: 16px; } .certiquiz-app .card { padding: 23px; } .certiquiz-app .pin { font-size: 48px; } .certiquiz-app input.code-input { height: 74px !important; font-size: 48px !important; } .certiquiz-app .option { min-height: 80px; padding: 15px; } .certiquiz-app .result-banner { padding: 23px; } }
+@media (max-width: 720px) { .certiquiz-app .entry-grid, .certiquiz-app .options { grid-template-columns: 1fr; } .certiquiz-app .entry-card { max-width: none; } .certiquiz-app .card { padding: 23px; } .certiquiz-app .pin { font-size: 48px; } .certiquiz-app input.code-input { height: 74px !important; font-size: 48px !important; } .certiquiz-app .option { min-height: 80px; padding: 15px; } .certiquiz-app .result-banner { padding: 23px; } }
 @media (max-width: 370px) { .certiquiz-app .field-row { grid-template-columns: 1fr; gap: 0; } .certiquiz-app .card { padding: 18px; } .certiquiz-app .actions .button { width: 100%; } .certiquiz-app .invite-code { grid-template-columns: minmax(0, 1fr) 44px; } .certiquiz-app .pin { font-size: 40px; } .certiquiz-app input.code-input { height: 66px !important; font-size: 40px !important; } }
 @media (max-width: 370px) { .certiquiz-app .lobby-footer:not(.player-lobby-footer) .actions { gap: 4px; } .certiquiz-app .lobby-footer:not(.player-lobby-footer) .actions .button { font-size: 12px; padding-inline: 7px; } .certiquiz-app .lobby-wait-timer { min-width: 60px; padding-inline: 6px; } }
 @media (prefers-reduced-motion: reduce) { .certiquiz-app .confetti { display: none; } .certiquiz-app *, .certiquiz-app *::before, .certiquiz-app *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }

@@ -141,13 +141,14 @@ test("sharing uses an English Oracle overview and a public PNG icon on every pag
   assert.equal(icon.readUInt32BE(16), 512);
   assert.equal(icon.readUInt32BE(20), 512);
 });
-test("home keeps CertiQuiz beside GitHub inside the site in the same tab", () => {
+test("home keeps CertiQuiz beside CertiTips inside the site in the same tab", () => {
   const html = homeBody(site);
-  const css = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
-  assert.match(html, /class="hero-actions"><a class="button github-link"[^]*?<a class="button button-secondary certiquiz-link" href="\/certitips\/certiquiz\/">/);
-  assert.match(html, /certiquiz-link"[^>]*><svg viewBox="0 0 1920 1920" width="20" height="20" fill="currentColor"[^]*?m746\.255 1466\.764/);
-  assert.doesNotMatch(html.match(/<a class="button button-secondary certiquiz-link"[^>]*>/)[0], /target=/);
-  assert.match(css, /\.hero-actions \.button-secondary,\s*\.certichat \.certichat-launcher\s*\{[^}]*border:\s*1px solid var\(--red\);/);
+  assert.match(html, /class="hero-actions"><a class="hero-action certitips-link" href="\/certitips\/courses\/">[^]*?<a class="hero-action certiquiz-link" href="\/certitips\/certiquiz\/">/);
+  assert.match(html, /certiquiz-link"[^>]*><span><svg viewBox="0 0 1920 1920" width="14" height="14" fill="currentColor"[^]*?m746\.255 1466\.764/);
+  assert.doesNotMatch(html.match(/<a class="hero-action certiquiz-link"[^>]*>/)[0], /target=/);
+  assert.match(html, /CertiTips<\/span><strong>Guías De Estudio<\/strong>/);
+  assert.match(html, /CertiQuiz<\/span><strong>Quiz En Equipo<\/strong>/);
+  assert.match(html, /CertiTube<\/span><strong>Videos Y Casos<\/strong>/);
 });
 test("CertiQuiz role choices are full-card buttons without duplicate actions", () => {
   const script = readFileSync(new URL("../assets/certiquiz.js", import.meta.url), "utf8");
@@ -258,7 +259,7 @@ test("CertiQuiz shares site navigation and theme without a course sidebar", () =
   assert.match(certiquizScript, /await finishLoading\(\); entry\(\);/);
   assert.doesNotMatch(certiquizBody('https://api.example.test'), /id="(?:error|connection|announcement)"/);
   const errorRocket = certiquizBody('https://api.example.test').match(/<template id="certiquiz-rocket">([^]*?)<\/template>/)[1];
-  const homeRocket = homeBody(site).match(/certiquiz-link"[^>]*>(<svg[^]*?<\/svg>)/)[1];
+  const homeRocket = homeBody(site).match(/certiquiz-link"[^>]*><span>(<svg[^]*?<\/svg>)/)[1];
   assert.deepEqual([...errorRocket.matchAll(/<path d="([^"]+)"/g)].map(match => match[1]), [...homeRocket.matchAll(/<path d="([^"]+)"/g)].map(match => match[1]));
   assert.doesNotMatch(html, /id="course-navigation"|class="menu-toggle"|src="[^\"]*\/quiz\.js"/);
 });
@@ -675,7 +676,7 @@ test("lesson completion follows the article before next-page navigation", () => 
   assert.match(rule, /border-radius:\s*30px;/);
   assert.match(rule, /background:\s*var\(--selected-surface\);/);
   assert.match(css, /\.complete-button\[aria-checked="true"\]\s*\{\s*background:\s*var\(--red\);/);
-  assert.match(css, /\.course-main\.lesson-main\s*\{\s*padding-bottom:\s*16px;/);
+  assert.match(css, /\.course-main\.lesson-main\s*\{\s*padding-bottom:\s*calc\(2 \* var\(--layout-gap\) \+ var\(--chat-launcher-size\)\);/);
   assert.match(css, /\.course-page:not\(\[data-page\^="certitube"\]\) \.course-main\s*\{[^}]*--course-frame-width:\s*calc\(var\(--course-layout-width\) - var\(--sidebar\)\);[^}]*--reading-width:\s*100%;/s);
   assert.doesNotMatch(css.match(/\.course-page:not\(\[data-page\^="certitube"\]\) \.course-main\s*\{([^}]*)\}/s)?.[1] ?? "", /\b(?:border(?:-radius)?|background(?:-image)?|box-shadow|(?:-webkit-)?backdrop-filter)\s*:/);
   assert.match(css, /\.course-page:not\(\[data-page\^="certitube"\]\) \.sidebar\s*\{\s*left:\s*var\(--course-sidebar-offset\);/);
@@ -806,24 +807,24 @@ test("home shows each certification and applied course once and links every avai
   assert.match(html, /href="\/certitips\/1Z0-1157-26\/overview\/"/);
   assert.match(html, /id="oci-enablers"/);
   assert.match(html, /class="oracle-badge"><svg viewBox="0 0 32 32" fill="currentColor"[^>]*><path d="M21\.272 22\.141h-10\.538/);
-  assert.match(html, /<span>Oracle Cloud Infrastructure<\/span><\/div><h1><span>De los Fundamentos<\/span><span>a tu Especialidad<\/span><\/h1>/);
+  assert.match(html, /<span>Oracle Cloud Infrastructure<\/span><\/div><h1>Ruta de Aprendizaje Práctico en Oracle AI<\/h1>/);
   assert.match(html, /class="hero-copy"/);
   assert.match(html, /class="hero-flow is-unavailable"/);
   const siteCss = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
-  assert.match(siteCss, /\.home-hero\s*\{[^}]*align-items:\s*stretch;/);
-  assert.match(siteCss, /\.home-hero\s*\{[^}]*padding:\s*35px 0 48px;/);
+  assert.match(siteCss, /\.home-hero\s*\{[^}]*align-items:\s*center;[^}]*min-height:\s*calc\(100dvh - var\(--header\) - var\(--footer-height\)\);/);
+  assert.match(siteCss, /\.home-hero\s*\{[^}]*padding:\s*20px 0;/);
   assert.match(siteCss, /\.home-hero \.hero-copy\s*\{[^}]*align-self:\s*stretch;[^}]*justify-content:\s*center;/);
   const oracleBadge = siteCss.match(/\.home-hero \.oracle-badge\s*\{([^}]*)\}/)[1];
   assert.match(oracleBadge, /display:\s*inline-flex;[\s\S]*border:\s*1px solid var\(--line\);[\s\S]*background:\s*var\(--chrome-bg\);[\s\S]*color:\s*var\(--ink\);/);
-  assert.match(siteCss, /html:not\(\[data-theme="dark"\]\) \.home-hero \.oracle-badge\s*\{\s*background:\s*var\(--white\);\s*\}/);
+  assert.match(siteCss, /\.hero-action, html:not\(\[data-theme="dark"\]\) \.home-hero \.oracle-badge\s*\{\s*background:\s*#31333f0d;/);
   assert.doesNotMatch(oracleBadge, /backdrop-filter|box-shadow/);
   assert.match(siteCss, /--scrollbar:\s*#59616e;/);
   assert.match(siteCss, /html\[data-theme="dark"\]\s*\{[^}]*--scrollbar:\s*#454855;[^}]*--red:\s*#c74634;[^}]*--red-dark:\s*#a6382b;/);
   assert.match(siteCss, /\.home-hero \.oracle-badge svg\s*\{[^}]*color:\s*var\(--accent\);/);
-  assert.match(siteCss, /\.home-hero h1\s*\{[^}]*font-size:\s*clamp\(2\.4rem, 3\.5vw, 3rem\);/);
-  assert.match(siteCss, /\.home-hero h1 span\s*\{\s*display:\s*block;/);
+  assert.match(siteCss, /\.home-hero h1\s*\{[^}]*font-family:\s*"Segoe UI"[^}]*font-size:\s*clamp\(2\.2rem, 3\.3vw, 2\.8rem\);/);
+  assert.doesNotMatch(homeBody(catalog).match(/<h1>([^]*?)<\/h1>/)[1], /<span>|<br/);
   assert.match(siteCss, /:focus-visible\s*\{[^}]*outline:\s*3px solid var\(--accent\);/);
-  assert.match(siteCss, /\.hero-flow\s*\{[^}]*background:\s*var\(--paper\);[^}]*border:\s*1px solid var\(--line\);/);
+  assert.match(siteCss, /\.hero-flow\s*\{[^}]*order:\s*-1;[^}]*background:\s*var\(--paper\);[^}]*border:\s*0;/);
   assert.doesNotMatch(siteCss, /\.hero-flow video\s*\{[^}]*filter:/);
   assert.doesNotMatch(html, /assets\/motion\/certification-path\.mp4/);
   const withMotion = homeBody(catalog, true);
@@ -836,8 +837,8 @@ test("home shows each certification and applied course once and links every avai
   assert.match(withMotion, /3 certificaciones de nivel 1/);
   assert.match(html, /OCI AI Foundations Associate/);
   assert.doesNotMatch(html, /Essentials|AI → AI Data Platform/);
-  assert.match(html, /class="button github-link"[^>]*>.*?GitHub<\/a>/);
-  assert.doesNotMatch(html, /View on GitHub|button-secondary github-link/);
+  assert.match(html, /class="hero-action certitips-link"[^>]*><span><svg[^>]*viewBox="0 0 16 16"[^]*?CertiTips<\/span><strong>Guías De Estudio<\/strong><\/a>/);
+  assert.doesNotMatch(html, /github-link|View on GitHub/);
   assert.doesNotMatch(html, /Ver el recorrido|30 de septiembre de 2026|catalog-disclaimer/);
   assert.equal(catalog.paths[3].label, "Architecture");
   assert.equal(catalog.paths[4].label, "Governance");

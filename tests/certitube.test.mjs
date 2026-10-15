@@ -15,7 +15,7 @@ import { corpusArtifacts } from "../scripts/certichat-corpus.mjs";
 test("unsegmented videos hide duplicate controls while retaining their registered citation", () => {
   const video = parseVideo(readFileSync(new URL("../data/certitube/MWASexQNDVU/MWASexQNDVU.md", import.meta.url), "utf8"), "MWASexQNDVU");
   const html = videoBody(video, new MarkdownIt(), site);
-  assert.equal(video.title, "AI Data Platform Workbench for VS Code Community Edition");
+  assert.equal(video.title, "AI Data Platform Workbench for VS Code Community");
   assert.match(html, /class="tube-chapters" hidden/);
   assert.match(html, /class="tube-description" hidden/);
   assert.match(html, /href="#t-0" data-tube-time="0"/);
@@ -116,6 +116,9 @@ test("published video produces matching safe pages, timed evidence and chat refe
   assert.match(html, /data-tube-description="332" aria-labelledby="t-332" hidden/);
   assert.match(html, /<h2 id="resumen">Resumen<\/h2>/);
   assert.match(html, /class="tube-resources"[^]*?<h2 id="recursos-relacionados">Recursos relacionados<\/h2>/);
+  const resourceLinks = [...html.match(/<section class="tube-resources"[^]*?<\/section>/)[0].matchAll(/<a\b[^>]*>/g)];
+  assert.equal(resourceLinks.length, 4);
+  assert.ok(resourceLinks.every(([tag]) => tag.includes('target="_blank"') && tag.includes('rel="noopener noreferrer"')));
   assert.doesNotMatch(html, /id="capitulos"|Reproducir desde|Caso de uso/);
   assert.doesNotMatch(html, /"status":|"reviewedAt":/);
   assert.ok(docs.every(doc => doc.courseId === "site" && doc.text.includes("2025-07-24")));

@@ -17,7 +17,7 @@ Ejemplo basado en una ficha existente. Para un video distinto, reemplazar todos 
 ````markdown
 ```json
 {
-  "title": "AI Data Platform Workbench for VS Code Community Edition",
+  "title": "AI Data Platform Workbench for VS Code Community",
   "videoId": "MWASexQNDVU",
   "channelUrl": "https://www.youtube.com/@jgangini",
   "publishedAt": "2026-08-15",

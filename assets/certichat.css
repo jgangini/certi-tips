@@ -1,6 +1,6 @@
 .certichat { position: fixed; right: 20px; bottom: calc(var(--footer-height) + 16px); z-index: 60; font-size: 14px; }
-@media (min-width: 1101px) and (max-width: 1200px) { .course-page .certichat { right: 5vw; } }
-@media (min-width: 801px) and (max-width: 1100px) { .course-page .certichat { right: 32px; } }
+.course-page .certichat, .certitips-page .certichat { bottom: calc(var(--footer-height) + var(--layout-gap)); }
+.course-page .certichat-launcher, .certitips-page .certichat-launcher { height: var(--chat-launcher-size); }
 @media (min-width: 801px) and (max-width: 1380px) { .home-page[data-page="home"] .path-carousel { padding-bottom: 84px; } }
 @media (max-width: 800px) {
   .home-page .certichat-launcher { width: 48px; height: 48px; padding: 0; gap: 0; }
@@ -11,8 +11,8 @@
   .course-page:not(.is-compact-nav) .certichat-launcher > span { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 @media (max-width: 1200px) {
-  .course-page .certichat-launcher { width: 48px; height: 48px; padding: 0; gap: 0; }
-  .course-page .certichat-launcher > span { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  :is(.course-page, .certitips-page) .certichat-launcher { width: 48px; height: 48px; padding: 0; gap: 0; }
+  :is(.course-page, .certitips-page) .certichat-launcher > span { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 .certichat [hidden] { display: none !important; }
 .certichat button { font-family: inherit; cursor: pointer; }
@@ -37,6 +37,9 @@
 .certichat-messages:empty { display: none; }
 .certichat-messages deep-chat { display: block; width: 100%; height: 100%; min-height: 0; min-width: 0; }
 @media (min-width: 801px) {
+  .course-page .certichat, .certitips-page .certichat { right: var(--frame-left); }
+  :is(.course-page, .certitips-page) .certichat.is-beside-content { right: 20px; }
+  .course-page[data-page^="certitube"] .certichat.is-beside-content { bottom: calc(var(--footer-height) + 20px); }
   .course-page .course-main { transition: width 360ms ease, margin-left 360ms ease, margin-right 360ms ease; }
   .certichat-panel {
     position: fixed;
@@ -44,12 +47,9 @@
     width: var(--dock-width);
     height: var(--panel-height);
   }
-  .certitips-page .certichat-launcher { width: auto; height: auto; padding: 11px 22px; gap: 10px; }
-  .certitips-page .certichat-launcher > span { position: static; width: auto; height: auto; overflow: visible; clip-path: none; white-space: normal; }
 }
 @media (max-width: 800px) {
-  .certichat { right: 24px; bottom: calc(var(--footer-height) + 10px); }
-  .course-page .certichat { bottom: calc(var(--footer-height) + 30px); }
+  .certichat { right: var(--content-gutter); bottom: calc(var(--footer-height) + 10px); }
   .certichat-actions > a { display: none; }
   .certichat .certichat-launcher { width: 44px; height: 44px; min-height: 44px; padding: 0; }
   body:not(.certichat-page):has(.certichat-panel:not([hidden])) { overflow: hidden; }
@@ -58,7 +58,6 @@
   .certichat-heading { padding-top: max(12px, env(safe-area-inset-top)); }
 }
 @media (max-width: 480px) {
-  .certichat { right: 18px; }
   .certichat .certichat-launcher { width: 31px; height: 31px; min-height: 31px; }
   .certichat .certichat-launcher > svg { width: 17px; height: 17px; }
 }

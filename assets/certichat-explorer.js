@@ -1,4 +1,4 @@
-import { createNetwork } from "./certichat-network.js";
+import { createNetwork, videoEvidence } from "./certichat-network.js";
 import { normalizeTrace, readTrace, sourcePath } from "./certichat-trace.js";
 
 export function indexGraph(data) {
@@ -75,10 +75,11 @@ if (root?.dataset.knowledgeGraph) {
     updating.parentElement?.setAttribute("aria-busy", String(indexing));
   }
 
-  function conceptButton(id, position) {
+  function conceptButton(id, position, source) {
     const label = graph.byId.get(id).label, button = element("button");
     button.append(element("span", position, "chat-graph-number"), element("span", label, "chat-graph-label"));
     button.type = "button"; button.dataset.concept = id;
+    button.dataset.source = source;
     button.setAttribute("aria-pressed", "false");
     button.setAttribute("aria-label", `${position}. ${label}`);
     button.addEventListener("click", () => select(id, true));
@@ -88,6 +89,8 @@ if (root?.dataset.knowledgeGraph) {
   function select(id, center = false) {
     network.select(id, center);
     active.querySelectorAll("button").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.concept === id)));
+    const selected = active.querySelector('[aria-pressed="true"]');
+    if (selected) active.scrollTo({ left: active.scrollLeft + selected.getBoundingClientRect().left - active.getBoundingClientRect().left - (active.clientWidth - selected.offsetWidth) / 2, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
     selection.textContent = `${graph.byId.get(id).label}. ${graph.neighbors.get(id).size} conceptos relacionados.`;
     cardTitle.textContent = graph.byId.get(id).label;
     cardSources.replaceChildren();
@@ -111,6 +114,7 @@ if (root?.dataset.knowledgeGraph) {
     card.hidden = !anchor;
     connector.toggleAttribute("hidden", !anchor);
     if (!anchor) return;
+    card.dataset.source = connector.dataset.source = anchor.source;
     const left = Math.max(8, Math.min(anchor.x - card.offsetWidth / 2, anchor.width - card.offsetWidth - 8));
     const top = Math.max(8, Math.min(anchor.y - card.offsetHeight, anchor.height - card.offsetHeight - 8));
     card.style.left = `${left}px`; card.style.top = `${top}px`;
@@ -138,8 +142,9 @@ if (root?.dataset.knowledgeGraph) {
     connector.setAttribute("hidden", "");
     network.setTrace(trace);
     active.replaceChildren();
+    const videoNodes = videoEvidence(trace).nodes;
     for (const [index, id] of nodes.entries()) {
-      const item = element("li"); item.append(conceptButton(id, index + 1)); active.append(item);
+      const item = element("li"); item.append(conceptButton(id, index + 1, videoNodes.has(id) ? "tube" : "tips")); active.append(item);
     }
     active.scrollTo({ left: 0, behavior: "instant" }); updateScroll();
     activeRelations.replaceChildren();

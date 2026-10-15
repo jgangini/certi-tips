@@ -57,7 +57,7 @@ async page => {
         await tab.waitForTimeout(420);
         const closed = await measure();
         assert(closed.compact === (closed.bar.width <= 800) && closed.desktopVisible !== closed.compact, `${width}: closed menu ignores its container width`);
-        assert(closed.labelVisible && closed.launcher.width > 100, `${theme} ${width}: CertiChat label hidden`);
+        assert(width <= 1200 ? !closed.labelVisible && closed.launcher.width === 48 : closed.labelVisible && closed.launcher.width > 100, `${theme} ${width}: incorrect CertiChat label/size`);
         assert(Math.abs(closed.bar.left - closed.card.left) < 1 && Math.abs(closed.bar.right - closed.card.right) < 1, `${theme} ${width}: closed bar/card misaligned ${JSON.stringify(closed)}`);
         assert(closed.bottomGap < 2, `${theme} ${width}: card has excess bottom padding ${closed.bottomGap}`);
         await tab.locator('[data-chat-open]').click();

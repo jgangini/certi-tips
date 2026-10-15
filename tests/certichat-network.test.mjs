@@ -64,6 +64,7 @@ test("Canvas preserves trace membership, camera control and selection styling", 
     assert.ok(Math.abs(anchor.x - (selected.x * scale + Number(canvas.dataset.panX))) < 1e-10, "concept card anchor must center over its node");
     assert.ok(Math.abs(anchor.y + 8 + selected.radius - (selected.y * scale + Number(canvas.dataset.panY))) < 1e-10, "concept card anchor must float above the node with a gap");
     assert.equal(anchor.id, "a");
+    assert.equal(anchor.source, "tips");
     assert.equal(anchor.nodeY, anchor.y + 8, "connector endpoint must touch the selected node's top");
     assert.equal(strokes.findLast(stroke => stroke.radii.length === 1).color, "#c74634", "selection ring must be red without changing trace membership");
     const pointerPan = { button: 0, pointerId: 1, clientX: 0, clientY: 0 };
@@ -150,6 +151,8 @@ test("Canvas preserves trace membership, camera control and selection styling", 
     const interrupted = pose(); step(7000);
     assert.deepEqual(pose(), interrupted, "manual zoom cancels both stages of concept navigation");
     assert.equal(canvas.dataset.cameraMoving, "false");
+    assert.equal(canvas.dataset.pulseActive, "true", "manual zoom preserves selected concept waves");
+    renderer.select("missing"); step(7016);
     assert.equal(frames.size, 0);
     renderer.setTrace({ nodes: ["a", "b"], edges: [] }); flush();
     const pulseStart = strokes.length;
@@ -182,6 +185,20 @@ test("Canvas preserves trace membership, camera control and selection styling", 
     assert.ok(strokes.slice(selectedMiddle).some(stroke => stroke.color === "#c74634" && stroke.radii.length === 1 && stroke.radii[0] > selectedWave.radii[0] && stroke.opacity < selectedWave.opacity), "the selected node's waves must expand and fade");
     step(15200); step(16400);
     assert.equal(canvas.dataset.pulseActive, "true", "selected node waves repeat while its card remains selected");
+    for (const [name, control] of [
+      ["zoom", () => renderer.zoom(1.1)],
+      ["fit", () => renderer.fit()],
+      ["keyboard pan", () => events.get("keydown")({ key: "ArrowRight", preventDefault() {} })],
+      ["pointer pan", () => { events.get("pointerdown")(pointerPan); events.get("pointermove")({ ...pointerPan, clientX: 20 }); events.get("pointerup")({ ...pointerPan, clientX: 20 }); }],
+      ["empty click", () => { const empty = { ...pointerPan, clientX: -10000 }; events.get("pointerdown")(empty); events.get("pointerup")(empty); }],
+      ["answer hover exit", () => renderer.stopPulse()],
+    ]) {
+      const start = strokes.length;
+      control(); step(17600); step(18080);
+      assert.equal(canvas.dataset.pulseActive, "true", `${name} must preserve selection waves`);
+      assert.ok(strokes.slice(start).some(stroke => stroke.color === "#c74634" && stroke.radii.length === 1 && stroke.opacity > 0 && stroke.opacity <= .38), `${name} must still draw the selected wave`);
+      assert.equal(anchors.at(-1)?.id, "c", `${name} must retain the selected concept`);
+    }
     renderer.select("missing"); step(16416);
     assert.equal(anchors.at(-1), null);
     assert.equal(canvas.dataset.pulseActive, "false");
@@ -206,13 +223,14 @@ test("Canvas preserves trace membership, camera control and selection styling", 
     const mixed = { nodes: ["a", "b", "c"], edges: graph.edges, sources: ["a", "b"].map(nodeId => ({ nodeId, url: videoURL })) };
     renderer.setTrace(mixed); renderer.fit(); flush();
     assert.equal(canvas.dataset.videoNodeCount, "2"); assert.equal(canvas.dataset.videoEdgeCount, "1");
-    assert.equal(fills.findLast(fill => fill.color === "#0074b9").radii.length, 2);
+    assert.equal(fills.findLast(fill => fill.color === "#0d65ad").radii.length, 2);
     assert.equal(fills.findLast(fill => fill.color === "#c74634").radii.length, 1);
     renderer.pulse(true); step(12000);
-    assert.ok(strokes.some(stroke => stroke.color === "#0074b9" && stroke.opacity === .38 && stroke.radii.length === 2), "video waves use blue");
+    assert.ok(strokes.some(stroke => stroke.color === "#0d65ad" && stroke.opacity === .38 && stroke.radii.length === 2), "video waves use the legend blue");
     renderer.stopPulse(); flush();
     renderer.select("a"); motion.matches = true; flush();
-    assert.equal(strokes.at(-1).color, "#0074b9", "reduced-motion selection uses the evidence color");
+    assert.equal(strokes.at(-1).color, "#0d65ad", "reduced-motion selection uses the legend blue");
+    assert.equal(anchors.at(-1).source, "tube", "card and connector must inherit the selected node's provenance");
     renderer.destroy();
     assert.equal(canvas.dataset.pulseActive, "false");
     assert.equal(destroyed, 2);

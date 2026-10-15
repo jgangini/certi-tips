@@ -140,6 +140,8 @@ export function videoBody(video, renderer, site) {
   view.renderer.rules.link_open = (tokens, index, options, env, self) => {
     const end = tokens.findIndex((token, position) => position > index && token.type === "link_close");
     tokens[index].attrSet("title", tokens.slice(index + 1, end).map(token => token.content).join(""));
+    tokens[index].attrSet("target", "_blank");
+    tokens[index].attrSet("rel", "noopener noreferrer");
     return self.renderToken(tokens, index, options);
   };
   const start = video.tokens.findIndex(token => token.type === "heading_open" && token.attrGet("id") === "capitulos");

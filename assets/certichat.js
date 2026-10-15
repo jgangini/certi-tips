@@ -72,25 +72,31 @@ if (root) {
     root.querySelector('a[aria-label="Ver el grafo de CertiChat"]').hidden = true;
   }
   const mobileChat = matchMedia("(max-width: 800px)");
-  const homePath = document.body.dataset.page === "home" ? document.querySelector(".path-carousel") : null;
-  function positionHomeLauncher() {
-    if (!homePath || !panel.hidden) return;
-    if (mobileChat.matches) { launcher.style.removeProperty("right"); launcher.style.removeProperty("top"); return; }
-    const card = homePath.querySelector(".path-section.is-active") || homePath;
-    const box = card.getBoundingClientRect(), rootBox = root.getBoundingClientRect(), top = rootBox.top;
-    const beside = box.right + launcher.offsetWidth + 40 <= document.documentElement.getBoundingClientRect().right;
-    launcher.style.right = beside ? "0px" : `${Math.max(0, rootBox.right - box.right)}px`;
-    const targetTop = (beside ? box.bottom - launcher.offsetHeight : box.bottom + 20) - top;
-    launcher.style.top = `${Math.max(Math.min(0, 88 - top), Math.min(0, targetTop))}px`;
+  const launcherContent = document.querySelector(".tube-detail, [data-group-carousel]") || document.querySelector(".course-page .course-main");
+  function positionLauncher() {
+    if (!launcherContent || !panel.hidden) return;
+    const content = launcherContent.querySelector(".path-section.is-active, .tube-player") || launcherContent;
+    const box = launcherContent.getBoundingClientRect(), gap = parseFloat(getComputedStyle(root).getPropertyValue("--layout-gap"));
+    const beside = !mobileChat.matches && box.right + launcher.offsetWidth + 20 + gap <= document.documentElement.clientWidth;
+    root.classList.toggle("is-beside-content", beside);
+    const navigation = content.querySelector(".page-navigation a:last-of-type")?.getBoundingClientRect();
+    const last = navigation || content.getBoundingClientRect();
+    const headerBottom = document.querySelector(".site-header").getBoundingClientRect().bottom;
+    if (beside && (navigation || content.matches(".tube-player")) && last.bottom > headerBottom && last.top < innerHeight) {
+      const origin = root.getBoundingClientRect();
+      const target = last.bottom - launcher.offsetHeight / 2;
+      const center = Math.max(headerBottom + 20 + launcher.offsetHeight / 2, target);
+      launcher.style.top = `${Math.min(0, center - (origin.top + origin.bottom) / 2)}px`;
+    } else launcher.style.removeProperty("top");
   }
-  if (homePath) {
+  if (launcherContent) {
     let frame;
-    const schedule = () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; positionHomeLauncher(); }); };
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; positionLauncher(); }); };
     addEventListener("scroll", schedule, { passive: true });
     addEventListener("resize", schedule);
     mobileChat.addEventListener("change", schedule);
     const observer = new ResizeObserver(schedule);
-    observer.observe(homePath);
+    observer.observe(launcherContent);
     const footer = document.querySelector(".site-footer");
     if (footer) observer.observe(footer);
     schedule();
@@ -134,6 +140,12 @@ if (root) {
   const saved = restoreChat(readStored(storageKey, null), root.dataset.siteRoot);
   const preview = isChatPreview(location.href, root.dataset.api);
   let chat, opening, verifying = false, verified = false, available = false, busy = false, turnstileId, turnstileLoad;
+  addEventListener("pagehide", () => {
+    const scroller = chat?.shadowRoot?.querySelector("#messages");
+    if (scroller && !panel.hidden) {
+      try { sessionStorage.setItem(`${storageKey}:scroll`, String(scroller.scrollTop)); } catch { /* Reading position is optional. */ }
+    }
+  });
   let pendingRequest = saved.pendingRequest, accessError = "", completedRequest, completedTrace, quota;
   const responseTraces = saved.messages.filter(message => message.role === "ai").map(message => message.graphTrace);
   const responseSelector = ".outer-message-container:not(.deep-chat-intro) .ai-message:not(.deep-chat-loading-message-bubble)";
@@ -262,14 +274,17 @@ if (root) {
         },
       };
       chat.submitButtonStyles = { submit: { container: { default: { transform: "scale(1.21)", marginBottom: "-3px", marginRight: "0.4em" } } } };
-      chat.messageStyles = { default: { shared: { bubble: { maxWidth: "92%", fontSize: "14px", lineHeight: "1.5" } }, ai: { bubble: { backgroundColor: "var(--hover)", color: "var(--ink)" } }, user: { bubble: { backgroundColor: "var(--accent)", color: "var(--on-red)" } } } };
-      chat.messageStyles.loading = { message: { styles: { bubble: { display: "flex", alignItems: "center", justifyContent: "center", width: "56px", height: "36px", padding: "0", boxSizing: "border-box" } } } };
+      chat.messageStyles = { default: { shared: { bubble: { maxWidth: "92%", fontSize: "14px", lineHeight: "1.45" } }, ai: { bubble: { backgroundColor: "var(--hover)", color: "var(--ink)" } }, user: { bubble: { backgroundColor: "var(--accent)", color: "var(--on-red)" } } } };
+      chat.messageStyles.loading = { message: { styles: { bubble: { backgroundColor: "var(--hover)", color: "var(--muted)", display: "flex", alignItems: "center", justifyContent: "center", width: "56px", height: "36px", padding: "0", boxSizing: "border-box" } } } };
       chat.remarkable = { html: false, applyHTML: false };
       chat.auxiliaryStyle = "* { overflow-wrap: anywhere; } #messages, #text-input { scrollbar-color: var(--scrollbar) transparent; scrollbar-width: thin; } #chat-view { grid-template-rows: minmax(0, 1fr) auto auto; } #certichat-quota { color: var(--muted); text-align: center; font-size: 12px; line-height: 1.4; padding: 8px 12px; } #certichat-quota[hidden] { display: none; } a { color: var(--blue); text-decoration: underline; } a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; } @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }";
       // ponytail: the native completion class also covers restored history; no extra render pass or observers.
       // ponytail: override the native disabled filter on hover; the submission guard stays unchanged.
       chat.auxiliaryStyle += `.outer-message-container:last-child { margin-bottom: 10px; }
         #input .input-button:hover #submit-icon { color: var(--red) !important; filter: none !important; }
+        .ai-message :is(p, ol, ul) { margin-block: .5em; }
+        .ai-message > :first-child { margin-top: 0; }
+        .ai-message > :last-child { margin-bottom: 0; }
         .ai-message :is(ol, ul) { padding-inline-start: 1.6em; }
         .chat-resource-heading { color: var(--red); font-size: .75em; font-weight: 750; letter-spacing: 1px; text-transform: uppercase; }
         .ai-message:not(.streamed-message) a { display: inline-block; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; vertical-align: bottom; color: var(--ink); }
@@ -382,7 +397,18 @@ if (root) {
     connecting.hidden = false; messages.hidden = true;
     try { await initialize(); }
     catch { setStatus("Sin conexión. Vuelve a intentarlo.", true); }
-    finally { connecting.hidden = true; messages.hidden = false; retry.disabled = false; clear.disabled = !chat || busy; }
+    finally {
+      connecting.hidden = true; messages.hidden = false; retry.disabled = false; clear.disabled = !chat || busy;
+      requestAnimationFrame(() => {
+        try {
+          const key = `${storageKey}:scroll`, value = sessionStorage.getItem(key), scroller = chat?.shadowRoot?.querySelector("#messages");
+          if (value !== null && Number.isFinite(Number(value)) && Number(value) >= 0 && scroller) {
+            scroller.scrollTop = Number(value);
+            sessionStorage.removeItem(key);
+          }
+        } catch { /* Reading position is optional. */ }
+      });
+    }
   }
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   let panelAnimation, closing = false;
@@ -403,7 +429,7 @@ if (root) {
       panel.hidden = true; launcher.hidden = false; launcher.style.removeProperty("visibility");
       launcher.setAttribute("aria-expanded", "false"); launcher.focus({ preventScroll: true });
       panelAnimation?.cancel(); panelAnimation = undefined; closing = false;
-      positionHomeLauncher();
+      positionLauncher();
     };
     if (!animate || reducedMotion.matches || !panel.animate) return finish();
     launcher.hidden = false; launcher.style.visibility = "hidden";
@@ -425,7 +451,7 @@ if (root) {
     } else if (root.hidden) {
       root.hidden = false;
       if (dock) launcher.click();
-      positionHomeLauncher();
+      positionLauncher();
     }
   }
   let checkingQuiz = false;

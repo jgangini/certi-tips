@@ -298,7 +298,7 @@ if (groupCarousel) {
   const activate = (target, scroll = false) => {
     index = Math.max(0, Math.min(groups.length - 1, target));
     const focusedControl = controls.contains(document.activeElement) ? document.activeElement : null;
-    groups[index].querySelector(".certification-list").before(controls);
+    groups[index].querySelector(".path-section-heading").prepend(controls);
     groups.forEach((group, position) => group.classList.toggle("is-active", position === index));
     previous.disabled = index === 0;
     next.disabled = index === groups.length - 1;
