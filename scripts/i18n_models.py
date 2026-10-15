@@ -174,6 +174,7 @@ class ArgosModel:
             tokens, beam_size=4, length_penalty=1, max_batch_size=32, batch_type="examples",
             max_input_length=0, max_decoding_length=768, replace_unknowns=True,
         )
+        recovered = {}
         for index, item in enumerate(results):
             if len(item.hypotheses[0]) >= 768:
                 results[index] = self.translator.translate_batch(
@@ -181,5 +182,12 @@ class ArgosModel:
                     repetition_penalty=1.1, no_repeat_ngram_size=4, replace_unknowns=True,
                 )[0]
                 if len(results[index].hypotheses[0]) >= 768:
-                    raise ValueError(f"Translation reached decoding limit: {texts[index][:200]}")
-        return [self.decode(item.hypotheses[0]).strip() for item in results]
+                    marker = re.compile(r"ZXQ\d+XZ")
+                    if not marker.search(texts[index]):
+                        raise ValueError(f"Translation reached decoding limit: {texts[index][:200]}")
+                    # ponytail: retry only natural fragments; unmasked failures still stop publication.
+                    parts = pieces(texts[index], marker)
+                    natural = [text for text, translate in parts if translate]
+                    translated = iter(self.translate(natural) if natural else [])
+                    recovered[index] = "".join(next(translated) if translate else text for text, translate in parts)
+        return [recovered[index] if index in recovered else self.decode(item.hypotheses[0]).strip() for index, item in enumerate(results)]

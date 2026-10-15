@@ -57,12 +57,32 @@ import sys, json, hashlib, tempfile
 from unittest.mock import patch
 from pathlib import Path
 sys.path.insert(0, 'scripts')
-from i18n_models import pieces, protected_pattern, model_files
+from i18n_models import ArgosModel, pieces, protected_pattern, model_files
+from types import SimpleNamespace
 from i18n_svg import svg_units, render_svg, validate_svg
 import i18n
 from i18n import Translator, validate_translation, manifest_records, source_digest
 
 pattern = protected_pattern(['OCI', 'OpenAI'])
+
+class DecodingFixture:
+    def translate_batch(self, batches, **options):
+        result = []
+        for words in batches:
+            source = ' '.join(words)
+            output = ['repeated'] * 768 if 'ZXQ' in source or source == 'Texto irrecuperable' else {'Consulta':'Consult', 'y revisa':'and check'}[source].split()
+            result.append(SimpleNamespace(hypotheses=[output]))
+        return result
+
+bounded = ArgosModel.__new__(ArgosModel)
+bounded.encode, bounded.decode = str.split, lambda words: ' '.join(words)
+bounded.translator = DecodingFixture()
+assert bounded.translate(['Consulta ZXQ0XZ y revisa ZXQ1XZ.']) == ['Consult ZXQ0XZ and check ZXQ1XZ.']
+try:
+    bounded.translate(['Texto irrecuperable'])
+    raise AssertionError('An untranslatable natural fragment must still block publication')
+except ValueError as error:
+    assert 'decoding limit' in str(error)
 text = 'Usa OCI con {count}, response.output_text y https://example.com/docs.'
 parts = pieces(text, pattern)
 assert ''.join(value for value, _ in parts) == text
