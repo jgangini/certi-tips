@@ -62,6 +62,16 @@ def clients(database_url, request):
             return httpx.Response(200, json=knowledge)
         assert request.url.host == "openrouter.ai"
         payload = json.loads(request.content)
+        if request.url.path == "/api/alpha/decisions":
+            assert settings.jev_video_enabled and payload["model"] == "typesafe/jev-1.14"
+            route = "generate" if "Explica" in payload["state"]["question"] else "video"
+            answers = {}
+            for name, item in payload["questions"].items():
+                selected = route if name == "route" else "R1" if route == "video" else "none"
+                answers[name] = {"type": "choice", "choice": selected,
+                                 "probabilities": {key: int(key == selected) for key in item["criteria"]}}
+            return httpx.Response(200, json={"model": "typesafe/jev-1.14-20261014", "answers": answers,
+                                           "usage": {"cost": .000001}})
         if request.url.path.endswith("embeddings"):
             return httpx.Response(200, json={"usage": {"cost": .000001}, "data": [{"embedding": [0.0]}]})
         assert payload["model"] == "openai/gpt-5.4" and payload["max_tokens"] == 8192
@@ -223,6 +233,27 @@ def test_answer_sources_idempotency_and_clear_preserve_quota(clients):
     token = client.cookies[COOKIE]
     assert client.post("/api/session", json={"turnstileToken": "fresh"}).json()["quota"]["remaining"] == 19
     assert client.cookies[COOKIE] == token
+
+
+@pytest.mark.parametrize("clients", [{"public_origin": ORIGIN, "jev_video_enabled": True}], indirect=True)
+def test_video_router_preserves_quota_idempotency_and_gpt_for_synthesis(clients):
+    make, _, calls, _, knowledge = clients
+    video = {**FRAGMENT, "url": FRONTEND + "/certitips/certitube/abcdefghijk/"}
+    knowledge["fragments"] = [video]
+    client = session(make)
+    body = {**question(), "message": "Dame un video de Oracle"}
+    response = client.post("/api/chat", json=body)
+    assert response.status_code == 200, response.text
+    assert response.json()["answer"] == "Puedes consultar estos recursos publicados:"
+    assert response.json()["sources"] == [{key: video[key] for key in ("id", "title", "url")}]
+    assert response.json()["quota"]["remaining"] == 19
+    count = len(calls)
+    assert client.post("/api/chat", json=body).json() == response.json() and len(calls) == count
+    assert not any(call.url.path.endswith("chat/completions") for call in calls)
+    response = client.post("/api/chat", json={**question(), "message": "Explica el video de Oracle"})
+    assert response.status_code == 200 and response.json()["answer"] == "Oracle almacena datos."
+    assert response.json()["quota"]["remaining"] == 18
+    assert sum(call.url.path.endswith("chat/completions") for call in calls) == 1
 
 
 def test_chat_language_is_validated_forwarded_and_part_of_request_identity(clients):

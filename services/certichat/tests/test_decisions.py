@@ -38,7 +38,7 @@ def test_batched_input_is_bounded_and_history_never_reuses_assistant_prose():
 
 @pytest.mark.parametrize("route,resource,p,expected", [
     ("video", "R2", 1, ["video"]), ("video", "R1", 1, []), ("generate", "R2", 1, []),
-    ("written", "R1", 1, ["guide"]), ("resource", "R2", 0.6, []), ("video", "none", 1, []),
+    ("generate", "R1", 1, []), ("video", "R2", 0.6, []), ("video", "none", 1, []),
 ])
 def test_selection_preserves_verified_format_and_uncertainty(route, resource, p, expected):
     request = decision_request("Material", FRAGMENTS, [], SITE)
@@ -56,7 +56,7 @@ def test_untrusted_decision_schema_is_rejected(mutation):
     if mutation == "missing": del response["answers"]["relevant_S1"]
     if mutation == "nan": response["answers"]["relevant_S1"]["noul"] = float("nan")
     if mutation == "bool": response["answers"]["relevant_S1"]["noul"] = True
-    if mutation == "sum": response["answers"]["route"]["probabilities"]["written"] = 0.5
+    if mutation == "sum": response["answers"]["route"]["probabilities"]["generate"] = 0.5
     if mutation == "unknown": response["answers"]["resource"]["choice"] = "S999"
     if mutation == "distribution_type": response["answers"]["route"]["probabilities"] = list(response["answers"]["route"]["probabilities"])
     with pytest.raises((ValueError, KeyError)):
@@ -69,7 +69,7 @@ def test_direct_lookup_or_one_unchanged_gpt_fallback(failure):
     history = [{"question": "AIDP", "answer": "No debe circular."}]
 
     class Stub:
-        settings = SimpleNamespace(site_url=SITE)
+        settings = SimpleNamespace(site_url=SITE, jev_video_enabled=True)
 
         async def request(self, kind, data, purpose):
             calls.append(kind)
@@ -127,6 +127,7 @@ def test_prefilter_only_skips_optimization_without_classifying_the_answer(messag
 
 def test_general_knowledge_does_not_pay_or_wait_for_a_decision():
     class Stub:
+        settings = SimpleNamespace(jev_video_enabled=True)
         async def request(self, *_):
             pytest.fail("Ordinary knowledge must not call Jev")
 
@@ -143,3 +144,18 @@ def test_video_path_asks_only_the_two_decisions_it_uses():
     plan = parse_decisions(result(request), request)
     resources, context = select_fragments(plan, FRAGMENTS, SITE)
     assert resources == [FRAGMENTS[1]] and context == FRAGMENTS
+
+
+@pytest.mark.parametrize("enabled,locale", [(False, "es"), (True, "en"), (True, "pt"), (True, "it")])
+def test_disabled_or_unevaluated_language_keeps_gpt(enabled, locale):
+    class Stub:
+        settings = SimpleNamespace(jev_video_enabled=enabled)
+
+        async def request(self, *_):
+            pytest.fail("Disabled or unevaluated route must not call Jev")
+
+        async def answer(self, message, fragments, history, received_locale):
+            assert received_locale == locale and fragments == FRAGMENTS
+            return "GPT", []
+
+    assert asyncio.run(answer_with_decisions(Stub(), "Un video", FRAGMENTS, [], locale)) == ("GPT", [])

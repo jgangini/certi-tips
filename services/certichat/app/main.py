@@ -22,6 +22,7 @@ from .provider import Provider
 from .graph import sanitize_graph, validate_trace
 from .security import ChatError, GuardMiddleware, cookie_name, network_digest, new_token, set_cookie, token_digest
 from .settings import Settings, Locale
+from .decisions import answer_with_decisions
 from .store import Store
 
 CLEANUP_SECONDS = 60
@@ -289,7 +290,7 @@ def create_app(settings=None, *, transport=None):
                 version, fragments, graph_trace = await retrieve(request.app, body, history)
                 history = [{"question": turn["question"], "answer": turn["answer"]}
                            for turn in history if turn["version"] == version]
-                answer, sources = await request.app.state.provider.answer(body.message, fragments, history, body.locale)
+                answer, sources = await answer_with_decisions(request.app.state.provider, body.message, fragments, history, body.locale)
                 if not sources:
                     graph_trace = {key: value for key, value in graph_trace.items() if key != "sources"}
                     graph_trace.update(nodes=[], edges=[], truncated=False)

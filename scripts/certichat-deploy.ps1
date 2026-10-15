@@ -2,10 +2,12 @@ param(
     [string]$SshHost = '187.77.63.10',
     [string]$User = 'jarvisops',
     [string]$KeyPath = "$env:USERPROFILE\.ssh\hostinger_multica_ed25519",
-    [switch]$SkipProxy
+    [switch]$SkipProxy,
+    [string]$SourceRoot
 )
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
+$releaseRoot = if ($SourceRoot) { (Resolve-Path -LiteralPath $SourceRoot).Path } else { $repo }
 $ssh = Join-Path $env:WINDIR 'System32/OpenSSH/ssh.exe'
 $scp = Join-Path $env:WINDIR 'System32/OpenSSH/scp.exe'
 $id = [guid]::NewGuid().ToString('N')
@@ -15,6 +17,7 @@ $target = "$User@$SshHost"
 $options = @('-i', $KeyPath, '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'ConnectTimeout=10', '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=3')
 $parameters = @{ CERTICHAT_REFRESH = '6'; CERTICHAT_QUESTIONS = '20'; CERTICHAT_INDEX_REFRESH_MINUTES = '5'; CERTICHAT_INDEX_BUDGET_USD = '10'; CERTICHAT_CHAT_BUDGET_USD = '10'; CERTICHAT_INDEX_MODEL = 'anthropic/claude-haiku-5.5'; CERTICHAT_CHAT_MODEL = 'openai/gpt-5.4'; CERTICHAT_INDEX_REASONING = 'high'; CERTICHAT_CHAT_REASONING = 'medium'; CERTICHAT_INDEX_MAX_TOKENS = '16384'; CERTICHAT_CHAT_MAX_TOKENS = '8192'; CERTICHAT_DATA_DIR = '/data/claude55-haiku' }
 $maximums = @{ CERTICHAT_REFRESH = 24; CERTICHAT_QUESTIONS = 100; CERTICHAT_INDEX_REFRESH_MINUTES = 15; CERTICHAT_INDEX_MAX_TOKENS = 16384; CERTICHAT_CHAT_MAX_TOKENS = 8192 }
+$parameters['CERTICHAT_JEV_VIDEO_ENABLED'] = 'false'
 $privateFile = Join-Path $repo '.private/certichat.env'
 if (Test-Path -LiteralPath $privateFile) {
     foreach ($line in [IO.File]::ReadAllLines($privateFile)) {
@@ -24,6 +27,8 @@ if (Test-Path -LiteralPath $privateFile) {
             if ($maximums.ContainsKey($name)) {
                 if ($value -notmatch '^[0-9]{1,5}$' -or [int]$value -lt 1 -or [int]$value -gt $maximums[$name]) { throw "$name must be an integer from 1 to $($maximums[$name])." }
                 $value = ([int]$value).ToString()
+            } elseif ($name -eq 'CERTICHAT_JEV_VIDEO_ENABLED') {
+                if ($value -cnotin @('true', 'false')) { throw "$name must be true or false." }
             } elseif ($name.EndsWith('_MODEL')) {
                 if ($value -cne $parameters[$name]) { throw "Unreviewed model: $name" }
             } elseif ($name.EndsWith('_REASONING')) {
@@ -44,7 +49,7 @@ function Invoke-Checked([scriptblock]$Action) {
 }
 
 # Explicit source roots and exclusions keep production credentials and unrelated work out of the release.
-Invoke-Checked { & tar -czf $archive -C $repo --exclude=.env --exclude='.env.*' --exclude=.private --exclude=__pycache__ --exclude=.pytest_cache services/certichat }
+Invoke-Checked { & tar -czf $archive -C $releaseRoot --exclude=.env --exclude='.env.*' --exclude=.private --exclude=__pycache__ --exclude=.pytest_cache services/certichat }
 $entries = & tar -tzf $archive
 if ($LASTEXITCODE -ne 0 -or ($entries | Where-Object { $_ -match '(^|/)(\.env[^/]*|\.private|\.\.)($|/)' -or $_ -notmatch '^services/certichat/' })) { throw 'Release archive contains an unexpected path.' }
 Invoke-Checked { & $scp @options $archive "${target}:$remoteArchive" }

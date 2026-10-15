@@ -43,6 +43,10 @@ for name, default in (('CERTICHAT_INDEX_BUDGET_USD', '10'), ('CERTICHAT_CHAT_BUD
     if not value.is_finite() or not 0 < value <= 1000000 or value.normalize().as_tuple().exponent < -2:
         raise SystemExit(f'{name} must be a positive USD amount up to 1000000 with at most two decimal places.')
     production[name] = format(value, 'f')
+jev_enabled = os.environ.get('CERTICHAT_JEV_VIDEO_ENABLED', existing.get('CERTICHAT_JEV_VIDEO_ENABLED', 'false')).strip("'\"")
+if jev_enabled not in ('true', 'false'):
+    raise SystemExit('CERTICHAT_JEV_VIDEO_ENABLED must be true or false.')
+production['CERTICHAT_JEV_VIDEO_ENABLED'] = jev_enabled
 for name, default in (('CERTICHAT_INDEX_MODEL', 'anthropic/claude-haiku-5.5'),
                       ('CERTICHAT_CHAT_MODEL', 'openai/gpt-5.4'),
                       ('CERTICHAT_INDEX_REASONING', 'high'), ('CERTICHAT_CHAT_REASONING', 'medium'),

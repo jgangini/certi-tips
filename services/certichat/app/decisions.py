@@ -1,4 +1,4 @@
-"""Experimental Jev selection over already validated Cognee evidence; no new retrieval."""
+"""Optional video lookup over validated Cognee evidence; GPT retains all synthesis."""
 
 import logging
 import math
@@ -11,9 +11,7 @@ from .security import ChatError
 
 ROUTES = {
     "video": "Only asks to find or link ONE video, with no explanation, comparison, timestamp lookup or other task.",
-    "written": "Only asks to find or link ONE written learning resource, with no explanation, comparison or other task.",
-    "resource": "Only asks to find or link ONE learning resource, accepting either written material or video.",
-    "generate": "Any explanation, comparison, advice requiring synthesis, greeting, mixed request, timestamp, unclear request or uncertainty.",
+    "generate": "Everything else: written resources, explanations, comparisons, advice, greetings, negated video requests, multiple videos, mixed tasks, timestamps, unclear requests or uncertainty.",
 }
 PREFIX = {"es": "Puedes consultar estos recursos publicados:", "en": "You can consult these published resources:",
           "pt": "Você pode consultar estes recursos publicados:", "it": "Puoi consultare queste risorse pubblicate:"}
@@ -89,7 +87,7 @@ def parse_decisions(result, request):
     answers = result["answers"]
     if not isinstance(answers, dict) or set(answers) != set(request["questions"]):
         raise ValueError("Incomplete decision result")
-    route, route_probability = choice(answers["route"], ROUTES)
+    route, route_probability = choice(answers["route"], request["questions"]["route"]["criteria"])
     resource, resource_probability = choice(answers["resource"], request["questions"]["resource"]["criteria"])
     scores = {}
     for name in request["questions"]:
@@ -110,7 +108,7 @@ def select_fragments(plan, fragments, site_url, threshold=0.95, drop_below=0.1):
         index = next((j for j in group if "#" not in fragments[j]["url"]), group[0])
         fragment = fragments[index]
         video = fragment["url"].startswith(site_url + "certitube/")
-        format_matches = plan["route"] == "resource" or plan["route"] == ("video" if video else "written")
+        format_matches = video and plan["route"] == "video"
         if (format_matches and plan["route_probability"] >= threshold and plan["resource"] == f"R{i+1}"
                 and plan["resource_probability"] >= threshold and fragment["url"].startswith(site_url)):
             resources.append(fragment)
@@ -122,7 +120,7 @@ async def answer_with_decisions(provider, message, fragments, history, locale="e
     if locale not in PREFIX:
         raise ChatError("Idioma no permitido.", 422)
     # Only video candidates pay for Jev. Ordinary knowledge questions retain the original single GPT call.
-    if fragments and video_lookup_candidate(message, history):
+    if provider.settings.jev_video_enabled and locale == "es" and fragments and video_lookup_candidate(message, history):
         try:
             request = decision_request(message, fragments, history, provider.settings.site_url, context_checks=False)
             with anyio.fail_after(2):
@@ -130,8 +128,10 @@ async def answer_with_decisions(provider, message, fragments, history, locale="e
             plan = parse_decisions(result, request)
             resources, _ = select_fragments(plan, fragments, provider.settings.site_url)
             if resources and plan["route"] == "video":
+                logging.getLogger(__name__).info("Jev video lookup: direct")
                 sources = [{key: f[key] for key in ("id", "title", "url")} for f in resources]
                 return PREFIX[locale], sources
+            logging.getLogger(__name__).info("Jev video lookup: GPT fallback")
         except (ChatError, TimeoutError, KeyError, TypeError, ValueError):
             logging.getLogger(__name__).info("Jev selection unavailable; using unchanged GPT path")
     return await provider.answer(message, fragments, history, locale)

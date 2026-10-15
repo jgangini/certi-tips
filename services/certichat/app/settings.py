@@ -36,8 +36,11 @@ class Settings:
     questions: int = 20
     index_budget_usd: Decimal = Decimal("10")
     chat_budget_usd: Decimal = Decimal("10")
+    jev_video_enabled: bool = False
 
     def validate(self):
+        if type(self.jev_video_enabled) is not bool:
+            raise ValueError("CERTICHAT_JEV_VIDEO_ENABLED must be true or false.")
         if (MODEL, CHAT_MODEL) != ("anthropic/claude-haiku-5.5", "openai/gpt-5.4"):
             raise ValueError("Model changes require reviewed provider prices and compatibility.")
         if not {INDEX_REASONING, CHAT_REASONING} <= {"medium", "high"}:
@@ -87,6 +90,9 @@ class Settings:
     @classmethod
     def from_env(cls):
         mode = os.environ.get("CERTICHAT_MODE", "VPS")
+        jev_enabled = os.environ.get("CERTICHAT_JEV_VIDEO_ENABLED", "false")
+        if jev_enabled not in ("true", "false"):
+            raise ValueError("CERTICHAT_JEV_VIDEO_ENABLED must be true or false.")
         return cls(database_url=os.environ["CERTICHAT_DATABASE_URL"],
                    openrouter_api_key=os.environ["OPENROUTER_API_KEY"],
                    turnstile_secret=os.environ.get("CERTICHAT_TURNSTILE_SECRET", ""),
@@ -104,4 +110,5 @@ class Settings:
                    refresh_hours=int(os.environ.get("CERTICHAT_REFRESH", "6")),
                    questions=int(os.environ.get("CERTICHAT_QUESTIONS", "20")),
                    index_budget_usd=Decimal(os.environ.get("CERTICHAT_INDEX_BUDGET_USD", "10")),
-                   chat_budget_usd=Decimal(os.environ.get("CERTICHAT_CHAT_BUDGET_USD", "10")))
+                   chat_budget_usd=Decimal(os.environ.get("CERTICHAT_CHAT_BUDGET_USD", "10")),
+                   jev_video_enabled=jev_enabled == "true")
