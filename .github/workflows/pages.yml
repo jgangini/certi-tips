@@ -48,14 +48,6 @@ jobs:
           CERTICHAT_MODE: VPS
           CERTICHAT_TURNSTILE_SITE_KEY: ${{ vars.CERTICHAT_TURNSTILE_SITE_KEY }}
       - run: npm run i18n:generate
-      - name: Preserve translation diagnostics on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: translation-diagnostics
-          path: output/i18n-*-issues.json
-          if-no-files-found: ignore
-          retention-days: 7
       - name: Keep completed inference batches for retries
         if: always() && steps.translation-cache.outputs.cache-primary-key != '' && steps.translation-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
@@ -67,6 +59,9 @@ jobs:
         run: |
           npm install --prefix .cache/i18n/browser --no-save --ignore-scripts playwright@1.62.1
           node .cache/i18n/browser/node_modules/playwright/cli.js install --with-deps chromium
+          fc-match 'Segoe UI' > output/i18n-fonts.txt
+          fc-match Arial >> output/i18n-fonts.txt
+          fc-match Consolas >> output/i18n-fonts.txt
       - name: Validate SVG text geometry in every language
         run: node scripts/check-diagrams.mjs es,en,pt,it output/i18n-geometry.json
         env:
@@ -83,6 +78,17 @@ jobs:
         if: github.event_name != 'pull_request'
         with:
           path: dist
+      - name: Preserve translation and diagram diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: translation-diagnostics
+          path: |
+            output/i18n-*-issues.json
+            output/i18n-geometry.json
+            output/i18n-fonts.txt
+          if-no-files-found: ignore
+          retention-days: 7
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: build
