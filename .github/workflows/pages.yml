@@ -47,6 +47,14 @@ jobs:
           CERTICHAT_MODE: VPS
           CERTICHAT_TURNSTILE_SITE_KEY: ${{ vars.CERTICHAT_TURNSTILE_SITE_KEY }}
       - run: npm run i18n:generate
+      - name: Preserve translation diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: translation-diagnostics
+          path: output/i18n-*-issues.json
+          if-no-files-found: ignore
+          retention-days: 7
       - run: npm run i18n:check
       - name: Install isolated diagram validation browser
         run: |

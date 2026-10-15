@@ -248,7 +248,7 @@ test("CertiQuiz shares site navigation and theme without a course sidebar", () =
   assert.doesNotMatch(html, /data-certichat|assets\/certichat\.(?:js|css)/);
   assert.match(html, /data-api-origin="https:\/\/api\.example\.test"/);
   assert.match(html, /<div id="app" aria-busy="true"><section class="loading loading-full"><h1><svg[^>]*viewBox="0 0 1920 1920"[^>]*><g[^]*?<\/svg><span>Preparando la partida<\/span><\/h1><p role="status">Conectando con la sala de práctica\.<\/p><\/section>/);
-  const certiquizCss = readFileSync(new URL("../assets/certiquiz.css", import.meta.url), "utf8");
+  const certiquizCss = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
   const certiquizScript = readFileSync(new URL("../assets/certiquiz.js", import.meta.url), "utf8");
   assert.match(certiquizCss, /\.certiquiz-app \.loading-full\s*\{[^}]*width:\s*100%;[^}]*min-height:\s*calc\(100dvh - var\(--header\) - var\(--footer-height\)\);[^}]*border:\s*0;/);
   assert.match(certiquizCss, /\.certiquiz-app \.loading-full h1\s*\{[^}]*display:\s*flex;[^}]*justify-content:\s*center;[^}]*font-size:\s*clamp\(28px, 4vw, 44px\);/);

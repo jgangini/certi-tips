@@ -2380,3 +2380,17 @@ html[data-theme="dark"] .quiz-heading .eyebrow {
   .site-header { padding-inline: 16px; }
   .course-page .site-header { padding-inline: 6px; }
 }
+
+/* Shared full-page loading and error presentation. */
+.home-page .home-main:has(> .status-page) { width: 100%; max-width: none; margin: 0; padding: 0; }
+.status-page .loading-full, .certiquiz-app .loading-full { width: 100%; min-height: calc(100dvh - var(--header) - var(--footer-height)); margin: 0; padding: 32px 24px; border: 0; border-radius: 0; background: transparent; box-shadow: none; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.status-page .loading-full h1, .certiquiz-app .loading-full h1 { display: flex; align-items: center; justify-content: center; gap: 18px; font-size: clamp(28px, 4vw, 44px); }
+.status-page .loading-full h1 svg, .certiquiz-app .loading-full h1 svg { width: 46px; height: 46px; flex: 0 0 auto; color: var(--ink); animation: certiquiz-rocket-float 3s ease-in-out infinite; }
+.status-page .loading-error .hint, .certiquiz-app .loading-error .hint { margin-bottom: 0; }
+.status-page kbd, .certiquiz-app kbd { display: inline-flex; align-items: center; padding: 2px 5px; border: 1px solid var(--line); border-radius: 4px; background: var(--chrome-bg); color: var(--muted); font-size: 0.62rem; white-space: nowrap; }
+@keyframes certiquiz-rocket-float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(2px, -3px); } }
+.status-page .loading-full h1 { line-height: 1.08; letter-spacing: -.045em; margin: 14px 0 20px; }
+.status-page p { color: var(--muted); overflow-wrap: anywhere; }
+.status-page .hint { font-size: 13px; margin-top: 7px; }
+.status-page .status-link { margin-top: 24px; text-underline-offset: 4px; }
+@media (prefers-reduced-motion: reduce) { .status-page .loading-full h1 svg { animation: none; } }

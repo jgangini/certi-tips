@@ -96,6 +96,7 @@ Elegir el archivo según el cambio y usar una sesión nueva por comprobación:
 | `certitube-browser-smoke.cjs` | Último video por incorporación, accesos de portada/encabezado, búsqueda real y reintentos, barra inferior de capítulos, cita temporal, historial, errores de YouTube y ajuste compartido del chat; API simulada, sin capturas. |
 | `certichat-mobile-smoke.cjs` | Pie de página, panel móvil y navegación; área visible simulada, no teclado físico de iOS. |
 | `certiquiz-browser-smoke.cjs` | Salas, cookies y flujo de grupo; requiere API local real y crea salas de prueba. |
+| `status-browser-smoke.cjs` | Páginas inexistentes, respuesta 404 raíz de Pages y errores de CertiQuiz en cuatro idiomas, dos temas y móvil/escritorio. Ejecutar con las APIs bloqueadas para simular el fallo de servicio; usa DOM y geometría. |
 
 La comprobación `node scripts/certiquiz-animation-check.cjs` es independiente de la CLI. Requiere el paquete `playwright` resoluble por Node, directamente o mediante `NODE_PATH` de la instalación de herramientas. Usa Chromium y un DOM aislado, sin API: verifica absorción, llegadas, salidas y movimiento reducido.
 

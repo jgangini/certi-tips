@@ -1,5 +1,7 @@
 # Registro histórico de mejoras de CertiTips
 
+2026-10-15 — La publicación multilingüe falló dos veces mientras la caché local pasaba: la inferencia int8 de los modelos fijados produjo otras repeticiones y expansiones en Linux. Se reprodujo con caché de frases vacía, se añadieron correcciones por texto fuente y el workflow conserva los informes de rechazo. No confundir un push correcto con Pages desplegado; comprobar el resultado del workflow y el DOM publicado. Las páginas 404 reutilizan el estado de error de CertiQuiz y prueban también la entrega del 404 raíz por Pages, conservando URL, idioma y F5.
+
 Este archivo conserva evidencia de fricciones y decisiones del repositorio; no define las reglas vigentes. Algunas entradas históricas mantienen su idioma original y describen acuerdos posteriormente sustituidos. Para trabajar, consultar [AGENTS.md](AGENTS.md) y la guía correspondiente; leer aquí solo las entradas pertinentes.
 
 Añadir entradas breves con fecha, evidencia, decisión y alcance. Conservar las entradas previas y los resultados reales; no convertir cifras de experimentos o decisiones derogadas en normas actuales.

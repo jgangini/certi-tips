@@ -20,8 +20,9 @@ const types = {
 const port = Number(process.env.PORT || 4173);
 http
   .createServer(async (request, response) => {
+    let url;
     try {
-      const url = new URL(request.url, "http://localhost");
+      url = new URL(request.url, "http://localhost");
       if (url.pathname === "/") {
         response.writeHead(302, { Location: base });
         response.end();
@@ -60,8 +61,15 @@ http
       });
       response.end(content);
     } catch {
-      response.writeHead(404);
-      response.end("Not found");
+      const locale = url?.pathname.slice(base.length).match(/^(es|en|pt|it)\//)?.[1];
+      try {
+        const content = await readFile(path.join(root, locale || '', '404.html'));
+        response.writeHead(404, { "Content-Type": types['.html'], "Cache-Control": "no-store" });
+        response.end(content);
+      } catch {
+        response.writeHead(404);
+        response.end("Not found");
+      }
     }
   })
   .listen(port, "127.0.0.1", () =>

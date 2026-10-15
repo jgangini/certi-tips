@@ -13,6 +13,7 @@ if (!/^(?:es|en|pt|it)\//.test(location.pathname.slice(siteBase.length))) {
 const languageMenu = document.querySelector('.language-menu');
 function updateLanguageLink(link) {
   const target = new URL(link.href);
+  if (document.body.dataset.page === '404') target.pathname = new URL(localizedURL(location.href, link.dataset.languageLink)).pathname;
   target.search = location.search;
   target.hash = location.hash;
   link.href = target.href;

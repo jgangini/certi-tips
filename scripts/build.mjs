@@ -4,7 +4,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { parseEnv } from "node:util";
 import MarkdownIt from "markdown-it";
-import { layout, homeBody, coursesBody, certiquizBody, escapeHtml, courseRoute } from "./layout.mjs";
+import { layout, homeBody, coursesBody, certiquizBody, notFoundBody, escapeHtml, courseRoute } from "./layout.mjs";
 import { annotateHeadings, pageDocuments, corpusArtifacts, contentHash } from "./certichat-corpus.mjs";
 import { certichatExplorerBody } from "./certichat-explorer.mjs";
 import { loadVideos, videoDocuments, videoBody } from "./certitube.mjs";
@@ -207,7 +207,12 @@ await save(
 );
 await save(
   "404.html",
-  `<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Página no encontrada · CertiTips</title><link rel="stylesheet" href="${site.base}assets/site.css"><main class="home-main"><h1>No encontramos ese apartado.</h1><p>Vuelve a la ruta de aprendizaje para continuar.</p><a class="button" href="${site.base}">Ir a CertiTips</a></main></html>`,
+  layout({
+    site: { ...site, certichat: null },
+    course: site.courses[0],
+    page: { slug: "404", title: "Página no encontrada", description: "No encontramos ese apartado." },
+    body: notFoundBody(site),
+  }),
 );
 await localizeSite(root, output, site, preparing);
 await save(".nojekyll", "");
