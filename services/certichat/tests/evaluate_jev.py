@@ -178,12 +178,12 @@ class PilotProvider(Provider):
         return {**data, "messages": messages}
 
 
-async def check_finance(client, settings, store, required_micro=LIMIT_MICRO):
+async def check_finance(client, settings, store, required_micro=LIMIT_MICRO, *, key_limit=50):
     response = await client.get("https://openrouter.ai/api/v1/key", headers={"Authorization": "Bearer " + settings.openrouter_api_key})
     response.raise_for_status()
     data = response.json()["data"]
-    if data.get("limit") != 50 or Decimal(str(data.get("limit_remaining"))) * 1000000 < required_micro:
-        raise ValueError("Insufficient remaining shared US$50 key budget; no limit changes allowed")
+    if data.get("limit") != key_limit or Decimal(str(data.get("limit_remaining"))) * 1000000 < required_micro:
+        raise ValueError("Insufficient remaining approved shared key budget; no limit changes allowed")
     with store.pool.connection() as connection:
         spending = Store.spending(connection, "chat")["purpose"]
     if spending + required_micro > store.monthly_limits["chat"]:
