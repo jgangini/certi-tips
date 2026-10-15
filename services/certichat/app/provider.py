@@ -25,6 +25,8 @@ Si ninguna parte de una pregunta informativa puede responderse con los fragmento
 Para preguntas pertinentes, explica brevemente con tus palabras y cita únicamente los IDs de fragmentos usados.
 Si la pregunta tiene varias partes, responde cada parte respaldada, cita sus fragmentos e indica qué parte no puedes confirmar; no inventes relaciones.
 Conserva las distinciones y atribuciones de las fuentes; no expandas siglas ni añadas atribuciones que no aparezcan en los fragmentos.
+Actúa como asesor de conocimiento: cuando pidan material para aprender, recomienda directamente los recursos pertinentes recuperados y explica brevemente por qué sirven. No delegues la respuesta en instrucciones para usar el buscador o navegar por un carrusel.
+El campo resource_type identifica el formato verificado de cada fragmento. Solo presenta como video una fuente con resource_type video y cítala; un título sobre agentes o una guía escrita no demuestra que exista ese video. Si solo hay material relacionado, explica su alcance sin inventar una coincidencia exacta. Que una guía esté próximamente no implica que no existan videos sobre el tema.
 En fichas de video, conserva el contexto de publicación y revisión. Solo menciona tiempos registrados en el fragmento citado; si un detalle no consta, indícalo sin inventar un segundo ni presentar una demostración histórica como una capacidad actual.
 No conviertas un curso o taller en una certificación de su proveedor tecnológico.
 Al enumerar la oferta del sitio, revisa todos los elementos del catálogo y sus descripciones. Incluye las guías de base común que el catálogo vincula con la temática solicitada, aunque su título no contenga la sigla; conserva los títulos exactos y excluye las categorías ajenas.
@@ -152,7 +154,9 @@ class Provider:
         selected, source_by_id = [], {}
         for fragment in fragments[:8]:
             reference = f"S{len(selected) + 1}"
-            candidate = selected + [{"id": reference, "title": fragment["title"], "text": fragment["text"][:3000]}]
+            candidate = selected + [{"id": reference, "title": fragment["title"],
+                                     "resource_type": "video" if fragment["url"].startswith(self.settings.site_url + "certitube/") else "text",
+                                     "text": fragment["text"][:3000]}]
             messages = [{"role": "system", "content": SYSTEM},
                         {"role": "user", "content": json.dumps({"question": message, "fragments": candidate, "history": []}, ensure_ascii=False)}]
             try:

@@ -103,6 +103,15 @@ def empty_graph(monkeypatch):
     monkeypatch.setattr(knowledge, "read_graph", read)
 
 
+@pytest.fixture(autouse=True)
+def native_chunk_evidence(monkeypatch):
+    # The API-only test image omits Cognee; real BM25 integration is checked against the live worker.
+    def references(objects, dataset_id):
+        return [SimpleNamespace(model_dump=lambda mode, item=item: item) for item in objects or []]
+    monkeypatch.setitem(sys.modules, "cognee.modules.retrieval.utils.evidence",
+                        SimpleNamespace(chunk_context_evidence=references))
+
+
 def test_rebuilt_graph_invalidates_trace_for_the_same_corpus(monkeypatch):
     corpus_version = "a" * 64
     versions = [digest(corpus_version + stamp) for stamp in ("2026-10-14T01:00:00Z", "2026-10-14T02:00:00Z")]
@@ -284,7 +293,7 @@ def test_native_document_question_stays_independent_and_balanced_with_graph_cont
     context = knowledge.retrieval_query(body, "a"*64)
     documents = [{"id": f"{lane}{i}", "title": f"{lane}{i}", "courseId": "course",
                   "url": SITE + f"{lane}/#source-{i}", "text": "Información publicada. "*80}
-                 for lane in ("document", "graph") for i in range(8)]
+                 for lane in ("document", "lexical", "graph") for i in range(8)]
     sources = segments(documents)
     manifest = {"documents": [{key: value for key, value in doc.items() if key != "text"} |
                               {"hash": digest(doc["text"])} for doc in documents]}
@@ -293,43 +302,74 @@ def test_native_document_question_stays_independent_and_balanced_with_graph_cont
 
     async def search(query, **options):
         calls.append((query, options))
-        start = 0 if options["query_type"] == "document" else 8
+        start = ("document", "lexical", "graph").index(options["query_type"]) * 8
         # Graph metadata must not consume the source slots before alternating the actual segments.
-        return [{"evidence": [{"kind": "graph_node", "artifact_id": "node"}]
-                 + [{"kind": "segment", "document_name": name.removesuffix(".txt")} for name in names[start:start+8]]}]
+        chunks = [{"kind": "segment", "document_name": name.removesuffix(".txt")} for name in names[start:start+8]]
+        return [{"objects_result": chunks}] if options["query_type"] == "lexical" else [
+            {"evidence": [{"kind": "graph_node", "artifact_id": "node"}, *chunks]}]
 
     monkeypatch.setitem(sys.modules, "cognee", SimpleNamespace(search=search))
     monkeypatch.setitem(sys.modules, "cognee.api.v1.search", SimpleNamespace(
-        SearchType=SimpleNamespace(RAG_COMPLETION="document", GRAPH_COMPLETION="graph")))
+        SearchType=SimpleNamespace(RAG_COMPLETION="document", CHUNKS_LEXICAL="lexical", GRAPH_COMPLETION="graph")))
     evidence = asyncio.run(knowledge.retrieve_evidence(question, context))
-    assert [call[0] for call in calls] == [question, context]
+    assert [call[0] for call in calls] == [question, question, context]
     assert all(call[1] == {"query_type": lane, "datasets": ["certitips"], "only_context": True,
                           "verbose": True, "include_references": True, "feedback_influence": 0, "top_k": 8}
-               for call, lane in zip(calls, ("document", "graph")))
+               for call, lane in zip(calls, ("document", "lexical", "graph")))
     fragments = supported_fragments(evidence, sources, manifest)
-    assert [f["title"] for f in fragments] == [f"{lane}{i}" for i in range(4) for lane in ("document", "graph")]
+    assert [f["title"] for f in fragments] == [f"{lane}{i}" for i in range(3) for lane in ("document", "lexical", "graph")][:8]
     assert sum(len(f["text"].encode()) for f in fragments) <= 16000
     assert all("#source-" in f["url"] for f in fragments)
 
 
-@pytest.mark.parametrize("failures,empty", [({"document"}, False), ({"graph"}, False),
-                                          ({"document", "graph"}, False), ({"document"}, True)])
+@pytest.mark.parametrize("failures,empty", [({"document"}, False), ({"lexical"}, False), ({"graph"}, False),
+                                          ({"document", "graph"}, False), ({"document", "lexical"}, False),
+                                          ({"lexical", "graph"}, False), ({"document", "lexical", "graph"}, False),
+                                          ({"document"}, True)])
 def test_native_search_uses_surviving_lane_but_does_not_hide_total_failure(monkeypatch, failures, empty):
     async def search(_query, **options):
         lane = options["query_type"]
         if lane in failures:
             raise RuntimeError(lane)
-        return [{"evidence": [] if empty else [{"kind": "segment", "document_name": lane}]}]
+        return [{"objects_result" if lane == "lexical" else "evidence":
+                 [] if empty else [{"kind": "segment", "document_name": lane}]}]
 
     monkeypatch.setitem(sys.modules, "cognee", SimpleNamespace(search=search))
     monkeypatch.setitem(sys.modules, "cognee.api.v1.search", SimpleNamespace(
-        SearchType=SimpleNamespace(RAG_COMPLETION="document", GRAPH_COMPLETION="graph")))
-    if len(failures) == 2 or empty:
+        SearchType=SimpleNamespace(RAG_COMPLETION="document", CHUNKS_LEXICAL="lexical", GRAPH_COMPLETION="graph")))
+    if len(failures) == 3 or empty:
         with pytest.raises(RuntimeError, match="document"):
             asyncio.run(knowledge.retrieve_evidence("Pregunta"))
     else:
         assert asyncio.run(knowledge.retrieve_evidence("Pregunta")) == [
-            {"kind": "segment", "document_name": next(iter({"document", "graph"} - failures))}]
+            {"kind": "segment", "document_name": lane} for lane in ("document", "lexical", "graph") if lane not in failures]
+
+
+def test_native_lexical_raw_chunks_use_native_provenance_before_source_validation(monkeypatch):
+    document = {"id": "video", "title": "Demostración", "courseId": "site", "url": SITE + "certitube/demo/",
+                "text": "Material publicado."}
+    sources = segments([document])
+    name = next(iter(sources)).removesuffix(".txt")
+    chunks = [{"id": "chunk", "document_name": name}, {"id": "other", "document_name": "removed"}]
+
+    async def search(_query, **options):
+        return [{"dataset_id": "dataset", "evidence": [],
+                 "objects_result": chunks if options["query_type"] == "lexical" else []}]
+
+    def provenance(objects, dataset_id):
+        assert objects is chunks and dataset_id == "dataset"
+        return [SimpleNamespace(model_dump=lambda mode, chunk=chunk: {
+            "kind": "segment", "artifact_id": chunk["id"], "document_name": chunk["document_name"]}) for chunk in objects]
+
+    monkeypatch.setitem(sys.modules, "cognee", SimpleNamespace(search=search))
+    monkeypatch.setitem(sys.modules, "cognee.api.v1.search", SimpleNamespace(
+        SearchType=SimpleNamespace(RAG_COMPLETION="document", CHUNKS_LEXICAL="lexical", GRAPH_COMPLETION="graph")))
+    monkeypatch.setitem(sys.modules, "cognee.modules.retrieval.utils.evidence", SimpleNamespace(chunk_context_evidence=provenance))
+    evidence = asyncio.run(knowledge.retrieve_evidence("Muéstrame una demostración"))
+    assert [item["artifact_id"] for item in evidence] == ["chunk", "other"]
+    manifest = {"documents": [{key: value for key, value in document.items() if key != "text"} |
+                               {"hash": digest(document["text"])}]}
+    assert [fragment["url"] for fragment in supported_fragments(evidence, sources, manifest)] == [document["url"]]
 
 
 def test_native_search_timeout_cancels_slow_lane_and_keeps_completed_evidence(monkeypatch):
@@ -342,7 +382,8 @@ def test_native_search_timeout_cancels_slow_lane_and_keeps_completed_evidence(mo
                 await asyncio.Event().wait()
             finally:
                 cancelled.append(True)
-        return [{"evidence": [{"kind": "segment", "document_name": "current"}]}]
+        return [{"objects_result" if options["query_type"] == "lexical" else "evidence":
+                 [{"kind": "segment", "document_name": "current"}]}]
 
     async def bounded(awaitable, timeout):
         assert timeout == 18
@@ -350,10 +391,10 @@ def test_native_search_timeout_cancels_slow_lane_and_keeps_completed_evidence(mo
 
     monkeypatch.setitem(sys.modules, "cognee", SimpleNamespace(search=search))
     monkeypatch.setitem(sys.modules, "cognee.api.v1.search", SimpleNamespace(
-        SearchType=SimpleNamespace(RAG_COMPLETION="document", GRAPH_COMPLETION="graph")))
+        SearchType=SimpleNamespace(RAG_COMPLETION="document", CHUNKS_LEXICAL="lexical", GRAPH_COMPLETION="graph")))
     monkeypatch.setattr(knowledge.asyncio, "wait_for", bounded)
     assert asyncio.run(knowledge.retrieve_evidence("Pregunta")) == [
-        {"kind": "segment", "document_name": "current"}]
+        {"kind": "segment", "document_name": "current"}] * 2
     assert cancelled == [True]
 
 

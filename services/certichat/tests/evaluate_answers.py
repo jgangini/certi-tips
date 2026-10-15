@@ -57,6 +57,11 @@ CASES = [
     ("repeated_variants", [("De qué trata dama y OCI", True),
                             ("¿De qué tratan OCI y DAMA?", True),
                             ("De qué trata dama y OCI", True)]),
+    ("video_discovery_reported", [("muestrame un video de agentes o aidp", True)]),
+    ("video_discovery_agents", [("Recomiéndame un video sobre agentes de IA", True)]),
+    ("video_discovery_aidp", [("Muéstrame un video sobre AIDP", True)]),
+    ("video_discovery_followup", [("¿Qué es AIDP?", True), ("Muéstrame un video de eso", True)]),
+    ("unsupported_video", [("Muéstrame un video para preparar un pastel de chocolate", False)]),
 ]
 
 
@@ -68,7 +73,7 @@ class ObservedProvider(Provider):
 
 
 def fragment_summary(fragment):
-    return {**{key: fragment[key] for key in ("id", "title")},
+    return {**{key: fragment[key] for key in ("id", "title", "resource_type") if key in fragment},
             "chars": len(fragment["text"]), "bytes": len(fragment["text"].encode("utf-8"))}
 
 
@@ -148,7 +153,9 @@ def reference_attribution(answer, sources, published):
     # Explicit regression fixture for this scenario, not a general semantic entailment claim.
     describes_matrix = all(re.search(r"\b" + term + r"\b", answer, re.IGNORECASE)
                            for term in ("matriz", "DAMA", "Oracle"))
-    expected_documents = {"data-governance/oracle-map", "data-governance/oracle-map#matriz-de-decisiones-y-evidencia"}
+    # The committee exercise explicitly applies the DAMA → Oracle matrix with roles, controls and evidence.
+    expected_documents = {"data-governance/oracle-map", "data-governance/oracle-map#matriz-de-decisiones-y-evidencia",
+                          "data-governance/case-study#tu-propuesta-para-el-comite"}
     return {"matrix_claim_uses_matrix_source": not describes_matrix or any(
         published.get(source["id"], {}).get("id") in expected_documents for source in sources)}
 
@@ -161,6 +168,17 @@ def followup_reference_coverage(answer, sources, published):
     return {"followup_keeps_dama_source": any(
         published.get(source["id"], {}).get("courseId") == "data-governance" for source in sources),
             "does_not_deny_reference_links": not denies_links}
+
+
+def video_recommendation_coverage(answer, sources, published, videos):
+    # Topic IDs belong to evaluation fixtures, never production retrieval or generation.
+    direct_video = any(public_url(source.get("url", "")) and any(
+        f"/certitube/{video}/" in source["url"] for video in videos)
+        for citation in sources if (source := published.get(citation["id"], {})))
+    delegates_search = re.search(
+        r"\b(?:busca(?:r|dor)?|selecciona(?:r)?)\b[^.!?\n]{0,100}\b(?:CertiTube|carrusel|buscador)\b"
+        r"|\bCertiTube\b[^.!?\n]{0,100}\b(?:busca(?:r|dor)?|busques|carrusel)\b", answer, re.IGNORECASE)
+    return {"relevant_video_link": direct_video, "does_not_delegate_search": not delegates_search}
 
 
 async def evaluate(output_path, case=None):
@@ -209,6 +227,12 @@ async def evaluate(output_path, case=None):
                             result["required_source_attribution"].update(followup_reference_coverage(
                                 result.get("answer", ""), result.get("sources", []), published))
                         result["passed"] = result["passed"] and all(result["required_source_attribution"].values())
+                    if name.startswith("video_discovery_") and turn_index == len(turns) - 1:
+                        videos = ("Ha74VhpQwQo",) if name == "video_discovery_agents" else (
+                            "Ha74VhpQwQo", "MWASexQNDVU", "Wf5fisusQOc", "ZjfQUwUdpbI")
+                        result["video_recommendation"] = video_recommendation_coverage(
+                            result.get("answer", ""), result.get("sources", []), published, videos)
+                        result["passed"] = result["passed"] and all(result["video_recommendation"].values())
                     report["results"].append(result)
                     output_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
                     print(json.dumps({key: result[key] for key in ("case", "turn", "passed", "seconds", "error")

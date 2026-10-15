@@ -66,14 +66,21 @@ async def retrieve_evidence(message: str, context: str | None = None) -> list[di
     results = await asyncio.gather(*[
         asyncio.wait_for(cognee.search(query, query_type=kind, datasets=[DATASET], only_context=True, verbose=True,
                                       include_references=True, feedback_influence=0, top_k=8), timeout=18)
-        for query, kind in ((message, SearchType.RAG_COMPLETION), (context or message, SearchType.GRAPH_COMPLETION))],
+        for query, kind in ((message, SearchType.RAG_COMPLETION), (message, SearchType.CHUNKS_LEXICAL),
+                            (context or message, SearchType.GRAPH_COMPLETION))],
         return_exceptions=True)
+    if not isinstance(results[1], BaseException):
+        # Cognee 1.6.1 BM25 omits its evidence hook; reuse native chunk provenance.
+        from cognee.modules.retrieval.utils.evidence import chunk_context_evidence
+        for result in results[1]:
+            result["evidence"] = [reference.model_dump(mode="json") for reference in chunk_context_evidence(
+                result.get("objects_result"), dataset_id=result.get("dataset_id"))]
     successful = [lane for lane in results if not isinstance(lane, BaseException)]
     evidence = [[item for result in lane for item in result.get("evidence", [])] for lane in successful]
     segments = [[item for item in lane if item.get("kind") == "segment"] for lane in evidence]
     if not any(segments) and len(successful) != len(results):
         raise next(lane for lane in results if isinstance(lane, BaseException))
-    # Keep current-question document matches independent of history; reserve room for graph context by rank.
+    # Fuse native semantic, lexical and graph ranks without comparing their different score scales.
     return ([item for pair in zip_longest(*segments) for item in pair if item is not None]
             + [item for lane in evidence for item in lane if item.get("kind") != "segment"])
 

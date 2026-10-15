@@ -1,7 +1,7 @@
 """Offline checks for mistakes observed in the saved live acceptance report."""
 
 from evaluate_answers import (citation_ids_are_hidden, certification_coverage,
-                              followup_reference_coverage, reference_attribution)
+                              followup_reference_coverage, reference_attribution, video_recommendation_coverage)
 
 
 def test_visible_internal_alias_is_not_a_successful_answer():
@@ -17,12 +17,13 @@ def test_matrix_claim_must_cite_its_published_evidence_not_a_reassigned_glossary
     published = {
         "matrix": {"id": "data-governance/oracle-map"},
         "matrix-section": {"id": "data-governance/oracle-map#matriz-de-decisiones-y-evidencia"},
+        "committee-exercise": {"id": "data-governance/case-study#tu-propuesta-para-el-comite"},
         "glossary": {"id": "oci-ai-foundations-2026/glossary"},
     }
     answer = "Esta matriz permite pasar de una necesidad del dominio DAMA a una acción con Oracle."
     assert not all(reference_attribution(answer, [{"id": "glossary"}], published).values())
     assert not all(reference_attribution(answer, [], published).values())
-    for source in ("matrix", "matrix-section"):
+    for source in ("matrix", "matrix-section", "committee-exercise"):
         assert all(reference_attribution(answer, [{"id": source}], published).values())
     assert all(reference_attribution("El glosario explica conceptos de IA.", [{"id": "glossary"}], published).values())
 
@@ -58,3 +59,17 @@ def test_valid_citations_do_not_make_an_explicit_denial_of_links_correct():
         assert not checks["does_not_deny_reference_links"]
     assert all(followup_reference_coverage(
         "Aquí tienes las guías pertinentes. No puedo confirmar el pronóstico del tiempo.", sources, published).values())
+
+
+def test_video_discovery_requires_a_relevant_video_link_not_a_guide_with_a_similar_title():
+    site = "https://jgangini.github.io/certitips/"
+    published = {"guide": {"url": site + "agents/"}, "video": {"url": site + "certitube/demo/#t-223"},
+                 "other": {"url": site + "certitube/unrelated/"}}
+    for source in ([], [{"id": "guide"}], [{"id": "other"}], [{"id": "removed"}]):
+        assert not video_recommendation_coverage("Te recomiendo este video.", source, published, ["demo"])["relevant_video_link"]
+    assert all(video_recommendation_coverage(
+        "Esta demostración incluye un Agent Flow.", [{"id": "video"}], published, ["demo"]).values())
+    for answer in ("En CertiTube puedes buscar un video de agentes con estos títulos.",
+                   "Para encontrarlo, usa el buscador de CertiTube y selecciona el resultado en el carrusel."):
+        assert not video_recommendation_coverage(
+            answer, [{"id": "video"}], published, ["demo"])["does_not_delegate_search"]
