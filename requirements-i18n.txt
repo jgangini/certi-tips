@@ -1,0 +1,15 @@
+# Argos model inference only: no translation API, Torch, or implicit NLP downloads.
+ctranslate2==4.6.0
+sentencepiece==0.2.1
+sacremoses==0.1.1
+subword-nmt==0.3.8
+numpy==2.5.4
+PyYAML==6.0.3
+setuptools==80.9.0
+click==8.5.0
+cloudpickle==3.1.2
+colorama==0.4.6
+joblib==1.6.0
+mock==5.2.0
+regex==2026.9.29
+tqdm==4.70.1

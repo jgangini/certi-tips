@@ -1,8 +1,9 @@
 import { sourcePath } from "./certichat-trace.js";
+import { locale, language } from './i18n.js';
 
 const normalize = value => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 const words = value => new Set(normalize(value).split(/\s+/).filter(Boolean));
-const ignored = new Set("a al el en la las lo los de del y o un una que como para por con usar utilizar puedo quiero necesito sobre".split(" "));
+const ignored = new Set(({ es: 'a al el en la las lo los de del y o un una que como para por con usar utilizar puedo quiero necesito sobre', en: 'a an the and or of to in on with how can use using want need about', pt: 'a as o os e ou de do da dos das em um uma que como para por com usar posso quero preciso sobre', it: 'a al il lo la i gli le e o di del della in un una che come per con usare posso voglio su' }[locale] || '').split(' '));
 
 export function indexSearchEntry(entry) {
   const heading = entry.heading ?? entry.title;
@@ -39,7 +40,7 @@ export function searchContent(entries, query) {
     const phraseBonus = entry.phrase.includes(terms.join(" ")) ? 30 : 0;
     matches.push({ entry, score: scores.reduce((sum, score) => sum + score, phraseBonus) });
   }
-  matches.sort((a, b) => b.score - a.score || a.entry.title.localeCompare(b.entry.title, "es"));
+  matches.sort((a, b) => b.score - a.score || a.entry.title.localeCompare(b.entry.title, language));
   // One useful section per page keeps repeated chapter/page titles out of the result list.
   const pages = new Set();
   return matches.filter(({ entry }) => {

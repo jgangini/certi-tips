@@ -4,6 +4,10 @@ from dataclasses import dataclass
 from decimal import Decimal
 import os
 from urllib.parse import urlsplit
+from typing import Literal
+
+Locale = Literal["es", "en", "pt", "it"]
+LANGUAGES = {"es": "español", "en": "inglés", "pt": "portugués de Brasil", "it": "italiano"}
 
 MODEL = os.environ.get("CERTICHAT_INDEX_MODEL", "anthropic/claude-haiku-5.5")
 CHAT_MODEL = os.environ.get("CERTICHAT_CHAT_MODEL", "openai/gpt-5.4")

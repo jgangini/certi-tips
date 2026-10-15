@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" role="img" aria-labelledby="title description">
+  <title id="title">La API y el Alojamiento son Decisiones Distintas</title>
+  <desc id="description">En despliegue propio, tu equipo opera la aplicación y el backend en máquinas virtuales o un clúster. En alojamiento gestionado, publicas una aplicación compatible mediante su imagen, endpoint y configuración. Ambas opciones pueden consumir OCI Responses API y sus modelos y herramientas compatibles. Elegir el alojamiento no elimina la necesidad de identidad, estado, límites y observabilidad.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1 9 5 1 9" fill="none" stroke="#59616E" stroke-width="1.5"/></marker>
+    <style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#3C4545;font-size:30px}.heading{font-size:34px;font-weight:700}.edge{fill:none;stroke:#59616E;stroke-width:3;marker-end:url(#arrow)}</style>
+  </defs>
+  <rect width="1920" height="1080" fill="#F1EFED"/>
+  <text x="96" y="99" style="font-size:56px;font-weight:700">La API y el Alojamiento son Decisiones Distintas</text>
+  <rect x="96" y="128" width="88" height="6" fill="#C74634"/>
+  <g data-layout="module-artwork" data-center="960 608">
+    <rect x="96" y="236" width="816" height="448" rx="16" fill="#FFFFFF" stroke="#59616E" stroke-width="1.5"/>
+    <text x="504" y="299" text-anchor="middle" class="heading">Despliegue propio</text>
+    <text x="504" y="350" text-anchor="middle">Tu equipo opera la aplicación y la infraestructura</text>
+    <rect x="144" y="416" width="200" height="126" rx="12" fill="#F1EFED" stroke="#59616E" stroke-width="1.5"/>
+    <text x="244" y="491" text-anchor="middle">Aplicación</text>
+    <path d="M344 479H404" class="edge"/>
+    <rect x="404" y="416" width="200" height="126" rx="12" fill="#F1EFED" stroke="#59616E" stroke-width="1.5"/>
+    <text x="504" y="491" text-anchor="middle">Backend</text>
+    <path d="M604 479H664" class="edge"/>
+    <rect x="664" y="416" width="200" height="126" rx="12" fill="#F1EFED" stroke="#59616E" stroke-width="1.5"/>
+    <text x="764" y="469" text-anchor="middle"><tspan x="764">VM o</tspan><tspan x="764" dy="42">clúster</tspan></text>
+    <text x="504" y="625" text-anchor="middle">Configuración y operación a cargo de tu equipo</text>
+    <rect x="1008" y="236" width="816" height="448" rx="16" fill="#FFFFFF" stroke="#59616E" stroke-width="1.5"/>
+    <text x="1416" y="299" text-anchor="middle" class="heading">Alojamiento gestionado</text>
+    <text x="1416" y="350" text-anchor="middle">Publicas una aplicación compatible</text>
+    <rect x="1056" y="416" width="200" height="126" rx="12" fill="#F1EFED" stroke="#59616E" stroke-width="1.5"/>
+    <text x="1156" y="491" text-anchor="middle">Imagen</text>
+    <path d="M1256 479H1316" class="edge"/>
+    <rect x="1316" y="416" width="200" height="126" rx="12" fill="#F1EFED" stroke="#59616E" stroke-width="1.5"/>
+    <text x="1416" y="491" text-anchor="middle">Endpoint</text>
+    <path d="M1516 479H1576" class="edge"/>
+    <rect x="1576" y="416" width="200" height="126" rx="12" fill="#F1EFED" stroke="#59616E" stroke-width="1.5"/>
+    <text x="1676" y="469" text-anchor="middle"><tspan x="1676">Configura</tspan><tspan x="1676" dy="42">el servicio</tspan></text>
+    <text x="1416" y="625" text-anchor="middle">El alojamiento opera la infraestructura compatible</text>
+    <path d="M504 684V768" class="edge"/>
+    <path d="M1416 684V768" class="edge"/>
+    <rect x="224" y="768" width="1472" height="88" rx="12" fill="#59616E"/>
+    <text x="494" y="823" text-anchor="middle" style="fill:#FFFFFF;font-size:34px;font-weight:700">OCI Responses API</text>
+    <line x1="772" y1="788" x2="772" y2="836" stroke="#FFFFFF" stroke-width="1.5"/>
+    <text x="1234" y="823" text-anchor="middle" style="fill:#FFFFFF">Modelos y herramientas compatibles</text>
+    <rect x="96" y="916" width="1728" height="64" rx="12" fill="#F1EFED" stroke="#59616E" stroke-width="1.5"/>
+    <text x="960" y="959" text-anchor="middle">En ambas opciones: identidad, estado, límites y observabilidad.</text>
+  </g>
+</svg>

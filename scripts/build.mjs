@@ -1,3 +1,4 @@
+import { localizeSite } from './localize.mjs';
 import { readFile, readdir, mkdir, writeFile, cp, realpath, rm } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -9,9 +10,10 @@ import { certichatExplorerBody } from "./certichat-explorer.mjs";
 import { loadVideos, videoDocuments, videoBody } from "./certitube.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
-const output = path.join(root, "dist");
+const preparing = process.argv.includes("--prepare-i18n");
+const output = path.join(root, preparing ? "output/i18n-source" : "dist");
 const site = JSON.parse(
-  await readFile(path.join(root, "data/catalog.json"), "utf8"),
+  await readFile(path.join(root, "data/es/catalog.json"), "utf8"),
 );
 site.videos = await loadVideos(root, site.base);
 const certiquizApi = new URL(process.env.CERTIQUIZ_API_ORIGIN || "https://certiquiz.cloudtechnext.net");
@@ -43,7 +45,7 @@ md.renderer.rules.heading_open = (tokens, index, options, env, renderer) => {
 md.renderer.rules.image = (tokens, index, _options, env) => {
   const token = tokens[index];
   const reference = token.attrGet("src");
-  if (!/^img\/[a-z0-9-]+\.(?:svg|png)$/.test(reference)) throw new Error(`Invalid module image: ${reference}`);
+  if (!/^img\/[a-z0-9-]+\.svg$/.test(reference)) throw new Error(`Invalid module image: ${reference}`);
   const imageUrl = `${site.base}${env.publicPath}/${reference}`;
   const src = escapeHtml(imageUrl);
   const alt = escapeHtml(token.content);
@@ -74,7 +76,7 @@ async function publishImages(directory, publicPath) {
   const images = await realpath(path.join(directory, "img"));
   if (!images.startsWith(`${directory}${path.sep}`)) throw new Error("Module images must stay inside their source directory.");
   const files = await readdir(images, { withFileTypes: true });
-  if (files.some(file => !file.isFile() || !/^[a-z0-9-]+\.(?:svg|png)$/.test(file.name))) throw new Error(`Invalid module image directory: ${images}`);
+  if (files.some(file => !file.isFile() || !/^[a-z0-9-]+\.svg$/.test(file.name))) throw new Error(`Invalid module image directory: ${images}`);
   for (const { name } of files) {
     let contents = await readFile(path.join(images, name));
     let size;
@@ -82,14 +84,7 @@ async function publishImages(directory, publicPath) {
       contents = contents.toString("utf8");
       const viewBox = contents.match(/\bviewBox="([^"]+)"/)?.[1].trim().split(/[\s,]+/).map(Number);
       if (viewBox?.length === 4) size = viewBox.slice(2);
-      // SVGs loaded through <img> cannot fetch siblings; embed only module-local PNG files.
-      for (const [reference, png] of contents.matchAll(/href="([a-z0-9-]+\.png)"/g)) {
-        if (!files.some(file => file.name === png)) throw new Error(`Missing module illustration: ${png}`);
-        contents = contents.replace(reference, `href="data:image/png;base64,${(await readFile(path.join(images, png))).toString("base64")}"`);
-      }
-    } else {
-      if (contents.length < 24 || contents.toString("hex", 0, 8) !== "89504e470d0a1a0a" || contents.toString("ascii", 12, 16) !== "IHDR") throw new Error(`Invalid PNG: ${name}`);
-      size = [contents.readUInt32BE(16), contents.readUInt32BE(20)];
+      if (/<image\b|data:image\/(?:png|jpeg|webp|gif)/i.test(contents)) throw new Error(`Raster content is not allowed in diagrams: ${name}`);
     }
     if (!size?.every(value => Number.isFinite(value) && value > 0)) throw new Error(`Missing image dimensions: ${name}`);
     imageSizes.set(`${site.base}${publicPath}/img/${name}`, size);
@@ -98,7 +93,7 @@ async function publishImages(directory, publicPath) {
 }
 
 async function renderPage(course, page) {
-  const contentRoot = await realpath(path.join(root, "data"));
+  const contentRoot = await realpath(path.join(root, "data/es"));
   const source = await realpath(path.resolve(contentRoot, course.contentDir, page.file));
   if (!source.startsWith(`${contentRoot}${path.sep}`)) throw new Error("Course source must stay inside data/.");
   const publicPath = `${courseRoute(course)}/${page.slug}`;
@@ -108,7 +103,7 @@ async function renderPage(course, page) {
 
 try {
   const existing = await realpath(output);
-  if (existing !== path.join(await realpath(root), "dist"))
+  if (existing !== path.join(await realpath(root), preparing ? "output/i18n-source" : "dist"))
     throw new Error("Refusing to clean a redirected dist directory.");
   await rm(existing, { recursive: true, force: true });
 } catch (error) {
@@ -126,7 +121,7 @@ for (const [name, source] of assetSources) if (name.endsWith(".js")) {
   await save(`assets/${name}`, source.replace(/((?:\bfrom\s*|\bimport\s*(?:\(\s*)?)["'])(\.\/[\w-]+\.js)(["'])/g, `$1$2?v=${site.certichat.version}$3`));
 }
 for (const course of site.courses) {
-  await save(`assets/${course.questionBank}.json`, await readFile(path.join(root, "data", `${course.questionBank}.json`)));
+  await save(`assets/${course.questionBank}.json`, await readFile(path.join(root, "data/es", `${course.questionBank}.json`)));
   const publicPath = courseRoute(course);
   const pages = [...course.modules, ...course.resources];
   const rendered = new Map(await Promise.all(pages.map(async (page) => [
@@ -153,7 +148,7 @@ for (const course of site.courses) {
     );
   }
   if (course.resources.some(page => page.slug === "practice")) {
-    const questions = JSON.parse(await readFile(path.join(root, "data", `${course.questionBank}.json`), "utf8"));
+    const questions = JSON.parse(await readFile(path.join(root, "data/es", `${course.questionBank}.json`), "utf8"));
     for (const question of questions) knowledge.push({
       id: `${course.id}/questions/${question.id}`, title: `${course.title} · Práctica: ${question.id}`,
       url: `${site.origin}${site.base}${publicPath}/practice/`, courseId: course.id,
@@ -165,7 +160,7 @@ knowledge.push({ id: "home", title: "CertiTips · Rutas de aprendizaje", url: `$
 const tubeCourse = { id: "site", route: "certitube", title: "CertiTube", modules: [], resources: [], description: "Explora proyectos de inteligencia artificial y Oracle Cloud. Comprende el caso y reproduce cada momento de la demostración." };
 if (!site.videos.length) await save("certitube/index.html", layout({ site, course: tubeCourse, page: { slug: "certitube", title: "CertiTube", description: "No hay videos publicados todavía." }, body: "<p>No hay videos publicados todavía.</p>" }));
 for (const video of site.videos) {
-  await publishImages(path.join(root, "data", video.publicPath), video.publicPath);
+  await publishImages(path.join(root, "data/es", video.publicPath), video.publicPath);
   knowledge.push(...videoDocuments(video, site));
   const html = layout({ site, course: tubeCourse, page: { slug: video.publicPath, title: video.title, description: video.summary }, body: videoBody(video, md, site) });
   await save(`${video.publicPath}/index.html`, html);
@@ -214,5 +209,6 @@ await save(
   "404.html",
   `<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Página no encontrada · CertiTips</title><link rel="stylesheet" href="${site.base}assets/site.css"><main class="home-main"><h1>No encontramos ese apartado.</h1><p>Vuelve a la ruta de aprendizaje para continuar.</p><a class="button" href="${site.base}">Ir a CertiTips</a></main></html>`,
 );
+await localizeSite(root, output, site, preparing);
 await save(".nojekyll", "");
-console.log(`Built ${site.courses.length} course(s) at ${site.base} in dist/.`);
+console.log(`Built ${site.courses.length} course(s) at ${site.base} in ${preparing ? 'output/i18n-source' : 'dist'}/.`);

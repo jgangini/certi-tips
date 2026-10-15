@@ -24,15 +24,18 @@ El [catálogo CertiTips](https://jgangini.github.io/certitips/courses/) conserva
 
 ## Ejecutar localmente
 
-Requiere Node.js 24 y npm.
+Requiere Node.js 24, npm y Python 3.12. Español es la única fuente editable en `data/es/`; los otros idiomas se generan con modelos Argos fijados, sin una API de traducción pagada. La primera ejecución descarga los modelos y tarda más que las posteriores.
 
 ```sh
 npm ci --ignore-scripts
+npm run i18n:prepare
+npm run i18n:generate
+npm run i18n:check
 npm run build
 npm run preview
 ```
 
-Abrir [localhost:4173/certitips](http://127.0.0.1:4173/certitips/). Para configurar las APIs opcionales, consultar [CertiQuiz](services/certiquiz/README.md) y [CertiChat](services/certichat/README.md).
+Antes de generar, instalar `requirements-i18n.txt` en un entorno Python aislado siguiendo la [guía de internacionalización](.codex/internacionalizacion.md). Abrir [localhost:4173/certitips/es/](http://127.0.0.1:4173/certitips/es/); el selector conserva la página actual al pasar a `en`, `pt` o `it`. Los enlaces españoles anteriores siguen funcionando. Para configurar las APIs opcionales, consultar [CertiQuiz](services/certiquiz/README.md) y [CertiChat](services/certichat/README.md).
 
 ## Contribuir
 

@@ -1,10 +1,12 @@
+import { t, locale } from './i18n.js';
 const app = document.querySelector('#app');
 const apiOrigin = document.querySelector('.certiquiz-app').dataset.apiOrigin;
 const siteBase = document.body.dataset.base;
+const assetsBase = document.body.dataset.siteBase || siteBase;
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const certiQuizBrand = 'Certi<span class="brand-accent">Quiz</span>';
 const oracleBadgeIcon = '<svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21.272 22.141h-10.538c-3.338-0.070-6.017-2.793-6.017-6.141s2.679-6.071 6.011-6.141l0.007-0h10.538c0.003 0 0.007 0 0.011 0 3.391 0 6.141 2.749 6.141 6.141s-2.749 6.141-6.141 6.141c-0.004 0-0.007 0-0.012 0h0.001zM21.513 6.518h-11.022c-5.234 0.004-9.474 4.248-9.474 9.482 0 5.231 4.235 9.472 9.463 9.482h11.033c5.231-0.008 9.469-4.25 9.469-9.482s-4.238-9.474-9.468-9.482h-0.001z"/></svg>';
-const welcome = (role, inRoom = false) => `<section class="welcome"><nav class="certiquiz-breadcrumb" aria-label="Ruta de navegación"><a href="${siteBase}">Home</a><span aria-hidden="true">/</span>${role ? `<a class="certiquiz-mark" href="${siteBase}certiquiz/">${certiQuizBrand}</a><span aria-hidden="true">/</span>${inRoom ? `<a href="${siteBase}certiquiz/#${role === 'host' ? 'host' : 'participant'}" data-entry-role="${role}">${role === 'host' ? 'Anfitrión' : 'Participante'}</a>` : `<span aria-current="page">${role === 'host' ? 'Anfitrión' : 'Participante'}</span>`}${inRoom ? '<span aria-hidden="true">/</span><span aria-current="page">Sala</span>' : ''}` : `<span class="certiquiz-mark" aria-current="page">${certiQuizBrand}</span>`}</nav></section>`;
+const welcome = (role, inRoom = false) => `<section class="welcome"><nav class="certiquiz-breadcrumb" aria-label="${escape(t("Ruta de navegación"))}"><a href="${siteBase}">${escape(t("Home"))}</a><span aria-hidden="true">/</span>${role ? `<a class="certiquiz-mark" href="${siteBase}certiquiz/">${certiQuizBrand}</a><span aria-hidden="true">/</span>${inRoom ? `<a href="${siteBase}certiquiz/#${role === 'host' ? 'host' : 'participant'}" data-entry-role="${role}">${role === 'host' ? escape(t("Anfitrión")) : escape(t("Participante"))}</a>` : `<span aria-current="page">${role === 'host' ? escape(t("Anfitrión")) : escape(t("Participante"))}</span>`}${inRoom ? `<span aria-hidden="true">/</span><span aria-current="page">${escape(t("Sala"))}</span>` : ''}` : `<span class="certiquiz-mark" aria-current="page">${certiQuizBrand}</span>`}</nav></section>`;
 const warningNoticeIcon = '<svg viewBox="-0.5 0 25 25" fill="none" aria-hidden="true" focusable="false"><path d="M18.2202 21.25H5.78015c-.638.0275-1.27181-.1153-1.83642-.4136-.56462-.2983-1.03971-.7414-1.37659-1.2838-.33688-.5425-.52342-1.1649-.54047-1.8032-.01704-.6384.13603-1.2697.44348-1.8294l6.21998-10.81c.34482-.5692.83064-1.0399 1.41047-1.3665A3.744 3.744 0 0 1 12.0001 3.245c.6655 0 1.3198.1716 1.8996.4983.5798.3266 1.0652.7973 1.4101 1.3665l6.22 10.81c.3074.5597.4605 1.191.4435 1.8294-.017  .6383-.2036 1.2607-.5405 1.8032-.3369.5424-.812.9855-1.3766 1.2838-.5646.2983-1.1984.4411-1.8364.4136Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.8809 17.15a1.13 1.13 0 0 1 1.13-1.12 1.13 1.13 0 0 1 0 2.26 1.13 1.13 0 0 1-1.13-1.14Zm.36-2.73-.14-5.22a.9.9 0 0 1 1.79 0l-.13 5.22a.76.76 0 0 1-1.52 0Z" fill="currentColor"/></svg>';
 const errorNoticeIcon = '<svg viewBox="0 0 64 64" fill="currentColor" aria-hidden="true" focusable="false"><path d="M32.085 56.058c6.165-.059 12.268-2.619 16.657-6.966 5.213-5.164 7.897-12.803 6.961-20.096-1.605-12.499-11.855-20.98-23.772-20.98-9.053 0-17.853 5.677-21.713 13.909-2.955 6.302-2.96 13.911 0 20.225 3.832 8.174 12.488 13.821 21.559 13.908h.308Zm-.282-4.003c-9.208-.089-17.799-7.227-19.508-16.378-1.204-6.452 1.07-13.433 5.805-18.015 5.53-5.35 14.22-7.143 21.445-4.11 6.466 2.714 11.304 9.014 12.196 15.955.764 5.949-1.366 12.184-5.551 16.48-3.672 3.767-8.82 6.016-14.131 6.068h-.256Zm-12.382-10.29 9.734-9.734-9.744-9.744 2.804-2.803 9.744 9.744 10.078-10.078 2.808 2.807-10.078 10.079 10.098 10.098-2.803 2.804-10.099-10.099-9.734 9.734-2.808-2.808Z"/></svg>';
 const hostRoleIcon = '<svg viewBox="0 0 31.381 31.381" fill="currentColor" aria-hidden="true" focusable="false"><circle cx="5.2" cy="25.988" r="3.638"/><circle cx="15.767" cy="25.988" r="3.638"/><circle cx="26.158" cy="25.988" r="3.638"/><rect x="24.253" y="18.292" width=".769" height="1.57"/><path d="M0 1.754v18.107h22.064v-2.779h-.193l-.287-5.589h-5.256V9.987h7.221l1.165 1.352 1.128-1.352 2.475.325.16 5.629h-1.267v3.92h4.171V1.754H0zm24.661 7.773a3.058 3.058 0 1 1 0-6.115 3.058 3.058 0 0 1 0 6.115z"/></svg>';
@@ -40,7 +42,7 @@ function showNotice(message, tone = 'error', retryAfter = 0) {
   if (!notice) return;
   notice.className = `notice ${tone}`;
   noticeRetryDeadline = message && Number.isFinite(retryAfter) && retryAfter > 0 ? performance.now() + retryAfter * 1000 : 0;
-  const countdown = noticeRetryDeadline ? `<output class="notice-countdown" data-notice-countdown role="timer" aria-live="off" aria-label="Tiempo de espera restante">${formatCountdown(Math.ceil(retryAfter))}</output>` : '';
+  const countdown = noticeRetryDeadline ? `<output class="notice-countdown" data-notice-countdown role="timer" aria-live="off" aria-label="${escape(t("Tiempo de espera restante"))}">${formatCountdown(Math.ceil(retryAfter))}</output>` : '';
   notice.innerHTML = message ? `${tone === 'warning' ? warningNoticeIcon : errorNoticeIcon}<span>${escape(message)}</span>${countdown}` : '';
   notice.hidden = !message;
 }
@@ -49,21 +51,23 @@ function showWarning(message, retryAfter) { showNotice(message, 'warning', retry
 function announce(message) { const node = app.querySelector('#announcement'); if (node) node.textContent = message; }
 function setConnection(message) { const node = app.querySelector('#connection'); if (node) node.textContent = message; }
 function retryAfterMessage(seconds) {
-  const [amount, unit] = seconds % 3600 === 0 ? [seconds / 3600, 'hora'] : seconds % 60 === 0 ? [seconds / 60, 'minuto'] : [seconds, 'segundo'];
-  return `Demasiados intentos. Vuelve a intentarlo en ${amount} ${unit}${amount === 1 ? '' : 's'}.`;
+  const [amount, singular, plural] = seconds % 3600 === 0 ? [seconds / 3600, 'hora', 'horas'] : seconds % 60 === 0 ? [seconds / 60, 'minuto', 'minutos'] : [seconds, 'segundo', 'segundos'];
+  return t('Demasiados intentos. Vuelve a intentarlo en {amount} {unit}.', { amount, unit: t(amount === 1 ? singular : plural) });
 }
 async function request(path, body) {
   const start = performance.now();
   let response;
+  const url = new URL(path, apiOrigin);
+  url.searchParams.set('locale', locale);
   try {
-    response = await fetch(`${apiOrigin}${path}`, { method: body === undefined ? 'GET' : 'POST', credentials: 'include', cache: 'no-store', headers: body === undefined ? {} : { 'Content-Type': 'application/json', 'X-CertiQuiz': '1' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: AbortSignal.timeout(10000) });
-  } catch { throw new Error('No podemos conectar. Revisa tu conexión e inténtalo de nuevo.'); }
+    response = await fetch(url, { method: body === undefined ? 'GET' : 'POST', credentials: 'include', cache: 'no-store', headers: body === undefined ? {} : { 'Content-Type': 'application/json', 'X-CertiQuiz': '1' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: AbortSignal.timeout(10000) });
+  } catch { throw new Error(t("No podemos conectar. Revisa tu conexión e inténtalo de nuevo.")); }
   if (response.status === 204) return null;
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     const retryAfter = Number(response.headers.get('Retry-After'));
     const detail = typeof data.detail === 'string' ? data.detail : typeof data.error === 'string' ? data.error : '';
-    const message = response.status === 429 && Number.isInteger(retryAfter) && retryAfter > 0 && detail.startsWith('Demasiados intentos.') ? retryAfterMessage(retryAfter) : detail || (response.status === 429 ? 'Demasiados intentos. Espera un momento antes de volver a probar.' : 'No se pudo completar la acción. Revisa los datos e inténtalo de nuevo.');
+    const message = response.status === 429 && Number.isInteger(retryAfter) && retryAfter > 0 && detail.startsWith('Demasiados intentos.') ? retryAfterMessage(retryAfter) : (detail ? t(detail) : "") || (response.status === 429 ? t("Demasiados intentos. Espera un momento antes de volver a probar.") : t("No se pudo completar la acción. Revisa los datos e inténtalo de nuevo."));
     const error = new Error(message); error.status = response.status; error.retryAfter = Number.isInteger(retryAfter) && retryAfter > 0 ? retryAfter : 0; throw error;
   }
   if (Number.isFinite(data.serverNow)) { data.clockServer = data.serverNow + (performance.now() - start) / 2; data.clockReceived = performance.now(); }
@@ -88,17 +92,17 @@ function bindForm(id, callback) {
     event.preventDefault();
     const form = event.currentTarget;
     if (id === 'answer-form' && !form.querySelector('input[name="optionId"]:checked')) {
-      showWarning('Selecciona una de estas opciones.');
+      showWarning(t("Selecciona una de estas opciones."));
       return;
     }
     if (id === 'create-form') {
       const invalid = form.querySelector('input[type="number"]:invalid');
       if (invalid) {
-        const message = invalid.validity.rangeUnderflow ? `El valor debe ser superior o igual a ${invalid.min}.`
-          : invalid.validity.rangeOverflow ? `El valor debe ser inferior o igual a ${invalid.max}.`
-            : invalid.validity.valueMissing ? 'Ingresa un valor en los campos numéricos.'
-              : invalid.validity.stepMismatch ? 'El valor debe ser un número entero.'
-                : 'Revisa el valor ingresado.';
+        const message = invalid.validity.rangeUnderflow ? t('El valor debe ser superior o igual a {min}.', { min: invalid.min })
+          : invalid.validity.rangeOverflow ? t('El valor debe ser inferior o igual a {max}.', { max: invalid.max })
+            : invalid.validity.valueMissing ? t("Ingresa un valor en los campos numéricos.")
+              : invalid.validity.stepMismatch ? t("El valor debe ser un número entero.")
+                : t("Revisa el valor ingresado.");
         showWarning(message);
         invalid.focus({ preventScroll: true });
         return;
@@ -109,7 +113,7 @@ function bindForm(id, callback) {
 }
 function joinUrl() { const url = new URL(`${siteBase}certiquiz/`, location.origin); url.searchParams.set('room', room.code); return url.href; }
 function roomPath(suffix = '') { return `/api/rooms/${encodeURIComponent(room.code)}${suffix}`; }
-const cookieMessage = 'Tu navegador no pudo guardar el acceso seguro a CertiQuiz. Actualízalo y permite las cookies de CertiQuiz para este sitio antes de volver a intentarlo.';
+const cookieMessage = t("Tu navegador no pudo guardar el acceso seguro a CertiQuiz. Actualízalo y permite las cookies de CertiQuiz para este sitio antes de volver a intentarlo.");
 async function enterRoom(snapshot) {
   session = await request('/api/session');
   if ((snapshot.role === 'host' ? session.hostRoomCode : session.roomCode) !== snapshot.code || (snapshot.role === 'host' && !session.host)) throw new Error(cookieMessage);
@@ -124,9 +128,9 @@ function invitationQr(url) {
   if (typeof window.qrcode !== 'function') return '';
   const qr = window.qrcode(0, 'H');
   qr.addData(url); qr.make();
-  return `<figure class="invite-qr"><button class="invite-qr-toggle" type="button" data-invite-qr aria-pressed="false" aria-label="Ampliar código QR de invitación"><span class="invite-qr-code">${qr.createSvgTag({ cellSize: 4, margin: 10, scalable: true, title: 'Código QR de invitación', alt: 'Escanea para abrir la sala' })}</span></button><span class="invite-qr-logo" aria-hidden="true"><svg viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="currentColor"/><path d="M13 13h12a8 8 0 0 1 8 8v14H21a8 8 0 0 1-8-8Z" fill="none" stroke="#fff" stroke-width="3"/><path d="m19 24 4 4 9-10" fill="none" stroke="#fff" stroke-width="3"/></svg></span></figure>`;
+  return `<figure class="invite-qr"><button class="invite-qr-toggle" type="button" data-invite-qr aria-pressed="false" aria-label="${escape(t("Ampliar código QR de invitación"))}"><span class="invite-qr-code">${qr.createSvgTag({ cellSize: 4, margin: 10, scalable: true, title: t("Código QR de invitación"), alt: t("Escanea para abrir la sala") })}</span></button><span class="invite-qr-logo" aria-hidden="true"><svg viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="currentColor"/><path d="M13 13h12a8 8 0 0 1 8 8v14H21a8 8 0 0 1-8-8Z" fill="none" stroke="#fff" stroke-width="3"/><path d="m19 24 4 4 9-10" fill="none" stroke="#fff" stroke-width="3"/></svg></span></figure>`;
 }
-function roomFacts(questionCount, secondsPerQuestion) { return `<div class="fact-row"><span><strong>${questionCount}</strong> preguntas</span><span><strong>${secondsPerQuestion} s</strong> por pregunta</span></div>`; }
+function roomFacts(questionCount, secondsPerQuestion) { return `<div class="fact-row"><span><strong>${questionCount}</strong> ${escape(t("preguntas"))}</span><span><strong>${secondsPerQuestion} s</strong> ${escape(t("por pregunta"))}</span></div>`; }
 function lobbyWaitSeconds() { return room?.lobbyDeadline ? Math.ceil(Math.max(0, room.lobbyDeadline - clock.server - (performance.now() - clock.received)) / 1000) : null; }
 function formatCountdown(seconds) { return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`; }
 
@@ -138,19 +142,19 @@ function entry(role = selectedRole) {
   if (role !== 'player' || !draftCode) history.replaceState(null, '', `${siteBase}certiquiz/${role === 'host' ? '#host' : role === 'player' ? '#participant' : ''}`);
   const limits = catalog.limits;
   if (!role) {
-    app.innerHTML = `${welcome()}<div class="entry-grid role-options"><button class="card join-card role-card" type="button" data-role="host" aria-label="Crear una partida como anfitrión"><span class="role-icon" aria-hidden="true">${hostRoleIcon}</span><span class="role-copy"><strong class="role-title">Anfitrión</strong><span class="muted">Elige un quiz, genera el código e invita a tu equipo.</span></span></button><button class="card join-card role-card" type="button" data-role="player" aria-label="Unirme a una partida como participante"><span class="role-icon" aria-hidden="true">${playerRoleIcon}</span><span class="role-copy"><strong class="role-title">Participante</strong><span class="muted">Ingresa el código de la sala y participa.</span></span></button></div>`;
+    app.innerHTML = `${welcome()}<div class="entry-grid role-options"><button class="card join-card role-card" type="button" data-role="host" aria-label="${escape(t("Crear una partida como anfitrión"))}"><span class="role-icon" aria-hidden="true">${hostRoleIcon}</span><span class="role-copy"><strong class="role-title">${escape(t("Anfitrión"))}</strong><span class="muted">${escape(t("Elige un quiz, genera el código e invita a tu equipo."))}</span></span></button><button class="card join-card role-card" type="button" data-role="player" aria-label="${escape(t("Unirme a una partida como participante"))}"><span class="role-icon" aria-hidden="true">${playerRoleIcon}</span><span class="role-copy"><strong class="role-title">${escape(t("Participante"))}</strong><span class="muted">${escape(t("Ingresa el código de la sala y participa."))}</span></span></button></div>`;
     const participantRole = app.querySelector('[data-role="player"]');
     if (session.host && session.hostRoomCode) {
       participantRole.disabled = true;
-      participantRole.title = 'Finaliza tu sala activa antes de unirte como participante.';
+      participantRole.title = t("Finaliza tu sala activa antes de unirte como participante.");
     }
     app.querySelectorAll('[data-role]').forEach(button => button.addEventListener('click', () => { if (busy) return; entry(button.dataset.role); app.querySelector('#course, input:not([type="hidden"])')?.focus(); }));
     return;
   }
   const maxQuestions = Math.min(limits.maxQuestions, catalog.courses[0]?.questionCount || 1);
   const resumeCandidate = role === 'host' && session.host && /^\d{6}$/.test(session.hostRoomCode || '');
-  const joinForm = `<span class="eyebrow">INGRESO DE PARTICIPANTE</span><h2 id="form-title">Únete a la Sala</h2><form id="join-form"><div class="field"><input class="code-input" id="room-code" name="code" aria-label="Código de la sala" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="off"  value="${escape(draftCode)}" required></div><div class="field"><label for="nickname">Tu nombre o alias</label><input id="nickname" name="nickname" autocomplete="nickname" minlength="2" maxlength="30" pattern="[\\p{L}\\p{N} ]+" placeholder="¿Cómo te llamamos?" required></div><div class="actions join-actions"><a class="button secondary" href="${siteBase}certiquiz/" data-entry-exit>Salir</a><button class="button" type="submit" disabled>Entrar</button></div></form>`;
-  const hostForm = `<h2 id="form-title">Anfitrión</h2><p class="muted">${resumeCandidate ? 'Tu sala activa está lista para continuar.' : 'Configura la partida y genera un código para invitar al equipo.'}</p><form id="create-form" novalidate><ol class="certification-list"><li class="certification-item"><div><span class="certification-number" aria-hidden="true"></span><span id="course-label" class="setup-label">Curso</span><p id="course-hint">Elige qué curso practicará tu equipo.</p></div><details class="path-group course-picker"${resumeCandidate ? ' inert aria-disabled="true"' : ''}><summary id="course" aria-labelledby="course-label course-title" aria-describedby="course-hint"><span id="course-title">${escape(catalog.courses[0]?.title || 'Sin cursos disponibles')}</span></summary><input type="hidden" name="courseId" value="${escape(catalog.courses[0]?.id)}" ${resumeCandidate ? 'disabled' : ''}><div class="path-group-panel" role="group" aria-labelledby="course-label">${catalog.courses.map((course, index) => `<button type="button" data-course="${escape(course.id)}" aria-pressed="${index === 0}">${escape(course.title)}</button>`).join('')}</div></details></li><li class="certification-item"><div><span class="certification-number" aria-hidden="true"></span><label for="question-count">Número de preguntas</label><p id="question-count-hint">Las preguntas se seleccionan del banco del curso.</p></div><input id="question-count" name="questionCount" type="number" min="1" max="${maxQuestions}" value="${Math.min(12, maxQuestions)}" aria-describedby="question-count-hint" required ${resumeCandidate ? 'disabled' : ''}></li><li class="certification-item"><div><span class="certification-number" aria-hidden="true"></span><label for="seconds">Segundos por pregunta</label><p id="seconds-hint">Tiempo que tendrá cada participante para responder.</p></div><input id="seconds" name="secondsPerQuestion" type="number" min="${limits.minSeconds}" max="${limits.maxSeconds}" value="${Math.min(limits.maxSeconds, Math.max(limits.minSeconds, 10))}" aria-describedby="seconds-hint" required ${resumeCandidate ? 'disabled' : ''}></li><li class="certification-item setup-actions"><div><span class="certification-number" aria-hidden="true"></span><span class="setup-label">${resumeCandidate ? 'Sala activa' : 'Generar Sala'}</span><p class="hint">${resumeCandidate ? 'Cargando la configuración de la sala…' : `Hasta ${limits.maxPlayers} participantes. Gana quien consigue más puntos; los empates comparten posición.`}</p></div><button class="button" type="${resumeCandidate ? 'button' : 'submit'}" ${resumeCandidate ? 'data-resume disabled' : catalog.courses.length ? '' : 'disabled'}>Entrar</button></li></ol></form>`;
+  const joinForm = `<span class="eyebrow">${escape(t("INGRESO DE PARTICIPANTE"))}</span><h2 id="form-title">${escape(t("Únete a la Sala"))}</h2><form id="join-form"><div class="field"><input class="code-input" id="room-code" name="code" aria-label="${escape(t("Código de la sala"))}" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="off"  value="${escape(draftCode)}" required></div><div class="field"><label for="nickname">${escape(t("Tu nombre o alias"))}</label><input id="nickname" name="nickname" autocomplete="nickname" minlength="2" maxlength="30" pattern="[\\p{L}\\p{N} ]+" placeholder="${escape(t("¿Cómo te llamamos?"))}" required></div><div class="actions join-actions"><a class="button secondary" href="${siteBase}certiquiz/" data-entry-exit>${escape(t("Salir"))}</a><button class="button" type="submit" disabled>${escape(t("Entrar"))}</button></div></form>`;
+  const hostForm = `<h2 id="form-title">${escape(t("Anfitrión"))}</h2><p class="muted">${resumeCandidate ? escape(t("Tu sala activa está lista para continuar.")) : escape(t("Configura la partida y genera un código para invitar al equipo."))}</p><form id="create-form" novalidate><ol class="certification-list"><li class="certification-item"><div><span class="certification-number" aria-hidden="true"></span><span id="course-label" class="setup-label">${escape(t("Curso"))}</span><p id="course-hint">${escape(t("Elige qué curso practicará tu equipo."))}</p></div><details class="path-group course-picker"${resumeCandidate ? ' inert aria-disabled="true"' : ''}><summary id="course" aria-labelledby="course-label course-title" aria-describedby="course-hint"><span id="course-title">${escape(catalog.courses[0]?.title || t("Sin cursos disponibles"))}</span></summary><input type="hidden" name="courseId" value="${escape(catalog.courses[0]?.id)}" ${resumeCandidate ? 'disabled' : ''}><div class="path-group-panel" role="group" aria-labelledby="course-label">${catalog.courses.map((course, index) => `<button type="button" data-course="${escape(course.id)}" aria-pressed="${index === 0}">${escape(course.title)}</button>`).join('')}</div></details></li><li class="certification-item"><div><span class="certification-number" aria-hidden="true"></span><label for="question-count">${escape(t("Número de preguntas"))}</label><p id="question-count-hint">${escape(t("Las preguntas se seleccionan del banco del curso."))}</p></div><input id="question-count" name="questionCount" type="number" min="1" max="${maxQuestions}" value="${Math.min(12, maxQuestions)}" aria-describedby="question-count-hint" required ${resumeCandidate ? 'disabled' : ''}></li><li class="certification-item"><div><span class="certification-number" aria-hidden="true"></span><label for="seconds">${escape(t("Segundos por pregunta"))}</label><p id="seconds-hint">${escape(t("Tiempo que tendrá cada participante para responder."))}</p></div><input id="seconds" name="secondsPerQuestion" type="number" min="${limits.minSeconds}" max="${limits.maxSeconds}" value="${Math.min(limits.maxSeconds, Math.max(limits.minSeconds, 10))}" aria-describedby="seconds-hint" required ${resumeCandidate ? 'disabled' : ''}></li><li class="certification-item setup-actions"><div><span class="certification-number" aria-hidden="true"></span><span class="setup-label">${resumeCandidate ? escape(t("Sala activa")) : escape(t("Generar Sala"))}</span><p class="hint">${resumeCandidate ? escape(t("Cargando la configuración de la sala…")) : escape(t('Hasta {count} participantes. Gana quien consigue más puntos; los empates comparten posición.', { count: limits.maxPlayers }))}</p></div><button class="button" type="${resumeCandidate ? 'button' : 'submit'}" ${resumeCandidate ? 'data-resume disabled' : catalog.courses.length ? '' : 'disabled'}>${escape(t("Entrar"))}</button></li></ol></form>`;
   app.innerHTML = `${welcome(role)}<section class="card join-card entry-card ${role}-entry" aria-labelledby="form-title">${role === 'host' ? hostForm : joinForm}</section>`;
   prepareNotices();
   const roomCode = app.querySelector('#room-code');
@@ -200,8 +204,8 @@ function lockHostSetup(form, activeRoom) {
   courseId.disabled = true;
   questionCount.value = activeRoom.questionCount; questionCount.disabled = true;
   seconds.value = activeRoom.secondsPerQuestion; seconds.disabled = true;
-  form.querySelector('.setup-actions .setup-label').textContent = 'Sala activa';
-  form.querySelector('.setup-actions .hint').textContent = 'Retoma la sala existente con su configuración actual.';
+  form.querySelector('.setup-actions .setup-label').textContent = t("Sala activa");
+  form.querySelector('.setup-actions .hint').textContent = t("Retoma la sala existente con su configuración actual.");
   resume.type = 'button'; resume.disabled = false;
   resume.onclick = () => action(() => enterRoom(activeRoom), resume);
 }
@@ -212,8 +216,8 @@ function unlockHostSetup(form) {
   form.querySelector('[name="courseId"]').disabled = false;
   form.querySelector('#question-count').disabled = false;
   form.querySelector('#seconds').disabled = false;
-  form.querySelector('.setup-actions .setup-label').textContent = 'Generar Sala';
-  form.querySelector('.setup-actions .hint').textContent = `Hasta ${catalog.limits.maxPlayers} participantes. Gana quien consigue más puntos; los empates comparten posición.`;
+  form.querySelector('.setup-actions .setup-label').textContent = t("Generar Sala");
+  form.querySelector('.setup-actions .hint').textContent = t('Hasta {count} participantes. Gana quien consigue más puntos; los empates comparten posición.', { count: catalog.limits.maxPlayers });
   const submit = form.querySelector('.setup-actions .button');
   submit.type = 'submit'; submit.disabled = !catalog.courses.length; submit.onclick = null;
 }
@@ -267,27 +271,27 @@ document.addEventListener('click', event => {
 
 function lobby() {
   const invite = room.role === 'host' ? joinUrl() : '';
-  const hostInvitation = `<div class="invite-overview"><div class="invite-code"><strong class="pin">${escape(room.code)}</strong>${invitationQr(invite)}</div><label for="join-address">Enlace de invitación</label><div class="invite-link"><input id="join-address" type="url" value="${escape(invite)}" readonly><button type="button" data-copy aria-label="Copiar enlace de invitación" title="Copiar enlace de invitación"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="4" y="8" width="12" height="13" rx="2"/><path d="M9 5V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2"/></svg></button></div></div>`;
+  const hostInvitation = `<div class="invite-overview"><div class="invite-code"><strong class="pin">${escape(room.code)}</strong>${invitationQr(invite)}</div><label for="join-address">${escape(t("Enlace de invitación"))}</label><div class="invite-link"><input id="join-address" type="url" value="${escape(invite)}" readonly><button type="button" data-copy aria-label="${escape(t("Copiar enlace de invitación"))}" title="${escape(t("Copiar enlace de invitación"))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="4" y="8" width="12" height="13" rx="2"/><path d="M9 5V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2"/></svg></button></div></div>`;
   const facts = roomFacts(room.questionCount, room.secondsPerQuestion);
-  const lobbyWaitTimer = room.role === 'host' && room.lobbyDeadline ? `<output class="lobby-wait-timer" data-lobby-wait-timer role="timer" aria-live="off" aria-label="Tiempo restante para iniciar la sala">${formatCountdown(lobbyWaitSeconds())}</output>` : '';
-  const hostFooter = `<div class="lobby-footer">${facts}<div class="actions game-actions">${lobbyWaitTimer}<button class="button secondary" type="button" data-exit>Finalizar</button><button class="button" type="button" data-start>Comenzar</button></div></div>`;
-  const playerFooter = `<div class="lobby-footer player-lobby-footer">${facts}<div class="actions game-actions"><button class="button secondary" type="button" data-exit>Salir</button></div></div>`;
-  return `${roomHeader()}<div class="room-grid"><section class="card join-card"><span class="eyebrow">${room.role === 'host' ? 'INVITA A PARTICIPANTES' : 'YA ESTÁS DENTRO'}</span><h2 id="stage-title" tabindex="-1">${room.role === 'host' ? 'Sala de Espera' : `¡Todo listo, ${escape(room.me?.nickname)}!`}</h2>${room.role === 'host' ? hostInvitation : '<p class="muted">El anfitrión iniciará la primera pregunta. Mantén esta página abierta para responder.</p>'}${room.role === 'host' ? hostFooter : playerFooter}</section><div class="room-side"><div data-players></div></div></div>`;
+  const lobbyWaitTimer = room.role === 'host' && room.lobbyDeadline ? `<output class="lobby-wait-timer" data-lobby-wait-timer role="timer" aria-live="off" aria-label="${escape(t("Tiempo restante para iniciar la sala"))}">${formatCountdown(lobbyWaitSeconds())}</output>` : '';
+  const hostFooter = `<div class="lobby-footer">${facts}<div class="actions game-actions">${lobbyWaitTimer}<button class="button secondary" type="button" data-exit>${escape(t("Finalizar"))}</button><button class="button" type="button" data-start>${escape(t("Comenzar"))}</button></div></div>`;
+  const playerFooter = `<div class="lobby-footer player-lobby-footer">${facts}<div class="actions game-actions"><button class="button secondary" type="button" data-exit>${escape(t("Salir"))}</button></div></div>`;
+  return `${roomHeader()}<div class="room-grid"><section class="card join-card"><span class="eyebrow">${room.role === 'host' ? escape(t("INVITA A PARTICIPANTES")) : escape(t("YA ESTÁS DENTRO"))}</span><h2 id="stage-title" tabindex="-1">${room.role === 'host' ? escape(t("Sala de Espera")) : escape(t('¡Todo listo, {name}!', { name: room.me?.nickname || '' }))}</h2>${room.role === 'host' ? hostInvitation : `<p class="muted">${escape(t("El anfitrión iniciará la primera pregunta. Mantén esta página abierta para responder."))}</p>`}${room.role === 'host' ? hostFooter : playerFooter}</section><div class="room-side"><div data-players></div></div></div>`;
 }
-const roomCloseButton = '<button class="quiz-close game-close" type="button" data-exit aria-label="Salir" title="Salir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button>';
+const roomCloseButton = `<button class="quiz-close game-close" type="button" data-exit aria-label="${escape(t("Salir"))}" title="${escape(t("Salir"))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button>`;
 
 function questionView() {
   const question = room.question;
   const revealed = room.status === 'reveal';
-  return `${roomHeader()}<section class="card"><div class="game-toolbar"><span class="game-toolbar-info"><span class="brand">Certi<span class="brand-accent">Quiz</span></span><span data-answer-count></span></span><span class="game-toolbar-trailing">${revealed ? '' : '<span class="timer" data-timer role="timer" aria-live="off"></span>'}${roomCloseButton}</span></div><progress data-timer-meter max="${room.secondsPerQuestion}" value="${revealed ? 0 : room.secondsPerQuestion}" aria-label="Tiempo restante"></progress><h2 class="question" id="question-title" tabindex="-1">${room.questionIndex + 1}. ${escape(question.text)}</h2><form id="answer-form" novalidate><fieldset aria-labelledby="question-title"><div class="options">${question.options.map((option, index) => `<label class="option${revealed && option.id === question.correctOption ? ' correct' : ''}${revealed && option.id === room.me?.answer && option.id !== question.correctOption ? ' incorrect' : ''}"><input type="radio" name="optionId" value="${escape(option.id)}" ${room.me?.answer === option.id ? 'checked' : ''} ${revealed || room.role === 'host' || room.me?.answer ? 'disabled' : ''} required><span class="option-letter" aria-hidden="true">${String.fromCharCode(65 + index)}</span><span>${escape(option.text)}${revealed && option.id === question.correctOption ? '<span class="visually-hidden">Respuesta correcta</span>' : ''}</span></label>`).join('')}</div></fieldset>${room.role === 'player' && !revealed ? '<div class="actions game-actions"><button class="button" type="submit" data-send>Enviar</button></div>' : ''}</form>${!revealed ? '<p class="answer-note" data-answer-note role="status"></p>' : ''}${revealed ? `<div class="explanation"><strong>Explicación</strong><p>${escape(question.explanation || '')}</p></div>` : ''}${room.role === 'host' ? `<div class="actions game-actions"><button class="button secondary" type="button" data-finish>Finalizar</button>${revealed ? '<button class="button" type="button" data-next>Siguiente</button>' : ''}</div>` : ''}</section>`;
+  return `${roomHeader()}<section class="card"><div class="game-toolbar"><span class="game-toolbar-info"><span class="brand">Certi<span class="brand-accent">Quiz</span></span><span data-answer-count></span></span><span class="game-toolbar-trailing">${revealed ? '' : '<span class="timer" data-timer role="timer" aria-live="off"></span>'}${roomCloseButton}</span></div><progress data-timer-meter max="${room.secondsPerQuestion}" value="${revealed ? 0 : room.secondsPerQuestion}" aria-label="${escape(t("Tiempo restante"))}"></progress><h2 class="question" id="question-title" tabindex="-1">${room.questionIndex + 1}. ${escape(question.text)}</h2><form id="answer-form" novalidate><fieldset aria-labelledby="question-title"><div class="options">${question.options.map((option, index) => `<label class="option${revealed && option.id === question.correctOption ? ' correct' : ''}${revealed && option.id === room.me?.answer && option.id !== question.correctOption ? ' incorrect' : ''}"><input type="radio" name="optionId" value="${escape(option.id)}" ${room.me?.answer === option.id ? 'checked' : ''} ${revealed || room.role === 'host' || room.me?.answer ? 'disabled' : ''} required><span class="option-letter" aria-hidden="true">${String.fromCharCode(65 + index)}</span><span>${escape(option.text)}${revealed && option.id === question.correctOption ? `<span class="visually-hidden">${escape(t("Respuesta correcta"))}</span>` : ''}</span></label>`).join('')}</div></fieldset>${room.role === 'player' && !revealed ? `<div class="actions game-actions"><button class="button" type="submit" data-send>${escape(t("Enviar"))}</button></div>` : ''}</form>${!revealed ? '<p class="answer-note" data-answer-note role="status"></p>' : ''}${revealed ? `<div class="explanation"><strong>${escape(t("Explicación"))}</strong><p>${escape(question.explanation || '')}</p></div>` : ''}${room.role === 'host' ? `<div class="actions game-actions"><button class="button secondary" type="button" data-finish>${escape(t("Finalizar"))}</button>${revealed ? `<button class="button" type="button" data-next>${escape(t("Siguiente"))}</button>` : ''}</div>` : ''}</section>`;
 }
 
 function ranking() {
-  return `<section class="card ranking-card" id="stage-title" tabindex="-1" aria-label="Clasificación por puntos"><div class="game-toolbar"><span class="brand">Certi<span class="brand-accent">Quiz</span></span>${roomCloseButton}</div>${leaderboard()}${room.role === 'host' ? '<div class="actions game-actions"><button class="button secondary" type="button" data-finish>Finalizar</button><button class="button" type="button" data-next>Siguiente</button></div>' : ''}</section>`;
+  return `<section class="card ranking-card" id="stage-title" tabindex="-1" aria-label="${escape(t("Clasificación por puntos"))}"><div class="game-toolbar"><span class="brand">Certi<span class="brand-accent">Quiz</span></span>${roomCloseButton}</div>${leaderboard()}${room.role === 'host' ? `<div class="actions game-actions"><button class="button secondary" type="button" data-finish>${escape(t("Finalizar"))}</button><button class="button" type="button" data-next>${escape(t("Siguiente"))}</button></div>` : ''}</section>`;
 }
 
 function leaderboard() {
-  return `<table class="leaderboard"><caption class="visually-hidden">Clasificación por puntos; los empates comparten posición.</caption><thead><tr><th scope="col">Ranking</th><th scope="col">Participante</th><th scope="col">Puntos</th></tr></thead><tbody>${room.leaderboard.map(player => `<tr data-player-id="${escape(player.id)}"${player.id === room.me?.id ? ' class="is-me"' : ''}><td class="place">#${String(player.rank).padStart(3, '0')}</td><th scope="row">${escape(player.nickname)}</th><td>${player.score}</td></tr>`).join('')}</tbody></table>`;
+  return `<table class="leaderboard"><caption class="visually-hidden">${escape(t("Clasificación por puntos; los empates comparten posición."))}</caption><thead><tr><th scope="col">${escape(t("Ranking"))}</th><th scope="col">${escape(t("Participante"))}</th><th scope="col">${escape(t("Puntos"))}</th></tr></thead><tbody>${room.leaderboard.map(player => `<tr data-player-id="${escape(player.id)}"${player.id === room.me?.id ? ' class="is-me"' : ''}><td class="place">#${String(player.rank).padStart(3, '0')}</td><th scope="row">${escape(player.nickname)}</th><td>${player.score}</td></tr>`).join('')}</tbody></table>`;
 }
 
 function animateLeaderboard(previousOrder = room.code === rankingCode ? rankingOrder : []) {
@@ -318,10 +322,10 @@ function animateLeaderboard(previousOrder = room.code === rankingCode ? rankingO
 }
 
 function podium() {
-  return `<ol class="podium" aria-label="Podio final">${[2, 1, 3].map(rank => {
+  return `<ol class="podium" aria-label="${escape(t("Podio final"))}">${[2, 1, 3].map(rank => {
     const players = room.leaderboard.filter(player => player.rank === rank);
     if (!players.length) return '';
-    return `<li class="podium-place podium-${rank}"><strong class="podium-name">${players.map(player => `<span>${escape(player.nickname)}</span>`).join('')}</strong><div class="podium-step"><img class="podium-medal" src="${siteBase}assets/icons/certiquiz-medal-${rank}.svg" alt="${rank === 1 ? 'Primer' : rank === 2 ? 'Segundo' : 'Tercer'} puesto${players.length > 1 ? ' compartido' : ''}" width="88" height="88"><strong class="podium-score">${players[0].score}</strong><span>puntos</span></div></li>`;
+    return `<li class="podium-place podium-${rank}"><strong class="podium-name">${players.map(player => `<span>${escape(player.nickname)}</span>`).join('')}</strong><div class="podium-step"><img class="podium-medal" src="${assetsBase}assets/icons/certiquiz-medal-${rank}.svg" alt="${escape(t(players.length > 1 ? 'Puesto {rank} compartido' : 'Puesto {rank}', { rank }))}" width="88" height="88"><strong class="podium-score">${players[0].score}</strong><span>${escape(t("puntos"))}</span></div></li>`;
   }).join('')}</ol>`;
 }
 
@@ -331,8 +335,8 @@ function confetti() {
 
 function finished() {
   const leaders = room.leaderboard.filter(player => player.rank === 1);
-  const title = leaders.length > 1 ? '¡Primer puesto compartido!' : leaders.length ? `¡Bien hecho, ${escape(leaders[0].nickname)}!` : 'Gracias por practicar en equipo.';
-  return `${roomHeader()}<section class="result-banner"><h2 id="stage-title" tabindex="-1">${title}</h2>${room.courseTitle ? `<p class="result-course">${oracleBadgeIcon}<span>${escape(room.courseTitle)}</span></p>` : ''}${leaders.length ? podium() + confetti() : ''}</section><section class="card">${leaderboard()}<div class="actions game-actions"><button class="button" type="button" data-exit>Salir</button></div></section>`;
+  const title = leaders.length > 1 ? escape(t("¡Primer puesto compartido!")) : leaders.length ? escape(t('¡Bien hecho, {name}!', { name: leaders[0].nickname })) : escape(t("Gracias por practicar en equipo."));
+  return `${roomHeader()}<section class="result-banner"><h2 id="stage-title" tabindex="-1">${title}</h2>${room.courseTitle ? `<p class="result-course">${oracleBadgeIcon}<span>${escape(room.courseTitle)}</span></p>` : ''}${leaders.length ? podium() + confetti() : ''}</section><section class="card">${leaderboard()}<div class="actions game-actions"><button class="button" type="button" data-exit>${escape(t("Salir"))}</button></div></section>`;
 }
 
 function setChatLock(code, active) {
@@ -366,10 +370,10 @@ function showRoom(snapshot) {
     prepareNotices();
     bindRoom();
     if (room.status !== 'lobby' && !document.querySelector('[data-confirm][open]')) (document.querySelector('#question-title') || document.querySelector('#stage-title'))?.focus({ preventScroll: true });
-    announce(room.status === 'question' ? `Pregunta ${room.questionIndex + 1}. Tienes ${room.secondsPerQuestion} segundos.` : room.status === 'reveal' ? 'Se cerró la pregunta. Puedes revisar la respuesta.' : room.status === 'ranking' ? 'Puntuaciones actualizadas. Puedes revisar la clasificación.' : room.status === 'finished' ? 'Partida terminada. Ya puedes consultar los resultados.' : 'Te has unido a la sala.');
+    announce(room.status === 'question' ? t('Pregunta {number}. Tienes {seconds} segundos.', { number: room.questionIndex + 1, seconds: room.secondsPerQuestion }) : room.status === 'reveal' ? t("Se cerró la pregunta. Puedes revisar la respuesta.") : room.status === 'ranking' ? t("Puntuaciones actualizadas. Puedes revisar la clasificación.") : room.status === 'finished' ? t("Partida terminada. Ya puedes consultar los resultados.") : t("Te has unido a la sala."));
   }
   updateRoom();
-  if (answered) { showError(''); announce('Respuesta enviada.'); }
+  if (answered) { showError(''); announce(t("Respuesta enviada.")); }
   app.setAttribute('aria-busy', 'false');
 }
 
@@ -382,7 +386,7 @@ function updateRoom() {
     const start = document.querySelector('[data-start]'); if (start) start.disabled = !playerCount || busy;
   }
   const count = document.querySelector('[data-answer-count]');
-  if (count) count.textContent = `${room.answeredCount} de ${playerCount} han respondido`;
+  if (count) count.textContent = t('{answered} de {total} han respondido', { answered: room.answeredCount, total: playerCount });
   tick();
   const note = document.querySelector('[data-answer-note]');
   if (!note) return;
@@ -390,8 +394,8 @@ function updateRoom() {
   if (room.status === 'question') {
     const locked = answered || remaining <= 0 || room.role === 'host';
     document.querySelectorAll('#answer-form input').forEach(input => { input.disabled = locked; if (answered) input.checked = input.value === room.me.answer; });
-    const send = document.querySelector('[data-send]'); if (send) { send.disabled = locked || busy; send.textContent = 'Enviar'; }
-    const message = room.role === 'host' ? 'Las respuestas se cierran al terminar el tiempo.' : answered ? '' : remaining <= 0 ? 'Tiempo terminado. Preparando la respuesta…' : '';
+    const send = document.querySelector('[data-send]'); if (send) { send.disabled = locked || busy; send.textContent = t("Enviar"); }
+    const message = room.role === 'host' ? t("Las respuestas se cierran al terminar el tiempo.") : answered ? '' : remaining <= 0 ? t("Tiempo terminado. Preparando la respuesta…") : '';
     if (note.textContent !== message) note.textContent = message;
   }
 }
@@ -433,7 +437,7 @@ function updatePlayers(container) {
     return;
   }
   if (!container.querySelector('.player-list')) {
-    container.innerHTML = `<ul class="player-list" tabindex="0" aria-label="Participantes de la sala"><li class="player-total"><span class="team-total" role="status" aria-live="polite">${rosterRays()}<span class="team-count"></span></span></li></ul>`;
+    container.innerHTML = `<ul class="player-list" tabindex="0" aria-label="${escape(t("Participantes de la sala"))}"><li class="player-total"><span class="team-total" role="status" aria-live="polite">${rosterRays()}<span class="team-count"></span></span></li></ul>`;
     const createdList = container.querySelector('.player-list');
     createdList.addEventListener('animationend', event => {
       if (event.animationName !== 'certiquiz-absorb') return;
@@ -448,10 +452,11 @@ function updatePlayers(container) {
   const list = container.querySelector('.player-list');
   const total = list.querySelector('.team-total');
   const totalValue = total.querySelector('.team-count');
+  totalValue.dataset.label = t('Participantes');
   const count = String(room.playerCount ?? room.players.length);
   const countChanged = totalValue.textContent !== count;
   if (countChanged) {
-    totalValue.textContent = count; total.setAttribute('aria-label', `${count} ${count === '1' ? 'participante' : 'participantes'}`);
+    totalValue.textContent = count; total.setAttribute('aria-label', t(count === '1' ? '{count} participante' : '{count} participantes', { count }));
   }
   const current = new Map([...list.querySelectorAll('[data-player-id]')].map(node => [node.dataset.playerId, node]));
   let arrivals = 0;
@@ -503,7 +508,7 @@ function expireLobby() {
   clearTimeout(pollTimer);
   const dialog = document.createElement('dialog'); dialog.className = 'confirmation confirmation-expired'; dialog.dataset.lobbyExpired = '';
   dialog.setAttribute('aria-labelledby', 'lobby-expired-title'); dialog.setAttribute('aria-describedby', 'lobby-expired-message');
-  dialog.innerHTML = `<div class="confirmation-body"><h2 id="lobby-expired-title">Tiempo de espera agotado</h2><p id="lobby-expired-message">El tiempo de espera de 15 minutos de la sala expiró. Volverás a CertiQuiz y podrás crear una nueva sala.</p></div><div class="confirmation-actions"><button class="button" type="button" data-return-to-entry>Aceptar</button></div>`;
+  dialog.innerHTML = `<div class="confirmation-body"><h2 id="lobby-expired-title">${escape(t("Tiempo de espera agotado"))}</h2><p id="lobby-expired-message">${escape(t("El tiempo de espera de 15 minutos de la sala expiró. Volverás a CertiQuiz y podrás crear una nueva sala."))}</p></div><div class="confirmation-actions"><button class="button" type="button" data-return-to-entry>${escape(t("Aceptar"))}</button></div>`;
   app.closest('.certiquiz-app').append(dialog);
   dialog.querySelector('[data-return-to-entry]').addEventListener('click', () => {
     dialog.close(); session = { host: false, roomCode: null }; draftCode = ''; entry(null);
@@ -522,16 +527,16 @@ function bindRoom() {
     if (!invitation) return;
     const expanded = invitation.classList.toggle('qr-expanded');
     button.setAttribute('aria-pressed', String(expanded));
-    button.setAttribute('aria-label', expanded ? 'Mostrar código de invitación' : 'Ampliar código QR de invitación');
-    announce(expanded ? 'Código QR ampliado.' : 'Código de invitación mostrado.');
+    button.setAttribute('aria-label', expanded ? t("Mostrar código de invitación") : t("Ampliar código QR de invitación"));
+    announce(expanded ? t("Código QR ampliado.") : t("Código de invitación mostrado."));
   });
   document.querySelector('[data-copy]')?.addEventListener('click', event => {
     const button = event.currentTarget;
     action(async () => {
       try { await navigator.clipboard.writeText(joinUrl()); }
-      catch { throw new Error('No se pudo copiar. Selecciona y copia el enlace del campo de invitación para compartir la sala.'); }
+      catch { throw new Error(t("No se pudo copiar. Selecciona y copia el enlace del campo de invitación para compartir la sala.")); }
       button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>';
-      button.title = 'Enlace copiado'; button.setAttribute('aria-label', 'Enlace copiado'); announce('Enlace de invitación copiado.');
+      button.title = t("Enlace copiado"); button.setAttribute('aria-label', t("Enlace copiado")); announce(t("Enlace de invitación copiado."));
     }, button);
   });
   for (const command of ['start', 'next']) document.querySelector(`[data-${command}]`)?.addEventListener('click', event => action(async () => showRoom(await request(roomPath(`/${command}`), {})), event.currentTarget));
@@ -540,11 +545,11 @@ function bindRoom() {
     showRoom(await request(roomPath('/answers'), { questionId: room.question.id, optionId: data.get('optionId') }));
   });
   document.querySelector('[data-finish]')?.addEventListener('click', event => {
-    confirmRoomAction(event.currentTarget, 'La partida terminará para todos y se mostrarán los resultados de las preguntas respondidas.', async () => showRoom(await request(roomPath('/finish'), {})));
+    confirmRoomAction(event.currentTarget, t("La partida terminará para todos y se mostrarán los resultados de las preguntas respondidas."), async () => showRoom(await request(roomPath('/finish'), {})));
   });
   document.querySelector('[data-exit]')?.addEventListener('click', event => {
-    if (room.role === 'host' && room.status !== 'finished') confirmRoomAction(event.currentTarget, 'Si sales, esta partida terminará para todos. Después podrás crear otra sala.', () => logout('host'));
-    else if (room.status !== 'finished') confirmRoomAction(event.currentTarget, 'Saldrás de la sala y dejarás de participar en esta partida.', () => logout('player'));
+    if (room.role === 'host' && room.status !== 'finished') confirmRoomAction(event.currentTarget, t("Si sales, esta partida terminará para todos. Después podrás crear otra sala."), () => logout('host'));
+    else if (room.status !== 'finished') confirmRoomAction(event.currentTarget, t("Saldrás de la sala y dejarás de participar en esta partida."), () => logout('player'));
     else action(() => logout(null), event.currentTarget);
   });
 }
@@ -554,7 +559,7 @@ function confirmRoomAction(button, message, callback) {
   showError('');
   const dialog = document.createElement('dialog'); dialog.className = 'confirmation'; dialog.dataset.confirm = '';
   dialog.setAttribute('aria-labelledby', 'confirmation-title'); dialog.setAttribute('aria-describedby', 'confirmation-message');
-  dialog.innerHTML = `<div class="confirmation-body"><h2 id="confirmation-title" tabindex="-1" autofocus>${room.role === 'host' && room.status !== 'finished' ? '¿Finalizar la partida?' : '¿Salir de la sala?'}</h2><p id="confirmation-message">${escape(message)}</p><div class="notice error" data-error role="alert" hidden></div></div><div class="confirmation-actions"><button class="button secondary" type="button" data-confirm-no>Cancelar</button><button class="button" type="button" data-confirm-yes>Aceptar</button></div>`;
+  dialog.innerHTML = `<div class="confirmation-body"><h2 id="confirmation-title" tabindex="-1" autofocus>${room.role === 'host' && room.status !== 'finished' ? escape(t("¿Finalizar la partida?")) : escape(t("¿Salir de la sala?"))}</h2><p id="confirmation-message">${escape(message)}</p><div class="notice error" data-error role="alert" hidden></div></div><div class="confirmation-actions"><button class="button secondary" type="button" data-confirm-no>${escape(t("Cancelar"))}</button><button class="button" type="button" data-confirm-yes>${escape(t("Aceptar"))}</button></div>`;
   app.closest('.certiquiz-app').append(dialog);
   const confirm = dialog.querySelector('[data-confirm-yes]');
   const cancel = dialog.querySelector('[data-confirm-no]');
@@ -595,9 +600,9 @@ async function poll() {
     if ([401, 403, 404, 410].includes(error.status)) {
       if (room.role === 'host' && room.status === 'lobby' && lobbyWaitSeconds() === 0) { expireLobby(); return; }
       if (room.role === 'player') setChatLock(code, false);
-      const role = room.role; draftCode = role === 'player' ? code : ''; session = { host: false, roomCode: null }; entry(role); showWarning('La sala o tu acceso ya no están disponibles. Solicita otro código.'); return;
+      const role = room.role; draftCode = role === 'player' ? code : ''; session = { host: false, roomCode: null }; entry(role); showWarning(t("La sala o tu acceso ya no están disponibles. Solicita otro código.")); return;
     }
-    setConnection('Reconectando… Tu respuesta solo se registra cuando recibes la confirmación.'); retry = 2500;
+    setConnection(t("Reconectando… Tu respuesta solo se registra cuando recibes la confirmación.")); retry = 2500;
   }
   schedulePoll(retry);
 }
@@ -620,7 +625,7 @@ async function load() {
     }
     await finishLoading(); entry();
   } catch {
-    app.innerHTML = `<section class="loading loading-full loading-error"><h1><span>Volvamos a intentarlo</span></h1><p class="muted" role="alert">CertiQuiz no se pudo cargar. Revisa tu conexión e inténtalo de nuevo.</p><p class="hint">Recarga la página desde tu navegador o pulsa <kbd>F5</kbd> para volver a intentarlo.</p></section>`;
+    app.innerHTML = `<section class="loading loading-full loading-error"><h1><span>${escape(t("Volvamos a intentarlo"))}</span></h1><p class="muted" role="alert">${escape(t("CertiQuiz no se pudo cargar. Revisa tu conexión e inténtalo de nuevo."))}</p><p class="hint">${escape(t("Recarga la página desde tu navegador o pulsa"))} <kbd>F5</kbd> ${escape(t("para volver a intentarlo."))}</p></section>`;
     app.querySelector('h1').prepend(document.querySelector('#certiquiz-rocket').content.cloneNode(true));
   } finally { app.setAttribute('aria-busy', 'false'); }
 }

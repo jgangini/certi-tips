@@ -35,6 +35,7 @@ def new_room(course: dict, count: int, seconds: int) -> dict:
         secrets.SystemRandom().shuffle(question["options"])
     return {
         "courseId": course["id"], "courseTitle": course["title"], "questions": questions,
+        "courseTitleTranslations": copy.deepcopy(course.get("titleTranslations", {})),
         "secondsPerQuestion": seconds, "status": "lobby", "questionIndex": -1,
         "deadline": None, "players": [], "answers": {}, "answerPoints": {}, "version": 1,
     }
@@ -143,17 +144,20 @@ def answer_question(room: dict, player_id: str, question_id: str, option_id: str
 
 
 def snapshot(code: str, room: dict, role: str, player_id: str | None, now: int,
-             lobby_deadline: int | None = None) -> dict:
+             lobby_deadline: int | None = None, locale: str = "es") -> dict:
     advance_clock(room, now)
     question = None
     shown = room["status"] == "reveal"
     if room["status"] in ("question", "reveal"):
         source = room["currentQuestion"] if "currentQuestion" in room else room["questions"][room["questionIndex"]]
-        question = {"id": source["id"], "text": source["question"],
-                    "options": [{"id": option["id"], "text": option["text"]} for option in source["options"]]}
+        translated = source.get("translations", {}).get(locale, {})
+        options = translated.get("options", {})
+        question = {"id": source["id"], "text": translated.get("question", source["question"]),
+                    "options": [{"id": option["id"], "text": options.get(option["id"], option)["text"]}
+                                for option in source["options"]]}
         if shown:
             question["correctOption"] = source["correctOption"]
-            question["explanation"] = next(option.get("explanation", "") for option in source["options"]
+            question["explanation"] = next(options.get(option["id"], option).get("explanation", "") for option in source["options"]
                                            if option["id"] == source["correctOption"])
     leaderboard = []
     if room["status"] in ("reveal", "ranking", "finished"):
@@ -169,7 +173,8 @@ def snapshot(code: str, room: dict, role: str, player_id: str | None, now: int,
         answer = room["answers"].get(player_id)
         correct = answer == question["correctOption"] if shown and answer is not None else None
         me = {"id": player_id, "nickname": player["nickname"], "answer": answer, "correct": correct, "score": player["score"]}
-    result = {"code": code, "role": role, "status": room["status"], "courseTitle": room["courseTitle"],
+    result = {"code": code, "role": role, "status": room["status"],
+            "courseTitle": room.get("courseTitleTranslations", {}).get(locale, room["courseTitle"]),
             "questionCount": room["questionCount"] if "questionCount" in room else len(room["questions"]),
             "secondsPerQuestion": room["secondsPerQuestion"],
             "questionIndex": room["questionIndex"], "serverNow": now, "deadline": room["deadline"],

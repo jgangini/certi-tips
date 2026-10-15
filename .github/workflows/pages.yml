@@ -17,12 +17,45 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements-i18n.txt
       - run: python services/certiquiz/check-catalog.py
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: npm
       - run: npm ci --ignore-scripts
+      - run: python -m pip install -r requirements-i18n.txt
+      - id: translation-models
+        name: Hash pinned models independently of glossary changes
+        run: node --input-type=module -e "import {readFileSync} from 'node:fs'; import {createHash} from 'node:crypto'; const models=JSON.parse(readFileSync('data/i18n.json')).models; console.log('digest='+createHash('sha256').update(JSON.stringify(models)).digest('hex'));" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: .cache/i18n/models
+          key: argos-models-v1-${{ runner.os }}-${{ steps.translation-models.outputs.digest }}
+          restore-keys: |
+            argos-models-v1-${{ runner.os }}-
+      - uses: actions/cache@v4
+        with:
+          path: .cache/i18n/phrases
+          key: i18n-phrases-v2-${{ runner.os }}-${{ hashFiles('data/i18n.json', 'requirements-i18n.txt') }}-${{ github.sha }}
+          restore-keys: |
+            i18n-phrases-v2-${{ runner.os }}-${{ hashFiles('data/i18n.json', 'requirements-i18n.txt') }}-
+            i18n-phrases-v2-${{ runner.os }}-
+      - run: npm run i18n:prepare
+        env:
+          CERTICHAT_MODE: VPS
+          CERTICHAT_TURNSTILE_SITE_KEY: ${{ vars.CERTICHAT_TURNSTILE_SITE_KEY }}
+      - run: npm run i18n:generate
+      - run: npm run i18n:check
+      - name: Install isolated diagram validation browser
+        run: |
+          npm install --prefix .cache/i18n/browser --no-save --ignore-scripts playwright@1.62.1
+          node .cache/i18n/browser/node_modules/playwright/cli.js install --with-deps chromium
+      - name: Validate SVG text geometry in every language
+        run: node scripts/check-diagrams.mjs es,en,pt,it output/i18n-geometry.json
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/.cache/i18n/browser/node_modules/playwright
       - run: npm run build
         env:
           CERTICHAT_MODE: VPS

@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" role="img" aria-labelledby="title description">
+  <title id="title">De la Pregunta a una Respuesta con Evidencia</title>
+  <desc id="description">La aplicación valida el acceso del usuario antes de recuperar información. Según la pregunta, obtiene documentos mediante búsqueda vectorial o datos estructurados mediante una consulta SQL autorizada. El modelo recibe la pregunta y ese contexto, y genera una respuesta que referencia la evidencia recuperada. La recuperación y los permisos pertenecen a la aplicación, no se delegan al modelo.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1 9 5 1 9" fill="none" stroke="#59616E" stroke-width="1.5"/></marker>
+    <style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#3C4545;font-size:30px}.heading{font-size:32px;font-weight:700}.edge{fill:none;stroke:#59616E;stroke-width:3;marker-end:url(#arrow)}</style>
+  </defs>
+  <rect width="1920" height="1080" fill="#F1EFED"/>
+  <text x="96" y="99" style="font-size:56px;font-weight:700">De la Pregunta a una Respuesta con Evidencia</text>
+  <rect x="96" y="128" width="88" height="6" fill="#C74634"/>
+  <g data-layout="module-artwork" data-center="960 608">
+    <rect x="96" y="236" width="300" height="600" rx="16" fill="#FFFFFF" stroke="#59616E" stroke-width="1.5"/>
+    <text x="246" y="296" text-anchor="middle" class="heading">Pregunta</text>
+    <line x1="120" y1="328" x2="372" y2="328" stroke="#59616E" stroke-width="1.5"/>
+    <text x="246" y="476" text-anchor="middle"><tspan x="246">Qué necesita</tspan><tspan x="246" dy="42">saber el usuario</tspan></text>
+    <text x="246" y="692" text-anchor="middle"><tspan x="246">Identidad y</tspan><tspan x="246" dy="42">contexto de acceso</tspan></text>
+    <path d="M396 536H460" class="edge"/>
+    <rect x="460" y="236" width="564" height="600" rx="16" fill="#FFFFFF" stroke="#59616E" stroke-width="1.5"/>
+    <text x="742" y="296" text-anchor="middle" class="heading">Recuperación autorizada</text>
+    <line x1="484" y1="328" x2="1000" y2="328" stroke="#59616E" stroke-width="1.5"/>
+    <text x="742" y="390" text-anchor="middle">La aplicación valida los permisos</text>
+    <rect x="500" y="430" width="484" height="124" rx="12" fill="#F1EFED" stroke="#59616E" stroke-width="1.5"/>
+    <text x="742" y="479" text-anchor="middle">Documentos autorizados</text>
+    <text x="742" y="522" text-anchor="middle">Búsqueda vectorial</text>
+    <text x="742" y="600" text-anchor="middle">o</text>
+    <rect x="500" y="632" width="484" height="124" rx="12" fill="#F1EFED" stroke="#59616E" stroke-width="1.5"/>
+    <text x="742" y="681" text-anchor="middle">Datos estructurados autorizados</text>
+    <text x="742" y="724" text-anchor="middle">Consulta SQL</text>
+    <text x="742" y="802" text-anchor="middle">Según la pregunta y los permisos</text>
+    <path d="M1024 536H1088" class="edge"/>
+    <rect x="1088" y="236" width="336" height="600" rx="16" fill="#FFFFFF" stroke="#59616E" stroke-width="1.5"/>
+    <text x="1256" y="296" text-anchor="middle" class="heading">Modelo + contexto</text>
+    <line x1="1112" y1="328" x2="1400" y2="328" stroke="#59616E" stroke-width="1.5"/>
+    <text x="1256" y="456" text-anchor="middle"><tspan x="1256">Pregunta</tspan><tspan x="1256" dy="46">+</tspan><tspan x="1256" dy="46">evidencia recuperada</tspan></text>
+    <text x="1256" y="692" text-anchor="middle"><tspan x="1256">El modelo redacta</tspan><tspan x="1256" dy="42">con ese contexto</tspan></text>
+    <path d="M1424 536H1488" class="edge"/>
+    <rect x="1488" y="236" width="336" height="600" rx="16" fill="#FFFFFF" stroke="#59616E" stroke-width="1.5"/>
+    <text x="1656" y="296" text-anchor="middle" class="heading">Respuesta</text>
+    <line x1="1512" y1="328" x2="1800" y2="328" stroke="#59616E" stroke-width="1.5"/>
+    <text x="1656" y="476" text-anchor="middle"><tspan x="1656">Explicación</tspan><tspan x="1656" dy="42">con evidencia</tspan></text>
+    <text x="1656" y="692" text-anchor="middle"><tspan x="1656">Referencias</tspan><tspan x="1656" dy="42">a las fuentes</tspan></text>
+    <rect x="96" y="884" width="1728" height="96" rx="12" fill="#F1EFED" stroke="#59616E" stroke-width="1.5"/>
+    <text x="960" y="943" text-anchor="middle">La aplicación controla el acceso y reúne la evidencia antes de que el modelo responda.</text>
+  </g>
+</svg>

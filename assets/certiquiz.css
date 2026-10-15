@@ -118,7 +118,7 @@ html[data-theme="dark"] .certiquiz-app .player-list { --core-color: #fff; }
 .certiquiz-app .energy-rays { position: absolute; left: -25%; top: -25%; width: 150%; height: 150%; z-index: 0; overflow: visible; animation: certiquiz-rays-turn 36s linear infinite; }
 .certiquiz-app .energy-rays line { stroke: var(--core-color); stroke-width: 1.1; stroke-linecap: round; transform-box: fill-box; transform-origin: center bottom; animation: certiquiz-ray-wave 3.6s ease-in-out var(--ray-delay) infinite alternate; }
 .certiquiz-app .team-count { position: absolute; z-index: 1; inset: 0; display: grid; place-items: center; align-content: center; gap: 6px; border: 1px solid var(--core-color); border-radius: 50%; background: var(--core-color); color: var(--paper); font-family: monospace; font-size: clamp(26px, calc(var(--total-size) * .25), 50px); font-weight: 700; line-height: 1; }
-.certiquiz-app .team-count::after { content: 'Participantes'; display: none; font-family: monospace; font-size: 14px; font-weight: 700; line-height: 1.2; text-transform: uppercase; }
+.certiquiz-app .team-count::after { content: attr(data-label); display: none; font-family: monospace; font-size: 14px; font-weight: 700; line-height: 1.2; text-transform: uppercase; }
 @container certiquiz-core (min-width: 160px) { .certiquiz-app .team-count::after { display: block; } }
 .certiquiz-app .player-list > li[data-player-id] { z-index: 1; left: 50%; top: 50%; width: var(--particle-size); height: var(--particle-size); pointer-events: none; animation: certiquiz-orbit var(--arrival-duration) linear var(--arrival-delay) both; }
 .certiquiz-app .player-list > li[data-absorbed] { opacity: 0; }

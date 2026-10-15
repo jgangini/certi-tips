@@ -16,7 +16,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from .corpus import (DATASET, digest, public_url, read_json,
                      snapshot_path, supported_fragments, validate_manifest)
 from .graph import current_evidence, graph_trace, node_documents, public_graph, read_graph
-from .settings import INDEX_MAX_TOKENS
+from .settings import INDEX_MAX_TOKENS, Locale
+from .localization import localized_evidence
 
 
 def configure_cognee(snapshot: Path, token: str) -> None:
@@ -95,6 +96,7 @@ class Retrieval(BaseModel):
     model_config = ConfigDict(extra="forbid")
     message: str = Field(min_length=1, max_length=1500)
     pageUrl: str | None = Field(default=None, max_length=1500)
+    locale: Locale = "es"
     history: list[PreviousQuestion] = Field(default_factory=list, max_length=4)
 
 
@@ -230,6 +232,10 @@ async def retrieve(body: Retrieval, authorization: str = Header(default="")):
             raise HTTPException(503, "Knowledge retrieval unavailable") from None
     # Re-read after search so removals published during retrieval are excluded too.
     latest = validate_manifest(read_json(latest_path))
+    localized = localized_evidence(app.state.root, body.locale, body.message, app.state.sources, latest)
+    native_segments = [item for item in evidence if item.get("kind") == "segment"]
+    evidence = ([item for pair in zip_longest(native_segments, localized) for item in pair if item is not None]
+                + [item for item in evidence if item.get("kind") != "segment"])
     # The stable home ID supplies navigation even when its public URL moves; freshness still applies.
     current = {doc["id"]: doc for doc in latest["documents"]}
     page_context = [{"kind": "segment", "document_name": name}

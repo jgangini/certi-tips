@@ -9,10 +9,11 @@ from app.catalog import load_catalog
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("data_dir", nargs="?", type=Path, default=Path("data"))
+    parser.add_argument("data_dir", nargs="?", type=Path, default=Path("data/es"))
+    parser.add_argument("--published", action="store_true", help="Require complete translations and exact bank digests")
     args = parser.parse_args()
     try:
-        courses = load_catalog(args.data_dir)
+        courses = load_catalog(args.data_dir, published=args.published)
     except (OSError, ValueError, RecursionError) as error:
         print(f"CertiQuiz: {error}", file=sys.stderr)
         return 1

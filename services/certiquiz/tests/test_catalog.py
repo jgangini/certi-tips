@@ -2,6 +2,7 @@ import copy
 from concurrent.futures import ThreadPoolExecutor
 import io
 import json
+import hashlib
 from threading import Event
 
 import pytest
@@ -11,6 +12,55 @@ from app import catalog, game
 QUESTIONS = [{"id": "q1", "question": "Pregunta original", "correctOption": "a", "options": [
     {"id": "a", "text": "Correcta", "explanation": "Explicación"}, {"id": "b", "text": "Incorrecta"}]}]
 DOCUMENT = {"courses": [{"id": "practice", "title": "Práctica", "questionBank": "questions"}]}
+
+
+def published_documents(documents):
+    documents = copy.deepcopy(documents)
+    for name, bank in documents.items():
+        if name == "catalog.json" or not isinstance(bank, list):
+            continue
+        for question in bank:
+            question["translations"] = {locale: {"question": question["question"], "options": {
+                option["id"]: {"text": option["text"], "explanation": option.get("explanation", "")}
+                for option in question["options"]}} for locale in catalog.LOCALES}
+    document = documents.get("catalog.json")
+    if isinstance(document, dict):
+        for course in document["courses"]:
+            bank = documents.get(course["questionBank"] + ".json")
+            if isinstance(bank, list):
+                course["sha256"] = hashlib.sha256(json.dumps(bank).encode()).hexdigest()
+    return documents
+
+
+def test_published_banks_require_matching_digests_and_complete_identities():
+    documents = published_documents({"catalog.json": DOCUMENT, "questions.json": QUESTIONS})
+    read = lambda name: json.dumps(documents[name]).encode()
+    courses = catalog.parse_catalog(documents["catalog.json"], read, published=True)
+    assert set(courses["practice"]["questions"][0]["translations"]) == {"en", "pt", "it"}
+    documents["questions.json"][0]["question"] = "Contenido de otra publicación"
+    with pytest.raises(ValueError, match="hash"):
+        catalog.parse_catalog(documents["catalog.json"], read, published=True)
+    for change in (lambda q: q["translations"].pop("it"),
+                   lambda q: q["translations"]["en"]["options"].pop("a"),
+                   lambda q: q["translations"]["pt"].update(correctOption="a")):
+        question = copy.deepcopy(courses["practice"]["questions"][0])
+        change(question)
+        with pytest.raises(ValueError):
+            catalog.validate_questions([question])
+    with pytest.raises(ValueError, match="SHA-256"):
+        catalog.parse_catalog(DOCUMENT, read, published=True)
+
+
+def test_bad_published_digest_keeps_previous_catalog_and_frozen_translations(tmp_path, monkeypatch):
+    documents = published_documents({"catalog.json": DOCUMENT, "questions.json": QUESTIONS})
+    monkeypatch.setattr(catalog, "download", lambda name, *_: json.dumps(documents[name]).encode())
+    cache = catalog.Catalog(packaged(tmp_path), "published")
+    accepted = cache.get()
+    room = game.new_room(accepted["practice"], 1, 10)
+    documents["questions.json"][0]["translations"]["en"]["question"] = "Another release"
+    cache._next_refresh = 0
+    assert cache.get() is accepted
+    assert room["questions"][0]["translations"]["en"]["question"] == "Pregunta original"
 
 
 def packaged(tmp_path):
@@ -24,7 +74,7 @@ def remote(monkeypatch, documents):
 
     def download(name, limit, _deadline):
         calls.append(name)
-        value = documents[name]
+        value = published_documents(documents)[name]
         if isinstance(value, Exception):
             raise value
         result = json.dumps(value).encode()
@@ -122,7 +172,7 @@ def test_single_refresh_serves_cached_value_to_concurrent_clients(tmp_path, monk
         if name == "catalog.json":
             started.set()
             assert release.wait(3)
-        return json.dumps(DOCUMENT if name == "catalog.json" else QUESTIONS).encode()
+        return json.dumps(published_documents({"catalog.json": DOCUMENT, "questions.json": QUESTIONS})[name]).encode()
 
     monkeypatch.setattr(catalog, "download", download)
     cache = catalog.Catalog(packaged(tmp_path), "github")

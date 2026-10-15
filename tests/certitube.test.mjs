@@ -13,7 +13,7 @@ import { answerWithReferences, configureChatMarkdown, restoreChat } from "../ass
 import { corpusArtifacts } from "../scripts/certichat-corpus.mjs";
 
 test("unsegmented videos hide duplicate controls while retaining their registered citation", () => {
-  const video = parseVideo(readFileSync(new URL("../data/certitube/MWASexQNDVU/MWASexQNDVU.md", import.meta.url), "utf8"), "MWASexQNDVU");
+  const video = parseVideo(readFileSync(new URL("../data/es/certitube/MWASexQNDVU/MWASexQNDVU.md", import.meta.url), "utf8"), "MWASexQNDVU");
   const html = videoBody(video, new MarkdownIt(), site);
   assert.equal(video.title, "AI Data Platform Workbench for VS Code Community");
   assert.match(html, /class="tube-chapters" hidden/);
@@ -74,21 +74,24 @@ Este capítulo permite localizar la conexión a la instancia Linux del ejemplo. 
 - [Guía de identidad y acceso de CertiTips]({{base}}1Z0-1085-26/iam/).
 `;
 
-test("CertiTube omits the fixed sidebar and keeps the ordered video carousel", () => {
+test("CertiTube omits the fixed sidebar and recommends other videos with large thumbnails", () => {
   const video = parseVideo(source, id);
-  const catalog = JSON.parse(readFileSync(new URL("../data/catalog.json", import.meta.url), "utf8"));
+  const other = { ...video, videoId: "MWASexQNDVU", publicPath: "certitube/MWASexQNDVU", title: "Otro video", summary: "Resumen con <referencias> & detalles." };
+  const catalog = JSON.parse(readFileSync(new URL("../data/es/catalog.json", import.meta.url), "utf8"));
   const course = { id: "site", route: "certitube", modules: [], resources: [] };
   for (const slug of [video.publicPath]) {
-    const navigation = videoCarousel([video], slug, site.base);
-    const html = layout({ site: { ...catalog, videos: [video] }, course, page: { slug, title: "CertiTube", description: video.summary }, body: videoBody(video, new MarkdownIt(), site) });
+    const navigation = videoCarousel([video, other], slug, site.base);
+    const html = layout({ site: { ...catalog, videos: [video, other] }, course, page: { slug, title: "CertiTube", description: video.summary }, body: videoBody(video, new MarkdownIt(), { ...site, videos: [video, other] }) });
     assert.match(html, /class="course-page"/);
     assert.match(html, /<main id="main" class="course-main"/);
     assert.doesNotMatch(html, /<aside class="sidebar" id="course-navigation"/);
     assert.match(html, /aria-label="Videos de CertiTube"/);
     assert.match(html, new RegExp(`<link rel="canonical" href="${site.origin}${site.base}${slug}/"`));
     assert.doesNotMatch(html, /data-progress|data-completion=|data-mark-complete|tube-grid|tube-card|class="tube-nav"|Biblioteca|tube-search/);
-    assert.match(navigation, new RegExp(`href="${site.base}${slug}/" title="[^"]+" aria-current="page"`));
-    assert.match(navigation, /i.ytimg.com\/vi\/sSQAGSs23uY\/mqdefault.jpg/);
+    assert.doesNotMatch(navigation, new RegExp(`href="${site.base}${slug}/"`));
+    assert.match(navigation, /href="\/certitips\/certitube\/MWASexQNDVU\/"/);
+    assert.match(navigation, /i.ytimg.com\/vi\/MWASexQNDVU\/maxresdefault.jpg" width="1280" height="720"/);
+    assert.match(navigation, /<span class="tube-video-summary">Resumen con &lt;referencias&gt; &amp; detalles\.<\/span>/);
     assert.doesNotMatch(navigation, /\d\d:\d\d —/);
     assert.match(html, /search-result-icon-video/);
     assert.match(html, /assets\/icons\/certitube.svg#certitube/);
@@ -129,7 +132,7 @@ test("published video produces matching safe pages, timed evidence and chat refe
   assert.match(moment.text, /conexión a la instancia Linux/);
   const answer = answerWithReferences("Consulta este momento.", [moment], site.origin + site.base);
   const restored = restoreChat({ updatedAt: 100, messages: [{ role: "ai", text: answer }] }, site.origin + site.base, 100);
-  assert.match(configureChatMarkdown(new Remarkable(), site.origin + site.base).render(restored.messages[0].text), /href="\/certitips\/certitube\/sSQAGSs23uY\/#t-332"/);
+  assert.match(configureChatMarkdown(new Remarkable(), site.origin + site.base).render(restored.messages[0].text), /href="\/certitips\/es\/certitube\/sSQAGSs23uY\/#t-332"/);
   assert.deepEqual(corpusArtifacts(docs, "unused"), corpusArtifacts(videoDocuments(parseVideo(source, id), site), "unused"));
 });
 
@@ -162,7 +165,7 @@ test("the latest incorporation comes first even for an older video; drafts stay 
   const root = await mkdtemp(path.join(tmpdir(), "certitube-test-")), draftId = "abcdefghijk", latestId = "zyxwvutsrqp";
   try {
     for (const videoId of [id, draftId, latestId]) {
-      const dir = path.join(root, "data", "certitube", videoId);
+      const dir = path.join(root, "data/es", "certitube", videoId);
       await mkdir(dir, { recursive: true });
       let content = source.replaceAll(id, videoId);
       if (videoId === draftId) content = content.replace('"published"', '"draft"');

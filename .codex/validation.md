@@ -16,10 +16,15 @@ Si una tarea documental pasa a modificar código o configuración, iniciar la fa
 
 ## Flujo habitual
 
+Para contenido/interfaz multilingüe seguir [Internacionalización](internacionalizacion.md): preparar manifiesto, generar, comprobar y compilar antes de las pruebas. Validar también el paquete publicado de CertiQuiz, los cuatro idiomas y la ausencia de raster en diagramas. El único PNG publicado permitido es el logo para compartir.
+
 Requiere Node.js 24 y npm; arquitectura y operaciones usan PowerShell 7.3 o posterior. El flujo de arquitectura necesita Git, Graphify y Sentrux disponibles en `PATH`; npm no los instala. En Windows, usar `npm.cmd` y `npx.cmd` si interfieren los lanzadores de PowerShell.
 
 ```powershell
 ./scripts/arch-preflight.ps1
+npm.cmd run i18n:prepare
+npm.cmd run i18n:generate
+npm.cmd run i18n:check
 npm.cmd run build
 npm.cmd test
 npm.cmd run check

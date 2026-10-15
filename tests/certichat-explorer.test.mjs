@@ -30,7 +30,7 @@ test("knowledge exploration indexes real directions, self-links and labels witho
 });
 
 test("the explorer is a standalone site page and offers an honest missing-snapshot state", () => {
-  const site = JSON.parse(readFileSync(new URL("../data/catalog.json", import.meta.url)));
+  const site = JSON.parse(readFileSync(new URL("../data/es/catalog.json", import.meta.url)));
   site.certichat = { apiOrigin: "http://127.0.0.1:18741" };
   const body = certichatExplorerBody(site.base, false);
   const html = layout({ site, course: site.courses[0], page: { slug: "certichat", title: "Cómo funciona CertiChat" }, body });

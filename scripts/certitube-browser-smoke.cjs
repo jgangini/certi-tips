@@ -63,8 +63,10 @@ async (page) => {
         const context = canvas.getContext('2d'); context.drawImage(image, 0, 0);
         return context.getImageData(0, 0, 512, 512).data;
       };
-      const [current, original] = await Promise.all([pixels(new URL(url).pathname), pixels('/certitips/assets/icons/favicon.png')]);
-      return {path: new URL(url).pathname, corners: [0, 511, 511 * 512, 512 * 512 - 1].map(pixel => [...current.slice(pixel * 4, pixel * 4 + 4)]), opaque: current.every((value, index) => index % 4 !== 3 || value === 255), preserved: original.every((value, index) => original[index - index % 4 + 3] !== 255 || value === current[index])};
+      const current = await pixels(new URL(url).pathname);
+      const bytes = await (await fetch(new URL(url).pathname)).arrayBuffer();
+      const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map(byte => byte.toString(16).padStart(2, '0')).join('');
+      return {path: new URL(url).pathname, corners: [0, 511, 511 * 512, 512 * 512 - 1].map(pixel => [...current.slice(pixel * 4, pixel * 4 + 4)]), opaque: current.every((value, index) => index % 4 !== 3 || value === 255), preserved: hash === 'f66a7a47ad4164090af85e96631ee095968cfa75f1c7ddb05a29d947cf6f04b1'};
     });
     assert(sharing.path.endsWith('/share-logo-square.png') && sharing.opaque && sharing.preserved && sharing.corners.every(pixel => JSON.stringify(pixel) === '[199,70,52,255]'), `Shared image has empty corners or changed original logo pixels: ${JSON.stringify(sharing)}`);
     const appLinks = tab.locator('.header-app-link');
@@ -84,7 +86,7 @@ async (page) => {
     await readyPlayer(); assert(await lastSeek() === undefined, 'Default entry auto-started');
     assert(await tab.locator('#course-navigation, .menu-toggle').count() === 0, 'Removed fixed menu remains');
     const videoOrder = await tab.locator('.tube-videos a').evaluateAll(links => links.map(link => link.pathname.split('/').filter(Boolean).at(-1)));
-    assert(JSON.stringify(videoOrder) === JSON.stringify(['Ha74VhpQwQo','MWASexQNDVU','Wf5fisusQOc','2qdNyl76opY','ZjfQUwUdpbI']), 'Video carousel is not in the requested order');
+    assert(JSON.stringify(videoOrder) === JSON.stringify(['MWASexQNDVU','Wf5fisusQOc','2qdNyl76opY','ZjfQUwUdpbI']), 'Recommendations must preserve order and omit the active video');
     assert(await tab.locator('#tube-search, .tube-video, .tube-player-actions, .tube-meta, .page-lead').count() === 0, 'Removed library or introductory blocks remain');
     assert(await tab.locator('.page-heading, #course-navigation .sidebar-heading, #caso-de-uso, #capitulos').count() === 0, 'Removed titles or long chapter list remain');
     assert(await tab.locator('h2#resumen').textContent() === 'Resumen', 'Summary heading differs');
@@ -176,8 +178,7 @@ async (page) => {
     checks.push('course + video listing, real Markdown snippets/anchors, typo/accent handling, SVG, keyboard, loading race and failed fetch/retry');
 
     await tab.locator('[data-chat-open]').click(); await chatReady();
-    const currentVideo = await tab.locator('.tube-videos a[aria-current="page"]').getAttribute('href');
-    const alternateHref = await tab.locator('.tube-videos a').evaluateAll((links, current) => links.find(link => link.getAttribute('href') !== current)?.getAttribute('href'), currentVideo);
+    const alternateHref = await tab.locator('.tube-videos a').first().getAttribute('href');
     assert(alternateHref, 'No alternate video is available for CertiTube navigation');
     await tab.locator(`.tube-videos a[href="${alternateHref}"]`).click(); await tab.waitForURL(new URL(alternateHref, origin).href); await readyPlayer(); await chatReady();
     assert(await tab.locator('#main').evaluate(main => main.getAnimations().length === 0), 'CertiTube resizes after navigating with CertiChat open');
@@ -189,7 +190,7 @@ async (page) => {
     assert(await tab.locator('#certichat-panel').isVisible(), 'Chat did not stay open');
     assert((await tab.locator('deep-chat').evaluate(chat => chat.getMessages())).length === 2, 'Conversation was lost');
     await readyPlayer(); assert(await lastSeek() === 243, 'Chat citation did not request its time');
-    assert(await tab.locator('.tube-videos a[aria-current="page"]').getAttribute('href') === `/certitips/${path}`, 'Selected video missing from carousel');
+    assert(await tab.locator(`.tube-videos a[href="/certitips/${path}"]`).count() === 0, 'Active video appears in recommendations');
     assert(await tab.locator('h1').count() === 1, 'Video title is duplicated');
     assert(await tab.locator('#tube-youtube').count() === 1, 'More than one player');
     checks.push('chat answer → same-tab citation → preserved conversation and requested second');

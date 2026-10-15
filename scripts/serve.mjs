@@ -6,7 +6,7 @@ const root = path.resolve(import.meta.dirname, "../dist");
 // ponytail: the local preview and its API are paired by certiquiz-local.ps1.
 const previewApiOrigin = "http://127.0.0.1:18740";
 const { base } = JSON.parse(
-  await readFile(new URL("../data/catalog.json", import.meta.url), "utf8"),
+  await readFile(new URL("../data/es/catalog.json", import.meta.url), "utf8"),
 );
 const types = {
   ".html": "text/html; charset=utf-8",
@@ -44,7 +44,7 @@ http
       if ((await stat(file)).isDirectory())
         file = path.join(file, "index.html");
       let content = await readFile(file);
-      if (file === path.join(root, "certiquiz", "index.html")) {
+      if (/^(?:(?:es|en|pt|it)[\\/])?certiquiz[\\/]index\.html$/.test(path.relative(root, file))) {
         content = Buffer.from(
           content
             .toString("utf8")

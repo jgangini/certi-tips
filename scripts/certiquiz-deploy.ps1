@@ -19,15 +19,17 @@ function Invoke-Checked([scriptblock]$Action) {
     if ($LASTEXITCODE -ne 0) { throw "CertiQuiz operation failed ($LASTEXITCODE)." }
 }
 
-$catalog = Get-Content -LiteralPath (Join-Path $repo 'data/catalog.json') -Raw | ConvertFrom-Json
+$catalogRoot = 'dist/assets/certiquiz'
+$catalog = Get-Content -LiteralPath (Join-Path $repo "$catalogRoot/catalog.json") -Raw | ConvertFrom-Json
 $banks = @($catalog.courses | ForEach-Object {
     if ($_.questionBank -cnotmatch '^(?:[A-Za-z0-9][A-Za-z0-9-]{0,63}/)?[a-z0-9][a-z0-9-]{0,99}$') { throw 'Invalid question bank filename.' }
-    "data/$($_.questionBank).json"
+    if ($_.sha256 -cnotmatch '^[a-f0-9]{64}$' -or (Get-FileHash -LiteralPath (Join-Path $repo "$catalogRoot/$($_.questionBank).json") -Algorithm SHA256).Hash.ToLowerInvariant() -cne $_.sha256) { throw 'Published bank digest mismatch. Rebuild the multilingual site before deployment.' }
+    "$catalogRoot/$($_.questionBank).json"
 } | Select-Object -Unique)
 # Explicit source roots and exclusions keep production credentials and unrelated work out of the release.
-Invoke-Checked { & tar -czf $archive -C $repo --exclude=.env --exclude='.env.*' --exclude=.private --exclude=__pycache__ --exclude=.pytest_cache services/certiquiz data/catalog.json @banks }
+Invoke-Checked { & tar -czf $archive -C $repo --exclude=.env --exclude='.env.*' --exclude=.private --exclude=__pycache__ --exclude=.pytest_cache services/certiquiz "$catalogRoot/catalog.json" @banks }
 $entries = & tar -tzf $archive
-if ($LASTEXITCODE -ne 0 -or ($entries | Where-Object { $_ -match '(^|/)(\.env[^/]*|\.private|\.\.)($|/)' -or $_ -notmatch '^(services/certiquiz/|data/)' })) { throw 'Release archive contains an unexpected path.' }
+if ($LASTEXITCODE -ne 0 -or ($entries | Where-Object { $_ -match '(^|/)(\.env[^/]*|\.private|\.\.)($|/)' -or $_ -notmatch '^(services/certiquiz/|dist/assets/certiquiz/)' })) { throw 'Release archive contains an unexpected path.' }
 Invoke-Checked { & $scp @options $archive "${target}:$remoteArchive" }
 $remote = @'
 set -euo pipefail

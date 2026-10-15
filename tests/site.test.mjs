@@ -6,18 +6,24 @@ import { courseRoute } from '../scripts/layout.mjs';
 import { loadVideos } from '../scripts/certitube.mjs';
 import { fileURLToPath } from 'node:url';
 
-test('publishes only current pages without course aliases or redirects', async () => {
-  const catalog = JSON.parse(readFileSync(new URL('../data/catalog.json', import.meta.url), 'utf8'));
+test('publishes the four locales and historical Spanish aliases without other routes or redirects', async () => {
+  const catalog = JSON.parse(readFileSync(new URL('../data/es/catalog.json', import.meta.url), 'utf8'));
   const dist = new URL('../dist/', import.meta.url);
   const pages = globSync('**/*.html', { cwd: dist }).map(file => file.replaceAll('\\', '/'));
   const videos = await loadVideos(fileURLToPath(new URL('../', import.meta.url)), catalog.base);
   const expected = ['index.html', '404.html', 'certichat/index.html', 'certiquiz/index.html', 'certitube/index.html', 'courses/index.html',
     ...videos.map(video => `${video.publicPath}/index.html`),
     ...catalog.courses.flatMap(course => [...course.modules, ...course.resources].map(page => `${courseRoute(course)}/${page.slug}/index.html`))];
-  assert.deepEqual(pages.sort(), expected.sort());
+  const prefixes = ['', 'es/', 'en/', 'pt/', 'it/'];
+  assert.deepEqual(pages.sort(), prefixes.flatMap(prefix => expected.map(file => prefix + file)).sort());
+  for (const file of expected) assert.equal(readFileSync(new URL(file, dist), 'utf8'), readFileSync(new URL(`es/${file}`, dist), 'utf8'), `Spanish alias differs: ${file}`);
   const corpus = JSON.parse(readFileSync(new URL('assets/certichat/corpus.json', dist), 'utf8'));
   assert.equal(corpus.documents.find(document => document.id === 'home').url, `${catalog.origin}${catalog.base}courses/`);
-  if (videos.length) assert.equal(readFileSync(new URL('certitube/index.html', dist), 'utf8'), readFileSync(new URL(`${videos[0].publicPath}/index.html`, dist), 'utf8'));
+  if (videos.length) for (const prefix of prefixes) {
+    const main = file => readFileSync(new URL(prefix + file, dist), 'utf8').match(/<main\b[\s\S]*?<\/main>/)?.[0];
+    assert.ok(main('certitube/index.html'));
+    assert.equal(main('certitube/index.html'), main(`${videos[0].publicPath}/index.html`), `Default video differs: ${prefix}`);
+  }
   for (const file of pages) assert.doesNotMatch(readFileSync(new URL(file, dist), 'utf8'), /http-equiv=["']refresh["']/i, file);
 });
 
@@ -50,7 +56,7 @@ test('validates an applied course and its question references without an exam co
   input.files.delete('course/agents/index.html');
   const issues = validateSite(input);
   includesIssue(issues, /missing published page course\/agents\/index\.html/);
-  includesIssue(issues, /data\/questions\.json\[0\].*missing target.*course\/agents/);
+  includesIssue(issues, /data\/es\/questions\.json\[0\].*missing target.*course\/agents/);
 });
 
 test('validates a second course with independent coverage and bank, including its failures', () => {
@@ -65,10 +71,10 @@ test('validates a second course with independent coverage and bank, including it
   input.coverage.second[2].anchor = 'missing';
   input.questions.second[0].options[1].explanation = '';
   const issues = validateSite(input);
-  includesIssue(issues, /data\/second-coverage\.json\[2\].*missing anchor #missing/);
-  includesIssue(issues, /data\/second-questions\.json\[0\].*correct alternative needs a nonempty explanation/);
+  includesIssue(issues, /data\/es\/second-coverage\.json\[2\].*missing anchor #missing/);
+  includesIssue(issues, /data\/es\/second-questions\.json\[0\].*correct alternative needs a nonempty explanation/);
   includesIssue(issues, /assets\/second-questions\.json: published question bank differs/);
-  assert.ok(!issues.some(issue => /data\/(?:questions|coverage)\.json/.test(issue)));
+  assert.ok(!issues.some(issue => /data\/es\/(?:questions|coverage)\.json/.test(issue)));
 });
 
 test('reports broken assets and exact-case route mismatches', () => {
@@ -177,19 +183,22 @@ test('accepts source-sized banks without inventing explanations for distractors'
   }
 });
 
-test('SVG illustrations allow inline PNG only and still reject active or external content', () => {
+test('SVG illustrations reject all raster content, active elements and external resources', () => {
   const input = fixture();
   const file = 'course/agents/img/oci-runtime.svg';
   const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aXioAAAAASUVORK5CYII=';
   const diagram = image => `<svg><title>Runtime</title><desc>Illustrated runtime.</desc>${image}</svg>`;
   input.files.set(file, diagram(`<image href="${png}"/>`));
-  assert.deepEqual(validateSite(input), []);
+  includesIssue(validateSite(input), /embedded SVG element <image> is not allowed/);
   for (const href of ['https://remote.test/image.png', '../image.png', 'data:image/png;base64,not-a-png', 'data:image/svg+xml;base64,PHN2Zz4=']) {
     input.files.set(file, diagram(`<image href="${href}"/>`));
     includesIssue(validateSite(input), /embedded SVG element <image> is not allowed/);
   }
   input.files.set(file, diagram(`<image href="${png}" onload="alert(1)"/>`));
   includesIssue(validateSite(input), /SVG event handler onload is not allowed/);
+  const icons = fixture();
+  icons.files.set('assets/icons/raster.svg', diagram(`<image href="${png}"/>`));
+  includesIssue(validateSite(icons), /assets\/icons\/raster\.svg: active or embedded SVG element <image> is not allowed/);
 });
 
 test('validates newly added diagrams as well as the required originals', () => {
@@ -211,8 +220,8 @@ test('checks study references against actual published module anchors', () => {
   input.coverage.course[0].anchor = 'missing-intro';
   input.coverage.course[1].module = 'unknown-module';
   const issues = validateSite(input);
-  includesIssue(issues, /data\/questions\.json\[0\].*missing anchor #missing-topic/);
-  includesIssue(issues, /data\/coverage\.json\[0\].*missing anchor #missing-intro/);
+  includesIssue(issues, /data\/es\/questions\.json\[0\].*missing anchor #missing-topic/);
+  includesIssue(issues, /data\/es\/coverage\.json\[0\].*missing anchor #missing-intro/);
   includesIssue(issues, /reference needs a known module/);
 });
 
@@ -237,7 +246,7 @@ test('checks all 53 lesson ids, filenames and their module mapping', () => {
 
 test('only published CertiTube cards may embed the official fixed thumbnail URL', () => {
   const input = fixture(), file = 'certitube/Ha74VhpQwQo/index.html';
-  const thumbnail = 'https://i.ytimg.com/vi/Ha74VhpQwQo/mqdefault.jpg';
+  const thumbnail = 'https://i.ytimg.com/vi/Ha74VhpQwQo/maxresdefault.jpg';
   input.files.set(file, `<main id="main"><img src="${thumbnail}"></main>`);
   assert.deepEqual(validateSite(input), []);
   for (const src of [thumbnail + '?tracking=1', thumbnail.replace('https:', 'http:'), thumbnail.replace('Ha74VhpQwQo', 'abcdefghijk'), thumbnail.replace('i.ytimg.com', 'evil.test')]) {

@@ -185,7 +185,7 @@ strong {
 .brand:hover {
   color: var(--ink);
 }
-.site-header > .brand { margin-right: auto; }
+.site-header > .brand { margin-right: auto; flex-shrink: 0; }
 .brand-accent {
   color: var(--accent);
 }
@@ -372,7 +372,7 @@ html:has(.has-course-groups) { scroll-padding-top: calc(var(--header) + var(--co
   background: transparent;
   color: var(--red);
 }
-.theme-toggle {
+.theme-toggle, .language-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -387,7 +387,7 @@ html:has(.has-course-groups) { scroll-padding-top: calc(var(--header) + var(--co
   font-size: 0.78rem;
   font-weight: 650;
 }
-.theme-toggle:hover { border-color: var(--red); color: var(--red); }
+.theme-toggle:hover, .language-toggle:hover { border-color: var(--red); color: var(--red); }
 .header-app-link { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); color: var(--ink); text-decoration: none; }
 .header-app-link:hover { border-color: var(--red); color: var(--red); }
 .header-app-link[aria-current="page"], .header-app-link[aria-current="page"]:hover { border-color: var(--red); background: var(--red); color: #fff; cursor: default; }
@@ -2096,7 +2096,7 @@ html[data-theme="dark"] .quiz-heading .eyebrow {
     gap: 14px;
   }
   .search-toggle { justify-content: center; }
-  .menu-toggle, .path-nav-mobile > summary, .header-app-link, .search-toggle, .theme-toggle {
+  .menu-toggle, .path-nav-mobile > summary, .header-app-link, .search-toggle, .theme-toggle, .language-toggle {
     width: 44px;
     height: 44px;
     min-width: 44px;
@@ -2227,13 +2227,13 @@ html[data-theme="dark"] .quiz-heading .eyebrow {
   }
   .course-page .site-header { gap: 5px; }
   .course-groups { left: 20px; width: calc(100% - 40px); }
-  .menu-toggle, .path-nav-mobile > summary, .header-app-link, .search-toggle, .theme-toggle, .group-carousel-controls button {
+  .menu-toggle, .path-nav-mobile > summary, .header-app-link, .search-toggle, .theme-toggle, .language-toggle, .group-carousel-controls button {
     width: 31px;
     height: 31px;
     min-width: 31px;
     min-height: 31px;
   }
-  .menu-toggle svg, .path-nav-mobile > summary svg, .header-app-link svg, .search-toggle svg, .theme-toggle svg, .group-carousel-controls button svg {
+  .menu-toggle svg, .path-nav-mobile > summary svg, .header-app-link svg, .search-toggle svg, .theme-toggle svg, .language-toggle svg, .group-carousel-controls button svg {
     width: 17px;
     height: 17px;
   }
@@ -2317,7 +2317,7 @@ html[data-theme="dark"] .quiz-heading .eyebrow {
   }
   .hero-ambient::before { animation: none; }
 }
-@media (max-width: 360px) {
+@media (max-width: 380px) {
   .course-page .site-header { gap: 3px; }
 }
 @media print {
@@ -2368,4 +2368,15 @@ html[data-theme="dark"] .quiz-heading .eyebrow {
     background: white;
     padding-bottom: 0;
   }
+}
+
+.language-menu { position: relative; flex-shrink: 0; }
+.language-toggle { list-style: none; cursor: pointer; }
+.language-toggle::-webkit-details-marker { display: none; }
+.language-panel { width: 160px; max-width: calc(100vw - 24px); }
+.language-panel a[aria-current="true"] { color: var(--on-red); background: var(--red); }
+@media (max-width: 700px) { .site-header { gap: 5px; } }
+@media (max-width: 360px) {
+  .site-header { padding-inline: 16px; }
+  .course-page .site-header { padding-inline: 6px; }
 }

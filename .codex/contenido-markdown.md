@@ -5,7 +5,7 @@ Aplicar al crear o revisar cursos, módulos, recursos, preguntas y cobertura de 
 ## Fuentes y estructura
 
 ```text
-data/
+data/es/
   catalog.json
   <código>/
     00_empieza_aqui/
@@ -25,6 +25,8 @@ data/
 - Para añadir un curso, registrar módulos, recursos, banco, cobertura y `lessonCounts` en el catálogo. Asociar su ID mediante `paths[].items[].guide` y usar el nivel de la clasificación existente. La entrada de Data Management Fundamentals corresponde a nivel 1; su naturaleza aplicada no sustituye el nivel por otra etiqueta.
 
 ## Redacción y evidencia
+
+Las versiones EN/PT-BR/IT se generan según [Internacionalización](internacionalizacion.md). Las traducciones del mismo banco conservan sus IDs; la regla de nuevos IDs al importar cuestionarios externos no se aplica a variantes de idioma.
 
 - Dirigirse al estudiante en español claro. Explicar primero la idea, después el mecanismo y un caso concreto, y finalmente sus condiciones o límites. Usar párrafos breves y conectados; listas para pasos o elementos paralelos y tablas para comparaciones reales.
 - Respetar la capitalización editorial del curso. En CDMP-DMF, los títulos y la navegación llevan mayúscula en las palabras principales, con artículos, preposiciones y conjunciones en minúscula salvo al inicio. No imponer este estilo a capítulos de video, que usan capitalización de oración.
@@ -77,7 +79,7 @@ La plantilla no obliga a repetir todos los subtítulos en cada apartado. Prioriz
 
 ## Banco de preguntas y práctica
 
-- Guardar un solo banco en `data/<código>/questions.json` y registrarlo como `<código>/questions` en `questionBank`. Reutilizar el esquema existente y su validador real de CertiQuiz.
+- Guardar un solo banco en `data/es/<código>/questions.json` y registrarlo como `<código>/questions` en `questionBank`. Reutilizar el esquema existente y su validador real de CertiQuiz.
 - Cada pregunta tiene cuatro opciones con identificadores estables, una sola correcta, su explicación y una referencia a una sección real. `explanation` es una cadena en cada opción; puede estar vacía en distractores cuando la fuente no los explica.
 - Los bancos originales usan seis preguntas por módulo técnico. Si el material fuente contiene otra distribución, preservar todas sus preguntas y declarar `questionCounts` con cada módulo técnico y su cantidad exacta, al menos dos por dominio. No inventar preguntas para alcanzar seis.
 - Cada intento selecciona dos preguntas por módulo; no confundir este muestreo ni los objetivos de estudio con ponderaciones oficiales del examen o notas de aprobación. Conservar el intento finalizado durante el repaso.

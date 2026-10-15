@@ -11,6 +11,8 @@ Mantén CertiTips como un sitio de aprendizaje claro, accesible y coherente. Est
 
 ## Elegir la guía según la tarea
 
+Los idiomas publicados son español, inglés, portugués de Brasil e italiano. La única fuente editable está en `data/es/`; las traducciones JSON/SVG se generan sin duplicar Markdown. Leer [Internacionalización](internacionalizacion.md) al cambiar fuentes, interfaz, servicios o despliegue multilingüe.
+
 | Tarea | Leer antes de editar |
 | --- | --- |
 | Crear o revisar lecciones, enlaces, catálogo, preguntas o cobertura | [Contenido Markdown](contenido-markdown.md) |
@@ -24,9 +26,9 @@ Mantén CertiTips como un sitio de aprendizaje claro, accesible y coherente. Est
 
 | Ubicación | Responsabilidad |
 | --- | --- |
-| `data/catalog.json` | Inventario de cursos, módulos, recursos, rutas y bancos. |
-| `data/<código>/` | Única fuente de cada curso: módulos Markdown, imágenes, preguntas y cobertura. |
-| `data/certitube/<videoId>/` | Ficha única del video y sus imágenes opcionales; independiente de los bancos de cursos. |
+| `data/es/catalog.json` | Inventario de cursos, módulos, recursos, rutas y bancos. |
+| `data/es/<código>/` | Única fuente de cada curso: módulos Markdown, SVG, preguntas y cobertura. |
+| `data/es/certitube/<videoId>/` | Ficha única del video y sus imágenes opcionales; independiente de los bancos de cursos. |
 | `assets/` | Estilos y módulos compartidos del navegador; `assets/icons/` contiene iconos reutilizables. |
 | `scripts/` | Constructor, componentes de página y herramientas ejecutables existentes. |
 | `tests/` y `services/*/tests/` | Regresiones del sitio y de las APIs, respectivamente. |
@@ -37,9 +39,9 @@ Mantén CertiTips como un sitio de aprendizaje claro, accesible y coherente. Est
 ## Contratos que deben conservarse
 
 - Usa Node.js 24, el constructor Markdown y los componentes compartidos existentes. No añadas un marco de interfaz ni dependencias para resolver lo que ya cubre el proyecto. Sigue la política global para inspeccionar, editar y comprobar el cambio mínimo.
-- Resuelve `contentDir` dentro de `data/`. Publica solo los módulos registrados y sus imágenes; no crees un árbol paralelo de contenido ni publiques todo `data/`.
-- Conserva `course.id`, identificadores de preguntas y fuentes, rutas públicas y fragmentos. Las rutas vigentes usan el código del curso y `overview/` como entrada. No generes alias históricos ni redirecciones sin un nuevo encargo explícito.
-- CertiQuiz descubre cada banco mediante `courses[].questionBank`. El banco se escribe una sola vez en `data/<código>/questions.json`; conserva la última versión válida y las instantáneas de partidas existentes. Una validación fallida bloquea la publicación; no se evita debilitando el contrato ni copiando bancos manualmente a producción. La lista de contenido permitida en Docker y despliegue se limita al catálogo y los bancos registrados.
+- Resuelve `contentDir` dentro de `data/es/`. Publica solo módulos registrados, sus SVG y sus traducciones generadas; no publiques todo `data/` ni edites resultados EN/PT/IT.
+- Conserva `course.id`, identificadores de preguntas y fuentes, rutas públicas y fragmentos. Las rutas usan `/certitips/{es|en|pt|it}/`, el código del curso y `overview/` como entrada. Por encargo explícito, conserva las URLs españolas sin prefijo como alias de `/es/`; el corpus mantiene esa identidad histórica. No añadas otros alias ni redirecciones sin encargo.
+- CertiQuiz descubre cada banco mediante `courses[].questionBank`. El banco se escribe una sola vez en `data/es/<código>/questions.json`; el paquete publicado añade traducciones por ID y hashes. Conserva la última versión válida y las instantáneas de partidas existentes. Una validación fallida bloquea la publicación. Docker y despliegue consumen el catálogo y los bancos registrados de `dist/assets/certiquiz/`; no copiar bancos manualmente ni debilitar el contrato.
 - El corpus de CertiChat deriva de introducciones, secciones y preguntas explicadas. Mover archivos no demuestra que haga falta reconstruir el índice. Reutilízalo solo si coinciden todos los identificadores, títulos, cursos y hashes de texto; resuelve las citas con el manifiesto vigente validado.
 - El documento `home` conserva la identidad del catálogo al cambiar de URL. Selecciona su contexto por ID estable tanto en recuperación como en evaluación; conserva los filtros de hash y procedencia.
 - `data/certichat-graph.json` es una proyección pública, no una segunda colección de lecciones. Conserva almacenes nativos, credenciales y trazabilidad privada fuera de la publicación; no modifiques un almacén abierto para cambiar URLs. Compilar no publica ni actualiza el índice activo ni autoriza consultas pagadas.

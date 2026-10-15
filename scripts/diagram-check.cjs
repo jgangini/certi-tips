@@ -1,12 +1,16 @@
 // Run in an isolated playwright-cli session; measures real SVG text, no screenshots.
-async (page) => {
-  const origin = await page.evaluate(() => location.origin);
-  const sources = new Set();
-  await page.goto(`${origin}/certitips/`);
-  const pages = await page.locator('[data-search-kind="topic"] a').evaluateAll(links => links.map(link => link.href));
-  for (const url of pages) {
-    await page.goto(url);
-    for (const source of await page.locator('.prose img[src$=".svg"]').evaluateAll(images => images.map(image => image.src))) sources.add(source);
+async (page, options = {}) => {
+  const startingURL = page.url();
+  const sources = new Set(options.sources || []);
+  if (!options.sources) {
+    const { origin, locale } = await page.evaluate(() => ({ origin: location.origin, locale: new URL(location.href).searchParams.get('locale') || document.body?.dataset.locale || 'es' }));
+    if (!['es', 'en', 'pt', 'it'].includes(locale)) throw new Error(`Unsupported locale: ${locale}`);
+    await page.goto(`${origin}/certitips/${locale}/`);
+    const pages = await page.locator('[data-search-kind="topic"] a').evaluateAll(links => links.map(link => link.href));
+    for (const url of pages) {
+      await page.goto(url);
+      for (const source of await page.locator('.prose img[src$=".svg"]').evaluateAll(images => images.map(image => image.src))) sources.add(source);
+    }
   }
   if (!sources.size) throw new Error('No course SVG diagrams found');
   const reports = [];
@@ -14,8 +18,8 @@ async (page) => {
   for (const source of sources) {
     const name = source.split('/').pop();
     const response = await page.goto(source);
-    if (response.status() !== 200) throw new Error(`Missing diagram: ${name}`);
-    reports.push(await page.evaluate(name => {
+    if (!response || !response.ok() && !source.startsWith('file:')) throw new Error(`Missing diagram: ${source}`);
+    const report = await page.evaluate(({ name, referenceRegions }) => {
       const root = document.querySelector('svg');
       if (!root || document.querySelector('parsererror')) throw new Error(`Invalid SVG: ${name}`);
       const canvas = root.getBoundingClientRect();
@@ -31,6 +35,20 @@ async (page) => {
       }
       const dimensions = root.getAttribute('viewBox').split(/\s+/).map(Number);
       const scale = Math.min(canvas.width / dimensions[2], canvas.height / dimensions[3]);
+      // ponytail: infer only rectangular containment proven by the Spanish source;
+      // free labels and non-rectangular regions still need the other geometry checks.
+      const regionFrames = [...root.querySelectorAll('rect')].filter(node => !node.closest('defs, [data-svgrepo-icon], [data-official-icon]') && (getComputedStyle(node).fill !== 'none' || getComputedStyle(node).stroke !== 'none' || node.hasAttribute('data-cell-frame'))).map(node => node.getBoundingClientRect());
+      const regions = referenceRegions || boxes.flatMap(({ box }, label) => {
+        const contained = regionFrames.map((frame, index) => ({ frame, index })).filter(({ frame }) => frame.width > 0 && frame.height > 0 && box.left >= frame.left - scale && box.right <= frame.right + scale && box.top >= frame.top - scale && box.bottom <= frame.bottom + scale).sort((a, b) => a.frame.width * a.frame.height - b.frame.width * b.frame.height);
+        return contained.length ? [{ label, frame: contained[0].index }] : [];
+      });
+      const containerOverflows = [];
+      for (const region of regions) {
+        const label = boxes[region.label], frame = regionFrames[region.frame];
+        if (!label || !frame) { containerOverflows.push({ ...region, issue: 'source-container-missing' }); continue; }
+        const overflow = Math.max(frame.left - label.box.left, label.box.right - frame.right, frame.top - label.box.top, label.box.bottom - frame.bottom) / scale;
+        if (overflow > 1) containerOverflows.push({ text: label.text, ...region, overflow });
+      }
       const originX = canvas.left + (canvas.width - dimensions[2] * scale) / 2 - dimensions[0] * scale;
       const originY = canvas.top + (canvas.height - dimensions[3] * scale) / 2 - dimensions[1] * scale;
       const composition = [];
@@ -76,7 +94,7 @@ async (page) => {
       }
       const tableCells = [];
       const markedCells = [...root.querySelectorAll('[data-table-cell]')];
-      const measure = document.createElement('canvas').getContext('2d');
+      const measure = document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas').getContext('2d');
       for (const cell of markedCells) {
         const frames = cell.querySelectorAll('[data-cell-frame]');
         const contents = cell.querySelectorAll('[data-cell-content]');
@@ -170,12 +188,14 @@ async (page) => {
         // ponytail: proximity flags detached artwork; semantic association still needs individual review.
         if (nearestLabelGap > 80) detachedIcons.push({ icon: icon.dataset.svgrepoIcon, nearestLabelGap });
       }
-      return { name, labels: boxes.length, minimumFont: Math.min(...boxes.map(item => item.size)), slideSize, outside, overlaps, composition, coveredLabels, alignment, tableCellCount: markedCells.length, tableCells, tagAlignment, proximity, iconSpacing, borderCrossings, sourcedIcons: sourcedIcons.length, iconCollisions, detachedIcons };
-    }, name));
+      return { name, labels: boxes.length, minimumFont: Math.min(...boxes.map(item => item.size)), slideSize, outside, overlaps, composition, coveredLabels, alignment, tableCellCount: markedCells.length, tableCells, tagAlignment, proximity, iconSpacing, borderCrossings, sourcedIcons: sourcedIcons.length, iconCollisions, detachedIcons, regions, containerOverflows };
+    }, { name, referenceRegions: options.reference?.[reports.length]?.regions });
+    reports.push({ source, ...report });
+    options.onProgress?.(reports.length, sources.size);
   }
-  await page.goto(`${origin}/certitips/`);
+  await page.goto(startingURL);
   // The user-supplied pyramid keeps its native 10/12px type, displayed at a uniform 1.72 scale.
-  const issues = reports.filter(item => !item.slideSize || item.outside.length || item.overlaps.length || item.composition.length || item.coveredLabels.length || item.alignment.length || item.tableCells.length || item.tagAlignment.length || item.proximity.length || item.iconSpacing.length || item.borderCrossings.length || item.iconCollisions.length || item.detachedIcons.length || item.minimumFont < (item.name === 'gov-overview-map.svg' ? 10 : item.name.startsWith('gov-') ? 25.5 : 14));
-  if (issues.length) throw new Error(JSON.stringify(issues));
-  return { diagrams: reports, screenshots: 0 };
+  const issues = reports.filter(item => !item.slideSize || item.outside.length || item.overlaps.length || item.composition.length || item.coveredLabels.length || item.alignment.length || item.tableCells.length || item.tagAlignment.length || item.proximity.length || item.iconSpacing.length || item.borderCrossings.length || item.iconCollisions.length || item.detachedIcons.length || item.containerOverflows.length || item.minimumFont < (item.name === 'gov-overview-map.svg' ? 10 : item.name.startsWith('gov-') ? 25.5 : 14));
+  if (issues.length && options.failOnIssues !== false) throw new Error(JSON.stringify(issues));
+  return { diagrams: reports, issues, screenshots: 0 };
 }

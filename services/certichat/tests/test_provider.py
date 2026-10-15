@@ -9,7 +9,7 @@ import httpx
 import pytest
 
 from app import provider as provider_module
-from app.provider import Provider, REFUSAL, prepare_request
+from app.provider import DECISION_MODEL, Provider, REFUSAL, prepare_request
 from app.security import ChatError
 from app.settings import CHAT_MODEL, MODEL
 
@@ -36,6 +36,50 @@ def run_provider(handler, operation):
             return await operation(provider)
 
     return asyncio.run(run()), ledger
+
+
+def decision_data():
+    return {"model": DECISION_MODEL, "state": {"answer": "Texto"}, "questions": {
+        "support": {"type": "noul", "instructions": "¿Está respaldado?", "criteria": {"true": "Sí", "false": "No"}}}}
+
+
+def test_decisions_use_the_reviewed_alpha_endpoint_and_persist_cost():
+    def handler(request):
+        assert str(request.url) == "https://openrouter.ai/api/alpha/decisions"
+        sent = json.loads(request.content)
+        assert sent["model"] == DECISION_MODEL and sent["provider"]["data_collection"] == "deny"
+        assert sent["provider"]["max_price"] == {"prompt": 0.042, "completion": 0, "request": 0}
+        assert not {"reasoning", "max_tokens", "response_format"} & sent.keys()
+        return httpx.Response(200, json={"model": DECISION_MODEL, "answers": {}, "usage": {"cost": 0.0000042}})
+
+    result, ledger = run_provider(handler, lambda p: p.request("alpha/decisions", decision_data(), "chat"))
+    assert result["model"] == DECISION_MODEL
+    assert ledger.reservations[0][0] == "chat" and ledger.reservations[0][1] >= 5
+    assert ledger.settlements == [(1, 5)]
+
+
+@pytest.mark.parametrize("change,purpose", [
+    ({"model": "typesafe/jev-latest"}, "chat"), ({}, "index"), ({"reasoning": {"effort": "low"}}, "chat"),
+    ({"questions": {}}, "chat"), ({"state": "a"}, "chat"),
+    ({"questions": {"x": {"type": "choice", "instructions": "x", "criteria": {"single": "a"}}}}, "chat"),
+    ({"state": {"text": "a" * 24000}}, "chat"),
+])
+def test_unreviewed_decisions_stop_before_any_reservation(change, purpose):
+    async def operation(provider):
+        with pytest.raises(ChatError):
+            await provider.request("alpha/decisions", {**decision_data(), **change}, purpose)
+    _, ledger = run_provider(lambda _: pytest.fail("No HTTP call expected"), operation)
+    assert not ledger.reservations
+
+
+def test_uncertain_decision_is_not_refunded_or_retried():
+    def handler(request):
+        raise httpx.ReadTimeout("Uncertain outcome", request=request)
+    async def operation(provider):
+        with pytest.raises(ChatError):
+            await provider.request("alpha/decisions", decision_data(), "chat")
+    _, ledger = run_provider(handler, operation)
+    assert len(ledger.reservations) == 1 and not ledger.settlements
 
 
 def test_model_price_output_and_encoding_are_enforced():
@@ -267,6 +311,23 @@ def test_answer_without_citations_remains_a_knowledge_refusal():
     fragments = [{"id": "doc", "text": "Información publicada.", "title": "Guía", "url": "https://site.test/guide"}]
     result, ledger = run_provider(handler, lambda provider: provider.answer("Tema ajeno", fragments, []))
     assert result == (REFUSAL, []) and len(ledger.reservations) == 1
+
+
+@pytest.mark.parametrize("locale,language", [("es", "español"), ("en", "inglés"), ("pt", "portugués de Brasil"), ("it", "italiano")])
+def test_selected_language_uses_one_existing_answer_call_and_localized_refusal(locale, language):
+    requests = []
+
+    def handler(request):
+        requests.append(request)
+        payload = json.loads(request.content)
+        assert "Responde en " + language in payload["messages"][0]["content"]
+        assert "fragmentos proporcionados" in payload["messages"][0]["content"]
+        return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(
+            {"kind": "grounded", "answer": "", "citations": []})}}]})
+
+    result, ledger = run_provider(handler, lambda provider: provider.answer("Question", [], [], locale))
+    assert result == (provider_module.REFUSALS[locale], [])
+    assert len(requests) == len(ledger.reservations) == 1
 
 
 @pytest.mark.parametrize("citations", [["S1"], []])

@@ -3,6 +3,10 @@ $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
 $service = Join-Path $repo 'services/certiquiz'
 $envFile = Join-Path $service '.env'
+$catalogFile = Join-Path $repo 'dist/assets/certiquiz/catalog.json'
+if (-not (Test-Path -LiteralPath $catalogFile -PathType Leaf)) {
+    throw 'Falta dist/assets/certiquiz/catalog.json. Genera las traducciones y ejecuta npm run build antes de iniciar CertiQuiz.'
+}
 
 function Invoke-Docker {
     & docker @args

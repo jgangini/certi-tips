@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" role="img" aria-labelledby="title description">
+  <title id="title">Arquitectura de una Aplicación de Agentes</title>
+  <desc id="description">Una aplicación envía solicitudes al runtime del agente. El runtime conserva el estado y coordina las llamadas al modelo y a las herramientas. Las herramientas consultan o modifican datos según sus permisos. La observabilidad registra las decisiones y los resultados. La identidad, los permisos y los límites se aplican a toda la operación.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M1 1 9 5 1 9" fill="none" stroke="#59616E" stroke-width="1.5"/></marker>
+    <style>text{font-family:'Segoe UI',Arial,sans-serif;fill:#3C4545;font-size:30px}.heading{font-size:34px;font-weight:700}.edge{fill:none;stroke:#59616E;stroke-width:3;marker-end:url(#arrow)}</style>
+  </defs>
+  <rect width="1920" height="1080" fill="#F1EFED"/>
+  <text x="96" y="99" style="font-size:56px;font-weight:700">Arquitectura de una Aplicación de Agentes</text>
+  <rect x="96" y="128" width="88" height="6" fill="#C74634"/>
+  <g data-layout="module-artwork" data-center="960 608">
+    <rect x="96" y="236" width="1728" height="744" rx="16" fill="#FFFFFF" stroke="#59616E" stroke-width="1.5"/>
+    <rect x="700" y="284" width="520" height="112" rx="12" fill="#F1EFED" stroke="#59616E" stroke-width="1.5"/>
+    <text x="960" y="329" text-anchor="middle" class="heading">Modelo</text>
+    <text x="960" y="369" text-anchor="middle">Interpreta y propone acciones</text>
+    <path d="M960 396V484" class="edge" marker-start="url(#arrow)"/>
+    <text x="984" y="450">Contexto y decisión</text>
+    <rect x="160" y="500" width="360" height="136" rx="12" fill="#FFFFFF" stroke="#59616E" stroke-width="2"/>
+    <text x="340" y="549" text-anchor="middle" class="heading">Aplicación</text>
+    <text x="340" y="595" text-anchor="middle">Solicitud del usuario</text>
+    <path d="M520 568H700" class="edge" marker-start="url(#arrow)"/>
+    <rect x="700" y="484" width="520" height="176" rx="12" fill="#F1EFED" stroke="#C74634" stroke-width="3"/>
+    <text x="960" y="535" text-anchor="middle" class="heading">Runtime del agente</text>
+    <text x="960" y="581" text-anchor="middle">Estado y orquestación</text>
+    <text x="960" y="624" text-anchor="middle">Ejecución de cada paso</text>
+    <path d="M1220 568H1344" class="edge" marker-start="url(#arrow)"/>
+    <rect x="1344" y="500" width="344" height="136" rx="12" fill="#FFFFFF" stroke="#59616E" stroke-width="2"/>
+    <text x="1516" y="549" text-anchor="middle" class="heading">Herramientas</text>
+    <text x="1516" y="595" text-anchor="middle">Acciones autorizadas</text>
+    <path d="M1516 636V756" class="edge" marker-start="url(#arrow)"/>
+    <text x="1540" y="707">Acceso</text>
+    <rect x="1344" y="756" width="344" height="96" rx="12" fill="#FFFFFF" stroke="#59616E" stroke-width="2"/>
+    <text x="1516" y="815" text-anchor="middle" class="heading">Datos</text>
+    <path d="M960 660V804H700" class="edge"/>
+    <text x="980" y="718">Trazas y resultados</text>
+    <rect x="160" y="756" width="540" height="96" rx="12" fill="#FFFFFF" stroke="#59616E" stroke-width="2"/>
+    <text x="430" y="815" text-anchor="middle" class="heading">Observabilidad</text>
+    <line x1="128" y1="888" x2="1792" y2="888" stroke="#59616E" stroke-width="1.5"/>
+    <text x="960" y="942" text-anchor="middle">Identidad, permisos y límites en cada interacción</text>
+  </g>
+</svg>

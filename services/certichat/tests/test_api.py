@@ -225,6 +225,21 @@ def test_answer_sources_idempotency_and_clear_preserve_quota(clients):
     assert client.cookies[COOKIE] == token
 
 
+def test_chat_language_is_validated_forwarded_and_part_of_request_identity(clients):
+    make, _, calls, _, _ = clients
+    client = session(make)
+    body = {**question(), "locale": "pt"}
+    assert client.post("/api/chat", json={**body, "locale": "xx"}).status_code == 422
+    response = client.post("/api/chat", json=body)
+    assert response.status_code == 200
+    retrieval = next(call for call in calls if call.url.path == "/retrieve")
+    assert json.loads(retrieval.content)["locale"] == "pt"
+    count = len(calls)
+    assert client.post("/api/chat", json=body).json() == response.json()
+    assert client.post("/api/chat", json={**body, "locale": "it"}).json()["code"] == "request_conflict"
+    assert len(calls) == count
+
+
 def test_minute_quota_and_spoofed_forwarding_headers(clients):
     make, app, _, _, _ = clients
     client = session(make)
@@ -478,7 +493,7 @@ def test_published_version_change_excludes_old_history_but_preserves_idempotency
     make, app, _, _, knowledge = clients
     histories = []
 
-    async def answer(_message, _fragments, history):
+    async def answer(_message, _fragments, history, _locale="es"):
         histories.append(history)
         return "Respuesta respaldada.", [{key: FRAGMENT[key] for key in ("id", "title", "url")}]
 

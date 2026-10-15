@@ -29,7 +29,7 @@ services:
       CERTIQUIZ_ALLOWED_ORIGINS: ${CERTIQUIZ_ALLOWED_ORIGINS:?Set the exact CertiTips frontend origin}
       CERTIQUIZ_SECURE_COOKIES: ${CERTIQUIZ_SECURE_COOKIES:-true}
       CERTIQUIZ_DATA_DIR: /app/data
-      CERTIQUIZ_CATALOG_SOURCE: ${CERTIQUIZ_CATALOG_SOURCE:-github}
+      CERTIQUIZ_CATALOG_SOURCE: ${CERTIQUIZ_CATALOG_SOURCE:-published}
     ports:
       - "127.0.0.1:${CERTIQUIZ_PORT:-18740}:8000"
     networks: [app, data]

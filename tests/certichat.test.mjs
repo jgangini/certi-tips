@@ -62,7 +62,7 @@ test("CertiChat includes unique verified section links with every sourced answer
     const html = plainChatHTML(answer, site);
     assert.match(html, /<span class="chat-resource-heading">Recursos Relacionados:<\/span><br>\s*<a /);
     assert.equal(plainChatHTML(answer.replace("Recursos Relacionados:", "Para profundizar:"), site), html, "saved answers must show the current resource heading without another request");
-    assert.match(html, /<a href="\/certitips\/1Z0-1157-26\/agents\/#conceptos-clave" data-source-url="https:\/\/jgangini.github.io\/certitips\/1Z0-1157-26\/agents\/#conceptos-clave" data-link-kind="certitips" title="[^"]+">/);
+    assert.match(html, /<a href="\/certitips\/es\/1Z0-1157-26\/agents\/#conceptos-clave" data-source-url="https:\/\/jgangini.github.io\/certitips\/1Z0-1157-26\/agents\/#conceptos-clave" data-link-kind="certitips" title="[^"]+">/);
     assert.doesNotMatch(html, /<img|attacker\.test/);
     assert.match(html, /&lt;img src=x&gt; &amp; herramientas/);
     assert.equal((html.match(/<a /g) || []).length, 1);
@@ -80,7 +80,7 @@ test("chat link icons use the validated URL path, including restored video times
     const restored = restoreChat({updatedAt: 100, messages: [{role: "ai", text}]}, site, 100);
     const html = plainChatHTML(restored.messages[0].text, site);
     assert.ok(html.includes(`data-link-kind="${kind}"`));
-    assert.ok(html.includes(`href="${new URL(site + path).pathname + new URL(site + path).hash}"`));
+    assert.ok(html.includes(`href="${new URL(site + "es/" + path).pathname + new URL(site + path).hash}"`));
     assert.equal(html, plainChatHTML(text, site));
   }
   for (const url of ["https://attacker.test/certitips/certitube/", `${site}certitube/?token=private`, "javascript:alert(1)"]) {
@@ -94,7 +94,7 @@ test("guide references navigate on the current origin while retaining canonical 
   const saved = { updatedAt: 100, messages: [{ role: "user", text: "¿Se puede aplicar DAMA y OCI?" }, { role: "ai", text }] };
   const restored = restoreChat(saved, site, 100), html = plainChatHTML(restored.messages[1].text, site);
   const path = html.match(/href="([^"]+)"/)[1];
-  assert.equal(path, new URL(url).pathname + new URL(url).hash);
+  assert.equal(path, new URL(url).pathname.replace("/certitips/", "/certitips/es/") + new URL(url).hash);
   assert.ok(html.includes(`data-source-url="${url}"`));
   for (const origin of ["http://127.0.0.1:4173", "http://localhost:4173", "http://[::1]:4173", new URL(site).origin]) {
     const destination = new URL(path, `${origin}/certitips/certichat/`);
@@ -200,7 +200,7 @@ test("published entries and shared modules use the same cache version, including
 
 test("published corpus covers catalog pages and questions with live canonical anchors and exact hashes", () => {
   const read = relative => readFileSync(new URL(`../${relative}`, import.meta.url), "utf8");
-  const catalog = JSON.parse(read("data/catalog.json"));
+  const catalog = JSON.parse(read("data/es/catalog.json"));
   const manifest = JSON.parse(read("dist/assets/certichat/manifest.json"));
   const corpusBytes = read("dist/assets/certichat/corpus.json"), corpus = JSON.parse(corpusBytes);
   assert.equal(manifest.contentHash, contentHash(corpusBytes));
@@ -209,7 +209,7 @@ test("published corpus covers catalog pages and questions with live canonical an
   for (const course of catalog.courses) {
     for (const page of [...course.modules, ...course.resources]) assert.ok(entries.has(`${course.id}/${page.slug}`));
     const hasPractice = course.resources.some(page => page.slug === 'practice');
-    for (const question of JSON.parse(read(`data/${course.questionBank}.json`))) {
+    for (const question of JSON.parse(read(`data/es/${course.questionBank}.json`))) {
       const entry = entries.get(`${course.id}/questions/${question.id}`);
       if (!hasPractice) { assert.equal(entry, undefined); continue; }
       assert.ok(entry);

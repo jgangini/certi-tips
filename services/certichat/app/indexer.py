@@ -15,6 +15,7 @@ from .corpus import (CORPUS_URL, DATASET, MANIFEST_URL, atomic_json, download,
                      read_json, same_indexed_content, segments, snapshot_path,
                      supported_fragments, validate_corpus, validate_manifest)
 from .knowledge import close_cognee, configure_cognee
+from .localization import refresh_localization
 from .settings import INDEX_MAX_TOKENS, INDEX_REASONING, MODEL
 
 
@@ -23,6 +24,7 @@ async def refresh(root: Path) -> dict:
     manifest = validate_manifest(json.loads(await download(MANIFEST_URL, 8_000_000)))
     root.mkdir(parents=True, exist_ok=True)
     atomic_json(root / "latest.json", manifest)
+    await refresh_localization(root, manifest, download)
     return manifest
 
 

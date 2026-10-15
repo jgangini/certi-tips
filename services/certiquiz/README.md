@@ -2,6 +2,8 @@
 
 Práctica de grupo con los bancos de CertiTips. La interfaz permanece en `https://jgangini.github.io/certitips/certiquiz/`, con la navegación y el tema del sitio. El botón abre esa ruta en la misma pestaña. El VPS publica únicamente las APIs bajo `https://certiquiz.cloudtechnext.net/api/`; no aloja otra página de CertiQuiz.
 
+Las rutas `/es/certiquiz/`, `/en/certiquiz/`, `/pt/certiquiz/` y `/it/certiquiz/` bajo la misma raíz seleccionan el idioma; `pt` usa portugués de Brasil y la URL española anterior sigue como alias. Cada visitante solicita su idioma mediante `?locale=es|en|pt|it` en las operaciones del catálogo y la sala. La sala congela las preguntas y sus traducciones al crearla: todos comparten IDs, orden, reloj y puntuación, aunque lean idiomas diferentes. Las salas anteriores sin traducciones siguen mostrando el español original. Al cambiar de idioma, el cliente solicita una instantánea completa sin la última `version` para evitar un HTTP 204 que conserve el texto anterior.
+
 El subdominio es una dirección de servicio, no una segunda interfaz. Una ruta en otro dominio existente también funcionaría, pero el host dedicado separa la configuración y las cookies de otras aplicaciones. No requiere comprar otro dominio, ni concede acceso administrativo al VPS. GitHub Pages sirve archivos estáticos y no ejecuta la API.
 
 ## Uso
@@ -23,10 +25,12 @@ La sesión dura ocho horas. Una recarga conserva el acceso dentro del mismo nave
 Desde la raíz, con PowerShell 7 y Docker Desktop:
 
 ```powershell
-./scripts/certiquiz-local.ps1 -Build -Test
 $env:CERTIQUIZ_API_ORIGIN = 'http://127.0.0.1:18740'
+npm run i18n:prepare
+npm run i18n:generate
 npm run build
 Remove-Item Env:CERTIQUIZ_API_ORIGIN
+./scripts/certiquiz-local.ps1 -Build -Test
 npm test
 npm run check
 node scripts/certiquiz-smoke.mjs --players=500
@@ -44,26 +48,29 @@ El build normal configura la API HTTPS productiva. `CERTIQUIZ_API_ORIGIN` es con
 
 ## Actualizar preguntas desde GitHub
 
-En producción, `CERTIQUIZ_CATALOG_SOURCE=github` consulta exclusivamente `jgangini/certitips`, rama `main`: `data/catalog.json` y los bancos identificados por `questionBank`. Cada cinco minutos, la siguiente consulta al catálogo puede actualizar una caché compartida por el proceso. El servidor valida el conjunto completo antes de sustituirlo; una descarga fallida o inválida conserva el último conjunto válido. Al iniciar, dispone de los bancos empaquetados como respaldo. Las salas en curso conservan las preguntas con las que se crearon.
+En producción, `CERTIQUIZ_CATALOG_SOURCE=published` consulta exclusivamente `https://jgangini.github.io/certitips/assets/certiquiz/catalog.json` y los bancos identificados por `questionBank`. El valor histórico `github` se admite como alias de `published` para conservar configuraciones privadas existentes. Cada cinco minutos, la siguiente consulta al catálogo puede actualizar una caché compartida por el proceso. El servidor verifica el SHA-256 de los bytes de cada banco, sus traducciones y el conjunto completo antes de sustituirlo; una descarga fallida, una publicación incompleta o un hash incompatible conserva el último conjunto válido. Al iniciar, dispone de los bancos empaquetados como respaldo. Las salas en curso conservan las preguntas y traducciones con las que se crearon.
 
-Para añadir preguntas basta con publicar los cambios válidos del banco en GitHub. Para añadir una certificación, también debe figurar en el catálogo con su banco. El navegador envía únicamente el identificador del curso y la configuración de la partida: no puede elegir una URL de descarga, respuestas correctas ni puntuaciones. Las descargas tienen límites de tiempo y tamaño y no siguen redirecciones. El modo local `bundled` permite probar los bancos del checkout sin publicarlos.
+Para añadir preguntas, publicar en Pages el build válido generado a partir del banco fuente y sus traducciones. Para añadir una certificación, también debe figurar en el catálogo con su banco. El navegador envía únicamente el identificador del curso, su idioma y la configuración de la partida: no puede elegir una URL de descarga, respuestas correctas ni puntuaciones. Las descargas tienen límites de tiempo y tamaño y no siguen redirecciones. El modo local `bundled` permite probar el paquete generado sin publicarlo.
 
 ### Contrato y validación de bancos
 
-La única fuente editable es `data/<código>/questions.json`, registrada en `data/catalog.json` mediante `questionBank: "<código>/questions"` (sin extensión). No mantener otra colección para CertiQuiz ni copiar bancos manualmente a la VPS. Un curso nuevo registrado aparece en `/api/catalog` después del refresco; no requiere cambiar el selector ni desplegar código. Añadir un JSON sin registrarlo no lo publica. La copia incluida en Docker es un respaldo generado durante el despliegue.
+La única fuente editable es `data/es/<código>/questions.json`, registrada en `data/es/catalog.json` mediante `questionBank: "<código>/questions"` (sin extensión). El build produce `dist/assets/certiquiz/catalog.json` y `<código>/questions.json`, excluidos de Git. Cada pregunta conserva `correctOption` y añade `translations: {en, pt, it}`; cada idioma contiene `question` y `options: {<id>: {text, explanation}}`. El catálogo registra `sha256` por banco y `titleTranslations` por curso. Las traducciones deben conservar exactamente los IDs de alternativas. No mantener otra colección ni copiar bancos manualmente a la VPS. Un curso nuevo registrado aparece en `/api/catalog` después del refresco; no requiere cambiar el selector ni desplegar código. Añadir un JSON sin registrarlo no lo publica. Docker incorpora exclusivamente ese paquete generado y lo valida antes de iniciar la API.
 
 Antes de publicar, ejecutar desde la raíz con Python 3.12 y Node.js 24:
 
 ```sh
 npm run check:certiquiz
+npm run i18n:prepare
+npm run i18n:generate
 npm run build
+python services/certiquiz/check-catalog.py dist/assets/certiquiz --published
 npm test
 npm run check
 ```
 
 `check:certiquiz` ejecuta `python services/certiquiz/check-catalog.py`; también acepta otro directorio de datos como argumento. Reutiliza `app/catalog.py`, el mismo validador de la API, sin instalar paquetes, acceder a GitHub ni conectar a PostgreSQL. Comprueba rutas, IDs únicos, textos, alternativas, respuesta correcta y límites: 32 cursos, 1.000 preguntas por banco, 256 KiB de catálogo, 2 MiB por banco y 8 MiB por conjunto. Informa el banco incompatible y termina con código distinto de cero. `npm run check` completa las reglas educativas del sitio: cuatro alternativas, explicación de la correcta, dominios y referencias válidas. Los distractores pueden tener `explanation: ""` cuando la fuente solo proporciona una justificación general. La distribución por dominio se comprueba contra `questionCounts` del curso, o seis por dominio cuando no se declara; no afecta al muestreo aleatorio de CertiQuiz.
 
-GitHub Actions ejecuta este chequeo antes de publicar Pages y Docker lo ejecuta al construir la imagen, antes de reemplazar la API. El refresco productivo sigue consultando `main`, por lo que un push directo puede estar disponible antes de que termine CI: validar localmente y en el PR antes de integrar. La API rechaza el conjunto completo si un banco falla y conserva su catálogo anterior; las salas creadas mantienen sus preguntas. Esta protección no equivale a validar la fidelidad de una traducción: debe revisarse contra su fuente.
+`--published` exige además hashes coincidentes y los tres idiomas completos. Docker ejecuta esta validación al construir la imagen, antes de reemplazar la API. El refresco productivo consume únicamente el resultado publicado en Pages; un push por sí solo no cambia el catálogo activo. La API rechaza el conjunto completo si un banco falla y conserva su catálogo anterior; las salas creadas mantienen sus preguntas. Esta protección no equivale a validar la fidelidad de una traducción: debe revisarse contra su fuente.
 
 ## Prevención de abuso
 
@@ -80,7 +87,7 @@ Estos controles limitan el consumo de la aplicación. Una red distribuida de bot
 node scripts/certiquiz-smoke.mjs --origin=https://certiquiz.cloudtechnext.net --players=2
 ```
 
-El script empaqueta exclusivamente CertiQuiz y los bancos del catálogo. Conserva el `.env` remoto, usa un árbol de fuentes limpio, respalda una instalación anterior y despliega el proyecto Compose `certiquiz` en `/opt/jarvis/apps/certiquiz`. El puerto 18740 queda vinculado a loopback; Caddy publica HTTPS mediante un bloque propio que los despliegues de CloudTechNext preservan. Antes de publicar el acceso debe existir un registro A `certiquiz` hacia la IP del VPS.
+El script requiere el build previo y empaqueta exclusivamente CertiQuiz y los bancos de `dist/assets/certiquiz`, verificando sus hashes antes de transferirlos. Conserva el `.env` remoto, usa un árbol de fuentes limpio, respalda una instalación anterior y despliega el proyecto Compose `certiquiz` en `/opt/jarvis/apps/certiquiz`. El puerto 18740 queda vinculado a loopback; Caddy publica HTTPS mediante un bloque propio que los despliegues de CloudTechNext preservan. Antes de publicar el acceso debe existir un registro A `certiquiz` hacia la IP del VPS.
 
 La primera instalación genera las credenciales de base de datos en el VPS. Nunca copiar `.env`, claves o archivos `.private` a GitHub. El pipeline de Pages no necesita claves SSH ni acceso al VPS. Los archivos privados de claves de anfitrión de instalaciones anteriores dejan de utilizarse.
 

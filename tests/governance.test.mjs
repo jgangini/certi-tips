@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 import { readFileSync, globSync, existsSync } from 'node:fs';
 
 const read = file => readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
-const course = JSON.parse(read('data/catalog.json')).courses.find(course => course.id === 'data-governance');
-const bank = JSON.parse(read(`data/${course.questionBank}.json`));
-const coverage = JSON.parse(read(`data/${course.coverage}.json`));
+const course = JSON.parse(read('data/es/catalog.json')).courses.find(course => course.id === 'data-governance');
+const bank = JSON.parse(read(`data/es/${course.questionBank}.json`));
+const coverage = JSON.parse(read(`data/es/${course.coverage}.json`));
 const pages = [...course.modules, ...course.resources];
-const readPage = slug => read(`data/${course.contentDir}/${pages.find(page => page.slug === slug).file}`);
-const diagrams = new Map(globSync(`data/${course.contentDir}/**/img/*.svg`).map(file => [file.split(/[\\/]/).at(-1), file]));
+const readPage = slug => read(`data/es/${course.contentDir}/${pages.find(page => page.slug === slug).file}`);
+const diagrams = new Map(globSync(`data/es/${course.contentDir}/**/img/*.svg`).map(file => [file.split(/[\\/]/).at(-1), file]));
 const anchor = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 test('Governance graphics use readable widescreen slides with accessible descriptions', () => {

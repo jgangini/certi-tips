@@ -17,3 +17,9 @@ videos/*/.thumbnails/
 .private/
 __pycache__/
 .pytest_cache/
+
+# Reproducible offline translations and model cache
+.cache/
+data/en/
+data/pt/
+data/it/

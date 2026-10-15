@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 import { courseRoute } from './layout.mjs';
 
 const diagramNames = ['agent-loop', 'guardrails', 'langchain-flow', 'mcp-architecture', 'openai-stack', 'handoffs', 'oci-runtime', 'vector-search', 'database-capabilities'];
-const diagramFile = /^[^/]+\/[^/]+\/img\/[^/]+\.svg$/i;
+const diagramFile = /^(?:(?:es|en|pt|it)\/)?[^/]+\/[^/]+\/img\/[^/]+\.svg$/i;
 const textFile = /\.(?:html|css|m?js|json|svg|md|txt)$/i;
 const present = value => typeof value === 'string' && value.trim().length > 0;
 const decode = value => value.replace(/&(?:amp|quot|apos|lt|gt|#\d+|#x[\da-f]+);/gi, entity => {
@@ -34,8 +34,8 @@ function validateReference(context, file, value, asset = false) {
     return;
   }
   if (url.origin !== origin) {
-    const thumbnail = /^https:\/\/i\.ytimg\.com\/vi\/([A-Za-z0-9_-]{11})\/mqdefault\.jpg$/.exec(value);
-    if (asset === 'img' && file.startsWith('certitube/') && thumbnail && context.files.has(`certitube/${thumbnail[1]}/index.html`)) return;
+    const thumbnail = /^https:\/\/i\.ytimg\.com\/vi\/([A-Za-z0-9_-]{11})\/maxresdefault\.jpg$/.exec(value);
+    if (asset === 'img' && /^(?:(?:es|en|pt|it)\/)?certitube\//.test(file) && thumbnail && context.files.has(`certitube/${thumbnail[1]}/index.html`)) return;
     if (asset) error(file, `external asset is not allowed: ${value}`);
     return;
   }
@@ -88,12 +88,17 @@ function validateHtml(context, file, source) {
 function validateFiles(context) {
   const { files, error } = context;
   for (const [file, source] of files) {
+    if (/\.(?:png|jpe?g|gif|webp)$/i.test(file) && file !== 'assets/icons/share-logo-square.png') error(file, 'only the sharing logo may use a raster image');
     if (/(?:^|\/)01-\d{2}-\d{2}-.+\.md$/i.test(file) || /(?:^|[\/_.-])transcripts?(?:[\/_.-]|$)/i.test(file)) error(file, 'source transcript must not be deployed');
     if (!textFile.test(file)) continue;
     if (source.includes('{{base}}')) error(file, 'unresolved {{base}} placeholder');
     if (/[a-z]:[\\/](?:[^\r\n<>"']*[\\/])?desktop[\\/]/i.test(source.replaceAll('\\\\', '\\'))) error(file, 'absolute Desktop source path is exposed');
     if (/file:\/\//i.test(source)) error(file, 'local file URL is exposed');
     if (/\.html$/i.test(file)) validateHtml(context, file, source);
+    if (/\.svg$/i.test(file)) {
+      for (const { tag, attributes } of context.parsed.get(file) || []) validateSvgElement(file, tag, attributes, error);
+      if (/@import\b/i.test(source) || /url\(\s*["']?(?!#)[^\s"')]+/i.test(source)) error(file, 'external SVG stylesheet or resource');
+    }
     if (/\.css$/i.test(file)) for (const match of source.matchAll(/url\(\s*["']?([^\s"')]+)["']?\s*\)/gi)) validateReference(context, file, match[1], true);
     // ponytail: literal module specifiers only; use an AST parser if imports become computed.
     // Consume strings/comments first so vendor diagnostics and object keys are not imports.
@@ -104,26 +109,24 @@ function validateFiles(context) {
 }
 
 function validateSvgElement(file, tag, attributes, error) {
-  const png = tag === 'image' && /^data:image\/png;base64,iVBORw0KGgo[A-Za-z0-9+/]*={0,2}$/.test(attributes.href || '');
-  if (['script', 'foreignobject', 'iframe'].includes(tag) || (tag === 'image' && !png)) error(file, `active or embedded SVG element <${tag}> is not allowed`);
+  if (['script', 'foreignobject', 'iframe', 'image'].includes(tag)) error(file, `active or embedded SVG element <${tag}> is not allowed`);
   for (const [key, value] of Object.entries(attributes)) {
     if (/^on/i.test(key)) error(file, `SVG event handler ${key} is not allowed`);
-    if ((key === 'href' || key === 'xlink:href') && !value.startsWith('#') && !(png && key === 'href')) error(file, `external SVG resource ${value.slice(0, 120)}`);
+    if ((key === 'href' || key === 'xlink:href') && !value.startsWith('#')) error(file, `external SVG resource ${value.slice(0, 120)}`);
   }
 }
 
 function validateDiagrams(context) {
-  const { files, parsed, usedDiagrams, error } = context;
+  const { files, usedDiagrams, error } = context;
   const diagrams = [...files.keys()].filter(file => diagramFile.test(file));
   for (const name of diagramNames) if (!diagrams.some(file => path.posix.basename(file) === `${name}.svg`)) error(`${name}.svg`, 'required diagram is missing');
   for (const file of diagrams) {
     const source = files.get(file);
     if (source === undefined) { error(file, 'required diagram is missing'); continue; }
-    if (!usedDiagrams.has(file)) error(file, 'diagram is not used by a page');
+    const spanishAlias = usedDiagrams.has(`es/${file}`) && files.get(`es/${file}`) === source;
+    if (!usedDiagrams.has(file) && !spanishAlias) error(file, 'diagram is not used by a page');
     if (!/^\s*(?:<\?xml[^>]*>\s*)?<svg\b/i.test(source) || !/<\/svg>\s*$/i.test(source)) error(file, 'missing SVG root');
     for (const element of ['title', 'desc']) if (!new RegExp(`<${element}\\b[^>]*>\\s*[^<\\s][\\s\\S]*?<\\/${element}>`, 'i').test(source)) error(file, `missing nonempty SVG ${element}`);
-    for (const { tag, attributes } of parsed.get(file) || []) validateSvgElement(file, tag, attributes, error);
-    if (/@import\b/i.test(source) || /url\(\s*["']?(?!#)[^\s"')]+/i.test(source)) error(file, 'external SVG stylesheet or resource');
   }
 }
 
@@ -131,7 +134,7 @@ function validatePublishedPages(context) {
   const { course, files, error } = context;
   for (const page of [...course.modules, ...(course.resources || [])]) {
     const file = `${courseRoute(course)}/${page.slug}/index.html`;
-    if (!files.has(file)) error('data/catalog.json', `missing published page ${file}`);
+    if (!files.has(file)) error('data/es/catalog.json', `missing published page ${file}`);
   }
 }
 
@@ -158,7 +161,7 @@ function validateOptions(file, question, error) {
 
 function validateQuestion(context, question, index, seen) {
   const { domains, error } = context;
-  const file = `data/${context.course.questionBank}.json[${index}] (${question?.id || 'no id'})`;
+  const file = `data/es/${context.course.questionBank}.json[${index}] (${question?.id || 'no id'})`;
   if (!question || !present(question.id) || seen.has(question.id)) error(file, 'question id must be nonempty and unique');
   seen.add(question?.id);
   if (!present(question?.question)) error(file, 'question text is empty');
@@ -170,7 +173,7 @@ function validateQuestion(context, question, index, seen) {
 
 function validateQuestions(context, questions) {
   const { files, domains, error, course } = context;
-  const source = `data/${course.questionBank}.json`;
+  const source = `data/es/${course.questionBank}.json`;
   const published = `assets/${course.questionBank}.json`;
   if (!Array.isArray(questions)) { error(source, 'question bank must be an array'); return; }
   try {
@@ -178,7 +181,7 @@ function validateQuestions(context, questions) {
   } catch { error(published, 'published question bank is missing or invalid JSON'); }
   const counts = course.questionCounts === undefined ? Object.fromEntries(domains.map(domain => [domain, 6])) : course.questionCounts;
   if (!counts || typeof counts !== 'object' || Array.isArray(counts) || Object.keys(counts).length !== domains.length || domains.some(domain => !Number.isSafeInteger(counts[domain]) || counts[domain] < 2)) {
-    error('data/catalog.json', `${course.id}: questionCounts must declare at least two questions for every domain`);
+    error('data/es/catalog.json', `${course.id}: questionCounts must declare at least two questions for every domain`);
     return;
   }
   const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
@@ -193,7 +196,7 @@ function validateQuestions(context, questions) {
 
 function validateCoverageEntry(context, entry, index, expected, seen) {
   const { error } = context;
-  const file = `data/${context.course.coverage}.json[${index}] (${entry?.lesson || 'no lesson'})`;
+  const file = `data/es/${context.course.coverage}.json[${index}] (${entry?.lesson || 'no lesson'})`;
   const match = present(entry?.lesson) ? entry.lesson.match(/^(01-\d{2}-\d{2})-[a-z0-9]+(?:-[a-z0-9]+)*\.md$/) : null;
   if (!match || !expected.has(match[1])) error(file, 'lesson id or lowercase hyphenated filename is not in the expected lesson sequence');
   else {
@@ -206,9 +209,9 @@ function validateCoverageEntry(context, entry, index, expected, seen) {
 
 function validateCoverage(context, coverage) {
   const { course, error } = context;
-  const source = `data/${course.coverage}.json`;
+  const source = `data/es/${course.coverage}.json`;
   const lessonCounts = course.lessonCounts;
-  if (!Array.isArray(lessonCounts) || lessonCounts.length !== course.modules.length || lessonCounts.some(count => !Number.isInteger(count) || count < 1)) { error('data/catalog.json', `${course.id}: invalid lesson counts`); return; }
+  if (!Array.isArray(lessonCounts) || lessonCounts.length !== course.modules.length || lessonCounts.some(count => !Number.isInteger(count) || count < 1)) { error('data/es/catalog.json', `${course.id}: invalid lesson counts`); return; }
   const total = lessonCounts.reduce((sum, count) => sum + count, 0);
   if (!Array.isArray(coverage)) { error(source, 'coverage must be an array'); return; }
   if (coverage.length !== total) error(source, `expected ${total} lessons, received ${coverage.length}`);
@@ -223,10 +226,10 @@ export function validateSite({ files, catalog, questions, coverage }) {
   const issues = [];
   const error = (file, message) => issues.push(`${file}: ${message}`);
   if (!catalog?.base?.startsWith('/') || !catalog.base.endsWith('/') || !present(catalog.origin)) {
-    return ['data/catalog.json: base must start/end with / and origin must be provided'];
+    return ['data/es/catalog.json: base must start/end with / and origin must be provided'];
   }
   let origin;
-  try { origin = new URL(catalog.origin).origin; } catch { return ['data/catalog.json: origin is not a valid URL']; }
+  try { origin = new URL(catalog.origin).origin; } catch { return ['data/es/catalog.json: origin is not a valid URL']; }
   const parsed = new Map([...files].filter(([file]) => /\.(?:html|svg)$/i.test(file)).map(([file, source]) => [file, tags(source)]));
   const ids = new Map([...parsed].map(([file, elements]) => [file, new Set(elements.map(element => element.attributes.id).filter(Boolean))]));
   const usedDiagrams = new Set();
@@ -235,9 +238,9 @@ export function validateSite({ files, catalog, questions, coverage }) {
   const context = { files, catalog, origin, parsed, ids, usedDiagrams, caseNames, error };
   validateFiles(context);
   validateDiagrams(context);
-  if (!catalog.courses?.length) return [...issues, 'data/catalog.json: at least one course is required'];
+  if (!catalog.courses?.length) return [...issues, 'data/es/catalog.json: at least one course is required'];
   for (const course of catalog.courses) {
-    if (!course?.id || !Array.isArray(course.modules)) { error('data/catalog.json', 'course needs an id and modules'); continue; }
+    if (!course?.id || !Array.isArray(course.modules)) { error('data/es/catalog.json', 'course needs an id and modules'); continue; }
     context.course = course;
     context.modules = new Set(course.modules.map(module => module.slug));
     context.domains = course.modules.filter(module => module.type === 'module').map(module => module.slug);
@@ -260,10 +263,10 @@ async function main() {
   }
   try {
     await collect(path.join(root, 'dist'));
-    const catalog = JSON.parse(await readFile(path.join(root, 'data/catalog.json'), 'utf8'));
+    const catalog = JSON.parse(await readFile(path.join(root, 'data/es/catalog.json'), 'utf8'));
     const questions = {}, coverage = {};
     for (const course of catalog.courses) {
-      [questions[course.id], coverage[course.id]] = await Promise.all([course.questionBank, course.coverage].map(async name => JSON.parse(await readFile(path.join(root, 'data', `${name}.json`), 'utf8'))));
+      [questions[course.id], coverage[course.id]] = await Promise.all([course.questionBank, course.coverage].map(async name => JSON.parse(await readFile(path.join(root, 'data/es', `${name}.json`), 'utf8'))));
     }
     const issues = validateSite({ files, catalog, questions, coverage });
     if (issues.length) {

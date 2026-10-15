@@ -11,8 +11,8 @@ RUN pip install --no-cache-dir -r requirements.txt \
 COPY --chown=10001:10001 services/certiquiz/app /app/app
 COPY --chown=10001:10001 services/certiquiz/check-catalog.py /app/check-catalog.py
 COPY --chown=10001:10001 services/certiquiz/schema.sql services/certiquiz/migrate.py /app/
-COPY --chown=10001:10001 data/ /app/data/
-RUN python /app/check-catalog.py /app/data
+COPY --chown=10001:10001 dist/assets/certiquiz/ /app/data/
+RUN python /app/check-catalog.py /app/data --published
 
 USER 10001:10001
 EXPOSE 8000

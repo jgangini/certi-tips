@@ -1,10 +1,12 @@
 # Autoría de fichas de CertiTube
 
+La fuente única reside en `data/es/certitube/<videoId>/`. Validar e interpretar la ficha española antes de traducir su presentación. Conservar videoId, tiempos y fragmentos `t-<segundos>`. Audio, video y subtítulos del proveedor no se traducen mediante este proceso. Ver [Internacionalización](internacionalizacion.md).
+
 Una ficha Markdown es la única fuente de la página, la búsqueda y la evidencia del video. Su presentación se define en [diseno-interfaz.md](diseno-interfaz.md); las comprobaciones, en [validation.md](validation.md).
 
 ## Identidad y publicación
 
-- Crear `data/certitube/<videoId>/<videoId>.md`. El ID de YouTube tiene once caracteres y coincide en carpeta, archivo y metadatos. `img/` es opcional para ilustraciones propias.
+- Crear `data/es/certitube/<videoId>/<videoId>.md`. El ID de YouTube tiene once caracteres y coincide en carpeta, archivo y metadatos. `img/` es opcional para ilustraciones SVG propias.
 - Mantener la ficha como `draft` hasta revisar título, descripción, recursos, duración y tiempos con las fuentes del autor. Los borradores se excluyen de páginas, búsqueda, imágenes y corpus.
 - Usar el título revisado aprobado por el usuario, natural y sin prefijos redundantes ni una raya editorial impuesta. Puede conservar un título en inglés aprobado: no se exige copiar errores del título de YouTube ni traducir nombres oficiales.
 - `publishedAt` y `reviewedAt` son fechas reales `YYYY-MM-DD`. `addedAt` registra la incorporación efectiva con fecha, hora y zona horaria; conservarlo al revisar la ficha. El orden y la entrada de CertiTube dependen de `addedAt`, no de la fecha de publicación del video.

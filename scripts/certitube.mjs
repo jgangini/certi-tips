@@ -90,7 +90,7 @@ export function parseVideo(source, id, base = "/certitips/") {
 }
 
 export async function loadVideos(root, base) {
-  const directory = path.join(await realpath(root), "data", "certitube");
+  const directory = path.join(await realpath(root), "data/es", "certitube");
   let entries;
   try { entries = await readdir(directory, { withFileTypes: true }); }
   catch (error) { if (error.code === "ENOENT") return []; throw error; }
@@ -157,5 +157,5 @@ export function videoBody(video, renderer, site) {
 }
 
 export function videoCarousel(videos, active, base) {
-  return `<nav class="tube-videos" aria-label="Videos de CertiTube"><header class="certichat-heading"><div class="certichat-brand"><div><strong>Certi<span class="brand-accent">Tube</span></strong><small>VIDEOTECA</small></div></div></header><ol>${videos.map(video => `<li><a href="${base}${video.publicPath}/" title="${escapeHtml(video.title)}"${active === video.publicPath ? ' aria-current="page"' : ""}><img src="https://i.ytimg.com/vi/${video.videoId}/mqdefault.jpg" width="320" height="180" alt="" loading="lazy"><span><strong>${escapeHtml(video.title)}</strong></span></a></li>`).join("")}</ol></nav>`;
+  return `<nav class="tube-videos" aria-label="Videos de CertiTube"><header class="certichat-heading"><div class="certichat-brand"><div><strong>Certi<span class="brand-accent">Tube</span></strong><small>VIDEOTECA</small></div></div></header><ol>${videos.filter(video => video.publicPath !== active).map(video => `<li><a href="${base}${video.publicPath}/" title="${escapeHtml(video.title)}"><img src="https://i.ytimg.com/vi/${video.videoId}/maxresdefault.jpg" width="1280" height="720" alt="" loading="lazy"><span><strong>${escapeHtml(video.title)}</strong><span class="tube-video-summary">${escapeHtml(video.summary)}</span></span></a></li>`).join("")}</ol></nav>`;
 }

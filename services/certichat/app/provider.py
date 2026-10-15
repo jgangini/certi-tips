@@ -9,10 +9,13 @@ import anyio
 import httpx
 
 from .security import ChatError
-from .settings import CHAT_MAX_TOKENS, CHAT_MODEL, CHAT_REASONING, EMBEDDING_MODEL, INDEX_MAX_TOKENS, INDEX_REASONING, MODEL
+from .settings import CHAT_MAX_TOKENS, CHAT_MODEL, CHAT_REASONING, EMBEDDING_MODEL, INDEX_MAX_TOKENS, INDEX_REASONING, MODEL, LANGUAGES
 
 REFUSAL = "No dispongo de información suficiente para responder esa consulta."
-SYSTEM = """Eres CertiChat, asistente en español del sitio CertiTips. Toda explicación factual o técnica debe basarse exclusivamente en los fragmentos proporcionados y usar kind grounded.
+REFUSALS = {"es": REFUSAL, "en": "I do not have enough information to answer that question.",
+            "pt": "Não tenho informações suficientes para responder a essa pergunta.",
+            "it": "Non dispongo di informazioni sufficienti per rispondere a questa domanda."}
+SYSTEM = """Eres CertiChat, asistente del sitio CertiTips. Toda explicación factual o técnica debe basarse exclusivamente en los fragmentos proporcionados y usar kind grounded.
 Para saludos, agradecimientos, despedidas o para aclarar qué desea estudiar la persona, responde breve y naturalmente con kind conversation y citations vacío, aunque no haya fragmentos.
 Una respuesta conversation solo mantiene el diálogo: no explica conceptos, enumera cursos ni afirma hechos del sitio o del mundo. No inventes citas para saludar.
 Si un mensaje combina cortesía con una pregunta de estudio, prioriza la pregunta y usa kind grounded. Una petición sin respaldo no se convierte en conversation.
@@ -42,15 +45,51 @@ ANSWER_FORMAT = {"type": "json_schema", "json_schema": {"name": "certichat_answe
                                            "answer": {"type": "string"},
                                            "citations": {"type": "array", "items": {"type": "string"}}},
                             "required": ["kind", "answer", "citations"]}}}
+DECISION_MODEL = "typesafe/jev-1.14"
 
 
 def encoded(value):
     return json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
 
 
+def validate_decision_question(question):
+    if not isinstance(question, dict) or set(question) != {"type", "instructions", "criteria"}:
+        raise ChatError("Criterio de decisión no válido.", 422)
+    if question["type"] not in ("noul", "choice") or not isinstance(question["instructions"], str) or not question["instructions"].strip():
+        raise ChatError("Criterio de decisión no válido.", 422)
+    criteria = question["criteria"]
+    if (not isinstance(criteria, dict) or not 2 <= len(criteria) <= 16
+            or any(not isinstance(key, str) or not re.fullmatch(r"[a-zA-Z0-9_]{1,64}", key) for key in criteria)
+            or question["type"] == "noul" and set(criteria) != {"true", "false"}):
+        raise ChatError("Criterio de decisión no válido.", 422)
+    if any(not isinstance(value, str) or not value for value in criteria.values()):
+        raise ChatError("Criterio de decisión no válido.", 422)
+
+
+def prepare_decisions(data, purpose):
+    """Bounded Jev decisions; extraction and GPT reasoning stay pinned independently."""
+    if purpose != "chat" or data.get("model") != DECISION_MODEL or set(data) != {"model", "state", "questions"}:
+        raise ChatError("Solicitud de decisiones no permitida.", 422)
+    questions = data["questions"]
+    if not isinstance(data["state"], dict) or not isinstance(questions, dict) or not 1 <= len(questions) <= 10:
+        raise ChatError("Estado o criterios no válidos.", 422)
+    for question in questions.values():
+        validate_decision_question(question)
+    payload = {**data, "provider": {"max_price": {"prompt": 0.042, "completion": 0, "request": 0},
+                                   "data_collection": "deny", "require_parameters": True, "allow_fallbacks": False}}
+    tokens = len(encoded(payload)) + 1024
+    if tokens > 24000:
+        raise ChatError("El contexto supera el límite permitido.", 413)
+    # Reserve each question's full context conservatively; settle only from actual usage.cost.
+    micro = (Decimal(tokens * len(questions)) * Decimal("0.042")).to_integral_value(rounding=ROUND_CEILING)
+    return payload, int(micro)
+
+
 def prepare_request(kind, data, purpose):
     if not isinstance(data, dict) or purpose not in ("chat", "index"):
         raise ChatError("Solicitud interna no válida.", 422)
+    if kind == "alpha/decisions":
+        return prepare_decisions(data, purpose)
     if kind == "embeddings":
         if data.get("model") not in ("text-embedding-3-small", EMBEDDING_MODEL):
             raise ChatError("Modelo no permitido.", 422)
@@ -118,7 +157,8 @@ class Provider:
         # Every incoming Cognee retry reserves independently. No automatic HTTP retries; uncertain costs stay reserved.
         try:
             with anyio.fail_after(35 if purpose == "chat" else 300):
-                response = await client.post(f"https://openrouter.ai/api/v1/{kind}", json=payload,
+                endpoint = kind if kind == "alpha/decisions" else f"v1/{kind}"
+                response = await client.post(f"https://openrouter.ai/api/{endpoint}", json=payload,
                                                  headers={"Authorization": f"Bearer {self.settings.openrouter_api_key}",
                                                           "HTTP-Referer": self.settings.site_url, "X-Title": "CertiChat"},
                                                  timeout=35 if purpose == "chat" else 300)
@@ -150,14 +190,17 @@ class Provider:
                             code="provider_rate_limited" if limited else "provider_error")
         return result
 
-    async def answer(self, message, fragments, history):
+    async def answer(self, message, fragments, history, locale="es"):
+        if locale not in LANGUAGES:
+            raise ChatError("Idioma no permitido.", 422)
+        system = SYSTEM + "\nResponde en " + LANGUAGES[locale] + ". Conserva nombres oficiales, código e identificadores de las fuentes."
         selected, source_by_id = [], {}
         for fragment in fragments[:8]:
             reference = f"S{len(selected) + 1}"
             candidate = selected + [{"id": reference, "title": fragment["title"],
                                      "resource_type": "video" if fragment["url"].startswith(self.settings.site_url + "certitube/") else "text",
                                      "text": fragment["text"][:3000]}]
-            messages = [{"role": "system", "content": SYSTEM},
+            messages = [{"role": "system", "content": system},
                         {"role": "user", "content": json.dumps({"question": message, "fragments": candidate, "history": []}, ensure_ascii=False)}]
             try:
                 prepare_request("chat/completions", {"model": CHAT_MODEL, "messages": messages, "response_format": ANSWER_FORMAT}, "chat")
@@ -170,14 +213,14 @@ class Provider:
             # ponytail: questions retain context without carrying unverified answers or per-turn citation IDs.
             # References to concepts introduced only by the assistant need persisted, revalidated sources first.
             candidate = [{"question": turn["question"]}, *data["history"]]
-            messages = [{"role": "system", "content": SYSTEM},
+            messages = [{"role": "system", "content": system},
                         {"role": "user", "content": json.dumps({**data, "history": candidate}, ensure_ascii=False)}]
             try:
                 prepare_request("chat/completions", {"model": CHAT_MODEL, "messages": messages, "response_format": ANSWER_FORMAT}, "chat")
             except ChatError:
                 break
             data["history"] = candidate
-        messages = [{"role": "system", "content": SYSTEM},
+        messages = [{"role": "system", "content": system},
                     {"role": "user", "content": json.dumps(data, ensure_ascii=False)}]
         result = await self.request("chat/completions", {"model": CHAT_MODEL, "messages": messages,
                                     "response_format": ANSWER_FORMAT}, "chat")
@@ -198,7 +241,7 @@ class Provider:
             if output["kind"] == "conversation" and (ids or len(answer) > 500):
                 raise ValueError("Invalid conversational answer")
             if not ids and output["kind"] == "grounded":
-                return REFUSAL, []
+                return REFUSALS[locale], []
             if (not answer.strip()
                     or re.search(r"https?://|www\.|<[^>]*>|\]\s*\(", answer, re.IGNORECASE)
                     or source_by_id and re.search(r"\b(?:" + "|".join(source_by_id) + r")\b", answer)):

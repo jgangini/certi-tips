@@ -9,8 +9,8 @@ test('all frequent-error diagrams share typography, headings and paired-card geo
   ];
   let sharedStyle, sharedHeadings;
   for (const [name, count] of diagrams) {
-    const [file] = globSync(`**/img/${name}.svg`, { cwd: new URL('../data/', import.meta.url) });
-    const svg = readFileSync(new URL(`../data/${file.replaceAll('\\', '/')}`, import.meta.url), 'utf8');
+    const [file] = globSync(`**/img/${name}.svg`, { cwd: new URL('../data/es/', import.meta.url) });
+    const svg = readFileSync(new URL(`../data/es/${file.replaceAll('\\', '/')}`, import.meta.url), 'utf8');
     const style = svg.match(/<style>([\s\S]*?)<\/style>/)?.[1];
     const headings = svg.match(/<g class="column-headings">([\s\S]*?)<\/g>/)?.[1];
     assert.ok(style && headings, `${name}: missing comparison style or headings`);

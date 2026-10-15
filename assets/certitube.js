@@ -1,3 +1,4 @@
+import { t, language } from './i18n.js';
 let youtubeReady;
 
 function loadYouTube() {
@@ -86,14 +87,14 @@ export function mountPlayer(root) {
   let player, playback, ready = false, pending, wanted = false, failed = false;
   const inform = (text, link = false) => { message.textContent = text; status.hidden = !text; external.hidden = !link; };
   const fallback = text => { clearTimeout(loading); spinner.hidden = true; playback?.stop(); failed = true; inform(text, true); };
-  const loading = setTimeout(() => fallback("YouTube está tardando en responder. Puedes abrir el video con el enlace."), 20000);
+  const loading = setTimeout(() => fallback(t("YouTube está tardando en responder. Puedes abrir el video con el enlace.")), 20000);
 
   function playMoment() {
     if (!ready || failed || !wanted) return;
     const seconds = pending?.seconds ?? 0;
     const actualDuration = player.getDuration();
     if (actualDuration > 0 && seconds >= actualDuration) {
-      wanted = false; player.pauseVideo(); inform("Este momento ya no está disponible en el video."); return;
+      wanted = false; player.pauseVideo(); inform(t("Este momento ya no está disponible en el video.")); return;
     }
     player.seekTo(seconds, true);
     player.playVideo();
@@ -105,8 +106,8 @@ export function mountPlayer(root) {
     const displayed = moment ?? moments.values().next().value;
     showChapter(root, displayed.seconds, Boolean(moment));
     if (!moment) { if (ready) player.pauseVideo(); return; }
-    const focusTarget = window.matchMedia("(max-width: 800px)").matches ? root.querySelector(".tube-watch") || root : root;
-    focusTarget.scrollIntoView({ block: "start", behavior: "instant" });
+    const focusTarget = window.matchMedia("(max-width: 1000px)").matches ? root.querySelector(".tube-watch") || root : root;
+    if (!window.matchMedia("(min-width: 801px) and (max-width: 1000px)").matches) focusTarget.scrollIntoView({ block: "start", behavior: "instant" });
     focusTarget.focus({ preventScroll: true });
     playMoment();
   }
@@ -121,13 +122,13 @@ export function mountPlayer(root) {
       clearTimeout(loading); spinner.hidden = true; failed = false;
       player = event.target; ready = true;
       playback = trackPlayback(root, player, moments, duration, external);
-      player.getIframe().title = "Video del caso en YouTube";
+      player.getIframe().title = t("Video del caso en YouTube");
       inform("");
       playMoment();
     },
     onStateChange(event) { if (event.data === 1) inform(""); playback?.state(event.data); },
-    onAutoplayBlocked() { inform("Pulsa reproducir en el video para ver el momento seleccionado."); },
-    onError() { fallback("No se puede reproducir aquí. Puedes abrir este momento en YouTube."); },
+    onAutoplayBlocked() { inform(t("Pulsa reproducir en el video para ver el momento seleccionado.")); },
+    onError() { fallback(t("No se puede reproducir aquí. Puedes abrir este momento en YouTube.")); },
   };
   document.addEventListener("click", event => onMomentLink(event, moments, fromHash));
   window.addEventListener("hashchange", fromHash);
@@ -140,9 +141,9 @@ export function mountPlayer(root) {
   loadYouTube().then(YT => {
     player = new YT.Player("tube-youtube", {
       videoId, width: "100%", height: "100%",
-      playerVars: { origin: location.origin, playsinline: 1, autoplay: 0 }, events,
+      playerVars: { origin: location.origin, playsinline: 1, autoplay: 0, hl: language }, events,
     });
-  }).catch(() => fallback("No se pudo conectar con YouTube. Usa el enlace para abrir el video."));
+  }).catch(() => fallback(t("No se pudo conectar con YouTube. Usa el enlace para abrir el video.")));
 }
 
 function mountChapterScroll(root) {
@@ -159,11 +160,13 @@ function mountChapterScroll(root) {
 }
 
 function mountMobileLayout(root) {
-  const mobile = matchMedia("(max-width: 800px)");
+  const mobile = matchMedia("(max-width: 1000px)");
   const videos = root.parentElement.querySelector(".tube-videos");
   const content = [...root.children].filter(node => !node.matches(".tube-watch"));
   const browse = document.createElement("div");
   browse.className = "tube-browse";
+  const watch = root.querySelector(".tube-watch");
+  new ResizeObserver(() => root.style.setProperty("--tube-watch-height", `${watch.getBoundingClientRect().height}px`)).observe(watch);
   function sync() {
     if (mobile.matches) {
       root.append(browse);

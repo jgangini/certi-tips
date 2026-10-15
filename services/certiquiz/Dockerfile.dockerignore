@@ -11,10 +11,12 @@
 !services/certiquiz/app/**
 !services/certiquiz/tests/
 !services/certiquiz/tests/**
-!data/
-data/**
-!data/catalog.json
-!data/*/questions.json
+!dist/
+!dist/assets/
+!dist/assets/certiquiz/
+!dist/assets/certiquiz/catalog.json
+!dist/assets/certiquiz/*/
+!dist/assets/certiquiz/*/questions.json
 **/__pycache__/
 **/*.pyc
 **/.env*

@@ -77,7 +77,8 @@ def validate_corpus(raw: bytes, manifest: dict) -> list[dict]:
 
 
 async def download(url: str, max_bytes: int) -> bytes:
-    if url not in (MANIFEST_URL, CORPUS_URL):
+    if url not in (MANIFEST_URL, CORPUS_URL, *(SITE + "assets/certichat/i18n/" + name + ".json"
+                                            for name in ("manifest", "en", "pt", "it"))):
         raise ValueError("Only published knowledge artifacts may be downloaded")
     async with httpx.AsyncClient(timeout=30, follow_redirects=False, trust_env=False) as client:
         async with client.stream("GET", url, headers={"Cache-Control": "no-cache"}) as response:

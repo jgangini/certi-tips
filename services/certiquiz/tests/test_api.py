@@ -72,6 +72,29 @@ def join(make, code, nickname):
     return player, response.json()["me"]["id"]
 
 
+def test_participants_choose_language_without_changing_room_or_answer_identity(clients):
+    make, app = clients
+    course = app.state.catalog.get()["practice"]
+    course["titleTranslations"] = {"en": "Practice", "pt": "Prática", "it": "Pratica"}
+    for question in course["questions"]:
+        question["translations"] = {locale: {"question": locale + ": " + question["question"], "options": {
+            option["id"]: {"text": locale + ": " + option["text"], "explanation": locale + ": explanation"}
+            for option in question["options"]}} for locale in ("en", "pt", "it")}
+    host, code = host_room(make, 1)
+    player, _ = join(make, code, "Ana")
+    assert host.get("/api/catalog?locale=pt").json()["courses"][0]["title"] == "Prática"
+    assert host.get("/api/catalog?locale=xx").status_code == 422
+    started = host.post(f"/api/rooms/{code}/start?locale=en", json={})
+    assert started.status_code == 200 and started.json()["question"]["text"].startswith("en:")
+    course["questions"][0]["translations"]["pt"]["question"] = "Updated catalog"
+    view = player.get(f"/api/rooms/{code}?locale=pt").json()
+    assert view["question"]["text"].startswith("pt:")
+    assert [option["id"] for option in view["question"]["options"]] == [option["id"] for option in started.json()["question"]["options"]]
+    assert "correctOption" not in view["question"] and "translations" not in view["question"]
+    assert player.get(f"/api/rooms/{code}?locale=pt&version={view['version']}").status_code == 204
+    assert player.get(f"/api/rooms/{code}?locale=it").json()["question"]["text"].startswith("it:")
+
+
 def test_room_deadline_stays_visible_to_host_after_participants_join(clients):
     make, _ = clients
     host, code = host_room(make)

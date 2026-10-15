@@ -1,5 +1,6 @@
-"""Bounded public GitHub refreshes with the packaged catalog as startup fallback."""
+"""Bounded published-catalog refreshes with the packaged catalog as startup fallback."""
 
+import hashlib
 import json
 from http.client import HTTPException
 import logging
@@ -10,7 +11,8 @@ from threading import Lock
 from time import monotonic
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 
-SOURCE = "https://raw.githubusercontent.com/jgangini/certitips/main/data/"
+SOURCE = "https://jgangini.github.io/certitips/assets/certiquiz/"
+LOCALES = ("en", "pt", "it")
 CATALOG_BYTES = 256 * 1024
 BANK_BYTES = 2 * 1024 * 1024
 REFRESH_BYTES = 8 * 1024 * 1024
@@ -51,13 +53,28 @@ def validate_questions(questions):
         correct = text(question.get("correctOption"), 40)
         if correct not in option_ids:
             raise ValueError("La respuesta correcta no pertenece a las alternativas.")
+        translated = question.get("translations", {})
+        if not isinstance(translated, dict) or (translated and set(translated) != set(LOCALES)):
+            raise ValueError("El banco debe incluir los tres idiomas traducidos.")
+        translations = {}
+        for locale, value in translated.items():
+            if (not isinstance(value, dict) or set(value) != {"question", "options"}
+                    or not isinstance(value["options"], dict) or set(value["options"]) != option_ids):
+                raise ValueError("La traducción no conserva las alternativas originales.")
+            localized_options = {}
+            for option_id, option in value["options"].items():
+                if not isinstance(option, dict) or set(option) != {"text", "explanation"}:
+                    raise ValueError("Alternativa traducida no válida.")
+                localized_options[option_id] = {"text": text(option["text"], 4000),
+                                                "explanation": text(option["explanation"], 4000, empty=True)}
+            translations[locale] = {"question": text(value["question"], 4000), "options": localized_options}
         validated.append({"id": identity, "question": text(question.get("question"), 4000),
-                          "options": normalized, "correctOption": correct})
+                          "options": normalized, "correctOption": correct, "translations": translations})
         ids.add(identity)
     return validated
 
 
-def parse_catalog(document, read_bank):
+def parse_catalog(document, read_bank, *, published=False):
     items = document.get("courses") if isinstance(document, dict) else None
     if not isinstance(items, list) or not 1 <= len(items) <= 32:
         raise ValueError("El catálogo debe contener entre 1 y 32 cursos.")
@@ -75,18 +92,33 @@ def parse_catalog(document, read_bank):
         bank = text(bank, 100)
         if not NAME.fullmatch(identity) or identity in courses or not BANK.fullmatch(bank):
             raise ValueError("El catálogo contiene un identificador o banco no válido.")
+        expected = item.get("sha256")
+        if (published or expected is not None) and (not isinstance(expected, str) or not re.fullmatch(r"[a-f0-9]{64}", expected)):
+            raise ValueError("El banco publicado necesita un hash SHA-256.")
         if bank not in banks:
             try:
-                banks[bank] = validate_questions(read_bank(f"{bank}.json"))
+                raw = read_bank(f"{bank}.json")
+                if expected is not None and (not isinstance(raw, bytes) or hashlib.sha256(raw).hexdigest() != expected):
+                    raise ValueError("El hash del banco no coincide con el catálogo.")
+                questions = validate_questions(json.loads(raw) if isinstance(raw, bytes) else raw)
+                if published and any(set(question["translations"]) != set(LOCALES) for question in questions):
+                    raise ValueError("El banco publicado tiene traducciones incompletas.")
+                banks[bank] = (expected, questions)
             except (OSError, ValueError, RecursionError) as error:
                 raise ValueError(f"{bank}.json (curso {identity}): {error}") from error
-        courses[identity] = {"id": identity, "title": text(item.get("title"), 240), "questions": banks[bank]}
+        if expected != banks[bank][0]:
+            raise ValueError("El mismo banco tiene hashes incompatibles.")
+        titles = item.get("titleTranslations", {})
+        if not isinstance(titles, dict) or set(titles) - set(LOCALES):
+            raise ValueError("Idiomas del título no válidos.")
+        courses[identity] = {"id": identity, "title": text(item.get("title"), 240), "questions": banks[bank][1],
+                             "titleTranslations": {locale: text(title, 240) for locale, title in titles.items()}}
     if not courses:
         raise ValueError("No hay cursos con preguntas disponibles.")
     return courses
 
 
-def load_catalog(data_dir: Path):
+def load_catalog(data_dir: Path, *, published=False):
     budget = REFRESH_BYTES
 
     def read_file(name):
@@ -98,10 +130,10 @@ def load_catalog(data_dir: Path):
             if len(raw) > limit:
                 raise ValueError("Excede el límite del archivo o del catálogo completo.")
             budget -= len(raw)
-            return json.loads(raw)
+            return raw
         except (OSError, ValueError, RecursionError) as error:
             raise ValueError(f"{name}: {error}") from error
-    return parse_catalog(read_file("catalog.json"), read_file)
+    return parse_catalog(json.loads(read_file("catalog.json")), read_file, published=published)
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -134,9 +166,12 @@ def download(filename, limit, deadline):
 
 class Catalog:
     def __init__(self, data_dir: Path, source=None):
-        self.source = source or os.environ.get("CERTIQUIZ_CATALOG_SOURCE", "github")
-        if self.source not in ("github", "bundled"):
-            raise ValueError("CERTIQUIZ_CATALOG_SOURCE debe ser github o bundled.")
+        self.source = source or os.environ.get("CERTIQUIZ_CATALOG_SOURCE", "published")
+        # Existing private deployment settings retain this value until the next rollout.
+        if self.source == "github":
+            self.source = "published"
+        if self.source not in ("published", "bundled"):
+            raise ValueError("CERTIQUIZ_CATALOG_SOURCE debe ser published o bundled.")
         self._courses = load_catalog(data_dir)
         self._next_refresh = 0
         self._lock = Lock()
@@ -154,11 +189,11 @@ class Catalog:
                     limit = min(CATALOG_BYTES if name == "catalog.json" else BANK_BYTES, budget)
                     raw = download(name, limit, deadline)
                     budget -= len(raw)
-                    return json.loads(raw)
+                    return raw
 
                 try:
                     # ponytail: one process refreshes on demand; multiple API workers need a shared cache.
-                    updated = parse_catalog(fetch("catalog.json"), fetch)
+                    updated = parse_catalog(json.loads(fetch("catalog.json")), fetch, published=True)
                 except (OSError, HTTPException, ValueError, RecursionError) as error:
                     logger.warning("CertiQuiz conserva el catálogo válido anterior (%s).", type(error).__name__)
                 else:

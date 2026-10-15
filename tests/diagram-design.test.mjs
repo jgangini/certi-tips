@@ -4,11 +4,29 @@ import { globSync, readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { runInNewContext } from "node:vm";
 
-const content = new URL("../data/", import.meta.url);
+const content = new URL("../data/es/", import.meta.url);
 const diagrams = new Map(globSync("**/img/*.svg", { cwd: content }).map(file => [file.split(/[\\/]/).at(-1), file.replaceAll("\\", "/")]));
 const readDiagram = (name) => readFileSync(new URL(diagrams.get(name), content), "utf8");
 const attributes = (tag) => Object.fromEntries([...tag.matchAll(/([\w:-]+)\s*=\s*(["'])(.*?)\2/gs)].map(([, key, , value]) => [key, value]));
 const declaration = (style, property) => [...(style || "").matchAll(/([\w-]+)\s*:\s*([^;]+)/g)].filter(([, name]) => name === property).at(-1)?.[2].trim();
+
+test("course artwork stays native SVG with editable labels and no embedded raster", () => {
+  const images = globSync("**/img/*", { cwd: content });
+  assert.ok(images.length > 0, "Course artwork must be discovered from the Spanish sources");
+  for (const file of images) {
+    assert.match(file, /\.svg$/, `${file}: course artwork must be SVG`);
+    const source = readFileSync(new URL(file.replaceAll("\\", "/"), content), "utf8");
+    assert.doesNotMatch(source, /<(?:image|foreignObject)\b|data:image\//i, `${file}: raster or active embedded artwork`);
+    assert.match(source, /<text\b/, `${file}: didactic labels must remain editable`);
+  }
+  for (const name of ["enterprise-agent.svg", "grounded-answer.svg", "oci-runtime.svg"]) {
+    const source = readDiagram(name);
+    assert.match(source, /viewBox="0 0 1920 1080"/);
+    assert.match(source, /<title\b[^>]*>[^<]+<\/title>/);
+    assert.match(source, /<desc\b[^>]*>[^<]+<\/desc>/);
+    assert.match(source, /data-layout="module-artwork" data-center="960 608"/);
+  }
+});
 
 test("Modeling's three result cards align and each note follows its card", () => {
   const svg = readDiagram("gov-data-modeling-oracle.svg");
@@ -80,6 +98,48 @@ test("marked table cells reject excess whitespace, off-center rows and avoidable
   textBox.top += 6;
   assert.ok(inspect({ ...tagRow, labelDy: measureRow() }).includes("vertical-alignment"), "A centered tag background must not hide displaced text in a row");
   assert.equal(measureTag().length, 1, "A tag must check its label independently of the unchanged background");
+});
+
+test("diagram audit retains every file and its findings and crawls the requested locale", async () => {
+  const check = runInNewContext(`(${readFileSync(new URL('../scripts/diagram-check.cjs', import.meta.url), 'utf8')})`);
+  const measured = { name: 'sample.svg', labels: 1, minimumFont: 30, slideSize: true, outside: ['Overflow'], overlaps: [], composition: [], coveredLabels: [], alignment: [], tableCells: [], tagAlignment: [], proximity: [], iconSpacing: [], borderCrossings: [], iconCollisions: [], detachedIcons: [], containerOverflows: [] };
+  const visits = [], progress = [];
+  const page = {
+    url: () => 'https://example.test/certitips/pt/?locale=pt',
+    goto: async url => { visits.push(url); return { ok: () => true }; },
+    setViewportSize: async () => {},
+    evaluate: async (_callback, args) => args ? { ...measured, name: args.name } : { origin: 'https://example.test', locale: 'pt' },
+    locator: selector => ({ evaluateAll: async () => selector.includes('data-search-kind') ? ['https://example.test/certitips/pt/course/'] : ['https://example.test/certitips/pt/assets/sample.svg'] }),
+  };
+  const sources = ['file:///data/es/one.svg', 'file:///data/en/two.svg'];
+  const report = await check(page, { sources, failOnIssues: false, onProgress: (...value) => progress.push(value) });
+  assert.deepEqual(Array.from(report.diagrams, item => item.source), sources);
+  assert.equal(report.issues.length, 2);
+  assert.deepEqual(progress, [[1, 2], [2, 2]]);
+  assert.equal(report.screenshots, 0);
+  assert.equal(visits.at(-1), page.url());
+  await assert.rejects(check(page, { sources }), /Overflow/, 'The default audit fails on geometry findings');
+  visits.length = 0;
+  await check(page, { failOnIssues: false });
+  assert.equal(visits[0], 'https://example.test/certitips/pt/');
+  assert.ok(visits.includes('https://example.test/certitips/pt/assets/sample.svg'));
+});
+
+test("translated labels must remain in their original rectangular container", () => {
+  const source = readFileSync(new URL('../scripts/diagram-check.cjs', import.meta.url), 'utf8');
+  const logic = source.slice(source.indexOf('const regionFrames ='), source.indexOf('const originX ='));
+  const frames = [{ left: 0, top: 0, right: 1000, bottom: 500, width: 1000, height: 500 }, { left: 10, top: 10, right: 110, bottom: 60, width: 100, height: 50 }].map(box => ({ closest: () => null, hasAttribute: () => false, getBoundingClientRect: () => box }));
+  const inspect = (right, referenceRegions) => runInNewContext(`(() => { ${logic} return { regions, containerOverflows }; })()`, {
+    root: { querySelectorAll: () => frames }, getComputedStyle: () => ({ fill: '#fff', stroke: 'none' }), scale: 1, referenceRegions,
+    boxes: [{ text: 'Label', box: { left: 20, top: 20, right, bottom: 50 } }],
+  });
+  const baseline = inspect(90);
+  assert.equal(baseline.regions[0].frame, 1, 'Use the smallest containing region, not the slide background');
+  assert.equal(baseline.containerOverflows.length, 0);
+  assert.equal(inspect(105, baseline.regions).containerOverflows.length, 0);
+  const expanded = inspect(130, baseline.regions);
+  assert.equal(expanded.containerOverflows.length, 1, 'Expansion cannot escape into the larger background');
+  assert.equal(expanded.containerOverflows[0].overflow, 20);
 });
 
 test("Governance icons retain reviewed source geometry and contain no active or external content", () => {
@@ -200,14 +260,14 @@ test("OpenAI support step numbers explicitly resolve to white, not the global te
 
 test("the worked purchase example consistently uses US dollars", () => {
   const svg = readDiagram("agents-example.svg");
-  const lesson = readFileSync(new URL("../data/1Z0-1157-26/01_agentes_de_ia/01_agentes_de_ia.md", import.meta.url), "utf8");
+  const lesson = readFileSync(new URL("../data/es/1Z0-1157-26/01_agentes_de_ia/01_agentes_de_ia.md", import.meta.url), "utf8");
   assert.match(svg, /USD\s+144/);
   assert.match(lesson, /USD\s+144/);
   assert.doesNotMatch(`${svg}\n${lesson}`, /S\/\s*\d|\bsoles\b/i);
 });
 
 test("the support case uses one OCI architecture instead of two competing examples", () => {
-  const lesson = readFileSync(new URL("../data/1Z0-1157-26/01_agentes_de_ia/01_agentes_de_ia.md", import.meta.url), "utf8");
+  const lesson = readFileSync(new URL("../data/es/1Z0-1157-26/01_agentes_de_ia/01_agentes_de_ia.md", import.meta.url), "utf8");
   assert.equal((lesson.match(/img\/oci-support\.svg/g) || []).length, 1);
   assert.doesNotMatch(lesson, /support-agent\.png/);
 });

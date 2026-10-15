@@ -20,6 +20,32 @@ def playing(count=2):
     return room, players
 
 
+def test_each_viewer_language_keeps_frozen_options_scoring_and_hidden_answers():
+    value = course()
+    for question in value["questions"]:
+        question["translations"] = {locale: {"question": f"{locale}: {question['question']}", "options": {
+            option["id"]: {"text": f"{locale}: {option['text']}", "explanation": f"{locale}: explanation"}
+            for option in question["options"]}} for locale in ("en", "pt", "it")}
+    room = game.new_room(value, 1, 10)
+    player = game.join_room(room, "Ana")
+    game.host_action(room, "start", 1000)
+    value["questions"].clear()
+    original = game.snapshot("123456", room, "player", player, 1001)
+    for locale in ("en", "pt", "it"):
+        view = game.snapshot("123456", room, "player", player, 1001, locale=locale)
+        assert view["question"]["id"] == original["question"]["id"]
+        assert view["question"]["text"].startswith(locale + ":")
+        assert [option["id"] for option in view["question"]["options"]] == [option["id"] for option in original["question"]["options"]]
+        assert set(view["question"]) == {"id", "text", "options"}
+    game.answer_question(room, player, original["question"]["id"], "b", 1500)
+    reveal = game.snapshot("123456", room, "player", player, 1500, locale="pt")
+    assert reveal["question"]["explanation"] == "pt: explanation"
+    assert reveal["question"]["correctOption"] == "b" and reveal["me"]["score"] == 975
+    del room["questions"][0]["translations"]
+    legacy = game.snapshot("123456", room, "player", player, 1500, locale="it")
+    assert legacy["question"]["text"] == original["question"]["text"]
+
+
 def test_answers_stay_hidden_and_correctness_scores_only_on_reveal():
     room, players = playing()
     question_id = room["questions"][0]["id"]

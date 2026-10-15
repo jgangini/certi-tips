@@ -72,9 +72,9 @@ try {
   const catalog = await host('/api/catalog');
   assert.equal(catalog.limits.maxPlayers, 500, 'Rebuild the API with the 500-player limit before this check.');
   const course = catalog.courses[0];
-  const sourceCatalog = JSON.parse(await readFile(new URL('../data/catalog.json', import.meta.url), 'utf8'));
+  const sourceCatalog = JSON.parse(await readFile(new URL('../data/es/catalog.json', import.meta.url), 'utf8'));
   const sourceCourse = sourceCatalog.courses.find(item => item.id === course.id);
-  const questionBank = JSON.parse(await readFile(new URL(`../data/${sourceCourse.questionBank || 'questions'}.json`, import.meta.url), 'utf8'));
+  const questionBank = JSON.parse(await readFile(new URL(`../data/es/${sourceCourse.questionBank || 'questions'}.json`, import.meta.url), 'utf8'));
   report.questionCount = players === 500 ? Math.min(catalog.limits.maxQuestions, course.questionCount) : 2;
   const room = await host('/api/rooms', { courseId: course.id, questionCount: report.questionCount, secondsPerQuestion: 10 }, 201);
   code = room.code;

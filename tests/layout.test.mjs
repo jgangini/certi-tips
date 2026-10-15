@@ -1,3 +1,4 @@
+import { t } from "../assets/i18n.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -30,7 +31,7 @@ test("the image viewer refreshes its group, source heading and description when 
     querySelectorAll: selector => selector === '.sidebar .nav-link' ? links : buttons,
   };
   const script = readFileSync(new URL("../assets/site.js", import.meta.url), "utf8");
-  vm.runInNewContext(script.slice(script.indexOf('const dialog = document.querySelector("#diagram-viewer");')), { document, URL, location: { href: "https://example.test/course/overview/" } });
+  vm.runInNewContext(script.slice(script.indexOf('const dialog = document.querySelector("#diagram-viewer");')), { document, t, URL, location: { href: "https://example.test/course/overview/" } });
   for (const [index, button] of buttons.entries()) {
     button.click();
     assert.equal(enlarged.src, button.image.src);
@@ -71,7 +72,7 @@ const course = {
 site.courses = [course];
 
 test("all practice pages keep an accessible title without the redundant page heading", () => {
-  const catalog = JSON.parse(readFileSync(new URL('../data/catalog.json', import.meta.url), 'utf8'));
+  const catalog = JSON.parse(readFileSync(new URL('../data/es/catalog.json', import.meta.url), 'utf8'));
   const practiceCourses = catalog.courses.filter(entry => entry.resources.some(page => page.slug === 'practice'));
   assert.deepEqual(practiceCourses.map(entry => entry.route).sort(), ['1Z0-1085-26', '1Z0-1122-26', '1Z0-1157-26']);
   for (const entry of practiceCourses) {
@@ -83,13 +84,13 @@ test("all practice pages keep an accessible title without the redundant page hea
 });
 
 test("course lessons omit completion promises and governance opens directly with its concepts", () => {
-  const catalog = JSON.parse(readFileSync(new URL('../data/catalog.json', import.meta.url), 'utf8'));
+  const catalog = JSON.parse(readFileSync(new URL('../data/es/catalog.json', import.meta.url), 'utf8'));
   for (const course of catalog.courses) for (const page of [...course.modules, ...course.resources]) {
-    const source = readFileSync(new URL(`../data/${course.contentDir}/${page.file}`, import.meta.url), 'utf8');
+    const source = readFileSync(new URL(`../data/es/${course.contentDir}/${page.file}`, import.meta.url), 'utf8');
     assert.doesNotMatch(source, /^(?:\*\*)?Al terminar podrás/im, `${course.id}/${page.slug}`);
   }
   const governance = catalog.courses.find(course => course.id === 'data-governance');
-  const source = readFileSync(new URL(`../data/${governance.contentDir}/${governance.modules.find(page => page.slug === 'governance').file}`, import.meta.url), 'utf8');
+  const source = readFileSync(new URL(`../data/es/${governance.contentDir}/${governance.modules.find(page => page.slug === 'governance').file}`, import.meta.url), 'utf8');
   assert.match(source, /^<span id="conceptos-clave"><\/span>El \*\*gobierno de datos\*\*/);
   assert.doesNotMatch(source, /^## Conceptos Clave|^Operadora Horizonte reúne/m);
 });
@@ -123,10 +124,10 @@ test("an applied course without practice continues to its case study", () => {
   assert.match(examHtml, /data-course="course" data-course-route="EXAM-1" data-course-has-exam="true"/);
 });
 
-test("sharing uses an English Oracle overview and a public PNG icon on every page type", () => {
+test("sharing uses the Spanish source overview and a public PNG icon on every page type", () => {
   const home = layout({ site, course, page: course.modules[0], body: "", home: true });
-  assert.match(home, /<title>CertiTips · Oracle Certification Paths<\/title>/);
-  assert.match(home, /<meta name="description" content="Explore Oracle certification paths with visual study guides in Spanish, explained practice questions, and CertiQuiz team quizzes\."/);
+  assert.match(home, /<title>CertiTips · Rutas de certificación Oracle<\/title>/);
+  assert.match(home, /<meta name="description" content="Explora rutas de certificación Oracle con guías visuales, preguntas explicadas y quizzes en equipo con CertiQuiz\."/);
   assert.doesNotMatch(home, /Ruta de certificaciones en Data e IA|Foundation Sprint y rutas/);
   for (const html of [home, layout({ site, course, page: course.modules[0], body: "" }), layout({ site, course, page: { slug: "certiquiz", title: "CertiQuiz" }, body: "" })]) {
     assert.match(html, /<meta property="og:image" content="https:\/\/example\.test\/certitips\/assets\/icons\/share-logo-square\.png">/);
@@ -134,7 +135,7 @@ test("sharing uses an English Oracle overview and a public PNG icon on every pag
     assert.match(html, /<meta property="og:image:width" content="512"><meta property="og:image:height" content="512">/);
     assert.match(html, /<meta property="og:image:alt" content="CertiTips logo">/);
     assert.match(html, /<meta property="og:url" content="https:\/\/example\.test\/certitips\//);
-    assert.match(html, /<link rel="icon" href="\/certitips\/assets\/icons\/favicon\.png" type="image\/png" sizes="512x512">/);
+    assert.match(html, /<link rel="icon" href="\/certitips\/assets\/icons\/favicon\.svg" type="image\/svg\+xml">/);
   }
   const icon = readFileSync(new URL("../assets/icons/share-logo-square.png", import.meta.url));
   assert.equal(icon.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
@@ -154,8 +155,8 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   const script = readFileSync(new URL("../assets/certiquiz.js", import.meta.url), "utf8");
   const css = readFileSync(new URL("../assets/certiquiz.css", import.meta.url), "utf8");
   const siteCss = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
-  assert.match(script, /<button class="card join-card role-card" type="button" data-role="host" aria-label="Crear una partida como anfitrión">/);
-  assert.match(script, /<button class="card join-card role-card" type="button" data-role="player" aria-label="Unirme a una partida como participante">/);
+  assert.match(script, /<button class="card join-card role-card" type="button" data-role="host" aria-label="\$\{escape\(t\("Crear una partida como anfitrión"\)\)\}">/);
+  assert.match(script, /<button class="card join-card role-card" type="button" data-role="player" aria-label="\$\{escape\(t\("Unirme a una partida como participante"\)\)\}">/);
   assert.match(script, /const hostRoleIcon = '<svg viewBox="0 0 31\.381 31\.381" fill="currentColor" aria-hidden="true" focusable="false">/);
   assert.match(script, /const playerRoleIcon = '<svg viewBox="0 0 297 297" fill="currentColor" aria-hidden="true" focusable="false">/);
   assert.match(script, /<span class="role-icon" aria-hidden="true">\${hostRoleIcon}<\/span><span class="role-copy">/);
@@ -167,22 +168,22 @@ test("CertiQuiz role choices are full-card buttons without duplicate actions", (
   assert.doesNotMatch(script, /ORGANIZA LA PARTIDA|APRENDE CON TU EQUIPO/);
   assert.doesNotMatch(script, /Practica certificaciones, comparte una sala y aprende con tu equipo\./);
   assert.match(script, /const certiQuizBrand = 'Certi<span class="brand-accent">Quiz<\/span>';/);
-  assert.match(script, /<nav class="certiquiz-breadcrumb" aria-label="Ruta de navegación">/);
+  assert.match(script, /<nav class="certiquiz-breadcrumb" aria-label="\$\{escape\(t\("Ruta de navegación"\)\)\}">/);
   assert.match(script, /<a class="certiquiz-mark" href="\$\{siteBase\}certiquiz\/">\$\{certiQuizBrand\}<\/a>/);
   assert.match(script, /<span class="certiquiz-mark" aria-current="page">\$\{certiQuizBrand\}<\/span>/);
-  assert.match(script, /href="\$\{siteBase\}certiquiz\/#\$\{role === 'host' \? 'host' : 'participant'\}" data-entry-role="\$\{role\}">\$\{role === 'host' \? 'Anfitrión' : 'Participante'\}<\/a>/);
+  assert.match(script, /href="\$\{siteBase\}certiquiz\/#\$\{role === 'host' \? 'host' : 'participant'\}" data-entry-role="\$\{role\}">\$\{role === 'host' \? escape\(t\("Anfitrión"\)\) : escape\(t\("Participante"\)\)\}<\/a>/);
   assert.match(script, /document\.querySelector\('\[data-entry-role\]'\)\?\.addEventListener\('click', event => \{ event\.preventDefault\(\); if \(!busy\) entry\(event\.currentTarget\.dataset\.entryRole\); \}\);/);
   assert.match(script, /window\.addEventListener\('hashchange', \(\) => \{ if \(catalog && !busy\) entry\(routeRole\(\)\); \}\);/);
   assert.match(script, /function roomHeader\(\) \{ return room\.status === 'lobby' \|\| room\.status === 'finished' \? welcome\(room\.role, true\) : ''; \}/);
-  assert.match(script, /const joinForm = `<span class="eyebrow">INGRESO DE PARTICIPANTE<\/span><h2 id="form-title">Únete a la Sala<\/h2>/);
-  assert.match(script, /id="room-code" name="code" aria-label="Código de la sala"/);
+  assert.match(script, /const joinForm = `<span class="eyebrow">\$\{escape\(t\("INGRESO DE PARTICIPANTE"\)\)\}<\/span><h2 id="form-title">\$\{escape\(t\("Únete a la Sala"\)\)\}<\/h2>/);
+  assert.match(script, /id="room-code" name="code" aria-label="\$\{escape\(t\("Código de la sala"\)\)\}"/);
   assert.match(script, /id="nickname"[^>]*maxlength="30"/);
   assert.ok(script.includes("roomCode.value = roomCode.value.replace(/\\D/g, '').slice(0, 6);"));
   assert.ok(script.includes("nickname.value = nickname.value.replace(/[^\\p{L}\\p{N} ]/gu, '').slice(0, 30);"));
   assert.doesNotMatch(script, /joinFacts|Los 6 números que comparte el anfitrión\./);
-  assert.match(script, /<div class="actions join-actions"><a class="button secondary" href="\$\{siteBase\}certiquiz\/" data-entry-exit>Salir<\/a><button class="button" type="submit" disabled>Entrar<\/button><\/div>/);
+  assert.match(script, /<div class="actions join-actions"><a class="button secondary" href="\$\{siteBase\}certiquiz\/" data-entry-exit>\$\{escape\(t\("Salir"\)\)\}<\/a><button class="button" type="submit" disabled>\$\{escape\(t\("Entrar"\)\)\}<\/button><\/div>/);
   assert.match(script, /joinButton\.disabled = !\(roomCode\.validity\.valid && nickname\.validity\.valid && nickname\.value\.trim\(\)\.length >= 2\);/);
-  assert.match(script, /function roomFacts\(questionCount, secondsPerQuestion\) \{ return `<div class="fact-row"><span><strong>\$\{questionCount\}<\/strong> preguntas<\/span><span><strong>\$\{secondsPerQuestion\} s<\/strong> por pregunta<\/span><\/div>`; \}/);
+  assert.match(script, /function roomFacts\(questionCount, secondsPerQuestion\) \{ return `<div class="fact-row"><span><strong>\$\{questionCount\}<\/strong> \$\{escape\(t\("preguntas"\)\)\}<\/span><span><strong>\$\{secondsPerQuestion\} s<\/strong> \$\{escape\(t\("por pregunta"\)\)\}<\/span><\/div>`; \}/);
   assert.doesNotMatch(script, /Entrar a la sala|Tu alias aparecerá en la sala y en los resultados\./);
   assert.doesNotMatch(script, /¿Ya tienes el código\? Solo falta tu nombre\./);
   assert.doesNotMatch(script, /data-change-role|Cambiar rol/);
@@ -212,10 +213,10 @@ test("CertiQuiz host setup labels the room step and aligns its submit control", 
   const css = readFileSync(new URL("../assets/certiquiz.css", import.meta.url), "utf8");
   assert.match(script, /<form id="create-form" novalidate>/);
   assert.match(script, /id === 'create-form'[\s\S]*?input\[type="number"\]:invalid[\s\S]*?showWarning\(message\)/);
-  assert.match(script, /El valor debe ser superior o igual a \$\{invalid\.min\}/);
-  assert.match(script, /El valor debe ser inferior o igual a \$\{invalid\.max\}/);
-  assert.match(script, /<span class="setup-label">\$\{resumeCandidate \? 'Sala activa' : 'Generar Sala'\}<\/span>/);
-  assert.match(script, /<button class="button" type="\$\{resumeCandidate \? 'button' : 'submit'\}" \$\{resumeCandidate \? 'data-resume disabled' : catalog\.courses\.length \? '' : 'disabled'\}>Entrar<\/button>/);
+  assert.match(script, /t\('El valor debe ser superior o igual a \{min\}\.', \{ min: invalid\.min \}\)/);
+  assert.match(script, /t\('El valor debe ser inferior o igual a \{max\}\.', \{ max: invalid\.max \}\)/);
+  assert.match(script, /<span class="setup-label">\$\{resumeCandidate \? escape\(t\("Sala activa"\)\) : escape\(t\("Generar Sala"\)\)\}<\/span>/);
+  assert.match(script, /<button class="button" type="\$\{resumeCandidate \? 'button' : 'submit'\}" \$\{resumeCandidate \? 'data-resume disabled' : catalog\.courses\.length \? '' : 'disabled'\}>\$\{escape\(t\("Entrar"\)\)\}<\/button>/);
   assert.match(script, /form\.querySelector\('#course-title'\)\.textContent = activeRoom\.courseTitle;/);
   assert.match(script, /picker\.open = false; picker\.inert = true; picker\.setAttribute\('aria-disabled', 'true'\);/);
   assert.match(script, /questionCount\.value = activeRoom\.questionCount; questionCount\.disabled = true;/);
@@ -279,7 +280,7 @@ test("CertiQuiz renders a branded local invitation QR", () => {
   assert.match(css, /\.certiquiz-app \.invite-code\s*\{[^}]*padding:\s*12px 16px;[^}]*border:\s*1px solid var\(--line\);[^}]*border-radius:\s*var\(--radius\);[^}]*background:\s*var\(--paper\);/);
   assert.match(css, /\.certiquiz-app \.pin\s*\{[^}]*font-size:\s*clamp\(48px, 6vw, 72px\);[^}]*line-height:\s*1;/);
   assert.match(script, /class="invite-qr-logo" aria-hidden="true"><svg viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="currentColor"\/><path d="M13 13h12a8 8 0 0 1 8 8v14H21a8 8 0 0 1-8-8Z" fill="none" stroke="#fff" stroke-width="3"\/>/);
-  assert.match(script, /data-invite-qr aria-pressed="false" aria-label="Ampliar código QR de invitación"/);
+  assert.match(script, /data-invite-qr aria-pressed="false" aria-label="\$\{escape\(t\("Ampliar código QR de invitación"\)\)\}"/);
   assert.doesNotMatch(script, /data-invite-qr-caption|Escanea o selecciona para ampliar/);
   assert.match(script, /aria-hidden="true"/);
   assert.doesNotMatch(script, /Escanea para unirte|assets\/icons\/favicon\.svg/);
@@ -318,30 +319,31 @@ test("CertiQuiz host lobby keeps facts beside its actions and uses a compact con
   const sharedCss = readFileSync(new URL("../assets/site.css", import.meta.url), "utf8");
   assert.doesNotMatch(script, /500–1000 puntos por acierto/);
   assert.match(script, /const hostFooter = `<div class="lobby-footer">\$\{facts\}<div class="actions game-actions">\$\{lobbyWaitTimer\}/);
-  assert.match(script, /data-lobby-wait-timer role="timer" aria-live="off" aria-label="Tiempo restante para iniciar la sala">\$\{formatCountdown\(lobbyWaitSeconds\(\)\)\}/);
-  assert.match(script, /room\.role === 'host' \? 'Sala de Espera'/);
+  assert.match(script, /data-lobby-wait-timer role="timer" aria-live="off" aria-label="\$\{escape\(t\("Tiempo restante para iniciar la sala"\)\)\}">\$\{formatCountdown\(lobbyWaitSeconds\(\)\)\}/);
+  assert.match(script, /room\.role === 'host' \? escape\(t\("Sala de Espera"\)\)/);
   assert.match(script, /const resumeCandidate = role === 'host' && session\.host && \/\^\\d\{6\}\$\//);
   assert.match(script, /session\.hostRoomCode : session\.roomCode/);
   assert.match(script, /dialog\.dataset\.lobbyExpired = ''/);
   assert.match(script, /El tiempo de espera de 15 minutos de la sala expiró/);
   assert.match(script, /className = 'confirmation confirmation-expired'/);
   assert.doesNotMatch(script, /confirmation-icon/);
-  assert.match(script, /data-return-to-entry>Aceptar<\/button>/);
-  assert.match(script, /const playerFooter = `<div class="lobby-footer player-lobby-footer">\$\{facts\}<div class="actions game-actions"><button class="button secondary" type="button" data-exit>Salir/);
+  assert.match(script, /data-return-to-entry>\$\{escape\(t\("Aceptar"\)\)\}<\/button>/);
+  assert.match(script, /const playerFooter = `<div class="lobby-footer player-lobby-footer">\$\{facts\}<div class="actions game-actions"><button class="button secondary" type="button" data-exit>\$\{escape\(t\("Salir"\)\)\}/);
   assert.doesNotMatch(script, /class="text-button room-exit"/);
   assert.match(script, /error\.tone = 'warning'/);
   assert.match(script, /room\.status !== 'lobby' && !document\.querySelector\('\[data-confirm\]\[open\]'\)/);
   assert.match(script, /const warningNoticeIcon = '<svg viewBox="-0\.5 0 25 25"/);
   assert.match(script, /const errorNoticeIcon = '<svg viewBox="0 0 64 64"/);
   assert.match(script, /function showWarning\(message, retryAfter\) \{ showNotice\(message, 'warning', retryAfter\); \}/);
-  assert.match(script, /data-notice-countdown role="timer" aria-live="off" aria-label="Tiempo de espera restante"/);
+  assert.match(script, /data-notice-countdown role="timer" aria-live="off" aria-label="\$\{escape\(t\("Tiempo de espera restante"\)\)\}"/);
   assert.match(script, /error\.retryAfter = Number\.isInteger\(retryAfter\)/);
-  assert.match(script, /showWarning\('La sala o tu acceso ya no están disponibles/);
+  assert.match(script, /showWarning\(t\("La sala o tu acceso ya no están disponibles/);
   assert.match(css, /\.certiquiz-app \.lobby-footer\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*justify-content:\s*space-between;/);
   assert.match(css, /\.certiquiz-app \.lobby-wait-timer\s*\{[^}]*border-radius:\s*8px;[^}]*font-variant-numeric:\s*tabular-nums;/);
   assert.match(css, /\.certiquiz-app \.team-total\s*\{[^}]*left:\s*50%;[^}]*top:\s*50%;[^}]*transition:\s*width \.45s/);
   assert.match(css, /\.certiquiz-app \.team-count\s*\{[^}]*font-family:\s*monospace;[^}]*font-size:\s*clamp\(26px, calc\(var\(--total-size\) \* \.25\), 50px\);[^}]*font-weight:\s*700;/);
-  assert.match(css, /\.certiquiz-app \.team-count::after\s*\{[^}]*content:\s*'Participantes';[^}]*font-family:\s*monospace;[^}]*font-weight:\s*700;[^}]*text-transform:\s*uppercase;/);
+  assert.match(css, /\.certiquiz-app \.team-count::after\s*\{[^}]*content:\s*attr\(data-label\);[^}]*font-family:\s*monospace;[^}]*font-weight:\s*700;[^}]*text-transform:\s*uppercase;/);
+  assert.match(script, /totalValue\.dataset\.label = t\('Participantes'\);/);
   assert.match(css, /\.certiquiz-app \.player-list\s*\{[^}]*height:\s*100%;[^}]*overflow:\s*hidden;/);
   assert.match(css, /\.certiquiz-app \.energy-rays line\s*\{[^}]*stroke:\s*var\(--core-color\);[^}]*certiquiz-ray-wave/);
   assert.match(css, /@keyframes certiquiz-rays-turn\s*\{\s*to\s*\{\s*transform:\s*rotate\(360deg\);/);
@@ -379,14 +381,14 @@ test("CertiQuiz host lobby keeps facts beside its actions and uses a compact con
   for (const source of [chatHtml, script]) assert.doesNotMatch(source, /confirmation-icon|confirmation-question\.svg/);
   assert.doesNotMatch(script, /\(tú\)/);
   assert.match(css, /\.certiquiz-app \.leaderboard \.is-me\s*\{[^}]*background:\s*var\(--chrome-bg\);/);
-  assert.match(script, /send\.disabled = locked \|\| busy; send\.textContent = 'Enviar';/);
+  assert.match(script, /send\.disabled = locked \|\| busy; send\.textContent = t\("Enviar"\);/);
   assert.doesNotMatch(script, /Respuesta registrada ✓/);
   assert.doesNotMatch(script, /Respuesta registrada\. Espera a que termine el tiempo\./);
   assert.doesNotMatch(script, /puntos en esta partida/);
   assert.match(script, /const oracleBadgeIcon = '<svg viewBox="0 0 32 32"/);
   assert.match(script, /<p class="result-course">\$\{oracleBadgeIcon\}<span>\$\{escape\(room\.courseTitle\)\}<\/span><\/p>/);
   assert.match(script, /<form id="answer-form" novalidate>/);
-  assert.match(script, /if \(id === 'answer-form' && !form\.querySelector\('input\[name="optionId"\]:checked'\)\) \{\s*showWarning\('Selecciona una de estas opciones\.'\);/);
+  assert.match(script, /if \(id === 'answer-form' && !form\.querySelector\('input\[name="optionId"\]:checked'\)\) \{\s*showWarning\(t\("Selecciona una de estas opciones\."\)\);/);
   assert.match(css, /\.certiquiz-app \.question\s*\{[^}]*outline:\s*none;/);
   assert.match(css, /\.certiquiz-app \.result-banner \.result-course\s*\{[^}]*display:\s*inline-flex;[^}]*border:\s*1px solid var\(--line\);[^}]*background:\s*var\(--chrome-bg\);/);
   assert.match(css, /\.certiquiz-app \.result-banner \.result-course svg\s*\{[^}]*width:\s*27px;[^}]*height:\s*27px;[^}]*color:\s*var\(--accent\);/);
@@ -436,10 +438,48 @@ test("CertiQuiz sizes varied arrival orbits inside the canvas around a growing c
 });
 test("CertiQuiz explains rate limits as warnings with the server retry delay", () => {
   const script = readFileSync(new URL("../assets/certiquiz.js", import.meta.url), "utf8");
-  assert.match(script, /function retryAfterMessage\(seconds\) \{[\s\S]*?seconds % 3600 === 0[\s\S]*?seconds % 60 === 0[\s\S]*?Vuelve a intentarlo en \$\{amount\}/);
+  const retrySource = script.slice(script.indexOf('function retryAfterMessage(seconds)'), script.indexOf('async function request('));
+  const retryAfterMessage = vm.runInNewContext(`(${retrySource.trim()})`, { t });
+  for (const [seconds, duration] of [[1, '1 segundo'], [2, '2 segundos'], [60, '1 minuto'], [120, '2 minutos'], [3600, '1 hora'], [7200, '2 horas']]) assert.equal(retryAfterMessage(seconds), `Demasiados intentos. Vuelve a intentarlo en ${duration}.`);
   assert.match(script, /response\.headers\.get\('Retry-After'\)/);
   assert.match(script, /detail\.startsWith\('Demasiados intentos\.'\) \? retryAfterMessage\(retryAfter\)/);
   assert.match(script, /catch \(error\) \{ \(error\.status === 429 \|\| error\.tone === 'warning' \? showWarning : showError\)\(error\.message, error\.retryAfter\); \}/);
+});
+test("CertiQuiz requests keep polling and answer identity while selecting the page language", async () => {
+  const script = readFileSync(new URL("../assets/certiquiz.js", import.meta.url), "utf8");
+  const helper = readFileSync(new URL("../assets/i18n.js", import.meta.url), "utf8").replaceAll('export ', '').replaceAll('import.meta.url', JSON.stringify('https://site.example.test/assets/i18n.js'));
+  const requestSource = script.slice(script.indexOf('function retryAfterMessage(seconds)'), script.indexOf('async function action('));
+  for (const language of ['es', 'en', 'pt', 'it']) {
+    const calls = [];
+    const message = { es: 'La sala está completa.', en: 'The room is full.', pt: 'A sala está cheia.', it: 'La sala è piena.' }[language];
+    let rejected = false;
+    const context = vm.createContext({
+      document: { body: { dataset: { locale: language, siteBase: '/certitips/' } } },
+      apiOrigin: 'https://quiz.example.test', URL, AbortSignal, performance: { now: () => 100 },
+      fetch: async (url, options) => {
+        if (url.origin === 'https://site.example.test') {
+          assert.equal(url.pathname, `/assets/i18n/${language}.json`);
+          return { ok: true, json: async () => ({ 'La sala está completa.': message }) };
+        }
+        calls.push({ url, options });
+        return { ok: !rejected, status: rejected ? 409 : 200, headers: new Headers(), json: async () => rejected ? { detail: 'La sala está completa.' } : { version: 4 } };
+      },
+    });
+    await vm.runInContext(`(async () => { ${helper}\n${requestSource}\nglobalThis.apiRequest = request; })()`, context);
+    await context.apiRequest('/api/rooms/123456?version=4');
+    await context.apiRequest('/api/rooms/123456/answers', { questionId: 'q-1', optionId: 'b' });
+    assert.equal(calls[0].url.searchParams.get('version'), '4');
+    for (const call of calls) {
+      assert.equal(call.url.searchParams.get('locale'), language);
+      assert.equal(call.options.credentials, 'include');
+      assert.equal(call.url.origin, 'https://quiz.example.test');
+    }
+    assert.equal(calls[0].options.method, 'GET');
+    assert.equal(calls[1].options.method, 'POST');
+    assert.deepEqual(JSON.parse(calls[1].options.body), { questionId: 'q-1', optionId: 'b' });
+    rejected = true;
+    await assert.rejects(context.apiRequest('/api/rooms/123456/join', {}), error => error.status === 409 && error.message === message);
+  }
 });
 const tocByPage = new Map([
   ["overview", [{ id: "primeros-pasos", title: "Primeros pasos" }]],
@@ -525,10 +565,10 @@ test("sidebar has native module and resource disclosures with only the active br
 });
 
 test("retired resources stay unpublished and overview contains only its retained sections", () => {
-  const catalog = JSON.parse(readFileSync(new URL("../data/catalog.json", import.meta.url), "utf8"));
+  const catalog = JSON.parse(readFileSync(new URL("../data/es/catalog.json", import.meta.url), "utf8"));
   const actualCourse = catalog.courses.find((item) => item.id === "agentic-ai-foundations-2026");
   assert.deepEqual(actualCourse.resources.map((item) => item.slug), ["glossary", "exam-checklist", "practice"]);
-  const overview = readFileSync(new URL(`../data/${actualCourse.contentDir}/${actualCourse.modules[0].file}`, import.meta.url), "utf8");
+  const overview = readFileSync(new URL(`../data/es/${actualCourse.contentDir}/${actualCourse.modules[0].file}`, import.meta.url), "utf8");
   assert.doesNotMatch(overview, /certification-roadmap/);
   const headings = [...overview.matchAll(/^## (.+)$/gm)].map((match) => match[1]);
   assert.deepEqual(headings, ["Objetivos y examen", "Acceso al Recorrido Oficial"]);
@@ -540,7 +580,7 @@ test("retired resources stay unpublished and overview contains only its retained
   assert.doesNotMatch(html, /overview\/#antes-de-comenzar/);
   const accessSections = new Set();
   for (const course of catalog.courses.filter(course => course.exam)) {
-    const source = readFileSync(new URL(`../data/${course.contentDir}/${course.modules[0].file}`, import.meta.url), 'utf8');
+    const source = readFileSync(new URL(`../data/es/${course.contentDir}/${course.modules[0].file}`, import.meta.url), 'utf8');
     assert.deepEqual([...source.matchAll(/^## (.+)$/gm)].map(match => match[1]), headings, course.id);
     assert.doesNotMatch(source, /## Antes de comenzar|## Cómo vas a estudiar/);
     assert.match(source, new RegExp(`\\*\\*${course.exam.code}\\*\\*`));
@@ -553,7 +593,7 @@ test("retired resources stay unpublished and overview contains only its retained
 });
 
 test("hero animation follows the catalog's Foundation Sprint order and levels", () => {
-  const catalog = JSON.parse(readFileSync(new URL("../data/catalog.json", import.meta.url), "utf8"));
+  const catalog = JSON.parse(readFileSync(new URL("../data/es/catalog.json", import.meta.url), "utf8"));
   const animation = readFileSync(new URL("../videos/certification-path-motion/compositions/hw-pipeline.html", import.meta.url), "utf8");
   const host = readFileSync(new URL("../videos/certification-path-motion/index.html", import.meta.url), "utf8");
   const base = animation.match(/const base = \[([\s\S]*?)\];/)?.[1];
@@ -575,13 +615,13 @@ test("hero animation follows the catalog's Foundation Sprint order and levels", 
 });
 
 test("technical sections have captioned local graphics and exercise solutions stay hidden", () => {
-  const catalog = JSON.parse(readFileSync(new URL("../data/catalog.json", import.meta.url), "utf8"));
+  const catalog = JSON.parse(readFileSync(new URL("../data/es/catalog.json", import.meta.url), "utf8"));
   const modules = catalog.courses.flatMap((entry) => entry.modules.filter((module) => module.type === "module").map((module) => ({ ...module, contentDir: entry.contentDir, courseId: entry.id })));
   assert.ok(modules.length > 0);
   assert.equal(catalog.courses.find((entry) => entry.id === "data-governance").modules.filter((module) => module.type === "module").length, 11);
   const markdown = new MarkdownIt({ html: true });
   for (const module of modules) {
-    const source = readFileSync(new URL(`../data/${module.contentDir}/${module.file}`, import.meta.url), "utf8");
+    const source = readFileSync(new URL(`../data/es/${module.contentDir}/${module.file}`, import.meta.url), "utf8");
     const tokens = markdown.parse(source, {});
     const sections = [];
     let section;
@@ -644,7 +684,7 @@ test("layout moves the contents into the sidebar while preserving reading and si
   assert.match(html, /<aside[^]*href="\/certitips\/EXAM-1\/agents\/#conceptos-clave"[^]*<\/aside>/);
   assert.match(html, /<article class="prose"><h2 id="conceptos-clave">Conceptos<\/h2><\/article>/);
   assert.match(html, /class="site-footer"/);
-  assert.match(html, /Made with .* at Certi<span class="brand-accent">Tips<\/span> .* Developed by <a href="https:\/\/www\.linkedin\.com\/in\/jgangini\/"[^>]*>Joel Gangini<\/a>/);
+  assert.match(html, /Hecho con .* en Certi<span class="brand-accent">Tips<\/span> .* Desarrollado por <a href="https:\/\/www\.linkedin\.com\/in\/jgangini\/"[^>]*>Joel Gangini<\/a>/);
   assert.doesNotMatch(html, /Mejorar esta guía/);
   assert.match(html, /id="diagram-viewer"/);
   assert.match(html, /data-mark-complete="agents"/);
@@ -727,7 +767,7 @@ test("path menu headings change on interaction without retaining an open-state f
 });
 
 test("the certification lesson identifies LangChain without a breadcrumb row", () => {
-  const catalog = JSON.parse(readFileSync(new URL("../data/catalog.json", import.meta.url), "utf8"));
+  const catalog = JSON.parse(readFileSync(new URL("../data/es/catalog.json", import.meta.url), "utf8"));
   const currentCourse = catalog.courses[0];
   assert.equal(`${currentCourse.title} ${currentCourse.edition}`, catalog.paths[0].items.find((item) => item.guide === currentCourse.id).title);
   const html = layout({ site: catalog, course: currentCourse, page: currentCourse.modules.find((item) => item.slug === "langchain"), body: "" });
@@ -760,7 +800,7 @@ test("search lists certifications before typing and keeps study topics available
 });
 
 test("home shows each certification and applied course once and links every available guide locally", () => {
-  const catalog = JSON.parse(readFileSync(new URL("../data/catalog.json", import.meta.url), "utf8"));
+  const catalog = JSON.parse(readFileSync(new URL("../data/es/catalog.json", import.meta.url), "utf8"));
   const items = catalog.paths.flatMap((path) => path.items);
   assert.deepEqual(catalog.paths.map((path) => path.id), ["foundation-sprint", "ai-first", "ai-data-layer", "oci-enablers", "governance"]);
   assert.equal(catalog.paths[0].title, "Foundation");

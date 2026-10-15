@@ -21,7 +21,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from .provider import Provider
 from .graph import sanitize_graph, validate_trace
 from .security import ChatError, GuardMiddleware, cookie_name, network_digest, new_token, set_cookie, token_digest
-from .settings import Settings
+from .settings import Settings, Locale
 from .store import Store
 
 CLEANUP_SECONDS = 60
@@ -49,6 +49,7 @@ class ChatBody(StrictBody):
     requestId: str = Field(min_length=36, max_length=36)
     message: str = Field(min_length=1, max_length=1500)
     pageUrl: str | None = Field(default=None, max_length=1024)
+    locale: Locale = "es"
 
     @field_validator("requestId")
     @classmethod
@@ -108,7 +109,7 @@ async def retrieve(application, body, history=()):
         raise ChatError("La página de contexto no pertenece a CertiTips.", 422)
     try:
         response = await application.state.client.post(f"{settings.knowledge_url}/retrieve",
-                    json={"message": body.message, "pageUrl": body.pageUrl,
+                    json={"message": body.message, "pageUrl": body.pageUrl, "locale": body.locale,
                           "history": [{"question": turn["question"], "version": turn["version"]} for turn in history]},
                     headers={"Authorization": f"Bearer {settings.chat_internal_token}"}, timeout=25)
         response.raise_for_status()
@@ -274,7 +275,9 @@ def create_app(settings=None, *, transport=None):
         store = request.app.state.store
         if body.pageUrl and not public_url(body.pageUrl, request.app.state.settings):
             raise ChatError("La página de contexto no pertenece a CertiTips.", 422)
-        input_hash = hashlib.sha256(json.dumps([body.message, body.pageUrl], ensure_ascii=False).encode()).hexdigest()
+        # Keep Spanish request hashes compatible with requests persisted before locale support.
+        identity_fields = [body.message, body.pageUrl] + ([] if body.locale == "es" else [body.locale])
+        input_hash = hashlib.sha256(json.dumps(identity_fields, ensure_ascii=False).encode()).hexdigest()
         previous = await db(store.begin_request, token_hash, body.requestId, input_hash, network(request))
         if previous is not None:
             return {**previous, "quota": await db(store.quota, token_hash)}
@@ -286,7 +289,7 @@ def create_app(settings=None, *, transport=None):
                 version, fragments, graph_trace = await retrieve(request.app, body, history)
                 history = [{"question": turn["question"], "answer": turn["answer"]}
                            for turn in history if turn["version"] == version]
-                answer, sources = await request.app.state.provider.answer(body.message, fragments, history)
+                answer, sources = await request.app.state.provider.answer(body.message, fragments, history, body.locale)
                 if not sources:
                     graph_trace = {key: value for key, value in graph_trace.items() if key != "sources"}
                     graph_trace.update(nodes=[], edges=[], truncated=False)

@@ -1,5 +1,38 @@
+import { t, locale, localizedURL, siteBase } from "./i18n.js";
 import { readStored, writeStored } from "./storage.js";
 import { indexSearchEntry, searchContent, corpusSearchEntries, searchExcerpt } from "./site-search.js";
+
+// Explicit locale paths take priority; legacy entry links can recall the last choice.
+if (!/^(?:es|en|pt|it)\//.test(location.pathname.slice(siteBase.length))) {
+  try {
+    const preferred = localStorage.getItem('certitips:locale');
+    if (['es', 'en', 'pt', 'it'].includes(preferred)) location.replace(localizedURL(location.href, preferred));
+  } catch { /* URLs remain usable without storage. */ }
+}
+
+const languageMenu = document.querySelector('.language-menu');
+function updateLanguageLink(link) {
+  const target = new URL(link.href);
+  target.search = location.search;
+  target.hash = location.hash;
+  link.href = target.href;
+}
+for (const link of document.querySelectorAll('[data-language-link]')) {
+  updateLanguageLink(link);
+  link.addEventListener('click', () => {
+    updateLanguageLink(link);
+    try { localStorage.setItem('certitips:locale', link.dataset.languageLink); } catch { /* Navigation works without storage. */ }
+  });
+}
+languageMenu?.addEventListener('toggle', () => {
+  if (languageMenu.open) {
+    for (const link of languageMenu.querySelectorAll('[data-language-link]')) updateLanguageLink(link);
+    for (const group of document.querySelectorAll(".path-group")) group.open = false;
+  }
+});
+document.addEventListener('click', event => { if (languageMenu?.open && !languageMenu.contains(event.target)) languageMenu.open = false; });
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && languageMenu?.open) { languageMenu.open = false; languageMenu.querySelector('summary').focus(); } });
+
 
 let resizeTimer;
 addEventListener("resize", () => {
@@ -56,7 +89,7 @@ const lessonSlugs = [...document.querySelectorAll('[data-completion]')].map(link
 function showProgress() {
   const count = lessonSlugs.filter((slug) => completed.has(slug)).length;
   document.querySelectorAll("[data-progress-label]").forEach((label) => {
-    label.textContent = `${count} de ${lessonSlugs.length}`;
+    label.textContent = t('{count} de {total}', { count, total: lessonSlugs.length });
   });
   document.querySelectorAll("[data-progress]").forEach((bar) => {
     bar.value = count;
@@ -64,12 +97,12 @@ function showProgress() {
   document.querySelectorAll("[data-completion]").forEach((link) => {
     const done = completed.has(link.dataset.completion);
     link.classList.toggle("is-complete", done);
-    link.setAttribute("aria-description", done ? "Módulo completado" : "Módulo pendiente");
+    link.setAttribute("aria-description", done ? t("Módulo completado") : t("Módulo pendiente"));
   });
   document.querySelectorAll("[data-mark-complete]").forEach((button) => {
     const done = completed.has(button.dataset.markComplete);
     button.setAttribute("aria-checked", String(done));
-    button.querySelector("[data-completion-label]").textContent = done ? "Completado" : "Sin Completar";
+    button.querySelector("[data-completion-label]").textContent = done ? t("Completado") : t("Sin Completar");
   });
 }
 
@@ -86,14 +119,14 @@ showProgress();
 
 const toggle = document.querySelector(".menu-toggle");
 const navigation = document.querySelector(".sidebar");
-const menuName = navigation?.dataset.menuName || "del curso";
+const menuName = navigation?.dataset.menuName || t("del curso");
 const courseNavMedia = matchMedia("(max-width: 800px)");
 function syncCourseMenu() {
   if (!toggle || !navigation) return;
   const mobile = courseNavMedia.matches;
   const compact = document.body.classList.contains("is-compact-nav");
   toggle.setAttribute("aria-expanded", String(mobile ? navigation.classList.contains("is-open") : !compact));
-  toggle.setAttribute("aria-label", mobile ? `Contenido ${menuName}` : compact ? `Expandir menú ${menuName}` : `Contraer menú ${menuName}`);
+  toggle.setAttribute("aria-label", mobile ? t('Contenido {name}', {name: menuName}) : compact ? t('Expandir menú {name}', {name: menuName}) : t('Contraer menú {name}', {name: menuName}));
   toggle.title = (mobile ? navigation.classList.contains("is-open") : !compact) ? "Ocultar contenido del curso" : "Mostrar contenido del curso";
 }
 if (toggle && navigation) {
@@ -113,7 +146,7 @@ const themeToggle = document.querySelector("[data-theme-toggle]");
 function syncTheme() {
   const dark = document.documentElement.dataset.theme === "dark";
   themeToggle?.setAttribute("aria-pressed", String(dark));
-  themeToggle?.setAttribute("aria-label", dark ? "Activar modo claro" : "Activar modo oscuro");
+  themeToggle?.setAttribute("aria-label", dark ? t("Activar modo claro") : t("Activar modo oscuro"));
   syncHeroFlowTheme();
 }
 themeToggle?.addEventListener("click", () => {
@@ -146,7 +179,7 @@ function contentResult(entry, query) {
   row.hidden = false; row.dataset.searchKind = entry.kind;
   link.href = entry.url; link.removeAttribute("target"); link.removeAttribute("rel");
   row.querySelector("strong").textContent = entry.title;
-  row.querySelector("small").textContent = entry.kind === "video" ? "Video · CertiTube" : "Contenido de la guía";
+  row.querySelector("small").textContent = entry.kind === "video" ? t("Video · CertiTube") : t("Contenido de la guía");
   row.querySelector(".search-result-description").textContent = searchExcerpt(entry.text, query);
   row.querySelector(".search-result-icon").replaceWith(searchIcons.get(entry.kind).cloneNode(true));
   return row;
@@ -165,18 +198,18 @@ function updateSearch() {
   const total = rows.length;
   searchDialog.classList.toggle("has-query", searching);
   searchEmpty.hidden = total !== 0;
-  searchClose.setAttribute("aria-label", searchInput.value ? "Limpiar búsqueda" : "Cerrar búsqueda");
-  searchCount.textContent = !searching ? `${total} cursos y videos disponibles.`
-    : total ? `${total} resultado${total === 1 ? "" : "s"}.`
-    : "No se encontraron resultados. Prueba con otro término.";
-  if (searchError) searchCount.textContent += " No se pudieron cargar las secciones. Vuelve a abrir el buscador para reintentar; puedes buscar por título y tema.";
+  searchClose.setAttribute("aria-label", searchInput.value ? t("Limpiar búsqueda") : t("Cerrar búsqueda"));
+  searchCount.textContent = !searching ? t('{total} cursos y videos disponibles.', {total})
+    : total ? t(total === 1 ? '{total} resultado.' : '{total} resultados.', {total})
+    : t("No se encontraron resultados. Prueba con otro término.");
+  if (searchError) searchCount.textContent += t(" No se pudieron cargar las secciones. Vuelve a abrir el buscador para reintentar; puedes buscar por título y tema.");
   searchCount.classList.toggle("visually-hidden", !searchError);
 }
 
 async function loadSearchContent() {
   if (searchLoading) return;
   searchError = false; searchDialog.setAttribute("aria-busy", "true");
-  searchLoading = fetch(`${document.body.dataset.base}assets/certichat/corpus.json`, { cache: "no-store" });
+  searchLoading = fetch(`${document.body.dataset.base}assets/certichat/search.json`, { cache: "no-store" });
   try {
     const response = await searchLoading;
     if (!response.ok) throw new Error("Search content unavailable");
@@ -303,7 +336,7 @@ if (groupCarousel) {
     previous.disabled = index === 0;
     next.disabled = index === groups.length - 1;
     (focusedControl?.disabled ? (focusedControl === next ? previous : next) : focusedControl)?.focus({ preventScroll: true });
-    status.textContent = `${groups[index].querySelector("h2").textContent} · ${index + 1} de ${groups.length}`;
+    status.textContent = t('{name} · {current} de {total}', {name: groups[index].querySelector('h2').textContent, current: index + 1, total: groups.length});
     if (scroll) groups[index].scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
   };
   const move = (step) => {
@@ -358,8 +391,8 @@ function setPresentationMenu(open) {
   filmstrip.classList.toggle("is-open", open);
   filmstrip.inert = !open;
   menu.setAttribute("aria-expanded", String(open));
-  menu.setAttribute("aria-label", open ? "Ocultar imágenes" : "Mostrar imágenes");
-  if (dialog.classList.contains("is-presenting")) dialog.querySelector(".dialog-content").setAttribute("aria-label", open ? "Diagrama en presentación; haz clic para ocultar imágenes" : "Diagrama en presentación; haz clic para avanzar");
+  menu.setAttribute("aria-label", open ? t("Ocultar imágenes") : t("Mostrar imágenes"));
+  if (dialog.classList.contains("is-presenting")) dialog.querySelector(".dialog-content").setAttribute("aria-label", open ? t("Diagrama en presentación; haz clic para ocultar imágenes") : t("Diagrama en presentación; haz clic para avanzar"));
 }
 menu.addEventListener("click", () => setPresentationMenu(!filmstrip.classList.contains("is-open")));
 function restoreDiagram() {
@@ -378,9 +411,9 @@ function leavePresentation() {
   slideCount.classList.remove("is-visible");
   setPresentationMenu(false);
   dialog.classList.remove("is-presenting");
-  dialog.querySelector(".dialog-content").setAttribute("aria-label", "Diagrama ampliado; desplázate para ver el contenido");
+  dialog.querySelector(".dialog-content").setAttribute("aria-label", t("Diagrama ampliado; desplázate para ver el contenido"));
   present.setAttribute("aria-pressed", "false");
-  present.setAttribute("aria-label", "Activar modo presentación");
+  present.setAttribute("aria-label", t("Activar modo presentación"));
 }
 async function showSlide(index) {
   if (!gallery.length) return;
@@ -423,7 +456,7 @@ present.addEventListener("click", async () => {
   } catch {
     galleryPromise = undefined;
     const description = dialog.querySelector("#diagram-description");
-    if (description) description.textContent = "No se pudieron cargar los diagramas del curso. Inténtalo de nuevo.";
+    if (description) description.textContent = t("No se pudieron cargar los diagramas del curso. Inténtalo de nuevo.");
     return;
   }
   if (!dialog.open || dialog.classList.contains("is-presenting")) return;
@@ -445,7 +478,7 @@ present.addEventListener("click", async () => {
     const button = document.createElement("button"), image = document.createElement("img");
     button.type = "button";
     button.dataset.slideNumber = String(index + 1);
-    button.setAttribute("aria-label", `Imagen ${index + 1} de ${gallery.length}: ${item.module}: ${item.alt}`);
+    button.setAttribute("aria-label", t('Imagen {current} de {total}: {module}: {alt}', {current: index + 1, total: gallery.length, module: item.module, alt: item.alt}));
     image.src = item.src; image.alt = ""; image.loading = "lazy";
     button.append(image);
     button.addEventListener("click", () => showSlide(index));
@@ -455,9 +488,9 @@ present.addEventListener("click", async () => {
   setPresentationMenu(false);
   viewerAnimation?.cancel();
   dialog.classList.add("is-presenting");
-  dialog.querySelector(".dialog-content").setAttribute("aria-label", "Diagrama en presentación; haz clic para avanzar");
+  dialog.querySelector(".dialog-content").setAttribute("aria-label", t("Diagrama en presentación; haz clic para avanzar"));
   present.setAttribute("aria-pressed", "true");
-  present.setAttribute("aria-label", "Salir del modo presentación");
+  present.setAttribute("aria-label", t("Salir del modo presentación"));
   const current = gallery.findIndex(item => new URL(item.src, location.href).href === dialog.querySelector(".dialog-content img").src);
   await showSlide(Math.max(0, current));
 });

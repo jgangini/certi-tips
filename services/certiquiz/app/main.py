@@ -6,6 +6,7 @@ import hashlib
 import os
 from pathlib import Path
 import re
+from typing import Literal
 from urllib.parse import urlsplit
 
 from anyio.to_thread import current_default_thread_limiter
@@ -21,6 +22,8 @@ from .catalog import Catalog
 from .security import (HOST_COOKIE, ROOM_COOKIE, SESSION_SECONDS, new_token, token_digest,
                        client_network)
 from .store import Store
+
+Locale = Literal["es", "en", "pt", "it"]
 
 
 @dataclass(frozen=True)
@@ -247,8 +250,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"ok": request.app.state.store.health()}
 
     @application.get("/api/catalog")
-    def catalog(request: Request):
-        return {"courses": [{"id": course["id"], "title": course["title"], "questionCount": len(course["questions"])}
+    def catalog(request: Request, locale: Locale = "es"):
+        return {"courses": [{"id": course["id"], "title": course.get("titleTranslations", {}).get(locale, course["title"]), "questionCount": len(course["questions"])}
                             for course in request.app.state.catalog.get().values()], "limits": game.LIMITS}
 
     @application.get("/api/session")
@@ -267,7 +270,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"ok": True}
 
     @application.post("/api/rooms", status_code=201)
-    def create_room(body: RoomBody, request: Request, response: Response):
+    def create_room(body: RoomBody, request: Request, response: Response, locale: Locale = "es"):
         host, _ = identities(request)
         host_token = request.cookies.get(cookie_name(request, HOST_COOKIE)) if host else new_token()
         host_hash = token_digest(host_token)
@@ -290,10 +293,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                                                       host is None, old_hash)
         cookie(response, request, HOST_COOKIE, host_token)
         cookie(response, request, ROOM_COOKIE, token)
-        return game.snapshot(code, state, "host", None, now, lobby_deadline)
+        return game.snapshot(code, state, "host", None, now, lobby_deadline, locale)
 
     @application.post("/api/rooms/{code}/join")
-    def join(code: str, body: JoinBody, request: Request, response: Response):
+    def join(code: str, body: JoinBody, request: Request, response: Response, locale: Locale = "es"):
         valid_code(code)
         # Allow one full room behind the same NAT plus one retry per participant.
         throttle(request, "join-ip", game.LIMITS["maxPlayers"] * 2, 60)
@@ -311,11 +314,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     connection.execute("DELETE FROM cq_sessions WHERE token_hash=%s", (existing["token_hash"],))
                 cookie(response, request, ROOM_COOKIE, token)
                 role = "player"
-            result = game.snapshot(code, row["state"], role, player_id, now, store.lobby_deadline(row))
+            result = game.snapshot(code, row["state"], role, player_id, now, store.lobby_deadline(row), locale)
         return result
 
     @application.get("/api/rooms/{code}")
-    def room(code: str, request: Request, version: int | None = Query(default=None, ge=0, le=2147483647)):
+    def room(code: str, request: Request, version: int | None = Query(default=None, ge=0, le=2147483647), locale: Locale = "es"):
         valid_code(code)
         host, room_session = identities(request)
         if not host and (not room_session or room_session["room_code"] != code):
@@ -326,11 +329,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             role, player_id = membership(request, code, row)
             if row.get("unchanged"):
                 return Response(status_code=204)
-            result = game.snapshot(code, row["state"], role, player_id, now, request.app.state.store.lobby_deadline(row))
+            result = game.snapshot(code, row["state"], role, player_id, now, request.app.state.store.lobby_deadline(row), locale)
         return JSONResponse(result)
 
     @application.post("/api/rooms/{code}/answers")
-    def answer(code: str, body: AnswerBody, request: Request):
+    def answer(code: str, body: AnswerBody, request: Request, locale: Locale = "es"):
         valid_code(code)
         _, room_session = identities(request)
         if not room_session or room_session["kind"] != "player" or room_session["room_code"] != code:
@@ -339,11 +342,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         with request.app.state.store.room(code) as (_connection, row, now):
             role, player_id = membership(request, code, row)
             game.answer_question(row["state"], player_id, body.questionId, body.optionId, now)
-            result = game.snapshot(code, row["state"], role, player_id, now, request.app.state.store.lobby_deadline(row))
+            result = game.snapshot(code, row["state"], role, player_id, now, request.app.state.store.lobby_deadline(row), locale)
         return JSONResponse(result)
 
     @application.post("/api/rooms/{code}/{action}")
-    def control(code: str, action: str, body: StrictBody, request: Request):
+    def control(code: str, action: str, body: StrictBody, request: Request, locale: Locale = "es"):
         valid_code(code)
         if action not in ("start", "next", "finish"):
             raise HTTPException(404, "Acción desconocida.")
@@ -354,7 +357,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if role != "host":
                 raise HTTPException(403, "Solo el anfitrión de esta sala puede continuar.")
             game.host_action(row["state"], action, now)
-            result = game.snapshot(code, row["state"], "host", None, now, request.app.state.store.lobby_deadline(row))
+            result = game.snapshot(code, row["state"], "host", None, now, request.app.state.store.lobby_deadline(row), locale)
         return JSONResponse(result)
 
     return application

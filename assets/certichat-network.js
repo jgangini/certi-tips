@@ -1,3 +1,4 @@
+import { t } from './i18n.js';
 const edgeKey = edge => JSON.stringify([edge.source, edge.target, edge.label]);
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
@@ -12,7 +13,7 @@ export function videoEvidence(trace) {
 }
 
 export function layoutNetwork(graph) {
-  const nodes = graph.nodes.map(node => ({ id: node.id, label: node.label, degree: 0, radius: 0, x: 0, y: 0 }));
+  const nodes = graph.nodes.map(node => ({ id: node.id, label: t(node.label), degree: 0, radius: 0, x: 0, y: 0 }));
   const indexes = new Map(nodes.map((node, index) => [node.id, index]));
   const neighbors = nodes.map(() => []), edges = [];
   for (const edge of graph.edges) {

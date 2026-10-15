@@ -97,14 +97,7 @@ async page => {
           assert(tab.url() === original, 'Opening a resource replaced the video page');
           await popup.close();
         }
-        const selected = tab.locator('.tube-videos a[aria-current="page"]');
-        const palette = await selected.evaluate(node => {
-          const style = getComputedStyle(node), neutral = getComputedStyle(document.querySelector('.tube-videos a:not([aria-current])'));
-          return { background: style.backgroundColor, color: style.color, border: style.borderColor, neutralBackground: neutral.backgroundColor, neutralColor: neutral.color };
-        });
-        assert(palette.background === palette.neutralBackground && palette.color === palette.neutralColor && palette.border === 'rgb(199, 70, 52)', 'Only the selected video border is red', palette);
-        await selected.hover(); await selected.focus();
-        assert(await selected.evaluate(node => getComputedStyle(node).color) === palette.color, 'Selected video changes text on focus');
+        assert(await tab.locator('.tube-videos a').evaluateAll(links => links.every(link => !link.href.includes(document.querySelector('[data-video-id]').dataset.videoId))), 'Recommendations repeat the active video');
         if (!state.beside && width > 1000) {
           const fit = await tab.locator('.tube-videos').evaluate(library => {
             const box = library.getBoundingClientRect(), button = document.querySelector('[data-chat-open]').getBoundingClientRect();

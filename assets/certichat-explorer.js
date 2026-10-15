@@ -1,3 +1,4 @@
+import { t, locale, language, localizedURL, canonicalURL, siteBase } from "./i18n.js";
 import { createNetwork, videoEvidence } from "./certichat-network.js";
 import { normalizeTrace, readTrace, sourcePath } from "./certichat-trace.js";
 
@@ -18,7 +19,7 @@ export function indexGraph(data) {
       links.get(to).push(edges.at(-1));
     }
   }
-  return { byId, neighbors, edges, nodes: [...byId.values()].sort((a, b) => a.label.localeCompare(b.label, "es", { numeric: true, sensitivity: "base" })) };
+  return { byId, neighbors, edges, nodes: [...byId.values()].sort((a, b) => a.label.localeCompare(b.label, language, { numeric: true, sensitivity: "base" })) };
 }
 
 const root = typeof document === "undefined" ? null : document.querySelector("[data-knowledge-graph]");
@@ -34,16 +35,16 @@ if (root?.dataset.knowledgeGraph) {
   const apiOrigin = document.querySelector("[data-certichat]")?.dataset.api;
   const element = (tag, text, className) => {
     const node = document.createElement(tag);
-    if (text !== undefined) node.textContent = text;
+    if (text !== undefined) node.textContent = t(text);
     if (className) node.className = className;
     return node;
   };
-  const timestampFormat = new Intl.DateTimeFormat("es", { timeZone: "America/Lima", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" });
+  const timestampFormat = new Intl.DateTimeFormat(language, { timeZone: "America/Lima", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" });
   let graph, network, version, generatedWhen, currentTrace, refreshing, hoveredTrace, focusAfterRefresh = false, lastGraphCheck = 0;
   let latest = { status: "idle", trace: readTrace(siteRoot) };
   if (latest.trace) latest.status = "ready";
   const updating = element("span", undefined, "certichat-spinner chat-graph-updating");
-  updating.hidden = true; updating.setAttribute("role", "status"); updating.setAttribute("aria-label", "Actualizando el índice de conocimiento");
+  updating.hidden = true; updating.setAttribute("role", "status"); updating.setAttribute("aria-label", t("Actualizando el índice de conocimiento"));
 
   function updateScroll() {
     const { scrollLeft, scrollWidth, clientWidth } = active;
@@ -67,7 +68,7 @@ if (root?.dataset.knowledgeGraph) {
         if (date && Number.isFinite(date.getTime())) {
           const stamp = root.querySelector(".chat-graph-stamp dd");
           stamp.textContent = timestampFormat.format(date).replaceAll("/", "-").replace(",", "");
-          stamp.title = `Última sincronización con el repositorio (hora de Perú, UTC−5). Índice generado el ${generatedWhen}.`;
+          stamp.title = t('Última sincronización con el repositorio (hora de Perú, UTC−5). Índice generado el {when}.', {when: generatedWhen});
         }
       }
     } catch { /* An unverified update must not keep the spinner running. */ }
@@ -76,7 +77,7 @@ if (root?.dataset.knowledgeGraph) {
   }
 
   function conceptButton(id, position, source) {
-    const label = graph.byId.get(id).label, button = element("button");
+    const label = t(graph.byId.get(id).label), button = element("button");
     button.append(element("span", position, "chat-graph-number"), element("span", label, "chat-graph-label"));
     button.type = "button"; button.dataset.concept = id;
     button.dataset.source = source;
@@ -91,16 +92,16 @@ if (root?.dataset.knowledgeGraph) {
     active.querySelectorAll("button").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.concept === id)));
     const selected = active.querySelector('[aria-pressed="true"]');
     if (selected) active.scrollTo({ left: active.scrollLeft + selected.getBoundingClientRect().left - active.getBoundingClientRect().left - (active.clientWidth - selected.offsetWidth) / 2, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
-    selection.textContent = `${graph.byId.get(id).label}. ${graph.neighbors.get(id).size} conceptos relacionados.`;
-    cardTitle.textContent = graph.byId.get(id).label;
+    selection.textContent = t('{label}. {count} conceptos relacionados.', {label: t(graph.byId.get(id).label), count: graph.neighbors.get(id).size});
+    cardTitle.textContent = t(graph.byId.get(id).label);
     cardSources.replaceChildren();
     const sources = currentTrace?.sources?.filter(source => source.nodeId === id) || [];
-    if (!sources.length) cardSources.append(element("p", "Sin referencia asociada a esta consulta."));
+    if (!sources.length) cardSources.append(element("p", t("Sin referencia asociada a esta consulta.")));
     for (const source of sources) {
-      const link = element("a", source.title); link.href = sourcePath(source.url, siteRoot);
-      link.title = source.title;
+      const link = element("a", source.title); link.href = localizedURL(sourcePath(source.url, siteRoot));
+      link.title = t(source.title);
       link.dataset.source = new URL(source.url).pathname.startsWith(new URL("certitube/", siteRoot).pathname) ? "tube" : "tips";
-      link.setAttribute("aria-label", `Profundizar: ${source.title}`);
+      link.setAttribute("aria-label", t('Profundizar: {title}', {title: t(source.title)}));
       link.addEventListener("click", event => {
         if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
           try { sessionStorage.setItem(`certichat:${siteRoot}:reference`, link.href); } catch { /* Guide navigation also works without storage. */ }
@@ -136,8 +137,8 @@ if (root?.dataset.knowledgeGraph) {
     currentTrace = trace;
     const { nodes = [], edges = [] } = trace || {};
     const [concepts, relations] = root.querySelectorAll("[data-graph-meta] dd");
-    concepts.textContent = `${nodes.length}/${graph.nodes.length.toLocaleString("es")}`;
-    relations.textContent = `${edges.length}/${graph.edges.length.toLocaleString("es")}`;
+    concepts.textContent = `${nodes.length}/${graph.nodes.length.toLocaleString(language)}`;
+    relations.textContent = `${edges.length}/${graph.edges.length.toLocaleString(language)}`;
     card.hidden = true;
     connector.setAttribute("hidden", "");
     network.setTrace(trace);
@@ -148,15 +149,15 @@ if (root?.dataset.knowledgeGraph) {
     }
     active.scrollTo({ left: 0, behavior: "instant" }); updateScroll();
     activeRelations.replaceChildren();
-    for (const edge of edges) activeRelations.append(element("li", `${graph.byId.get(edge.source).label} → ${edge.label || "relacionado con"} → ${graph.byId.get(edge.target).label}`));
+    for (const edge of edges) activeRelations.append(element("li", `${t(graph.byId.get(edge.source).label)} → ${t(edge.label || "relacionado con")} → ${t(graph.byId.get(edge.target).label)}`));
     activeFit.disabled = !nodes.length;
     const messages = {
       idle: "",
       loading: "",
-      error: "La consulta no se completó. No hay información que resaltar.",
+      error: t("La consulta no se completó. No hay información que resaltar."),
     };
-    notice.textContent = mismatch ? "El mapa y la consulta corresponden a versiones distintas. Actualiza la página para cargar el mapa publicado más reciente." : messages[latest.status] ?? messages.idle;
-    concepts.title = relations.title = trace?.truncated ? "Recuperados/total del mapa. Se muestra una selección acotada." : "Recuperados/total del mapa.";
+    notice.textContent = mismatch ? t("El mapa y la consulta corresponden a versiones distintas. Actualiza la página para cargar el mapa publicado más reciente.") : messages[latest.status] ?? messages.idle;
+    concepts.title = relations.title = trace?.truncated ? t("Recuperados/total del mapa. Se muestra una selección acotada.") : t("Recuperados/total del mapa.");
     notice.hidden = !notice.textContent;
     root.dataset.traceStatus = mismatch ? "version-mismatch" : latest.status;
     if (mismatch) refreshGraph();
@@ -181,14 +182,14 @@ if (root?.dataset.knowledgeGraph) {
     if (!indexed.nodes.length || !/^[a-f0-9]{64}$/.test(data.version)) throw new Error("Invalid graph");
     network?.destroy();
     graph = indexed; version = data.version;
-    const date = new Date(data.generatedAt), when = Number.isFinite(date.getTime()) ? timestampFormat.format(date).replaceAll("/", "-").replace(",", "") : "fecha no disponible";
+    const date = new Date(data.generatedAt), when = Number.isFinite(date.getTime()) ? timestampFormat.format(date).replaceAll("/", "-").replace(",", "") : t("fecha no disponible");
     generatedWhen = when;
     const metadata = root.querySelector("[data-graph-meta]");
     metadata.replaceChildren();
-    for (const [label, value] of [["Conceptos", graph.nodes.length.toLocaleString("es")], ["Relaciones", graph.edges.length.toLocaleString("es")], ["Actualización", when], ["Versión", String(version).slice(0, 12)]]) {
+    for (const [label, value] of [[t("Conceptos"), graph.nodes.length.toLocaleString(language)], [t("Relaciones"), graph.edges.length.toLocaleString(language)], [t("Actualización"), when], [t("Versión"), String(version).slice(0, 12)]]) {
       const item = element("div"); item.append(element("dt", label), element("dd", value)); metadata.append(item);
-      if (label === "Actualización") { item.className = "chat-graph-stamp"; item.lastElementChild.title = `Índice generado el ${when} (hora de Perú, UTC−5). Sincronización del repositorio pendiente de comprobar.`; }
-      if (label === "Versión") item.lastElementChild.append(updating);
+      if (label === t("Actualización")) { item.className = "chat-graph-stamp"; item.lastElementChild.title = t('Índice generado el {when} (hora de Perú, UTC−5). Sincronización del repositorio pendiente de comprobar.', {when}); }
+      if (label === t("Versión")) item.lastElementChild.append(updating);
     }
     status.hidden = true; workspace.hidden = false;
     network = createNetwork(root.querySelector("[data-graph-canvas]"), graph, select, anchorCard, percent => { zoom.value = `${percent}%`; });
@@ -229,7 +230,7 @@ if (root?.dataset.knowledgeGraph) {
       });
     } catch {
       status.classList.remove("is-loading"); status.removeAttribute("aria-label");
-      status.textContent = "No se pudo cargar la instantánea del mapa. Actualiza la página para volver a intentarlo.";
+      status.textContent = t("No se pudo cargar la instantánea del mapa. Actualiza la página para volver a intentarlo.");
       status.hidden = false; workspace.hidden = true;
     }
   }

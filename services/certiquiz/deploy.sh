@@ -20,7 +20,7 @@ if not env.exists():
         'CERTIQUIZ_SECURE_COOKIES': 'true',
         'CERTIQUIZ_PORT': '18740',
         'CERTIQUIZ_TRUSTED_PROXY_IPS': '127.0.0.1',
-        'CERTIQUIZ_CATALOG_SOURCE': 'github',
+        'CERTIQUIZ_CATALOG_SOURCE': 'published',
     }
     env.write_text(''.join(f"{name}='{value}'\n" for name, value in values.items()))
     os.chmod(env, 0o600)
@@ -30,7 +30,7 @@ if not any(line.startswith('CERTIQUIZ_ALLOWED_ORIGINS=') for line in env.read_te
         settings.write("\nCERTIQUIZ_ALLOWED_ORIGINS='https://jgangini.github.io'\n")
 if not any(line.startswith('CERTIQUIZ_CATALOG_SOURCE=') for line in env.read_text().splitlines()):
     with env.open('a') as settings:
-        settings.write("\nCERTIQUIZ_CATALOG_SOURCE=github\n")
+        settings.write("\nCERTIQUIZ_CATALOG_SOURCE=published\n")
 PY
 compose=(docker compose --project-directory "$PWD" --env-file services/certiquiz/.env -p certiquiz -f services/certiquiz/compose.yml)
 "${compose[@]}" config --quiet
