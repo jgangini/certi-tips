@@ -44,6 +44,8 @@ def network_digest(address, secret):
 
 
 def cookie_name(settings):
+    if settings.local_voice_pilot:
+        return "certichat-voice-pilot"
     return LOCAL_COOKIE if settings.mode == "LOCAL" else COOKIE
 
 
@@ -99,7 +101,7 @@ class GuardMiddleware:
         if scope["method"] in ("POST", "DELETE", "PUT", "PATCH"):
             if headers.get("content-type", "").split(";")[0].strip().lower() != "application/json":
                 return await JSONResponse({"detail": "Envía JSON."}, 415)(scope, receive, send)
-            limit = 131072 if internal else 8192
+            limit = 131072 if internal else 1350000 if scope["path"] == "/api/voice" else 16384 if scope["path"] == "/api/chat" else 8192
             try:
                 length = int(headers.get("content-length", "0"))
                 if length < 0 or length > limit:

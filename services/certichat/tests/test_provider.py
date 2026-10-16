@@ -313,6 +313,48 @@ def test_answer_without_citations_remains_a_knowledge_refusal():
     assert result == (REFUSAL, []) and len(ledger.reservations) == 1
 
 
+def test_opt_in_continuity_uses_the_same_paid_call_and_only_revalidated_prior_answers():
+    fragment = {"id": "doc", "title": "Guía", "url": "https://site.test/guide", "text": "El modelo propone y la aplicación valida."}
+    source = {key: fragment[key] for key in ("id", "title", "url")}
+    history = [{"question": "Primera duda", "answer": "No debe entrar", "sources": [{**source, "url": "https://site.test/removed"}]},
+               {"question": "Segunda duda", "answer": "El modelo propone.", "sources": [source]}]
+
+    def handler(request):
+        payload = json.loads(request.content)
+        data = json.loads(payload["messages"][1]["content"])
+        assert data["continuity"] == "Objetivo: comprender el ciclo."
+        assert data["history"] == [{"question": "Primera duda"}, {"question": "Segunda duda", "answer": "El modelo propone.",
+                                  "sources": [{"position": 1, "id": "S1", "title": "Guía"}]}]
+        schema = payload["response_format"]["json_schema"]["schema"]
+        assert schema["properties"]["continuity"]["maxLength"] == 1200
+        assert "continuity" in schema["required"]
+        assert "nunca evidencia" in payload["messages"][0]["content"]
+        return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps({
+            "kind": "grounded", "answer": fragment["text"], "citations": ["S1"], "continuity": "Objetivo: ciclo. Pendiente: permisos."})}}]})
+
+    result, ledger = run_provider(handler, lambda provider: provider.answer("Continúa", [fragment], history, continuity="Objetivo: comprender el ciclo."))
+    assert result == (fragment["text"], [source], "Objetivo: ciclo. Pendiente: permisos.")
+    assert len(ledger.reservations) == 1
+    assert "continuity" not in provider_module.ANSWER_FORMAT["json_schema"]["schema"]["properties"]
+
+
+@pytest.mark.parametrize("proposed", [None, [], "x"*1201, "   "])
+def test_invalid_continuity_keeps_the_previous_card_without_discarding_a_valid_answer(proposed):
+    def handler(_request):
+        return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps({
+            "kind": "conversation", "answer": "Podemos continuar.", "citations": [], "continuity": proposed})}}]})
+    result, ledger = run_provider(handler, lambda provider: provider.answer("Continúa", [], [], continuity="Tema: agentes."))
+    assert result == ("Podemos continuar.", [], "Tema: agentes.") and len(ledger.reservations) == 1
+
+
+def test_shared_answer_validator_rejects_untrusted_citations_and_extra_fields():
+    output = {"kind": "grounded", "answer": "Hecho.", "citations": ["unknown"]}
+    with pytest.raises(ValueError):
+        provider_module.validate_answer(output, {})
+    with pytest.raises(ValueError):
+        provider_module.validate_answer({"kind": "conversation", "answer": "Hola.", "citations": [], "continuity": "hidden"}, {})
+
+
 @pytest.mark.parametrize("locale,language", [("es", "español"), ("en", "inglés"), ("pt", "portugués de Brasil"), ("it", "italiano")])
 def test_selected_language_uses_one_existing_answer_call_and_localized_refusal(locale, language):
     requests = []

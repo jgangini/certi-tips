@@ -40,6 +40,7 @@ md.renderer.rules.table_open = () => '<div class="table-scroll" role="region" ar
 md.renderer.rules.table_close = () => "</table></div>\n";
 md.renderer.rules.heading_open = (tokens, index, options, env, renderer) => {
   env.heading = tokens[index + 1].children.filter(token => ["text", "code_inline"].includes(token.type)).map(token => token.content).join("");
+  tokens[index].attrSet("data-source-id", `${env.pageId}#${tokens[index].attrGet("id")}`);
   return renderer.renderToken(tokens, index, options);
 };
 
@@ -52,16 +53,17 @@ md.renderer.rules.image = (tokens, index, _options, env) => {
   const alt = escapeHtml(token.content);
   const caption = escapeHtml(token.attrGet("title") || token.content);
   const heading = env.heading || token.content;
-  env.gallery.push({ src: imageUrl, alt: token.content, caption: token.attrGet("title") || token.content, module: env.pageTitle, heading });
+  const sourceId = `${env.pageId}#diagram-${reference.slice(4)}`;
+  env.gallery.push({ src: imageUrl, alt: token.content, caption: token.attrGet("title") || token.content, module: env.pageTitle, heading, sourceId });
   const size = imageSizes.get(imageUrl);
   if (!size?.every(value => Number.isFinite(value) && value > 0)) throw new Error(`Missing image dimensions: ${src}`);
-  return `<button class="diagram" id="diagram-${reference.slice(4)}" type="button" data-diagram="${src}" data-diagram-heading="${escapeHtml(heading)}" aria-label="Ampliar: ${alt}"><img src="${src}" alt="${alt}" width="${size[0]}" height="${size[1]}" loading="lazy"><span>${caption} <span aria-hidden="true">↗</span></span></button>`;
+  return `<button class="diagram" id="diagram-${reference.slice(4)}" type="button" data-source-id="${escapeHtml(sourceId)}" data-diagram="${src}" data-diagram-heading="${escapeHtml(heading)}" aria-label="Ampliar: ${alt}"><img src="${src}" alt="${alt}" width="${size[0]}" height="${size[1]}" loading="lazy"><span>${caption} <span aria-hidden="true">↗</span></span></button>`;
 };
 
-function renderMarkdown(source, publicPath, pageTitle) {
+function renderMarkdown(source, publicPath, pageTitle, pageId) {
   const tokens = md.parse(source.replaceAll("{{base}}", site.base), {});
   const toc = annotateHeadings(tokens);
-  const env = { publicPath, pageTitle, gallery: [] };
+  const env = { publicPath, pageTitle, pageId, gallery: [] };
   return { html: md.renderer.render(tokens, md.options, env), toc, tokens, gallery: env.gallery };
 }
 
@@ -73,7 +75,8 @@ async function save(relative, html) {
 }
 
 async function publishImages(directory, publicPath) {
-  if (!existsSync(path.join(directory, "img"))) return;
+  const sources = new Map();
+  if (!existsSync(path.join(directory, "img"))) return sources;
   const images = await realpath(path.join(directory, "img"));
   if (!images.startsWith(`${directory}${path.sep}`)) throw new Error("Module images must stay inside their source directory.");
   const files = await readdir(images, { withFileTypes: true });
@@ -89,8 +92,10 @@ async function publishImages(directory, publicPath) {
     }
     if (!size?.every(value => Number.isFinite(value) && value > 0)) throw new Error(`Missing image dimensions: ${name}`);
     imageSizes.set(`${site.base}${publicPath}/img/${name}`, size);
+    sources.set(`img/${name}`, contents);
     await save(`${publicPath}/img/${name}`, contents);
   }
+  return sources;
 }
 
 async function renderPage(course, page) {
@@ -98,8 +103,8 @@ async function renderPage(course, page) {
   const source = await realpath(path.resolve(contentRoot, course.contentDir, page.file));
   if (!source.startsWith(`${contentRoot}${path.sep}`)) throw new Error("Course source must stay inside data/.");
   const publicPath = `${courseRoute(course)}/${page.slug}`;
-  await publishImages(path.dirname(source), publicPath);
-  return renderMarkdown(await readFile(source, "utf8"), publicPath, page.title);
+  const diagramSources = await publishImages(path.dirname(source), publicPath);
+  return { ...renderMarkdown(await readFile(source, "utf8"), publicPath, page.title, `${course.id}/${page.slug}`), diagramSources };
 }
 
 try {
@@ -132,8 +137,8 @@ for (const course of site.courses) {
   await save(`${publicPath}/gallery.json`, JSON.stringify(pages.flatMap(page => rendered.get(page.slug).gallery)));
   const tocByPage = new Map([...rendered].map(([slug, { toc }]) => [slug, toc]));
   for (const page of pages) {
-    const { html, tokens } = rendered.get(page.slug);
-    knowledge.push(...pageDocuments(tokens, { id: `${course.id}/${page.slug}`, title: page.title, description: page.description, courseId: course.id, url: `${site.origin}${site.base}${publicPath}/${page.slug}/` }));
+    const { html, tokens, diagramSources } = rendered.get(page.slug);
+    knowledge.push(...pageDocuments(tokens, { id: `${course.id}/${page.slug}`, title: page.title, description: page.description, courseId: course.id, url: `${site.origin}${site.base}${publicPath}/${page.slug}/`, diagramSources }));
     const index = course.modules.indexOf(page);
     await save(
       `${publicPath}/${page.slug}/index.html`,

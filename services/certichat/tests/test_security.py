@@ -88,7 +88,8 @@ def test_local_mode_requires_loopback_and_uses_separate_cookie():
 def test_environment_mode_defaults_fail_closed(monkeypatch):
     for name in ("CERTICHAT_MODE", "CERTICHAT_PUBLIC_ORIGIN", "CERTICHAT_ALLOWED_ORIGINS",
                  "CERTICHAT_TURNSTILE_SECRET", "CERTICHAT_SITE_URL", "CERTICHAT_REFRESH", "CERTICHAT_QUESTIONS",
-                 "CERTICHAT_INDEX_BUDGET_USD", "CERTICHAT_CHAT_BUDGET_USD", "CERTICHAT_JEV_VIDEO_ENABLED"):
+                 "CERTICHAT_INDEX_BUDGET_USD", "CERTICHAT_CHAT_BUDGET_USD", "CERTICHAT_JEV_VIDEO_ENABLED",
+                 "CERTICHAT_VOICE_ENABLED", "CERTICHAT_LOCAL_VOICE_PILOT"):
         monkeypatch.delenv(name, raising=False)
     for name, value in (("CERTICHAT_DATABASE_URL", "postgresql://test/test"), ("OPENROUTER_API_KEY", "a"*32),
                         ("CERTICHAT_CHAT_INTERNAL_TOKEN", "c"*32), ("CERTICHAT_INDEX_INTERNAL_TOKEN", "d"*32),
@@ -99,7 +100,8 @@ def test_environment_mode_defaults_fail_closed(monkeypatch):
         Settings.from_env().validate()
     monkeypatch.setenv("CERTICHAT_MODE", "LOCAL")
     Settings.from_env().validate()
-    assert Settings.from_env().index_budget_usd == Settings.from_env().chat_budget_usd == Decimal('10')
+    assert Settings.from_env().index_budget_usd == Decimal('10')
+    assert Settings.from_env().chat_budget_usd == Decimal('50')
     monkeypatch.setenv("CERTICHAT_INDEX_BUDGET_USD", "12.50")
     monkeypatch.setenv("CERTICHAT_CHAT_BUDGET_USD", "9.25")
     configured = Settings.from_env()
@@ -115,6 +117,17 @@ def test_environment_mode_defaults_fail_closed(monkeypatch):
     with pytest.raises(ValueError):
         Settings.from_env()
     monkeypatch.setenv("CERTICHAT_JEV_VIDEO_ENABLED", "false")
+    assert Settings.from_env().local_voice_pilot is False
+    monkeypatch.setenv("CERTICHAT_LOCAL_VOICE_PILOT", "true")
+    with pytest.raises(ValueError):
+        Settings.from_env().validate()
+    monkeypatch.setenv("CERTICHAT_VOICE_ENABLED", "true")
+    Settings.from_env().validate()
+    assert Settings.from_env().local_voice_pilot is True
+    monkeypatch.setenv("CERTICHAT_LOCAL_VOICE_PILOT", "yes")
+    with pytest.raises(ValueError):
+        Settings.from_env()
+    monkeypatch.setenv("CERTICHAT_LOCAL_VOICE_PILOT", "false")
     monkeypatch.setenv("CERTICHAT_REFRESH", "NaN")
     with pytest.raises(ValueError):
         Settings.from_env()
@@ -122,3 +135,23 @@ def test_environment_mode_defaults_fail_closed(monkeypatch):
     monkeypatch.setenv("CERTICHAT_PUBLIC_ORIGIN", "https://certichat.cloudtechnext.net")
     with pytest.raises(ValueError):
         Settings.from_env().validate()
+
+
+def test_local_voice_pilot_requires_local_enabled_voice_and_has_its_own_cookie():
+    local = Settings("postgresql://test/test", "a"*32, "", "c"*32, "d"*32, "e"*32,
+                     mode="LOCAL", public_origin="http://127.0.0.1:18742",
+                     allowed_origins=("http://127.0.0.1:4173",))
+    assert local.local_voice_pilot is False and cookie_name(local) == LOCAL_COOKIE
+    pilot = replace(local, voice_enabled=True, local_voice_pilot=True)
+    pilot.validate()
+    for change in ({"voice_enabled": False}, {"mode": "VPS"},
+                   {"local_voice_pilot": "true"}, {"local_voice_pilot": 1}):
+        with pytest.raises(ValueError):
+            replace(pilot, **change).validate()
+    response = Response()
+    set_cookie(response, new_token(), pilot)
+    cookie = response.headers["set-cookie"].lower()
+    assert cookie_name(pilot) == "certichat-voice-pilot"
+    assert cookie.startswith("certichat-voice-pilot=")
+    assert "httponly" in cookie and "samesite=lax" in cookie and "path=/" in cookie
+    assert "secure" not in cookie and "domain=" not in cookie

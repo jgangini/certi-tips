@@ -11,7 +11,7 @@ from test_api import database_url
 
 @pytest.fixture
 def ledger(database_url):
-    store = Store(database_url)
+    store = Store(database_url, chat_budget_usd=Decimal("10"))
     store.open()
     try:
         yield store

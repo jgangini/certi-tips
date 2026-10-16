@@ -4,8 +4,19 @@ import { readFileSync } from "node:fs";
 import MarkdownIt from "markdown-it";
 import { Remarkable } from "remarkable";
 import { annotateHeadings, pageDocuments, corpusArtifacts, contentHash } from "../scripts/certichat-corpus.mjs";
-import { configureChatMarkdown, safeSourceURL, quotaText, restoreChat, isChatPreview, answerWithReferences } from "../assets/certichat.js";
+import { configureChatMarkdown, safeSourceURL, quotaText, restoreChat, isChatPreview, answerWithReferences, chatNavigationAction } from "../assets/certichat.js";
+import { activityTrail, validActivityTrail } from "../assets/certichat-activity.js";
 const plainChatHTML = (text, siteRoot) => configureChatMarkdown(new Remarkable(), siteRoot).render(text);
+
+test("explicit multilingual brand navigation stays separate from questions, practice and mixed requests", () => {
+  for (const [text, name] of [
+    ["navegar hasta CertiQuiz", "quiz"], ["Abre CertiTube.", "videos"], ["ve a CertiTips", "catalog"], ["ir a inicio", "home"], ["abrir la página principal de inicio", "home"], ["llévame a CertiQuiz", "quiz"],
+    ["Open CertiQuiz", "quiz"], ["go home!", "home"], ["navigate to CertiChat", "chat"],
+    ["Abra CertiTube", "videos"], ["navegar para CertiTips", "catalog"], ["vá para início", "home"], ["navegue até CertiQuiz", "quiz"],
+    ["Apri CertiQuiz", "quiz"], ["vai a CertiChat", "chat"], ["naviga alla pagina iniziale", "home"],
+  ]) assert.deepEqual(chatNavigationAction(text), name ? { name } : null, text);
+  for (const text of [undefined, null, {}, "", "CertiQuiz", "qué es CertiQuiz", "No abras CertiQuiz", "do not open CertiQuiz", "não abra CertiQuiz", "non aprire CertiQuiz", "abre CertiQuiz y explica OCI", "open CertiTube or CertiQuiz", "navegar hasta CertiQuiz?", "abre práctica", "ve a https://example.com/", "dime cómo ir a inicio"]) assert.equal(chatNavigationAction(text), null, String(text));
+});
 
 test("CertiChat separates local previews from published and local API sessions", () => {
   const api = "https://certichat.cloudtechnext.net";
@@ -105,6 +116,12 @@ test("guide references navigate on the current origin while retaining canonical 
   assert.equal(safeSourceURL(path, site), null, "Relative navigation must not weaken canonical source validation");
 });
 
+test("CertiChat discards the old operational voice notice without removing conversation text", () => {
+  const text = "El modo voz todavía no está habilitado. Puedes seguir usando el chat.";
+  const messages = [{ role: "ai", text }, { role: "user", text }, { role: "ai", text: "Un agente conecta una meta con acciones." }];
+  assert.deepEqual(restoreChat({ updatedAt: 100, messages }, "https://jgangini.github.io/certitips/", 100).messages, messages.slice(1));
+});
+
 test("CertiChat restores bounded message text and discards the old sources panel data", () => {
   const site = "https://jgangini.github.io/certitips/", now = 1_800_000_000_000;
   const messages = Array.from({ length: 102 }, (_, index) => ({ role: index % 2 ? "ai" : "user", text: `Mensaje ${index}` }));
@@ -166,10 +183,46 @@ test("CertiChat restores only valid pending request identity and original page c
   const pendingRequest = { requestId: "550e8400-e29b-41d4-a716-446655440000", message: "Explica este tema", pageUrl: `${site}lesson/#context` };
   const snapshot = { updatedAt: now, messages: [], sources: [], pendingRequest: { ...pendingRequest, html: "ignored" } };
   assert.deepEqual(restoreChat(snapshot, site, now).pendingRequest, pendingRequest);
+  const contextIds = ["agentic-ai-foundations-2026/agents#diagram-agent-loop.svg", "agentic-ai-foundations-2026/agents#conceptos-clave"];
+  for (const ids of [[], contextIds]) assert.deepEqual(restoreChat({ ...snapshot, pendingRequest: { ...pendingRequest, contextIds: ids } }, site, now).pendingRequest, { ...pendingRequest, contextIds: ids });
+  for (const ids of [null, "source", [""], [null], ["theme:dark"], ["course:1Z0-1157-26"], ["https://example.com/#source"], ["x/section#" + "a".repeat(200)], [...contextIds, contextIds[0]]]) assert.equal(restoreChat({ ...snapshot, pendingRequest: { ...pendingRequest, contextIds: ids } }, site, now).pendingRequest, undefined, JSON.stringify(ids));
+  const trail = [{ at: now - 86400001, pageUrl: pendingRequest.pageUrl, kind: "page", state: "arrived" }];
+  assert.deepEqual(restoreChat({ ...snapshot, pendingRequest: { ...pendingRequest, activityTrail: trail } }, site, now).pendingRequest.activityTrail, trail, "A retry preserves its original snapshot even when a trail entry has since expired");
+  for (const activityTrail of [null, {}, [{ ...trail[0], response: "not activity" }], Array(13).fill(trail[0])]) assert.equal(restoreChat({ ...snapshot, pendingRequest: { ...pendingRequest, activityTrail } }, site, now).pendingRequest, undefined);
   assert.equal(restoreChat({ ...snapshot, pendingRequest: { ...pendingRequest, requestId: [pendingRequest.requestId] } }, site, now).pendingRequest, undefined);
   const invalid = [null, {}, ...[{ requestId: "550e8400-e29b-11d4-a716-446655440000" }, { requestId: "550e8400-e29b-41d4-1716-446655440000" }, { requestId: `${pendingRequest.requestId}-extra` }, { message: " " }, { message: "x".repeat(1501) }, { message: 123 }, { pageUrl: "https://attacker.test/" }, { pageUrl: `${site}?secret=1` }].map(value => ({ ...pendingRequest, ...value }))];
   for (const value of invalid) {
     assert.equal(restoreChat({ ...snapshot, pendingRequest: value }, site, now).pendingRequest, undefined);
+  }
+});
+
+test("activity trail accepts only bounded observable states and expires entries without renewing timestamps", () => {
+  const site = "https://jgangini.github.io/certitips/", now = 1_800_000_000_000;
+  const page = { at: now, pageUrl: `${site}1Z0-1157-26/agents/`, kind: "page", state: "arrived" };
+  const diagram = { ...page, kind: "diagram", state: "presentation", targetId: "agentic-ai-foundations-2026/agents#diagram-agent-loop.svg" };
+  const practice = { ...page, kind: "practice", state: "question", position: 2 };
+  const cancelled = { ...page, kind: "practice_dialog", state: "cancelled", targetId: "finish" };
+  const section = { ...page, kind: "section", state: "highlighted", targetId: "agentic-ai-foundations-2026/agents#conceptos-clave" };
+  assert(validActivityTrail([page, diagram, practice, cancelled, section], site));
+  for (const extra of [{ state: "opened" }, { targetId: "theme:dark" }, { position: 1 }, { text: "user phrase" }]) assert.equal(validActivityTrail([{ ...section, ...extra }], site), false);
+  for (const entry of [{ ...page, pageUrl: "https://attacker.test/" }, { ...page, pageUrl: `${site}?secret=1` }, { ...diagram, targetId: "theme:dark" }, { ...practice, position: 0 }, { ...practice, answer: "A" }, { ...cancelled, targetId: "home" }, { ...page, kind: "click" }, { ...page, state: "opened" }, { ...page, at: 1.5 }]) assert.equal(validActivityTrail([entry], site), false, JSON.stringify(entry));
+  assert.equal(validActivityTrail([page, { ...page, at: now - 1 }], site), false);
+  const huge = { ...diagram, pageUrl: site + "x".repeat(900) + "/" };
+  assert.equal(validActivityTrail(Array(12).fill(huge), site), false);
+  const previous = { document: globalThis.document, sessionStorage: globalThis.sessionStorage };
+  const storage = new Map(), key = "certichat:/certitips/:activity";
+  try {
+    globalThis.document = { querySelector: () => ({ dataset: { siteRoot: site } }) };
+    globalThis.sessionStorage = { getItem: name => storage.get(name), setItem: (name, value) => storage.set(name, value), removeItem: name => storage.delete(name) };
+    const old = { ...page, at: now - 86400000 }, fresh = { ...diagram, at: now - 1234 }, future = { ...page, at: now + 1 };
+    storage.set(key, JSON.stringify([old, fresh, future]));
+    assert.deepEqual(activityTrail(now), [fresh]);
+    assert.deepEqual(JSON.parse(storage.get(key)), [fresh]);
+    assert.deepEqual(activityTrail(now + 1), [fresh]);
+    const snapshot = activityTrail(now); storage.set(key, JSON.stringify([fresh, cancelled]));
+    assert.deepEqual(snapshot, [fresh], "A later UI action cannot mutate an existing request snapshot");
+  } finally {
+    for (const [name, value] of Object.entries(previous)) { if (value === undefined) delete globalThis[name]; else globalThis[name] = value; }
   }
 });
 

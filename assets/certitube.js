@@ -84,9 +84,16 @@ export function mountPlayer(root) {
   const spinner = root.querySelector("[data-tube-loading]");
   const duration = Number(root.dataset.duration), videoId = root.dataset.videoId;
   const moments = new Map([...document.querySelectorAll("[data-tube-time]")].map(link => [Number(link.dataset.tubeTime), { seconds: Number(link.dataset.tubeTime), label: link.querySelector("span").textContent }]));
-  let player, playback, ready = false, pending, wanted = false, failed = false;
+  let player, playback, ready = false, pending, wanted = false, failed = false, autoplay = true, voiceFullscreen = false;
+  const announcePlayback = playing => {
+    if (!playing && voiceFullscreen) {
+      voiceFullscreen = false;
+      if (document.fullscreenElement && root.contains(document.fullscreenElement)) document.exitFullscreen?.().catch(() => {});
+    }
+    window.dispatchEvent(new CustomEvent("certitube:playback", { detail: { playing, videoId } }));
+  };
   const inform = (text, link = false) => { message.textContent = text; status.hidden = !text; external.hidden = !link; };
-  const fallback = text => { clearTimeout(loading); spinner.hidden = true; playback?.stop(); failed = true; inform(text, true); };
+  const fallback = text => { clearTimeout(loading); spinner.hidden = true; playback?.stop(); failed = true; announcePlayback(false); inform(text, true); };
   const loading = setTimeout(() => fallback(t("YouTube está tardando en responder. Puedes abrir el video con el enlace.")), 20000);
 
   function playMoment() {
@@ -97,11 +104,11 @@ export function mountPlayer(root) {
       wanted = false; player.pauseVideo(); inform(t("Este momento ya no está disponible en el video.")); return;
     }
     player.seekTo(seconds, true);
-    player.playVideo();
+    if (autoplay) player.playVideo(); else player.pauseVideo();
   }
 
-  function select(moment) {
-    pending = moment; wanted = Boolean(moment);
+  function select(moment, play = true) {
+    pending = moment; wanted = Boolean(moment); autoplay = play;
     external.href = `https://www.youtube.com/watch?v=${videoId}${moment ? `&t=${moment.seconds}s` : ""}`;
     const displayed = moment ?? moments.values().next().value;
     showChapter(root, displayed.seconds, Boolean(moment));
@@ -126,10 +133,38 @@ export function mountPlayer(root) {
       inform("");
       playMoment();
     },
-    onStateChange(event) { if (event.data === 1) inform(""); playback?.state(event.data); },
+    onStateChange(event) { if (event.data === 1) inform(""); playback?.state(event.data); if ([0, 1, 2].includes(event.data)) announcePlayback(event.data === 1); },
     onAutoplayBlocked() { inform(t("Pulsa reproducir en el video para ver el momento seleccionado.")); },
     onError() { fallback(t("No se puede reproducir aquí. Puedes abrir este momento en YouTube.")); },
   };
+  root.addEventListener("certitube:command", event => {
+    const request = event.detail;
+    if (!request || failed) return;
+    if (request.name === "chapter") {
+      const moment = moments.get(request.seconds);
+      if (!moment || moment.seconds >= duration) return;
+      history.replaceState(history.state, "", `#t-${moment.seconds}`);
+      select(moment, false); announcePlayback(false); request.accepted = true;
+    } else if (["pause", "close"].includes(request.name)) {
+      wanted = false; autoplay = false;
+      if (ready) player.pauseVideo();
+      if (request.name === "close" && document.fullscreenElement && root.contains(document.fullscreenElement)) document.exitFullscreen?.().catch(() => {});
+      announcePlayback(false); request.accepted = true;
+    } else if (request.name === "play" && ready) {
+      request.accepted = true;
+      // ponytail: fullscreen needs a real gesture in some browsers; a denied promise keeps playback paused for the existing confirmation button.
+      request.completion = (async () => {
+        const screen = root.querySelector(".tube-watch") || root;
+        try {
+          if (document.fullscreenElement !== screen) {
+            if (!screen.requestFullscreen) return false;
+            await screen.requestFullscreen();
+          }
+          voiceFullscreen = true; autoplay = true; wanted = true; announcePlayback(true); playMoment(); return true;
+        } catch { player.pauseVideo(); announcePlayback(false); return false; }
+      })();
+    }
+  });
   document.addEventListener("click", event => onMomentLink(event, moments, fromHash));
   window.addEventListener("hashchange", fromHash);
   // Native initial-fragment/history scrolling happens after module initialization.

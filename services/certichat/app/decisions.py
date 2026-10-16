@@ -116,12 +116,12 @@ def select_fragments(plan, fragments, site_url, threshold=0.95, drop_below=0.1):
     return resources, context or fragments
 
 
-async def answer_with_decisions(provider, message, fragments, history, locale="es"):
+async def answer_with_decisions(provider, message, fragments, history, locale="es", continuity=None, *, activity=()):
     if locale not in PREFIX:
         raise ChatError("Idioma no permitido.", 422)
     # The shortcut sees questions only and cannot resolve ordered historical citations; GPT keeps those follow-ups.
     if (provider.settings.jev_video_enabled and locale == "es" and fragments
-            and not any(turn.get("sources") for turn in history) and video_lookup_candidate(message, history)):
+            and not activity and not any(turn.get("sources") for turn in history) and video_lookup_candidate(message, history)):
         try:
             request = decision_request(message, fragments, history, provider.settings.site_url, context_checks=False)
             with anyio.fail_after(2):
@@ -131,8 +131,10 @@ async def answer_with_decisions(provider, message, fragments, history, locale="e
             if resources and plan["route"] == "video":
                 logging.getLogger(__name__).info("Jev video lookup: direct")
                 sources = [{key: f[key] for key in ("id", "title", "url")} for f in resources]
-                return PREFIX[locale], sources
+                return (PREFIX[locale], sources, continuity) if continuity is not None else (PREFIX[locale], sources)
             logging.getLogger(__name__).info("Jev video lookup: GPT fallback")
         except (ChatError, TimeoutError, KeyError, TypeError, ValueError):
             logging.getLogger(__name__).info("Jev selection unavailable; using unchanged GPT path")
-    return await provider.answer(message, fragments, history, locale)
+    if continuity is not None:
+        return await provider.answer(message, fragments, history, locale, continuity=continuity, **({"activity": activity} if activity else {}))
+    return await provider.answer(message, fragments, history, locale, **({"activity": activity} if activity else {}))

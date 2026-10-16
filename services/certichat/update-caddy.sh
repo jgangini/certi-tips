@@ -17,8 +17,17 @@ cat >> "$temporary" <<'CADDY'
 # BEGIN certichat
 certichat.cloudtechnext.net {
   encode zstd gzip
-  request_body {
-    max_size 8KB
+  @voice path /api/voice
+  request_body @voice {
+    max_size 1350000
+  }
+  @chat path /api/chat
+  request_body @chat {
+    max_size 16384
+  }
+  @small not path /api/voice /api/chat
+  request_body @small {
+    max_size 8192
   }
   @public path /api/*
   handle @public {

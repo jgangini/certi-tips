@@ -146,8 +146,9 @@ def supported_fragments(evidence: list[dict], sources: dict, latest: dict, *,
                 or any(metadata.get(key) != source.get(key) for key in ("hash", "title", "courseId"))):
             continue
         seen.add(name)
-        candidates.append({"id": name.removesuffix(".txt"), "title": source["title"],
-                           "url": metadata["url"], "text": source["text"]})
+        candidates.append({"id": name.removesuffix(".txt"), "sourceId": source["id"], "courseId": source["courseId"], "title": source["title"],
+                           "url": metadata["url"], "text": source["text"],
+                           **({"kind": "diagram"} if metadata.get("kind") == "diagram" else {})})
     selected, size = [], 0
     for candidate in candidates:
         length = len(candidate["text"].encode("utf-8"))
@@ -158,3 +159,34 @@ def supported_fragments(evidence: list[dict], sources: dict, latest: dict, *,
         size += length
         selected.append(candidate)
     return selected
+
+
+def verified_local_context(directory: str, page_url: str, context_ids: list[str], history=(), retrieved=()):
+    """Read only explicit build context; this does not create or claim a Cognee index."""
+    root = Path(directory)
+    with (root / "manifest.json").open("rb") as stream:
+        raw_manifest = stream.read(8_000_001)
+    with (root / "corpus.json").open("rb") as stream:
+        raw_corpus = stream.read(32_000_001)
+    if len(raw_manifest) > 8_000_000 or len(raw_corpus) > 32_000_000:
+        raise ValueError("Local corpus exceeds artifact limits")
+    manifest = validate_manifest(json.loads(raw_manifest))
+    documents = validate_corpus(raw_corpus, manifest)
+    current = {doc["id"]: doc for doc in manifest["documents"]}
+    sources = segments(documents)
+    names = [name for identifier in context_ids for name, source in sources.items() if source["id"] == identifier
+             and current[identifier]["url"].split("#")[0] == page_url.split("#")[0]]
+    previous = {source["id"]: source for turn in history if turn.get("version") == manifest["contentHash"]
+                for source in turn.get("sources", [])}
+    if not context_ids:
+        names += [name for name, source in sources.items() if name.removesuffix(".txt") in previous
+                  and all(previous[name.removesuffix(".txt")].get(key) == source[key] for key in ("title", "url"))]
+    if not names:
+        return None
+    # Reuse the existing retrieval only when its complete segment still matches this verified build.
+    names += [fragment["id"] + ".txt" for fragment in retrieved if fragment["id"] + ".txt" in sources
+              and all(fragment.get(key) == sources[fragment["id"] + ".txt"][key] for key in ("title", "url", "text"))]
+    fragments = supported_fragments([{"kind": "segment", "document_name": name} for name in names], sources, manifest)
+    for fragment in fragments:
+        fragment["provenance"] = "verified_local_corpus"
+    return manifest["contentHash"], fragments

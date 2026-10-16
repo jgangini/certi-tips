@@ -14,6 +14,15 @@ const languageMenu = document.querySelector('.language-menu');
 const languageTransition = document.getElementById('language-transition');
 let languageTransitionTimer;
 languageTransition?.addEventListener('cancel', event => event.preventDefault());
+function showLanguageTransition(value) {
+  const target = new URL(value, location.href);
+  if (!languageTransition || target.origin !== location.origin || !target.pathname.startsWith(siteBase) || !/\/$|\.html$/.test(target.pathname) || target.pathname === location.pathname && target.search === location.search) return false;
+  clearTimeout(languageTransitionTimer);
+  if (!languageTransition.open) languageTransition.showModal();
+  try { sessionStorage.setItem('certitips:language-transition', target.href); } catch { /* Navigation works without storage. */ }
+  languageTransitionTimer = setTimeout(clearLanguageTransition, 8000);
+  return true;
+}
 function clearLanguageTransition() {
   clearTimeout(languageTransitionTimer);
   languageTransition?.close();
@@ -24,7 +33,7 @@ if (languageTransition?.open) {
     if (document.readyState === 'loading' || document.querySelector('main [aria-busy="true"]')) return;
     observer.disconnect();
     // ponytail: navigation timing includes loading; only pad fast transitions.
-    languageTransitionTimer = setTimeout(clearLanguageTransition, Math.max(0, 700 - performance.now()));
+    languageTransitionTimer = setTimeout(clearLanguageTransition, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : Math.max(0, 700 - performance.now()));
   };
   const observer = new MutationObserver(ready);
   observer.observe(document.querySelector('main'), { subtree: true, childList: true, attributes: true, attributeFilter: ['aria-busy'] });
@@ -44,14 +53,21 @@ for (const link of document.querySelectorAll('[data-language-link]')) {
   link.addEventListener('click', event => {
     updateLanguageLink(link);
     try { localStorage.setItem('certitips:locale', link.dataset.languageLink); } catch { /* Navigation works without storage. */ }
-    if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || link.dataset.languageLink === locale) return;
-    event.preventDefault();
-    languageMenu.open = false;
-    languageTransition.showModal();
-    try { sessionStorage.setItem('certitips:language-transition', link.href); } catch { /* The next page remains usable without storage. */ }
-    requestAnimationFrame(() => requestAnimationFrame(() => location.assign(link.href)));
   });
 }
+// The same glass covers normal links and native programmatic navigation; no client router.
+window.addEventListener('click', event => {
+  if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+  const link = event.composedPath().find(node => node.matches?.('a[href]'));
+  if (!link || link.hasAttribute('download') || link.target && link.target.toLowerCase() !== '_self' || !showLanguageTransition(link.href)) return;
+  event.preventDefault();
+  if (languageMenu) languageMenu.open = false;
+  requestAnimationFrame(() => requestAnimationFrame(() => location.assign(link.href)));
+});
+window.navigation?.addEventListener('navigate', event => {
+  if (event.defaultPrevented || event.destination.sameDocument || event.hashChange || event.downloadRequest !== null || event.formData || !showLanguageTransition(event.destination.url)) return;
+  event.signal.addEventListener('abort', clearLanguageTransition, { once: true });
+});
 languageMenu?.addEventListener('toggle', () => {
   if (languageMenu.open) {
     for (const link of languageMenu.querySelectorAll('[data-language-link]')) updateLanguageLink(link);
@@ -424,6 +440,7 @@ function setPresentationMenu(open) {
 }
 menu.addEventListener("click", () => setPresentationMenu(!filmstrip.classList.contains("is-open")));
 function restoreDiagram() {
+  dialog.dataset.sourceId = opener.dataset.sourceId || "";
   const image = opener.querySelector("img"), enlarged = dialog.querySelector(".dialog-content img");
   enlarged.src = image.src;
   enlarged.alt = image.alt;
@@ -452,6 +469,7 @@ async function showSlide(index) {
   try { await preload.decode(); } catch { return; }
   if (token !== slideToken || !dialog.open || !dialog.classList.contains("is-presenting")) return;
   slideIndex = index;
+  dialog.dataset.sourceId = typeof item.sourceId === "string" ? item.sourceId : "";
   const image = dialog.querySelector(".dialog-content img");
   image.src = item.src;
   image.alt = item.alt;
@@ -467,12 +485,13 @@ async function showSlide(index) {
   slideCount.classList.add("is-visible");
   clearTimeout(countTimer);
   countTimer = setTimeout(() => slideCount.classList.remove("is-visible"), 2200);
+  return true;
 }
-present.addEventListener("click", async () => {
-  if (dialog.classList.contains("is-presenting")) return leavePresentation();
+async function togglePresentation() {
+  if (dialog.classList.contains("is-presenting")) { leavePresentation(); return true; }
   const prefix = `${document.body.dataset.base}${document.body.dataset.courseRoute}/`;
   try {
-    galleryPromise ||= fetch(`${prefix}gallery.json`).then(response => {
+    galleryPromise ||= fetch(`${prefix}gallery.json`, { signal: AbortSignal.timeout(8000) }).then(response => {
       if (!response.ok) throw new Error("Gallery unavailable");
       return response.json();
     }).then(items => {
@@ -506,10 +525,13 @@ present.addEventListener("click", async () => {
     const button = document.createElement("button"), image = document.createElement("img");
     button.type = "button";
     button.dataset.slideNumber = String(index + 1);
+    button.dataset.sourceId = typeof item.sourceId === "string" ? item.sourceId : "";
+    button.dataset.voiceLabel = `${item.module}: ${item.heading || item.alt}`;
     button.setAttribute("aria-label", t('Imagen {current} de {total}: {module}: {alt}', {current: index + 1, total: gallery.length, module: item.module, alt: item.alt}));
     image.src = item.src; image.alt = ""; image.loading = "lazy";
     button.append(image);
     button.addEventListener("click", () => showSlide(index));
+    button.addEventListener("certivoice:activate", event => { event.detail.completion = showSlide(index); });
     group.append(button);
   });
   filmstrip.replaceChildren(...groups);
@@ -520,7 +542,19 @@ present.addEventListener("click", async () => {
   present.setAttribute("aria-pressed", "true");
   present.setAttribute("aria-label", t("Salir del modo presentación"));
   const current = gallery.findIndex(item => new URL(item.src, location.href).href === dialog.querySelector(".dialog-content img").src);
-  await showSlide(Math.max(0, current));
+  return await showSlide(Math.max(0, current));
+}
+present.addEventListener("click", togglePresentation);
+present.addEventListener("certivoice:activate", event => { event.detail.completion = togglePresentation(); });
+dialog.addEventListener("certivoice:visibility", event => {
+  const request = event.detail;
+  if (request?.name === "suspend" && dialog.open) {
+    dialog.dataset.voiceReturn = dialog.dataset.sourceId;
+    leavePresentation(); dialog.close();
+  } else if (request?.name === "resume" && !dialog.open && request.targetId === dialog.dataset.voiceReturn && (gallery.some(item => item.sourceId === request.targetId) || [...document.querySelectorAll("[data-diagram][data-source-id]")].some(item => item.dataset.sourceId === request.targetId))) {
+    delete dialog.dataset.voiceReturn;
+    dialog.showModal(); request.completion = togglePresentation();
+  }
 });
 dialog.querySelector(".dialog-content").addEventListener("click", () => {
   if (dialog.classList.contains("is-presenting")) {
@@ -531,6 +565,7 @@ dialog.querySelector(".dialog-content").addEventListener("click", () => {
 });
 dialog.addEventListener("keydown", event => {
   if (!dialog.classList.contains("is-presenting") || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+  if (event.defaultPrevented || event.composedPath().some(node => node.matches?.("[data-certichat], .certivoice, input, textarea, [contenteditable]"))) return;
   event.preventDefault();
   showSlide(slideIndex + (event.key === "ArrowRight" ? 1 : -1));
 });
@@ -571,6 +606,7 @@ function closeViewer() {
 }
 document.querySelectorAll("[data-diagram]").forEach((button) =>
   button.addEventListener("click", () => {
+    delete dialog.dataset.voiceReturn;
     opener = button;
     restoreDiagram();
     dialog.showModal();
@@ -586,4 +622,10 @@ dialog.addEventListener("click", (event) => {
   if (filmstrip.classList.contains("is-open")) { slideToken++; setPresentationMenu(false); }
   else closeViewer();
 });
-dialog.addEventListener("cancel", event => { event.preventDefault(); closeViewer(); });
+dialog.addEventListener("cancel", event => {
+  if (event.target !== dialog) return;
+  event.preventDefault();
+  const chatClose = dialog.querySelector("#certichat-panel:not([hidden]) [data-chat-close]");
+  if (chatClose) chatClose.click();
+  else closeViewer();
+});

@@ -46,6 +46,7 @@ def test_provenance_never_returns_changed_deleted_or_unmapped_sources():
     evidence += [{"kind": "segment", "document_name": "invented.txt"}]
     found = supported_fragments(evidence, sources, manifest)
     assert len(found) == 2 and found[0]["url"] == doc["url"]
+    assert all(fragment["sourceId"] == doc["id"] for fragment in found)
     assert "".join(f["text"] for f in found) == doc["text"]
     manifest["documents"][0]["url"] = SITE + "moved/"
     moved = supported_fragments(evidence, sources, manifest)

@@ -40,3 +40,12 @@ CREATE TABLE IF NOT EXISTS cc_spend (
     settled boolean NOT NULL DEFAULT false
 );
 CREATE INDEX IF NOT EXISTS cc_spend_time ON cc_spend(created_at);
+ALTER TABLE cc_requests ADD COLUMN IF NOT EXISTS channel text NOT NULL DEFAULT 'chat' CHECK (channel IN ('chat','voice'));
+ALTER TABLE cc_history ADD COLUMN IF NOT EXISTS channel text NOT NULL DEFAULT 'chat' CHECK (channel IN ('chat','voice'));
+ALTER TABLE cc_spend ADD COLUMN IF NOT EXISTS channel text NOT NULL DEFAULT 'chat' CHECK (channel IN ('chat','voice','index'));
+UPDATE cc_spend SET channel='index' WHERE purpose='index' AND channel='chat';
+CREATE TABLE IF NOT EXISTS cc_continuity (
+    session_hash text PRIMARY KEY REFERENCES cc_sessions(token_hash) ON DELETE CASCADE,
+    text text NOT NULL CHECK (length(text) BETWEEN 1 AND 1200),
+    since timestamptz NOT NULL
+);

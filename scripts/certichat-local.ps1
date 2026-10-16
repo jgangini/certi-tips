@@ -1,8 +1,11 @@
-param([switch]$Test, [switch]$Build, [string]$SnapshotArchive)
+param([switch]$Test, [switch]$Build, [string]$SnapshotArchive, [switch]$VoicePilot, [string]$PrivateEnv)
 $ErrorActionPreference = 'Stop'
+if ($VoicePilot -and $Test) { throw 'Use a separate disposable project for tests; the voice pilot preserves its spending ledger.' }
+if ($PrivateEnv -and -not $VoicePilot) { throw 'PrivateEnv is only supported for the isolated voice pilot.' }
 $repo = Split-Path -Parent $PSScriptRoot
 $service = Join-Path $repo 'services/certichat'
-$envFile = Join-Path $service '.env'
+$envFile = if ($VoicePilot) { Join-Path $repo '.private/certivoice-pilot.env' } else { Join-Path $service '.env' }
+$project = if ($VoicePilot) { 'certichat-voice-pilot' } else { 'certichat-local' }
 
 function Invoke-Docker {
     $previous = @{}
@@ -48,6 +51,10 @@ $values = @{
     CERTICHAT_DATA_DIR = '/data/claude55-haiku'
     CERTICHAT_INDEX_BUDGET_USD = '10'
     CERTICHAT_CHAT_BUDGET_USD = '10'
+    CERTICHAT_VOICE_ENABLED = 'false'
+    CERTICHAT_LOCAL_VOICE_PILOT = 'false'
+    CERTICHAT_VOICE_MODEL = 'openai/gpt-audio-mini'
+    CERTICHAT_VOICE_PILOT_BUDGET_USD = '4.58'
     CERTICHAT_INDEX_MODEL = 'anthropic/claude-haiku-5.5'
     CERTICHAT_CHAT_MODEL = 'openai/gpt-5.4'
     CERTICHAT_INDEX_REASONING = 'high'
@@ -70,10 +77,24 @@ if ($Test) {
         CERTICHAT_DATABASE_URL = 'postgresql://unused:unused@unused/unused'
     }
 } else {
-    $private = Read-PrivateValues (Join-Path $repo '.private/certichat.env') @('CERTICHAT_MODE', 'OPENROUTER_API_KEY', 'CERTICHAT_REFRESH', 'CERTICHAT_QUESTIONS', 'CERTICHAT_INDEX_REFRESH_MINUTES', 'CERTICHAT_INDEX_BUDGET_USD', 'CERTICHAT_CHAT_BUDGET_USD', 'CERTICHAT_INDEX_MODEL', 'CERTICHAT_CHAT_MODEL', 'CERTICHAT_INDEX_REASONING', 'CERTICHAT_CHAT_REASONING', 'CERTICHAT_INDEX_MAX_TOKENS', 'CERTICHAT_CHAT_MAX_TOKENS', 'CERTICHAT_DATA_DIR')
+    $privatePath = if ($PrivateEnv) { (Resolve-Path -LiteralPath $PrivateEnv).Path } else { Join-Path $repo '.private/certichat.env' }
+    $private = Read-PrivateValues $privatePath @('CERTICHAT_MODE', 'OPENROUTER_API_KEY', 'CERTICHAT_REFRESH', 'CERTICHAT_QUESTIONS', 'CERTICHAT_INDEX_REFRESH_MINUTES', 'CERTICHAT_INDEX_BUDGET_USD', 'CERTICHAT_CHAT_BUDGET_USD', 'CERTICHAT_INDEX_MODEL', 'CERTICHAT_CHAT_MODEL', 'CERTICHAT_INDEX_REASONING', 'CERTICHAT_CHAT_REASONING', 'CERTICHAT_INDEX_MAX_TOKENS', 'CERTICHAT_CHAT_MAX_TOKENS', 'CERTICHAT_DATA_DIR', 'CERTICHAT_VOICE_ENABLED', 'CERTICHAT_VOICE_MODEL', 'CERTICHAT_VOICE_PILOT_BUDGET_USD')
     if ($private.CERTICHAT_MODE -cne 'LOCAL') { throw 'Set CERTICHAT_MODE=LOCAL in .private/certichat.env before starting the local API.' }
     if (-not $private.OPENROUTER_API_KEY -or $private.OPENROUTER_API_KEY -match "['\r\n]") {
         throw 'A valid OPENROUTER_API_KEY is required in .private/certichat.env.'
+    }
+    if ($private.ContainsKey('CERTICHAT_VOICE_ENABLED')) {
+        if ($private.CERTICHAT_VOICE_ENABLED -cnotin @('true', 'false')) { throw 'CERTICHAT_VOICE_ENABLED must be true or false.' }
+        $values.CERTICHAT_VOICE_ENABLED = $private.CERTICHAT_VOICE_ENABLED
+    }
+    if ($private.ContainsKey('CERTICHAT_VOICE_MODEL')) {
+        if ($private.CERTICHAT_VOICE_MODEL -cnotin @('openai/gpt-audio-mini', 'openai/gpt-audio')) { throw 'Unreviewed voice model.' }
+        $values.CERTICHAT_VOICE_MODEL = $private.CERTICHAT_VOICE_MODEL
+    }
+    if ($private.ContainsKey('CERTICHAT_VOICE_PILOT_BUDGET_USD')) {
+        $voiceBudget = $private.CERTICHAT_VOICE_PILOT_BUDGET_USD
+        if ($voiceBudget -notmatch '^\d+(?:\.\d{1,2})?$' -or [decimal]::Parse($voiceBudget, [Globalization.CultureInfo]::InvariantCulture) -le 0 -or [decimal]::Parse($voiceBudget, [Globalization.CultureInfo]::InvariantCulture) -gt 4.58) { throw 'Voice pilot remaining budget must be positive and at most USD 4.58.' }
+        $values.CERTICHAT_VOICE_PILOT_BUDGET_USD = $voiceBudget
     }
     foreach ($name in @('CERTICHAT_INDEX_MODEL', 'CERTICHAT_CHAT_MODEL', 'CERTICHAT_INDEX_REASONING', 'CERTICHAT_CHAT_REASONING', 'CERTICHAT_INDEX_MAX_TOKENS', 'CERTICHAT_CHAT_MAX_TOKENS')) {
         if ($private.ContainsKey($name)) {
@@ -117,9 +138,25 @@ if ($Test) {
     $values.CERTICHAT_SECURE_COOKIES = 'false'
     $values.OPENROUTER_API_KEY = $private.OPENROUTER_API_KEY
     $values.CERTICHAT_DATABASE_URL = "postgresql://certichat_runtime:$($values.CERTICHAT_POSTGRES_RUNTIME_PASSWORD)@postgres:5432/certichat"
+    if ($VoicePilot) {
+        # ponytail: reuse the local stack with distinct tags, volumes and cookie; never reset its lifetime ledger.
+        $values.CERTICHAT_IMAGE_TAG = 'voice-pilot'
+        $values.CERTICHAT_PORT = '18742'
+        $values.CERTICHAT_PUBLIC_ORIGIN = 'http://127.0.0.1:18742'
+        $values.CERTICHAT_LOCAL_VOICE_PILOT = 'true'
+        $values.CERTICHAT_VOICE_ENABLED = 'true'
+        $values.CERTICHAT_VOICE_MODEL = 'openai/gpt-audio'
+        $values.CERTICHAT_CHAT_BUDGET_USD = $values.CERTICHAT_VOICE_PILOT_BUDGET_USD
+        $values.CERTICHAT_INDEX_BUDGET_USD = '0.01'
+    }
 }
+[IO.Directory]::CreateDirectory((Split-Path -Parent $envFile)) | Out-Null
 [IO.File]::WriteAllLines($envFile, @($values.Keys | Sort-Object | ForEach-Object { "$_='$($values[$_])'" }), [Text.UTF8Encoding]::new($false))
-$compose = @('compose', '--project-directory', $repo, '--env-file', $envFile, '-p', 'certichat-local', '-f', (Join-Path $service 'compose.yml'))
+$compose = @('compose', '--project-directory', $repo, '--env-file', $envFile, '-p', $project, '-f', (Join-Path $service 'compose.yml'))
+foreach ($name in @('certivoice-ca.compose.yml', 'certivoice-context.compose.yml')) {
+    $localOverride = Join-Path $repo ".private/$name"
+    if ($VoicePilot -and (Test-Path -LiteralPath $localOverride -PathType Leaf)) { $compose += @('-f', $localOverride) }
+}
 if ($Test) {
     Invoke-Docker @compose build api test
     try { Invoke-Docker @compose --profile test run --rm test }
@@ -171,6 +208,6 @@ with tarfile.open('/snapshot.tar') as archive:
     Invoke-Docker @compose up -d --wait api knowledge
     Invoke-Docker @compose --profile ops run --rm indexer refresh
     Invoke-Docker @compose --profile local up -d local-refresh
-    Write-Output 'CertiChat health: http://127.0.0.1:18741/api/health'
+    Write-Output "CertiChat health: $($values.CERTICHAT_PUBLIC_ORIGIN)/api/health"
     Write-Output 'LOCAL mode: only http://127.0.0.1:4173 is allowed; Turnstile is skipped. An active local knowledge snapshot is required for answers.'
 }

@@ -1,9 +1,21 @@
-import { t, locale, language, localizedURL, canonicalURL, siteBase } from "./i18n.js";
+import { t, locale, language, localizedURL, siteBase } from "./i18n.js";
 import { readStored, writeStored } from "./storage.js";
 import { normalizeTrace, publishTrace, safeSourceURL, sourcePath } from "./certichat-trace.js";
+import { installVoiceChatControls } from "./certivoice-chat.js";
+import { performVoiceAction, voiceContext, voicePageURL } from "./certivoice-actions.js";
+import { activityTrail, validActivityTrail } from "./certichat-activity.js";
 export { safeSourceURL } from "./certichat-trace.js";
 
 const escapeChat = text => String(text).replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
+
+export function chatNavigationAction(text) {
+  if (typeof text !== "string") return null;
+  const command = text.normalize("NFD").replace(/\p{M}/gu, "").trim().replace(/\s+/g, " ").toLowerCase();
+  // ponytail: only complete navigation imperatives; questions and compound requests stay with the tutor.
+  const match = /^(?:abre|abrir|abra|open|apri|aprire|navega(?:r)?(?: a| hasta| para)?|navegue(?: a| ate| para)?|navigate to|ir (?:a|para)|ve a|llevame a|go(?: to)?|va para|vai (?:a|al|alla)|naviga (?:a|al|alla)) (?:(?:el|la|o|a|il|the) )?(certitips|certiquiz|certitube|certichat|inicio|home(?: page)?|pagina principal(?: de inicio)?|pagina inicial|pagina iniziale)[.!]?$/.exec(command);
+  if (!match) return null;
+  return { name: ({ certitips: "catalog", certiquiz: "quiz", certitube: "videos", certichat: "chat" })[match[1]] || "home" };
+}
 
 export function configureChatMarkdown(markdown, siteRoot) {
   markdown.set({ html: false, breaks: true });
@@ -50,15 +62,20 @@ export function isChatPreview(pageURL, apiURL) {
 export function restoreChat(value, siteRoot, now = Date.now()) {
   const empty = { messages: [], pendingRequest: undefined };
   if (!value || !Number.isFinite(value.updatedAt) || value.updatedAt > now || now - value.updatedAt >= 86400000) return empty;
+  // Remove the operational notice stored by the earlier voice preview; retain user text and educational replies.
+  const voiceNotice = "El modo voz todavía no está habilitado. Puedes seguir usando el chat.";
   let traceBytes = 0;
-  const messages = (Array.isArray(value.messages) ? value.messages : []).filter(item => item && ["user", "ai"].includes(item.role) && typeof item.text === "string" && item.text.trim() && item.text.length <= (item.role === "user" ? 1500 : 12000)).slice(-100).reverse().map(({ role, text, graphTrace }) => {
+  const messages = (Array.isArray(value.messages) ? value.messages : []).filter(item => item && ["user", "ai"].includes(item.role) && typeof item.text === "string" && item.text.trim() && item.text.length <= (item.role === "user" ? 1500 : 12000) && !(item.role === "ai" && [voiceNotice, t(voiceNotice)].includes(item.text))).slice(-100).reverse().map(({ role, text, graphTrace }) => {
     const trace = role === "ai" && normalizeTrace(graphTrace, siteRoot);
     // ponytail: retain newest graph evidence up to 500 KiB; older answer text remains available.
     if (trace && (traceBytes += JSON.stringify(trace).length * 2) <= 512000) return { role, text, graphTrace: trace };
     return { role, text };
   }).reverse();
   const pending = value.pendingRequest;
-  const pendingRequest = pending && typeof pending.requestId === "string" && /^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/i.test(pending.requestId) && typeof pending.message === "string" && pending.message.trim() && pending.message.length <= 1500 && safeSourceURL(pending.pageUrl, siteRoot) ? { requestId: pending.requestId, message: pending.message, pageUrl: pending.pageUrl, ...(pending.locale === undefined ? {} : { locale: ['es', 'en', 'pt', 'it'].includes(pending.locale) ? pending.locale : 'es' }) } : undefined;
+  const contextIds = pending?.contextIds;
+  const validContext = contextIds === undefined || Array.isArray(contextIds) && contextIds.length <= 2 && contextIds.every(id => typeof id === "string" && id.length <= 200 && /^[\w.-]+\/[\w.-]+#[\w./-]+$/.test(id));
+  const validTrail = pending?.activityTrail === undefined || validActivityTrail(pending.activityTrail, siteRoot);
+  const pendingRequest = validContext && validTrail && pending && typeof pending.requestId === "string" && /^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/i.test(pending.requestId) && typeof pending.message === "string" && pending.message.trim() && pending.message.length <= 1500 && safeSourceURL(pending.pageUrl, siteRoot) ? { requestId: pending.requestId, message: pending.message, pageUrl: pending.pageUrl, ...(contextIds === undefined ? {} : { contextIds }), ...(pending.activityTrail === undefined ? {} : { activityTrail: pending.activityTrail }), ...(pending.locale === undefined ? {} : { locale: ['es', 'en', 'pt', 'it'].includes(pending.locale) ? pending.locale : 'es' }) } : undefined;
   return { messages, pendingRequest };
 }
 
@@ -72,10 +89,12 @@ if (root) {
     root.querySelector("[data-chat-close]").hidden = true;
     root.querySelector('.certichat-actions a').hidden = true;
   }
+  const viewer = document.querySelector("#diagram-viewer"), homeParent = root.parentNode, homeNext = root.nextSibling;
+  let presenting = false;
   const mobileChat = matchMedia("(max-width: 800px)");
   const launcherContent = document.querySelector(".tube-detail, [data-group-carousel]") || document.querySelector(".course-page .course-main");
   function positionLauncher() {
-    if (!launcherContent || !panel.hidden) return;
+    if (presenting || !launcherContent || !panel.hidden) return;
     const content = launcherContent.querySelector(".path-section.is-active, .tube-player") || launcherContent;
     const box = launcherContent.getBoundingClientRect(), gap = parseFloat(getComputedStyle(root).getPropertyValue("--layout-gap"));
     const beside = !mobileChat.matches && box.right + launcher.offsetWidth + 20 + gap <= document.documentElement.clientWidth;
@@ -105,7 +124,7 @@ if (root) {
   function fitMobileViewport() {
     const viewport = window.visualViewport;
     // ponytail: track the keyboard viewport, while preserving deliberate pinch zoom.
-    if (dock || panel.hidden || !mobileChat.matches || !viewport || viewport.scale !== 1) return;
+    if (presenting || dock || panel.hidden || !mobileChat.matches || !viewport || viewport.scale !== 1) return;
     for (const [name, value] of Object.entries({ top: viewport.offsetTop, left: viewport.offsetLeft, width: viewport.width, height: viewport.height })) panel.style.setProperty(`--chat-${name}`, `${value}px`);
   }
   window.visualViewport?.addEventListener("resize", fitMobileViewport);
@@ -140,9 +159,9 @@ if (root) {
   if (quizCode) root.hidden = true;
   const saved = restoreChat(readStored(storageKey, null), root.dataset.siteRoot);
   const preview = isChatPreview(location.href, root.dataset.api);
-  let chat, opening, verifying = false, verified = false, available = false, busy = false, turnstileId, turnstileLoad;
+  let chat, opening, verifying = false, verified = false, available = false, busy = false, voiceBusy = false, turnstileId, turnstileLoad, refreshVoice = () => {};
   addEventListener("pagehide", () => {
-    if (dock) {
+    if (dock && !textNavigating) {
       try { sessionStorage.removeItem(`${storageKey}:open`); sessionStorage.removeItem(`${storageKey}:reference`); } catch { /* Navigation also works without session storage. */ }
     }
     const scroller = chat?.shadowRoot?.querySelector("#messages");
@@ -150,7 +169,7 @@ if (root) {
       try { sessionStorage.setItem(`${storageKey}:scroll`, String(scroller.scrollTop)); } catch { /* Reading position is optional. */ }
     }
   });
-  let pendingRequest = saved.pendingRequest, accessError = "", completedRequest, completedTrace, quota;
+  let pendingRequest = saved.pendingRequest, accessError = "", completedRequest, completedTrace, quota, textNavigation, textNavigating = false;
   const responseTraces = saved.messages.filter(message => message.role === "ai").map(message => message.graphTrace);
   const responseSelector = ".outer-message-container:not(.deep-chat-intro) .ai-message:not(.deep-chat-loading-message-bubble)";
   const quotaNotice = document.createElement("div");
@@ -167,7 +186,8 @@ if (root) {
     input.contentEditable = String(!exhausted);
     input.setAttribute("aria-disabled", String(exhausted));
     input.classList.toggle("text-input-disabled", exhausted);
-    chat.disableSubmitButton(exhausted);
+    chat.disableSubmitButton(exhausted || voiceBusy);
+    refreshVoice(busy);
   }
   setInterval(() => updateQuota(), 30000);
 
@@ -177,6 +197,24 @@ if (root) {
     const messages = chat.getMessages().map(message => message.role === "ai" ? { ...message, graphTrace: responseTraces[index++] } : message);
     writeStored(storageKey, { updatedAt: Date.now(), ...restoreChat({ updatedAt: Date.now(), messages, pendingRequest }, root.dataset.siteRoot) });
   }
+
+  async function finishTextNavigation() {
+    const pending = textNavigation;
+    if (!pending?.ready || !pending.approved || busy) return;
+    textNavigation = undefined;
+    const result = pending.navigation ? pending : await performVoiceAction(pending.action);
+    if (!result.navigation) return;
+    persist();
+    try { sessionStorage.setItem(`${storageKey}:open`, "true"); sessionStorage.setItem(`${storageKey}:reference`, result.navigation); } catch { /* Navigation also works without storage. */ }
+    textNavigating = true;
+    location.assign(result.navigation);
+  }
+  window.addEventListener("certivoice:state", event => { if (event.detail?.active) textNavigation = undefined; });
+  window.addEventListener("certivoice:practice-followup", event => {
+    if (!textNavigation || textNavigation.action.name !== event.detail?.action?.name) return;
+    textNavigation.approved = true;
+    finishTextNavigation();
+  });
 
   function focusResponse(event) {
     const hovering = event.type.startsWith("pointer");
@@ -218,12 +256,13 @@ if (root) {
     return data;
   }
 
-  function updateAccess(session) {
+  function updateAccess(session, publish = true) {
     verified = Boolean(session.authenticated && !session.verificationRequired);
     available = session.available !== false;
     updateQuota(session.quota);
     setStatus(session.available === false ? t("El servicio está actualizando su contenido o alcanzó su límite de uso. Inténtalo más tarde.") : "", session.available === false);
-    clear.disabled = busy;
+    clear.disabled = busy || voiceBusy;
+    if (publish) window.dispatchEvent(new CustomEvent("certichat:session", { detail: session }));
   }
 
   async function verify() {
@@ -277,7 +316,7 @@ if (root) {
           text: { color: "var(--ink)", fontSize: "16px", paddingTop: "11px", paddingBottom: "13px", paddingLeft: "12px", paddingRight: "2.4em" },
         },
       };
-      chat.submitButtonStyles = { submit: { container: { default: { transform: "scale(1.21)", marginBottom: "-3px", marginRight: "0.4em" } } } };
+      chat.submitButtonStyles = { submit: { container: { default: { display: "flex", alignItems: "center", justifyContent: "center", width: "44px", height: "44px", boxSizing: "border-box", margin: "0", insetInlineEnd: "8px", insetBlockEnd: "4px", borderRadius: "0", backgroundColor: "transparent" } } } };
       chat.messageStyles = { default: { shared: { bubble: { maxWidth: "92%", fontSize: "14px", lineHeight: "1.45" } }, ai: { bubble: { backgroundColor: "var(--hover)", color: "var(--ink)" } }, user: { bubble: { backgroundColor: "var(--accent)", color: "var(--on-red)" } } } };
       chat.messageStyles.loading = { message: { styles: { bubble: { backgroundColor: "var(--hover)", color: "var(--muted)", display: "flex", alignItems: "center", justifyContent: "center", width: "56px", height: "36px", padding: "0", boxSizing: "border-box" } } } };
       chat.remarkable = { html: false, applyHTML: false };
@@ -285,7 +324,10 @@ if (root) {
       // ponytail: the native completion class also covers restored history; no extra render pass or observers.
       // ponytail: override the native disabled filter on hover; the submission guard stays unchanged.
       chat.auxiliaryStyle += `.outer-message-container:last-child { margin-bottom: 10px; }
-        #input .input-button:hover #submit-icon { color: var(--red) !important; filter: none !important; }
+        #input .input-button.inside-end:not(.custom-button) { display: flex; background: transparent !important; }
+        #submit-icon { width: 24px; height: 24px; }
+        #stop-icon { position: static; }
+        #input .input-button:is(:hover, :focus-visible) #submit-icon { color: var(--red) !important; filter: none !important; }
         .ai-message :is(p, ol, ul) { margin-block: .5em; }
         .ai-message > :first-child { margin-top: 0; }
         .ai-message > :last-child { margin-bottom: 0; }
@@ -297,6 +339,8 @@ if (root) {
         .ai-message:not(.streamed-message) a[data-link-kind="certitips"]::before { mask-image: url("${new URL("./icons/certitips-course.svg", import.meta.url).href}"); }
         .ai-message:not(.streamed-message) a[data-link-kind="certitube"]::before { mask-image: url("${new URL("./icons/certitube.svg", import.meta.url).href}"); }`;
       if (dock) chat.auxiliaryStyle += `${responseSelector}:not(.streamed-message) { border: 1px solid transparent; cursor: pointer; } ${responseSelector}:not(.streamed-message):hover { border-color: var(--red); } ${responseSelector}:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }`;
+      refreshVoice = installVoiceChatControls(chat);
+      chat.onInput = () => refreshVoice(busy);
       chat.introMessage = { text: t("Hola. Resuelve tus dudas sobre las guías y prácticas del sitio.") };
       chat.history = saved.messages.map(({ role, text }) => ({ role, text }));
       chat.onMessage = ({ isHistory, message }) => {
@@ -307,19 +351,21 @@ if (root) {
           if (pendingRequest?.requestId === completedRequest) pendingRequest = undefined;
           completedRequest = undefined;
           busy = false; clear.disabled = false;
-          chat.shadowRoot.querySelector('.input-button.inside-end')?.setAttribute("aria-label", t("Enviar consulta"));
+          chat.shadowRoot.querySelector('.input-button.inside-end:not(.custom-button)')?.setAttribute("aria-label", t("Enviar consulta"));
+          refreshVoice(busy);
         }
         persist();
+        finishTextNavigation();
       };
       chat.errorMessages = { displayServiceErrorMessages: true };
       chat.requestBodyLimits = { maxMessages: 1 };
-      chat.validateInput = text => !busy && !quotaText(quota) && Boolean(text?.trim()) && text.length <= 1500;
+      chat.validateInput = text => !busy && !voiceBusy && !quotaText(quota) && Boolean(text?.trim()) && text.length <= 1500;
       chat.onComponentRender = () => {
         chat.shadowRoot.querySelector("#input")?.before(quotaNotice);
         const input = chat.shadowRoot.querySelector('[role="textbox"]');
         input?.setAttribute("aria-label", t("Escribe tu consulta"));
         input?.setAttribute("enterkeyhint", "send");
-        chat.shadowRoot.querySelector('.input-button.inside-end')?.setAttribute("aria-label", t("Enviar consulta"));
+        chat.shadowRoot.querySelector('.input-button.inside-end:not(.custom-button)')?.setAttribute("aria-label", t("Enviar consulta"));
         if (dock) {
           chat.shadowRoot.addEventListener("click", focusResponse);
           chat.shadowRoot.addEventListener("keydown", focusResponse);
@@ -334,6 +380,9 @@ if (root) {
         event.preventDefault(); event.stopImmediatePropagation();
         if (chat.validateInput(input.innerText)) chat.submitUserMessage({ text: input.innerText });
       }, { capture: true });
+      chat.addEventListener("input", event => {
+        if (event.composedPath()[0]?.getAttribute?.("role") === "textbox") window.dispatchEvent(new CustomEvent("certichat:activity"));
+      });
       chat.addEventListener("click", event => {
         const link = event.composedPath().find(node => node.tagName === "A");
         if (link && safeSourceURL(link.dataset.sourceUrl, root.dataset.siteRoot) && event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
@@ -342,20 +391,37 @@ if (root) {
       });
       // ponytail: reveal the validated answer progressively; raw model tokens cannot bypass source validation.
       chat.connect = { stream: matchMedia("(prefers-reduced-motion: reduce)").matches ? undefined : { simulation: 6 }, handler: async (body, signals) => {
+        window.dispatchEvent(new CustomEvent("certichat:activity"));
         busy = true; clear.disabled = true;
+        refreshVoice(busy);
         completedTrace = undefined;
         publishTrace(root.dataset.siteRoot, "loading");
-        let answer;
+        let answer, localNavigation;
+        textNavigation = undefined;
         try {
-          if (!verified || !available) {
+          const message = body.messages?.at(-1)?.text?.trim() || "";
+          const action = chatNavigationAction(message);
+          if (action) {
+            const previous = document.querySelector('#quiz dialog.confirmation[open]');
+            const result = await performVoiceAction(action);
+            answer = result.error || result.confirmation || t("Abriendo la página…");
+            const dialog = document.querySelector('#quiz dialog.confirmation[open][data-finish-confirm]');
+            if (result.navigation || (dialog && dialog !== previous)) {
+              textNavigation = localNavigation = { action, navigation: result.navigation, approved: Boolean(result.navigation), ready: false };
+              dialog?.addEventListener("close", () => { if (dialog.returnValue !== "finish" && textNavigation === localNavigation) textNavigation = undefined; }, { once: true });
+            }
+            publishTrace(root.dataset.siteRoot, "idle");
+          } else if (!verified || !available) {
             answer = accessError || (available ? t("Completa la verificación de acceso para enviar tu consulta.") : t("El servicio no está disponible. Pulsa Reintentar conexión."));
             setStatus(answer, true);
             publishTrace(root.dataset.siteRoot, "error");
           } else {
             setStatus("");
-            const message = body.messages?.at(-1)?.text?.trim() || "";
             // A transport retry reuses the UUID; the server deduplicates any paid generation.
-            if (pendingRequest?.message !== message) pendingRequest = { requestId: crypto.randomUUID(), message, pageUrl: canonicalURL(document.querySelector('link[rel="canonical"]')?.href || root.dataset.siteRoot), locale };
+            if (pendingRequest?.message !== message) {
+              const context = voiceContext(document);
+              pendingRequest = { requestId: crypto.randomUUID(), message, pageUrl: voicePageURL(document), locale, contextIds: [context.diagramId, context.sectionId].filter(Boolean), activityTrail: activityTrail() };
+            }
             persist();
             const result = await api("chat", pendingRequest);
             completedRequest = pendingRequest.requestId;
@@ -374,9 +440,10 @@ if (root) {
             try { updateQuota((await api("session", undefined, "GET")).quota); } catch { /* Keep the last known renewal time. */ }
           }
         }
-        chat.shadowRoot.querySelector('.input-button.inside-end')?.setAttribute("aria-label", t("Detener respuesta"));
+        chat.shadowRoot.querySelector('.input-button.inside-end:not(.custom-button)')?.setAttribute("aria-label", t("Detener respuesta"));
         await signals.onResponse({ text: answer });
         persist();
+        if (localNavigation) { localNavigation.ready = true; finishTextNavigation(); }
       } };
       messages.append(chat);
     }
@@ -415,9 +482,42 @@ if (root) {
     }
   }
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
-  let panelAnimation, closing = false;
+  let panelAnimation, closing = false, layoutTransition;
+  async function changeCourseLayout(change, animate) {
+    const main = document.querySelector('.course-page:not([data-page^="certitube"]) .course-main');
+    if (!animate || reducedMotion.matches || presenting || dock || mobileChat.matches || !main || !document.startViewTransition) return change();
+    while (layoutTransition) { layoutTransition.skipTransition(); await layoutTransition.finished.catch(() => {}); }
+    const figure = [...main.querySelectorAll('.diagram')].map(element => {
+      const box = element.getBoundingClientRect();
+      return { element, area: box.width * Math.max(0, Math.min(innerHeight, box.bottom) - Math.max(0, box.top)) };
+    }).sort((a, b) => b.area - a.area)[0];
+    const image = figure?.area > 0 ? figure.element : null;
+    const html = document.documentElement;
+    html.classList.add('is-chat-layout-transition');
+    main.style.viewTransitionName = 'course-reading';
+    launcher.style.viewTransitionName = 'course-chat-launcher';
+    if (image) image.style.viewTransitionName = 'course-diagram';
+    let transition;
+    const cleanup = () => {
+      if (layoutTransition !== transition) return;
+      main.style.removeProperty('view-transition-name'); image?.style.removeProperty('view-transition-name');
+      launcher.style.removeProperty('view-transition-name');
+      html.classList.remove('is-chat-layout-transition'); layoutTransition = undefined;
+    };
+    let changed = false;
+    try {
+      // Native snapshots interpolate the visible figure while text reflows once at its final width.
+      transition = document.startViewTransition(() => {
+        changed = true; change();
+        if (!panel.hidden && !document.body.classList.contains('is-compact-nav') && main.getBoundingClientRect().width < panel.offsetWidth) document.querySelector('.menu-toggle')?.click();
+      });
+      layoutTransition = transition;
+      transition.finished.catch(() => {}).finally(cleanup);
+      await transition.updateCallbackDone;
+    } catch { if (!changed) change(); cleanup(); }
+  }
   function animatePanel(button, fold) {
-    if (dock || reducedMotion.matches || !panel.animate) return;
+    if (presenting || dock || reducedMotion.matches || !panel.animate) return;
     const box = panel.getBoundingClientRect();
     if (!box.width || !box.height) return;
     // ponytail: fold the real panel briefly; a separate overlay is only needed if scaled content becomes distracting.
@@ -425,15 +525,20 @@ if (root) {
     const full = { transform: "none", opacity: 1, borderRadius: getComputedStyle(panel).borderRadius };
     return panel.animate(fold ? [full, small] : [small, full], { duration: 320, easing: "cubic-bezier(.22, 1, .36, 1)", fill: fold ? "forwards" : "none" });
   }
-  function closePanel(animate = true) {
+  function closePanel(animate = true, focus = true) {
     if (dock || panel.hidden || closing) return;
+    window.dispatchEvent(new CustomEvent("certivoice:command", { detail: "exit" }));
     try { sessionStorage.removeItem(`${storageKey}:open`); sessionStorage.removeItem(`${storageKey}:reference`); } catch { /* Storage is optional. */ }
     panelAnimation?.cancel();
     const finish = () => {
+      launcher.style.removeProperty("visibility");
+      return changeCourseLayout(() => {
       panel.hidden = true; launcher.hidden = false; launcher.style.removeProperty("visibility");
-      launcher.setAttribute("aria-expanded", "false"); launcher.focus({ preventScroll: true });
+      launcher.setAttribute("aria-expanded", "false");
+      if (focus) launcher.focus({ preventScroll: true });
       panelAnimation?.cancel(); panelAnimation = undefined; closing = false;
       positionLauncher();
+      }, animate);
     };
     if (!animate || reducedMotion.matches || !panel.animate) return finish();
     launcher.hidden = false; launcher.style.visibility = "hidden";
@@ -441,6 +546,26 @@ if (root) {
     if (!panelAnimation) return finish();
     closing = true;
     panelAnimation.finished.then(finish, finish);
+  }
+  if (viewer && !dock) {
+    const syncPresentation = () => {
+      const active = viewer.open && (viewer.classList.contains("is-presenting") || root.dataset.voiceMode === "true");
+      if (active === presenting) return;
+      panelAnimation?.cancel(); panelAnimation = undefined; closing = false;
+      if (root.dataset.voiceMode !== "true") closePanel(false, false);
+      presenting = active;
+      root.classList.remove("is-beside-content"); launcher.style.removeProperty("top");
+      for (const name of ["top", "left", "width", "height"]) panel.style.removeProperty(`--chat-${name}`);
+      // ponytail: move the live instance; rebuilding Deep Chat would lose an in-flight response.
+      if (active) viewer.append(root);
+      else homeParent.insertBefore(root, homeNext?.parentNode === homeParent ? homeNext : null);
+      panel.setAttribute("role", active ? "region" : "dialog");
+      if (!active && viewer.open) viewer.querySelector("[data-diagram-present]").focus({ preventScroll: true });
+      positionLauncher();
+    };
+    new MutationObserver(syncPresentation).observe(viewer, { attributes: true, attributeFilter: ["class", "open"] });
+    new MutationObserver(syncPresentation).observe(panel, { attributes: true, attributeFilter: ["data-voice-mode"] });
+    syncPresentation();
   }
   function syncQuizLock() {
     quizCode = readQuizLock();
@@ -490,12 +615,14 @@ if (root) {
     if (readQuizLock()) { syncQuizLock(); return; }
     if (!panel.hidden) return closePanel(event.isTrusted);
     const button = launcher.getBoundingClientRect();
-    panel.hidden = false; launcher.hidden = true; launcher.setAttribute("aria-expanded", "true");
-    try { sessionStorage.setItem(`${storageKey}:open`, "true"); } catch { /* The panel also works when session storage is blocked. */ }
-    fitMobileViewport();
-    if (event.isTrusted) panelAnimation = animatePanel(button, false);
-    if (!dock && event.isTrusted) root.querySelector("[data-chat-close]").focus({ preventScroll: true });
-    if (!opening) { opening = connect(); await opening; opening = undefined; }
+    await changeCourseLayout(() => {
+      panel.hidden = false; launcher.hidden = true; launcher.setAttribute("aria-expanded", "true");
+      try { sessionStorage.setItem(`${storageKey}:open`, "true"); } catch { /* The panel also works when session storage is blocked. */ }
+      fitMobileViewport();
+      if (event.isTrusted) panelAnimation = animatePanel(button, false);
+      if (!dock && event.isTrusted) root.querySelector("[data-chat-close]").focus({ preventScroll: true });
+    }, event.isTrusted);
+    if (!opening && !busy) { opening = connect(); await opening; opening = undefined; }
   });
   let wasOpen = false;
   try {
@@ -515,7 +642,7 @@ if (root) {
     } catch { /* Keep the restored panel state if storage is unavailable. */ }
   });
   root.querySelector("[data-chat-close]").addEventListener("click", () => closePanel());
-  panel.addEventListener("keydown", event => { if (event.key === "Escape") { event.preventDefault(); closePanel(); } });
+  panel.addEventListener("keydown", event => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); closePanel(); } });
   retry.addEventListener("click", connect);
   clear.addEventListener("click", () => {
     clearError.hidden = true;
@@ -536,6 +663,7 @@ if (root) {
     try {
       const result = preview ? { quota } : await api("conversation", {}, "DELETE");
       chat.clearMessages(); responseTraces.length = 0; completedTrace = undefined; pendingRequest = undefined; persist();
+      window.dispatchEvent(new CustomEvent("certichat:cleared"));
       publishTrace(root.dataset.siteRoot, "idle");
       updateQuota(result.quota); if (!preview) setStatus(""); confirmation.close();
     } catch {
@@ -546,5 +674,21 @@ if (root) {
       busy = false; clear.disabled = false; confirmClear.disabled = false; cancelClear.disabled = false;
       confirmation.setAttribute("aria-busy", "false");
     }
+  });
+  const voiceResponses = new Set();
+  window.addEventListener("certivoice:busy", event => { voiceBusy = event.detail === true; clear.disabled = busy || voiceBusy || !chat; updateQuota(); });
+  window.addEventListener("certichat:session", event => { if (event.detail) updateAccess(event.detail, false); });
+  window.addEventListener("certichat:voice-result", event => {
+    const result = event.detail;
+    if (!result || voiceResponses.has(result.requestId) || typeof result.transcript !== "string" || typeof result.answer !== "string" || result.transcript.length > 1500 || result.answer.length > 12000) return;
+    voiceResponses.add(result.requestId);
+    const pair = [...(result.transcript.trim() ? [{ role: "user", text: result.transcript }] : []), { role: "ai", text: answerWithReferences(result.answer, result.sources, root.dataset.siteRoot) }];
+    if (chat) { completedTrace = normalizeTrace(result.graphTrace, root.dataset.siteRoot); pair.forEach(message => chat.addMessage(message, true)); }
+    else {
+      saved.messages = restoreChat({ updatedAt: Date.now(), messages: [...saved.messages, ...pair] }, root.dataset.siteRoot).messages;
+      responseTraces.splice(0, responseTraces.length, ...saved.messages.filter(message => message.role === "ai").map(message => message.graphTrace));
+      writeStored(storageKey, { updatedAt: Date.now(), messages: saved.messages, pendingRequest });
+    }
+    updateQuota(result.quota);
   });
 }

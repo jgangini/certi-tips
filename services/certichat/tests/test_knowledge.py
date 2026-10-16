@@ -190,6 +190,33 @@ def test_current_page_precedes_graph_results_with_existing_source_limit(tmp_path
     assert [fragment["title"] for fragment in result["fragments"]] == ["current", *[f"graph{i}" for i in range(7)]]
 
 
+def test_voice_diagram_context_is_registered_page_scoped_and_hash_checked(tmp_path, monkeypatch):
+    documents = [{"id": "guide#diagram-a.svg", "kind": "diagram", "title": "Diagrama A", "courseId": "guide",
+                  "url": SITE + "guide/#diagram-a.svg", "text": "A conecta con B según la descripción."},
+                 {"id": "other#diagram-b.svg", "kind": "diagram", "title": "Diagrama B", "courseId": "other",
+                  "url": SITE + "other/#diagram-b.svg", "text": "Otro módulo."}]
+    sources = segments(documents)
+    manifest = {"schemaVersion": 1, "contentHash": "a"*64, "corpusUrl": CORPUS_URL,
+                "documents": [{key: value for key, value in doc.items() if key != "text"} |
+                              {"hash": digest(doc["text"])} for doc in documents]}
+    atomic_json(tmp_path / "latest.json", manifest)
+    monkeypatch.setattr(knowledge.app, "state", SimpleNamespace(root=tmp_path, token="test-token", snapshot=tmp_path,
+                       version="a"*64, sources=sources, manifest=manifest, lock=asyncio.Lock()))
+
+    async def evidence(message, context):
+        assert "Tema: redes" in context
+        return []
+
+    monkeypatch.setattr(knowledge, "retrieve_evidence", evidence)
+    request = knowledge.Retrieval(message="Explica esto", pageUrl=SITE + "guide/", continuity="Tema: redes",
+                                  contextIds=[documents[0]["id"], documents[1]["id"]])
+    result = asyncio.run(knowledge.retrieve(request, "Bearer test-token"))
+    assert len(result["fragments"]) == 1 and result["fragments"][0]["kind"] == "diagram"
+    manifest["documents"][0]["hash"] = digest("Descripción modificada")
+    atomic_json(tmp_path / "latest.json", manifest)
+    assert asyncio.run(knowledge.retrieve(request, "Bearer test-token"))["fragments"] == []
+
+
 @pytest.mark.parametrize("fresh", [True, False])
 @pytest.mark.parametrize("navigation_url", [SITE, SITE + "cursos/"])
 def test_chat_page_includes_published_navigation_only_while_its_hash_matches(tmp_path, monkeypatch, fresh, navigation_url):
@@ -463,6 +490,7 @@ def test_relocated_page_keeps_context_and_graph_identity_with_current_links(tmp_
         knowledge.Retrieval(message="Explica este concepto", pageUrl=current_url), "Bearer test-token"))
     assert result["version"] == current["contentHash"]
     assert result["fragments"] == [{"id": next(iter(sources)).removesuffix(".txt"), "title": doc["title"],
+                                    "sourceId": doc["id"], "courseId": doc["courseId"],
                                     "url": current_url, "text": doc["text"]}]
     assert result["graphTrace"] == {"version": indexed["contentHash"], "nodes": [node], "edges": [], "truncated": False,
                                     "sources": [{"nodeId": node, "title": doc["title"], "url": current_url}]}
@@ -693,3 +721,47 @@ def test_explicit_new_subject_does_not_restore_previous_resources(locale, messag
         {"question": "Almacenamiento", "version": "a"*64, "sources": previous}])
     assert knowledge.previous_reference(body, "a"*64) is None
     assert knowledge.followup_sources(body, "a"*64) == []
+
+
+def test_empty_nested_data_root_starts_waiting_without_cognee(tmp_path, monkeypatch):
+    root = tmp_path / "fresh-volume" / "claude55-haiku"
+    assert not root.exists()
+    monkeypatch.setenv("CERTICHAT_DATA_DIR", str(root))
+    monkeypatch.setenv("CERTICHAT_CHAT_INTERNAL_TOKEN", "t" * 32)
+    monkeypatch.setattr(knowledge.app, "state", SimpleNamespace())
+
+    def unexpected(*_args, **_kwargs):
+        pytest.fail("An empty knowledge worker must not initialize Cognee or perform retrieval")
+
+    monkeypatch.setattr(knowledge, "configure_cognee", unexpected)
+    monkeypatch.setattr(knowledge, "retrieve_evidence", unexpected)
+
+    async def run():
+        async with knowledge.lifespan(knowledge.app):
+            assert root.is_dir()
+            assert await knowledge.health() == {"status": "waiting", "version": None,
+                                                 "indexing": False, "checkedAt": None}
+    asyncio.run(run())
+
+
+def test_voice_diagram_context_and_followup_keep_both_current_sources(tmp_path):
+    documents = [{"id": str(i), "title": str(i), "courseId": "course", "url": SITE + str(i),
+                  "text": "Texto vigente."} for i in range(8)]
+    documents += [{"id": "guide#diagram.svg", "kind": "diagram", "title": "Diagrama", "courseId": "guide",
+                   "url": SITE + "guide/#diagram.svg", "text": "Descripción del diagrama."},
+                  {"id": "previous", "title": "Recurso anterior", "courseId": "course",
+                   "url": SITE + "previous/", "text": "Evidencia del recurso anterior."}]
+    sources = segments(documents)
+    latest = {"contentHash": "a" * 64, "documents": [
+        {key: value for key, value in doc.items() if key != "text"} | {"hash": digest(doc["text"])} for doc in documents]}
+    names = list(sources)
+    previous = {"id": names[-1].removesuffix(".txt"), "title": documents[-1]["title"], "url": documents[-1]["url"]}
+    body = knowledge.Retrieval(message="Amplía ese recurso", pageUrl=SITE + "guide/", contextIds=[documents[-2]["id"]],
+        continuity="Tema: diagrama y recurso previo.", history=[{"question": "Recomienda un recurso", "answer": "Recurso anterior.",
+        "version": latest["contentHash"], "sources": [previous]}])
+    evidence = [{"kind": "segment", "document_name": name} for name in names[:8]]
+    fragments, _ = knowledge.select_evidence(body, evidence, sources, latest, tmp_path)
+    assert len(fragments) == 8
+    assert [item["id"] for item in fragments[:2]] == [names[-2].removesuffix(".txt"), previous["id"]]
+    latest["documents"][-1]["hash"] = digest("Recurso modificado")
+    assert all(item["id"] != previous["id"] for item in knowledge.select_evidence(body, evidence, sources, latest, tmp_path)[0])

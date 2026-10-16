@@ -37,3 +37,24 @@ foreach ($fault in @('import', 'import-and-restart', 'restart', 'none')) {
     }
 }
 Write-Output 'CertiChat local self-check passed: snapshot failures restart knowledge and preserve the original error.'
+
+$override = Join-Path $fixture '.private/certivoice-ca.compose.yml'
+[IO.File]::WriteAllText($override, '{"services":{"api":{"volumes":[]}}}')
+$contextOverride = Join-Path $fixture '.private/certivoice-context.compose.yml'
+[IO.File]::WriteAllText($contextOverride, '{"services":{"api":{"volumes":[]}}}')
+foreach ($mode in @('normal', 'test', 'pilot')) {
+    $seen = [Collections.Generic.List[bool]]::new()
+    function docker {
+        $seen.Add($args -contains $override)
+        $seen.Add($args -contains $contextOverride)
+        $global:LASTEXITCODE = 0
+    }
+    try {
+        $options = if ($mode -eq 'pilot') { @{VoicePilot=$true} } elseif ($mode -eq 'test') { @{Test=$true} } else { @{} }
+        & (Join-Path $fixture 'scripts/certichat-local.ps1') @options | Out-Null
+    } finally { Remove-Item Function:docker }
+    if ($seen.Count -eq 0 -or @($seen | Where-Object { $_ -ne ($mode -eq 'pilot') }).Count) {
+        throw "Private pilot override escaped its pilot scope: $mode"
+    }
+}
+Write-Output 'CertiChat override self-check passed: only the isolated voice pilot includes CA and corpus overrides.'

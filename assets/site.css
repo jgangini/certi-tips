@@ -630,27 +630,28 @@ html[data-theme="dark"] .hero-action { border-color: #ffffff1a; background: #fff
 html[data-theme="dark"] .hero-action:is(:hover, :focus-visible) { border-color: #c7463480; background: #c746341a; }
 @container hero-copy (max-width: 440px) {
   .hero-actions { grid-template-columns: 1fr; }
-  body:has(.certichat-panel:not([hidden])) .home-hero h1 { font-size: clamp(1.75rem, 10cqi, 2.4rem); }
+  body:has(.certichat-panel:not([hidden]):not([data-voice-mode="true"])) .home-hero h1 { font-size: clamp(1.75rem, 10cqi, 2.4rem); }
 }
 /* ponytail: two 420px chat-width columns plus the 56px maximum gap; update if the dock width changes. */
 @container home-main (max-width: 896px) {
-  body:has(.certichat-panel:not([hidden])) .home-hero { grid-template-columns: minmax(0, 1fr); }
-  body:has(.certichat-panel:not([hidden])) .home-hero :is(.hero-copy, .hero-ambient) { grid-column: 1; }
-  body:has(.certichat-panel:not([hidden])) .hero-flow { display: none; }
-  body:has(.certichat-panel:not([hidden])) .hero-ambient { margin-left: calc(-1 * var(--frame-left)); }
-  body:has(.certichat-panel:not([hidden])) .home-hero h1 { font-size: clamp(1.75rem, 6cqi, 2.4rem); }
-  html[data-theme="dark"] body:has(.certichat-panel:not([hidden])) .home-hero::before { display: none; }
+  body:has(.certichat-panel:not([hidden]):not([data-voice-mode="true"])) .home-hero { grid-template-columns: minmax(0, 1fr); }
+  body:has(.certichat-panel:not([hidden]):not([data-voice-mode="true"])) .home-hero :is(.hero-copy, .hero-ambient) { grid-column: 1; }
+  body:has(.certichat-panel:not([hidden]):not([data-voice-mode="true"])) .hero-flow { display: none; }
+  body:has(.certichat-panel:not([hidden]):not([data-voice-mode="true"])) .hero-ambient { margin-left: calc(-1 * var(--frame-left)); }
+  body:has(.certichat-panel:not([hidden]):not([data-voice-mode="true"])) .home-hero h1 { font-size: clamp(1.75rem, 6cqi, 2.4rem); }
+  html[data-theme="dark"] body:has(.certichat-panel:not([hidden]):not([data-voice-mode="true"])) .home-hero::before { display: none; }
 }
 .certichat .certichat-launcher {
   position: relative;
   isolation: isolate;
   color: #8f2c25;
   border: 1px solid var(--red);
-  background: linear-gradient(135deg, rgba(255, 255, 255, .88), rgba(255, 231, 222, .56) 55%, rgba(243, 228, 255, .64));
+  background-color: var(--chat-glass-surface);
+  background-image: var(--chat-glass-texture);
   -webkit-backdrop-filter: blur(16px) saturate(160%);
   backdrop-filter: blur(16px) saturate(160%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6), inset 0 -1px 0 rgba(199, 70, 52, .08), 0 3px 8px rgba(199, 70, 52, .08), 0 0 12px rgba(231, 131, 108, .1);
-  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+  transition: box-shadow .2s ease, border-color .2s ease;
 }
 .certichat .certichat-launcher::before {
   content: "";
@@ -664,23 +665,20 @@ html[data-theme="dark"] .hero-action:is(:hover, :focus-visible) { border-color: 
   pointer-events: none;
 }
 .certichat .certichat-launcher:is(:hover, :focus-visible) {
-  transform: translateY(-2px);
   border-color: var(--red-dark);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .75), 0 4px 12px rgba(199, 70, 52, .12), 0 0 16px rgba(231, 131, 108, .16);
 }
 html[data-theme="dark"] .certichat .certichat-launcher {
   color: #ffe9df;
   border-color: rgba(255, 217, 199, .65);
-  background: linear-gradient(135deg, rgba(255, 255, 255, .13), rgba(199, 70, 52, .18) 55%, rgba(146, 91, 180, .2));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 3px 8px rgba(0, 0, 0, .2), 0 0 12px rgba(223, 107, 78, .09);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 3px 8px rgba(146, 91, 180, .18), 0 0 12px rgba(223, 107, 78, .09);
 }
 html[data-theme="dark"] .certichat .certichat-launcher:is(:hover, :focus-visible) {
   border-color: rgba(255, 217, 199, .65);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 4px 12px rgba(0, 0, 0, .2), 0 0 16px rgba(223, 107, 78, .14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 4px 12px rgba(146, 91, 180, .22), 0 0 16px rgba(223, 107, 78, .14);
 }
 @media (prefers-reduced-motion: reduce) {
   .certichat .certichat-launcher { transition: none; }
-  .certichat .certichat-launcher:is(:hover, :focus-visible) { transform: none; }
 }
 .certitips-link, .certiquiz-link, .certitube-link, .certichat-launcher { gap: 10px; }
 .hero-flow {
@@ -726,8 +724,8 @@ html[data-theme="dark"] .certichat .certichat-launcher:is(:hover, :focus-visible
 .certitips-page .certification-list { min-height: 0; margin-right: calc(-1 * var(--layout-gap)); padding-right: var(--layout-gap); overflow-y: auto; scrollbar-color: var(--scrollbar) transparent; scrollbar-width: thin; }
 .certitips-page .certification-item { scroll-margin-top: 0; }
 @media (min-width: 801px) {
-  .certitips-page:has(.certichat-panel:not([hidden])) .path-carousel { padding-bottom: 20px; }
-  .certitips-page:has(.certichat-panel:not([hidden])) .path-section { max-height: calc(100dvh - var(--header) - var(--footer-height) - var(--course-groups-height) - 20px); }
+  .certitips-page:has(.certichat-panel:not([hidden]):not([data-voice-mode="true"])) .path-carousel { padding-bottom: 20px; }
+  .certitips-page:has(.certichat-panel:not([hidden]):not([data-voice-mode="true"])) .path-section { max-height: calc(100dvh - var(--header) - var(--footer-height) - var(--course-groups-height) - 20px); }
 }
 .has-js .path-carousel > .path-section:not(.is-active) { display: none; }
 .path-carousel > .path-section.is-active { animation: group-enter 220ms ease-out both; }
@@ -873,7 +871,7 @@ html[data-theme="dark"] .certichat .certichat-launcher:is(:hover, :focus-visible
   flex-direction: column;
   position: fixed;
   top: var(--header);
-  bottom: 0;
+  bottom: var(--footer-height);
   left: 0;
   width: var(--sidebar-width);
   border-right: 1px solid var(--line);
@@ -1082,7 +1080,7 @@ progress::-webkit-progress-value {
   .site-header .brand > span { display: none; }
 }
 @media (min-width: 801px) {
-  body:has(.certichat-panel:not([hidden])), html.chat-restoring body {
+  body:has(.certichat-panel:not([hidden]):not([data-voice-mode="true"])), html.chat-restoring body {
     --chat-space: calc(var(--dock-width) + var(--layout-gap));
     --content-gutter: 24px;
   }
@@ -1443,14 +1441,13 @@ dialog:not(#diagram-viewer)[open]::backdrop { opacity: 1; }
   dialog:not(#diagram-viewer)[open]::backdrop { opacity: 0; }
 }
 html:has(#language-transition[open]) { overflow: hidden; }
-#language-transition { width: 32px; height: 32px; overflow: hidden; border: 0; border-radius: 0; outline: none; background: transparent; box-shadow: none; }
+#language-transition { width: 1px; height: 1px; overflow: hidden; border: 0; border-radius: 0; outline: none; background: transparent; box-shadow: none; }
 #language-transition[open], #language-transition[open]::backdrop { opacity: 1; transform: none; transition: none; }
 @media (prefers-reduced-motion: no-preference) {
   dialog#language-transition, dialog#language-transition::backdrop { transition-duration: 450ms; }
 }
 @media (prefers-reduced-motion: reduce) {
   dialog:not(#diagram-viewer), dialog:not(#diagram-viewer)::backdrop { transition: none; }
-  #language-transition .certichat-spinner { animation: none; }
 }
 .search-dialog {
   width: min(620px, calc(100vw - 24px));
@@ -1651,10 +1648,13 @@ html:not([data-theme="dark"]) :is(.dialog-content, .dialog-content img) { backgr
 #diagram-viewer.is-presenting:has(.diagram-presentation-nav.is-open)::after { opacity: 1; pointer-events: auto; }
 #diagram-viewer.is-presenting .dialog-content img { width: 100%; height: 100%; min-width: 0; min-height: 0; object-fit: contain; }
 #diagram-viewer.is-presenting #diagram-description { grid-column: 1; grid-row: 3; max-height: 22dvh; overflow-y: auto; }
-#diagram-viewer.is-presenting .diagram-slide-count { display: grid; place-items: center; grid-column: 1; grid-row: 2; justify-self: end; align-self: end; position: relative; margin: 0 20px 12px 0; width: 98px; height: 40px; border: 1px solid #111; border-radius: 6px; background: #111; color: #fff; font-size: 1.1rem; font-weight: 700; font-variant-numeric: tabular-nums; opacity: 0; visibility: hidden; transition: opacity 250ms, visibility 250ms; pointer-events: none; }
+#diagram-viewer.is-presenting .diagram-slide-count { display: grid; place-items: center; grid-column: 1; grid-row: 2; justify-self: end; align-self: end; position: relative; margin: 0 20px 20px 0; width: 98px; height: 36px; border: 1px solid #111; border-radius: 6px; background: #111; color: #fff; font-size: 1.1rem; font-weight: 700; font-variant-numeric: tabular-nums; opacity: 0; visibility: hidden; transition: opacity 250ms, visibility 250ms; pointer-events: none; }
 #diagram-viewer.is-presenting .diagram-slide-count.is-visible { opacity: 1; visibility: visible; }
 @media (max-width: 700px) { .dialog-toolbar #diagram-caption { font-size: .85rem; } }
 html.is-resizing :is(.course-page, .site-header, .home-main, .hero-ambient, .course-groups, .sidebar, .course-main, .site-footer) { transition: none !important; }
+html.is-chat-layout-transition :is(.course-page, .site-header, .sidebar, .course-main) { transition: none !important; }
+html.is-chat-layout-transition::view-transition { pointer-events: none; }
+::view-transition-group(course-reading), ::view-transition-group(course-diagram), ::view-transition-group(course-chat-launcher) { animation-duration: 360ms; animation-timing-function: ease; }
 @media (prefers-reduced-motion: reduce) {
   #diagram-viewer::backdrop { animation: none; }
   .diagram-slide-count, .diagram-presentation-nav, #diagram-viewer::after { transition: none !important; }
@@ -2116,7 +2116,6 @@ html[data-theme="dark"] .quiz-heading .eyebrow {
     width: min(310px, 88vw);
     box-shadow: 12px 0 40px #2523211c;
     visibility: hidden;
-    bottom: var(--footer-height);
     transition:
       transform 0.18s,
       visibility 0.18s;

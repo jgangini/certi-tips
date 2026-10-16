@@ -1,6 +1,6 @@
 # CertiChat
 
-**Alcance de esta versión:** recuperación de referencias vigentes en seguimientos, orden visible de enlaces y memoria conversacional acotada. Su publicación en `main` y Hostinger fue autorizada después de 455 pruebas y un replay sin proveedor. Las evaluaciones históricas de fusión multilingüe que no superaron la aceptación se conservan documentadas; sus cambios generales de ranking quedaron descartados. El replay acredita transporte de contexto, no una mejora general de precisión del generador.
+**Base integrada desde `main` (`60af95f`):** recuperación de referencias vigentes en seguimientos, orden visible de enlaces y memoria conversacional acotada. Su publicación en `main` y Hostinger fue autorizada después de 455 pruebas y un replay sin proveedor. Esa autorización corresponde a la corrección acotada de seguimientos; el piloto de voz sigue siendo experimental. Las evaluaciones históricas de fusión multilingüe que no superaron la aceptación se conservan documentadas; sus cambios generales de ranking quedaron descartados. El replay acredita transporte de contexto, no una mejora general de precisión del generador.
 
 Asistente de las guías publicadas en [CertiTips](https://jgangini.github.io/certitips/). Deep Chat 2.5.1 se carga al abrir el panel; la API FastAPI vive en `https://certichat.cloudtechnext.net`. Cognee 1.6.1 mantiene el índice privado. Solo la API posee la clave de OpenRouter.
 
@@ -13,6 +13,8 @@ El modo progresivo usa `connect.stream.simulation` nativo de Deep Chat, después
 ## Contenido y respuestas
 
 La recuperación utiliza hasta cuatro turnos del historial privado del servidor, conservados durante 24 horas y compatibles con el hash de contenido actual. Incluye preguntas, un extracto de la respuesta previa y referencias a sus fuentes para resolver expresiones como «el segundo recurso». Ese historial es contexto conversacional, nunca evidencia factual. Las fuentes recordadas se vuelven a validar contra el snapshot y el manifiesto vigentes; su texto proviene del corpus, no de la respuesta guardada. Una referencia antigua con formato inválido se descarta sin invalidar toda la conversación.
+
+La implementación experimental de voz se describe en [VOICE-PILOT.md](VOICE-PILOT.md). Permanece desactivada por defecto (`CERTICHAT_VOICE_ENABLED=false`): los contratos de audio se probaron, pero ningún modelo ha completado la aceptación de calidad y dispositivos. El código del piloto, preparado inicialmente sobre `3bd8079`, incorpora ahora la corrección de seguimientos de `main` (`60af95f`). La autorización posterior de publicar el piloto se aplica mediante el procedimiento de despliegue siguiente; no convierte los resultados históricos en una aceptación auditiva.
 
 La generación reserva como máximo 6.000 bytes UTF-8 para el contexto de esos cuatro turnos antes de seleccionar fragmentos. La respuesta previa se limita a 1.500 caracteres y solo se incluye cuando conserva alguna fuente revalidada entre los fragmentos disponibles; si no cabe, se conserva únicamente la pregunta. Los recursos mantienen su posición original en la lista mostrada, aunque otro recurso deje de estar vigente. Sus IDs se convierten a los nuevos alias S1…S8 de la consulta; nunca se reutilizan alias escritos en respuestas antiguas. Si el referente no puede identificarse, el asesor debe pedir una aclaración breve.
 
@@ -44,13 +46,14 @@ Turnstile valida el hostname `jgangini.github.io` y la acción `certichat_sessio
 
 | Recurso | Límite |
 | --- | --- |
-| Sesión | 2 consultas/minuto y `CERTICHAT_QUESTIONS` por periodo de `CERTICHAT_REFRESH` horas (por defecto 20 cada 6 horas); una en curso |
+| Sesión | 2 consultas de chat/minuto o 10 intervenciones de voz/minuto; comparten `CERTICHAT_QUESTIONS` por periodo de `CERTICHAT_REFRESH` horas (por defecto 20 cada 6 horas) y una solicitud en curso |
 | Red de origen | 60 consultas/minuto y 600/hora; IPv6 agrupada por /64 |
 | API | Cuatro consultas admitidas simultáneamente |
 | Buscador | Una búsqueda activa, sin cola ilimitada |
 | Mensaje / respuesta | 1.500 caracteres / 8.192 tokens de generación, incluido razonamiento; texto visible máximo de 5.000 caracteres |
 | Historial | Cuatro turnos utilizables durante 24 horas; limpieza física cada minuto; mismo hash del contenido |
-| Consultas | `CERTICHAT_CHAT_BUDGET_USD`: US$10/mes por defecto |
+| Consultas y audio | `CERTICHAT_CHAT_BUDGET_USD`: US$50/mes como techo conjunto; se conservan límites existentes menores |
+| Piloto de voz | `CERTICHAT_VOICE_PILOT_BUDGET_USD`: hasta US$4,58 nuevos, más US$0,42 apartados para las pruebas previas, dentro del presupuesto mensual |
 | Indexación | `CERTICHAT_INDEX_BUDGET_USD`: US$10/mes por defecto |
 
 Los dos presupuestos mensuales son independientes y usan UTC, sin límite diario de gasto ni otro tope combinado en la aplicación. Admiten importes positivos con hasta dos decimales. PostgreSQL conserva cuotas, solicitudes idempotentes y reservas de coste; borrar la conversación o reiniciar no restablece los gastos del mes. La red se guarda como HMAC, sin registrar la IP en las tablas. Cada llamada, incluidos embeddings y reintentos de Cognee, reserva presupuesto antes de salir. Una llamada cuyo coste sea incierto conserva la reserva. Los precios máximos por millón de tokens son US$0,10 de entrada y US$0,50 de salida para Haiku, y US$2,50/15 para GPT; el contexto acotado evita el tramo largo de Haiku. Se exige proveedor sin tarifa por solicitud ni recopilación de datos; de lo contrario la llamada falla cerrada. El razonamiento cuenta como generación facturada aunque se excluya de las respuestas y los informes. Las pruebas pagadas también quedan registradas y consumen su presupuesto mensual. El límite de la clave en OpenRouter es independiente: la aplicación no modifica ese ajuste y, si es menor, puede bloquear antes de consumir ambos presupuestos.
@@ -75,8 +78,11 @@ El archivo ignorado `.private/certichat.env` concentra los parámetros editables
 | `CERTICHAT_INDEX_MODEL` / `CERTICHAT_CHAT_MODEL` | `anthropic/claude-haiku-5.5` / `openai/gpt-5.4` | Modelos con precios y compatibilidad validados; añadir otro requiere revisar el gateway |
 | `CERTICHAT_INDEX_REASONING` / `CERTICHAT_CHAT_REASONING` | `high` / `medium` | Esfuerzo de razonamiento; se admiten medio y alto |
 | `CERTICHAT_INDEX_MAX_TOKENS` / `CERTICHAT_CHAT_MAX_TOKENS` | `16384` / `8192` | Salida máxima incluida la parte de razonamiento; se puede reducir, sin superar esos techos |
-| `CERTICHAT_CHAT_BUDGET_USD` | `10` | USD/mes para respuestas |
+| `CERTICHAT_CHAT_BUDGET_USD` | `50` | USD/mes conjuntos para chat, recuperación y audio; máximo 50. Los wrappers local/despliegue mantienen su valor conservador de 10 cuando no hay configuración y los valores explícitos menores se respetan |
 | `CERTICHAT_INDEX_BUDGET_USD` | `10` | USD/mes para indexación, independiente del chat |
+| `CERTICHAT_VOICE_ENABLED` | `false` | Habilita el piloto de voz y la continuidad compartida; activar explícitamente después de verificar el índice según el procedimiento siguiente |
+| `CERTICHAT_VOICE_MODEL` | `openai/gpt-audio-mini` | Valor predeterminado histórico, no aceptado; para el despliegue autorizado configurar explícitamente `openai/gpt-audio`, comprobado en el piloto |
+| `CERTICHAT_VOICE_PILOT_BUDGET_USD` | `4.58` | Máximo acumulado del nuevo piloto, sin renovación mensual; incluye reservas inciertas |
 | `CERTICHAT_QUESTIONS` | `20` | Consultas por usuario en cada periodo; acepta 1–100 |
 | `CERTICHAT_REFRESH` | `6` | Horas hasta renovar las consultas; acepta 1–24 |
 | `CERTICHAT_INDEX_REFRESH_MINUTES` | `5` | Minutos entre comprobaciones del conocimiento; acepta 1–15 |
@@ -85,13 +91,29 @@ El intervalo del conocimiento controla ambos temporizadores de la VPS y el refre
 
 En el mapa, «Actualización» muestra la última sincronización exitosa del manifiesto publicado (`knowledge.checkedAt` en `/api/health`), siempre en hora de Perú (`America/Lima`, UTC−5), independientemente de la zona del navegador. Proviene de la fecha de escritura de `latest.json`, no del reloj del navegador; un fallo de refresco no la adelanta. El detalle de la celda conserva la creación del índice (`generatedAt`): comprobar el repositorio no implica regenerar el grafo ni cambiar su versión.
 
-1. Guardar también `OPENROUTER_API_KEY`, `CERTICHAT_TURNSTILE_SITE_KEY` y `CERTICHAT_TURNSTILE_SECRET` en `.private/certichat.env`. No incluirlo en un commit ni compartirlo en el chat. Para utilizar ambos presupuestos completos con una misma clave, configurar en OpenRouter un límite de US$20 con reinicio mensual; la aplicación no modifica ese ajuste.
+1. Guardar también `OPENROUTER_API_KEY`, `CERTICHAT_TURNSTILE_SITE_KEY` y `CERTICHAT_TURNSTILE_SECRET` en `.private/certichat.env`. No incluirlo en un commit ni compartirlo en el chat. El límite de la clave de OpenRouter debe cubrir los presupuestos autorizados de consultas/audio e indexación que se deseen utilizar; la aplicación no aumenta ese límite ni el saldo disponible.
 2. Crear el widget Managed de Turnstile para `jgangini.github.io`. Configurar en GitHub la variable pública `CERTICHAT_TURNSTILE_SITE_KEY`. El workflow de Pages la entrega al build; nunca necesita la clave privada.
 3. Crear el registro A `certichat.cloudtechnext.net` hacia la VPS. Instalar solamente las claves OpenRouter y Turnstile privada en `/opt/jarvis/apps/certichat/services/certichat/.env`, con permisos 600 y directorios privados.
 4. Ejecutar `./scripts/certichat-deploy.ps1` desde la raíz para aplicar cambios en la VPS. Transfiere exclusivamente `services/certichat`, sin archivos de entorno. Lee de `.private/certichat.env` los dos parámetros numéricos de cuota, los dos presupuestos mensuales y el intervalo del conocimiento, los valida y los instala en el entorno privado de la VPS; si faltan, aplica los valores iniciales de la tabla. Genera credenciales independientes en la VPS, aplica el esquema con un rol administrador y usa un rol DML limitado en ejecución. Fuerza `CERTICHAT_MODE=VPS`, orígenes públicos HTTPS y cookies seguras antes de iniciar Docker, incluso si había valores locales en el entorno. Configura Caddy y los temporizadores de sincronización. El workflow de Pages también fuerza `CERTICHAT_MODE=VPS`; el modo local no se publica.
 5. Publicar el build de Pages y comprobar la primera indexación. Una API saludable puede estar todavía esperando su primer índice; no equivale a un chat listo.
 
 El despliegue mantiene una copia privada de la base y del release previo. Si falla una actualización restaura las imágenes y fuentes anteriores; las migraciones deben ser aditivas. No revierte automáticamente datos. Los contenedores usan usuario sin privilegios, sistemas de archivos de solo lectura, límites de CPU/memoria y redes privadas para PostgreSQL y el buscador. Ninguno comparte datos ni credenciales con CertiQuiz.
+
+### Publicación del piloto de voz
+
+El desarrollo y la publicación del piloto están autorizados; este procedimiento no afirma que el despliegue ya se haya realizado. Publicar primero las APIs compatibles, manteniendo la voz desactivada. Después publicar Pages mediante su workflow, que fuerza `CERTICHAT_MODE=VPS`, y actualizar y validar el índice de la VPS contra ese manifiesto público. La comparación de esta entrega añade **238 documentos SVG** a los 502 existentes (740 en total), sin cambiar los hashes de los 502 anteriores. El índice debe incorporar esos diagramas para explicarlos; conservar el snapshot activo hasta validar y activar el candidato. Una compilación local o una respuesta de salud no prueban esa indexación.
+
+Con el índice verificado, persistir en `.private/certichat.env` estos valores y desplegar de nuevo el backend:
+
+```dotenv
+CERTICHAT_VOICE_ENABLED=true
+CERTICHAT_VOICE_MODEL=openai/gpt-audio
+CERTICHAT_VOICE_PILOT_BUDGET_USD=4.58
+```
+
+Conservar un límite explícito menor si ya existe. `scripts/certichat-deploy.ps1 -SkipProxy` sincroniza los tres parámetros al entorno privado de la VPS; cambiarlos únicamente en un contenedor no los conserva en el siguiente despliegue. Mantener los presupuestos mensuales de consultas e indexación, las cuotas y el ledger existentes: el tope de voz es acumulado, incluye reservas pendientes y **no se renueva al cambiar de mes, reiniciar o borrar una conversación**. Los US$4,58 no son crédito nuevo por despliegue; los US$0,42 históricos siguen apartados dentro de los US$5 autorizados.
+
+El piloto local continúa disponible mediante `scripts/certichat-local.ps1 -VoicePilot -Build`, con entorno y ledger aislados, para el desarrollo autorizado. Las pruebas de contrato respaldan `openai/gpt-audio`; la aceptación auditiva con personas sigue pendiente. El [registro del piloto](VOICE-PILOT.md) conserva los resultados y el probe optativo, cuyos argumentos `--private-env`, `--ssh-key`, `--ssh-target` y `--ssh-container` son explícitos y no forman parte del despliegue automático.
 
 ## Desarrollo local
 
@@ -104,6 +126,8 @@ La evaluación general posterior congeló 120 casos de cursos, prácticas, pregu
 CertiTube añade al mismo corpus las fichas publicadas de `data/es/certitube/<videoId>/<videoId>.md`. Cada capítulo aporta una fuente con `courseId: "site"` y un fragmento temporal estable, por ejemplo `/certitips/certitube/Ha74VhpQwQo/#t-243`. El contrato de la API y los filtros de procedencia no cambian. Borradores y controles de reproducción quedan excluidos. Véase la [guía de edición](../../.codex/certitube.md). Publicar una ficha cambia el corpus; construir el sitio localmente no actualiza el índice activo. El modo local de refresco descrito abajo no ejecuta esa indexación de pago.
 
 Con `CERTICHAT_MODE=LOCAL` en `.private/certichat.env`, ejecutar `./scripts/certichat-local.ps1 -Build`, `npm run build` y `npm run preview`. Abrir `http://127.0.0.1:4173/certitips/`: el build dirige el chat a `http://127.0.0.1:18741`. La sesión local omite Turnstile y usa una cookie local; conserva comprobación del origen exacto, límites, presupuesto y filtros de contenido. La API solo se publica en el loopback del equipo, sin modificar el acceso de la VPS.
+
+Para revisar un worktree en otro puerto mientras la API local ya está en uso, iniciar solo su preview con `$env:PORT='4183'; $env:CERTICHAT_PREVIEW_PROXY_PORT='18741'; npm run preview`. El servidor conecta las rutas públicas de CertiChat con esa API de loopback y adapta únicamente el `data-api` local al origen de la vista previa. Valida origen, cabeceras y tamaño, conserva cookies y no reintenta consultas. Ambos puertos comparten sesión y cuotas; abrir o reconectar el panel no consulta modelos. No ejecutar `certichat-local.ps1 -Build` desde otro worktree para este caso: sustituiría el backend compartido. El proxy es opcional y no modifica el build ni la configuración de producción.
 
 El script lee el modo, la clave OpenRouter, modelos, esfuerzos y límites de salida, los dos parámetros de cuota, los dos presupuestos y el intervalo del conocimiento del archivo privado. Después de editar `.private/certichat.env`, volver a ejecutar `./scripts/certichat-local.ps1 -Build` para aplicar los cambios locales. Genera credenciales independientes y persistentes en `services/certichat/.env`, también ignorado por Git; rechaza sobrescribir un archivo de servicio que no sea `LOCAL`. Los datos usan volúmenes del proyecto Docker `certichat-local`. Las consultas reales consumen OpenRouter; `-Test` sigue usando proveedores simulados y credenciales desechables.
 
@@ -279,6 +303,21 @@ La corrección posterior conserva las tres búsquedas y el orden habitual de can
 Se ejecutó `./scripts/certichat-local.ps1 -Test`: 455 pruebas aprobadas con PostgreSQL desechable, proveedores simulados y credenciales ficticias. Incluyen frescura, orden de URLs, cuatro idiomas, aislamiento, caducidad, borrado, idempotencia y límites de empaquetado. Las 24 expresiones de seguimiento h01–h06 del experimento anterior reconocen sus referencias; esto mide el detector, no respuestas nuevas de GPT.
 
 El replay privado `output/cognee-followup-20261016/replay.py` reutiliza los 16 contrafactuales y dos pools capturados: 32 comprobaciones. Con el pool A, el referente y sus fuentes llegan completos al payload en 16/16, frente a 0/16 antes; con MR se conserva 16/16. Como no se guardaron los candidatos nativos previos al recorte, se reutilizan los fragmentos finales capturados y se desactiva la proyección localizada en ese replay. No ejecuta búsqueda Cognee ni generación, y no mide precisión final, ahorro o latencia real. El gasto de esta corrección es US$0; no cambia presupuestos, modelos ni índice. `REPLAY.md` y `replay.json` conservan resultados y hashes. Tras revisar esos resultados, el usuario autorizó publicar en `main` y Hostinger esta corrección acotada; esa autorización no convierte el replay en una demostración de mejora general ni promueve la fusión experimental descartada.
+
+## Piloto local de voz aislado
+
+Para revisar voz sin reemplazar el backend de otra tarea, el arranque existente admite `-VoicePilot`. Usa el proyecto e imágenes `certichat-voice-pilot`/`voice-pilot`, puerto 18742, volúmenes y credenciales propios y la cookie `certichat-voice-pilot`. La configuración se guarda en `.private/certivoice-pilot.env`; `-PrivateEnv` lee la clave y configuración local existente sin modificarlas.
+
+```powershell
+./scripts/certichat-local.ps1 -VoicePilot -Build -PrivateEnv <archivo-LOCAL-existente> -SnapshotArchive <copia-consistente.tar>
+$env:PORT = '4183'
+$env:CERTICHAT_PREVIEW_PROXY_PORT = '18742'
+npm run preview
+```
+
+La copia del índice debe exportarse con sus propietarios detenidos; nunca montar el volumen activo simultáneamente en ambos workers. El importador rechaza sobrescribir un índice activo. Después del primer arranque, omitir `-SnapshotArchive`; se reutilizan los datos y el ledger. No eliminar el volumen PostgreSQL para reiniciar un piloto: reinicios, cambios de mes y borrado de conversación conservan el gasto acumulado.
+
+La bandera `CERTICHAT_LOCAL_VOICE_PILOT=true` solo se admite con modo LOCAL y voz habilitada. `openai/gpt-audio` es el candidato del piloto; el techo restante de US$4,58 incluye **todas** las consultas, audio y recuperación desde la primera reserva, incluso chat anterior a la primera voz. US$0,42 quedan apartados para los probes previos. No ejecuta reindexación; los detalles y límites de aceptación están en [VOICE-PILOT.md](VOICE-PILOT.md). El chat y la voz comparten memoria dentro de este preview. Integrar el código de `main` no combina las sesiones, bases de datos ni ledgers de los dos backends aislados.
 
 ## Evaluación experimental de Jev · 2026-10-15
 

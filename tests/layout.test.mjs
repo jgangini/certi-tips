@@ -10,6 +10,7 @@ test("the image viewer refreshes its group, source heading and description when 
   const caption = { textContent: "" }, group = { textContent: "" }, description = { textContent: "" }, enlarged = { addEventListener() {} };
   const close = { focus() {}, addEventListener() {} };
   const dialog = {
+    dataset: {},
     querySelector: selector => ({ "img": enlarged, ".dialog-content img": enlarged, ".dialog-content": enlarged, "[data-diagram-present]": close, "[data-diagram-menu]": close, ".diagram-presentation-nav": {}, ".diagram-slide-count": {}, button: close, "[data-close-diagram]": close, "#diagram-description": description })[selector],
     showModal() {}, addEventListener() {},
   };
@@ -17,7 +18,7 @@ test("the image viewer refreshes its group, source heading and description when 
     { src: "https://example.test/course/overview/img/pyramid.svg", alt: "Pirámide Dorada de Peter Aiken", description: "Las once áreas de gestión de datos." },
     { src: "https://example.test/course/governance/img/contract.svg", alt: "Contrato del Producto de Datos", heading: "El Caso de Operadora Horizonte", description: "Negocio acuerda; ingeniería aplica controles." },
   ].map(image => ({
-    dataset: { diagramHeading: image.heading },
+    dataset: { diagramHeading: image.heading, sourceId: `course#${image.src.split('/').at(-1)}` },
     image: { ...image, getAttribute: name => name === 'src' ? image.src : null },
     querySelector(selector) { return selector === "img" ? this.image : { firstChild: { textContent: `${image.description} ` }, textContent: `${image.description} ↗` }; },
     addEventListener(type, callback) { this.click = callback; },
@@ -35,6 +36,7 @@ test("the image viewer refreshes its group, source heading and description when 
   for (const [index, button] of buttons.entries()) {
     button.click();
     assert.equal(enlarged.src, button.image.src);
+    assert.equal(dialog.dataset.sourceId, button.dataset.sourceId);
     assert.equal(caption.textContent, button.dataset.diagramHeading || button.image.alt);
     assert.equal(group.textContent, `${links[index].number} ${links[index].title}`);
     assert.equal(description.textContent, button.image.description);
@@ -370,10 +372,20 @@ test("CertiQuiz host lobby keeps facts beside its actions and uses a compact con
   assert.match(chatHtml, /data-quiz-api="https:\/\/quiz\.example\.test"/);
   assert.doesNotMatch(chatHtml, /data-chat-status|Preparando el asistente|Completa la verificación/);
   assert.match(chatHtml, /data-chat-verification/);
+  const voiceSupport = chatHtml.match(/<section data-certivoice[^]*?<\/section>/)?.[0];
+  assert.ok(voiceSupport, "Voice retains accessible support inside the chat panel");
+  assert.match(chatHtml, /id="certichat-panel"[^]*?<section data-certivoice[^]*?<\/section><div class="certichat-messages"/);
+  assert.match(voiceSupport, /class="visually-hidden" data-voice-status role="status" aria-live="polite"/);
+  assert.match(voiceSupport, /data-voice-verification hidden/);
+  assert.doesNotMatch(voiceSupport, /<button|<details/);
+  assert.doesNotMatch(chatHtml, /class="certivoice"|data-voice-(?:toggle|stop|retry|caption)/);
   const chatDialog = chatHtml.match(/<dialog class="confirmation" data-chat-confirm[^]*?<\/dialog>/)[0];
   assert.doesNotMatch(chatDialog, /data-chat-clear-error/);
   assert.match(chatHtml, /class="notice warning chat-clear-toast" data-chat-clear-error role="alert" hidden><span data-chat-clear-error-message><\/span><button type="button" data-chat-clear-error-close aria-label="Cerrar aviso">/);
-  assert.match(chatHtml, /data-chat-retry[^]*?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"/);
+  assert.match(chatHtml, /<div class="certichat-actions"><button[^>]*data-chat-retry[^]*?<svg viewBox="0 0 512 512" fill="currentColor"/);
+  assert.match(chatHtml, /data-chat-retry[^]*?transform="translate\(44\.810770,44\.810773\)"/);
+  assert.match(chatHtml, /<span class="warning" data-voice-unavailable hidden role="img"[^]*?<svg viewBox="-3\.5 0 32 32" fill="currentColor"/);
+  assert.match(chatHtml, /data-voice-unavailable[^]*?transform="translate\(-154,-307\)"[^]*?<\/span><a [^>]*aria-label="Ver el grafo de CertiChat"/);
   assert.match(chatHtml, /<h2 id="chat-confirm-title" tabindex="-1" autofocus>/);
   assert.match(chatHtml, /data-chat-confirm-yes>Aceptar<\/button>/);
   assert.match(script, /<h2 id="confirmation-title" tabindex="-1" autofocus>/);

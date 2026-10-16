@@ -210,12 +210,12 @@ function playerFixture(hash = "#t-332") {
   const strip = { getBoundingClientRect: () => ({ left: 0, right: 100 }), scrollBy() {} };
   const links = [0, 49, 332].map(seconds => ({ dataset: { tubeTime: String(seconds) }, querySelector: () => ({ textContent: String(seconds) }), setAttribute() {}, removeAttribute() {}, parentElement: strip, getBoundingClientRect: () => ({ left: 0, right: 10 }) }));
   const panels = [0, 49, 332].map(seconds => ({ dataset: { tubeDescription: String(seconds) }, hidden: true }));
-  const root = { dataset: { duration: "450", videoId: id }, querySelector: name => ({ "[data-tube-external]": external, "[data-tube-status]": status, "[data-tube-message]": message, "[data-tube-loading]": spinner })[name], querySelectorAll: name => name === "[data-tube-time]" ? links : panels, scrollIntoView() { scrolls++; }, focus() {} };
+  const root = { dataset: { duration: "450", videoId: id }, addEventListener: (type, fn) => { handlers[type] = fn; }, querySelector: name => ({ "[data-tube-external]": external, "[data-tube-status]": status, "[data-tube-message]": message, "[data-tube-loading]": spinner })[name], querySelectorAll: name => name === "[data-tube-time]" ? links : panels, scrollIntoView() { scrolls++; }, focus() {} };
   const location = new URL(`https://jgangini.github.io/certitips/certitube/${id}/${hash}`);
   const frame = {};
   const player = { time: 0, state: 5, getCurrentTime() { return this.time; }, getPlayerState() { return this.state; }, getDuration: () => 450, seekTo(seconds) { this.time = seconds; calls.push(["seek", seconds]); }, playVideo() { this.state = 1; calls.push(["play"]); }, pauseVideo() { this.state = 2; calls.push(["pause"]); }, getIframe: () => frame };
   let options;
-  const window = { matchMedia: () => ({ matches: true }), setInterval: fn => { timers.set(++timerId, fn); return timerId; }, clearInterval: id => timers.delete(id), requestAnimationFrame: fn => fn(), addEventListener: (type, fn) => { handlers[type] = fn; }, YT: { Player: function (_id, opts) { options = opts; return player; } } };
+  const window = { matchMedia: () => ({ matches: true }), setInterval: fn => { timers.set(++timerId, fn); return timerId; }, clearInterval: id => timers.delete(id), requestAnimationFrame: fn => fn(), addEventListener: (type, fn) => { handlers[type] = fn; }, dispatchEvent() {}, YT: { Player: function (_id, opts) { options = opts; return player; } } };
   const document = { querySelectorAll: () => links, addEventListener: (type, fn) => { handlers[type] = fn; } };
   const history = { pushState(_a, _b, hash) { location.hash = hash; } };
   return { root, location, window, document, history, handlers, calls, external, status, message, spinner, panels, player, timers, get scrolls() { return scrolls; }, get options() { return options; } };

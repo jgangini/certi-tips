@@ -31,6 +31,7 @@ production = {
     'CERTICHAT_ALLOWED_ORIGINS': 'https://jgangini.github.io',
     'CERTICHAT_TURNSTILE_HOSTNAME': 'jgangini.github.io',
     'CERTICHAT_PORT': '18741', 'CERTICHAT_SECURE_COOKIES': 'true',
+    'CERTICHAT_LOCAL_VOICE_PILOT': 'false',
 }
 for name, default, maximum in (('CERTICHAT_REFRESH', '6', 24), ('CERTICHAT_QUESTIONS', '20', 100),
                                ('CERTICHAT_INDEX_REFRESH_MINUTES', '5', 15)):
@@ -38,15 +39,22 @@ for name, default, maximum in (('CERTICHAT_REFRESH', '6', 24), ('CERTICHAT_QUEST
     if not value.isascii() or not value.isdecimal() or not 1 <= int(value) <= maximum:
         raise SystemExit(f'{name} must be an integer from 1 to {maximum}.')
     production[name] = str(int(value))
-for name, default in (('CERTICHAT_INDEX_BUDGET_USD', '10'), ('CERTICHAT_CHAT_BUDGET_USD', '10')):
+for name, default, maximum in (('CERTICHAT_INDEX_BUDGET_USD', '10', Decimal('1000000')),
+                               ('CERTICHAT_CHAT_BUDGET_USD', '10', Decimal('50')),
+                               ('CERTICHAT_VOICE_PILOT_BUDGET_USD', '4.58', Decimal('4.58'))):
     value = Decimal(os.environ.get(name, existing.get(name, default)).strip("'\""))
-    if not value.is_finite() or not 0 < value <= 1000000 or value.normalize().as_tuple().exponent < -2:
-        raise SystemExit(f'{name} must be a positive USD amount up to 1000000 with at most two decimal places.')
+    if not value.is_finite() or not 0 < value <= maximum or value.normalize().as_tuple().exponent < -2:
+        raise SystemExit(f'{name} must be a positive USD amount up to {maximum} with at most two decimal places.')
     production[name] = format(value, 'f')
-jev_enabled = os.environ.get('CERTICHAT_JEV_VIDEO_ENABLED', existing.get('CERTICHAT_JEV_VIDEO_ENABLED', 'false')).strip("'\"")
-if jev_enabled not in ('true', 'false'):
-    raise SystemExit('CERTICHAT_JEV_VIDEO_ENABLED must be true or false.')
-production['CERTICHAT_JEV_VIDEO_ENABLED'] = jev_enabled
+for name in ('CERTICHAT_JEV_VIDEO_ENABLED', 'CERTICHAT_VOICE_ENABLED'):
+    value = os.environ.get(name, existing.get(name, 'false')).strip("'\"")
+    if value not in ('true', 'false'):
+        raise SystemExit(f'{name} must be true or false.')
+    production[name] = value
+voice_model = os.environ.get('CERTICHAT_VOICE_MODEL', existing.get('CERTICHAT_VOICE_MODEL', 'openai/gpt-audio-mini')).strip("'\"")
+if voice_model not in ('openai/gpt-audio-mini', 'openai/gpt-audio'):
+    raise SystemExit('CERTICHAT_VOICE_MODEL must be a reviewed audio model.')
+production['CERTICHAT_VOICE_MODEL'] = voice_model
 for name, default in (('CERTICHAT_INDEX_MODEL', 'anthropic/claude-haiku-5.5'),
                       ('CERTICHAT_CHAT_MODEL', 'openai/gpt-5.4'),
                       ('CERTICHAT_INDEX_REASONING', 'high'), ('CERTICHAT_CHAT_REASONING', 'medium'),
@@ -65,7 +73,7 @@ PY
 # Compose prioritizes the process environment over --env-file: pin both to production.
 export CERTICHAT_MODE=VPS CERTICHAT_PUBLIC_ORIGIN=https://certichat.cloudtechnext.net
 export CERTICHAT_ALLOWED_ORIGINS=https://jgangini.github.io CERTICHAT_TURNSTILE_HOSTNAME=jgangini.github.io
-export CERTICHAT_SECURE_COOKIES=true CERTICHAT_PORT=18741
+export CERTICHAT_SECURE_COOKIES=true CERTICHAT_PORT=18741 CERTICHAT_LOCAL_VOICE_PILOT=false
 compose=(docker compose --project-directory "$PWD" --env-file services/certichat/.env -p certichat -f services/certichat/compose.yml)
 "${compose[@]}" config --quiet
 "${compose[@]}" build api knowledge

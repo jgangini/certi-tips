@@ -104,7 +104,7 @@ test('Governance evidence maps eleven areas, original diagrams and all assessmen
     }
     for (const section of source.split(/^## /m).slice(1)) {
       // ponytail: official access links resources; teaching sections still require graphics.
-      if (page.slug === 'overview' && section.startsWith('Acceso al Recorrido Oficial\n')) {
+      if (page.slug === 'overview' && /^Acceso al Recorrido Oficial\r?\n/.test(section)) {
         assert.match(section, /\]\(https:\/\/dama\.org\/certification\/certification-pathway\/\)/);
         continue;
       }

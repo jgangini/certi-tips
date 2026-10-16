@@ -134,7 +134,7 @@ async (page) => {
   await waitForRetry();
   assert(await page.locator('[data-chat-status]').count() === 0, 'Opening offline shows an error banner');
   assert(await page.locator('[data-chat-retry]').isVisible(), 'Offline status does not show Retry');
-  assert(await page.locator('[data-chat-retry] svg').evaluate(svg => svg.getAttribute('viewBox') === '0 0 24 24' && svg.querySelector('path')?.getAttribute('d').includes('a8 8 0 0 0')), 'Retry connection does not use a refresh icon');
+  assert(await page.locator('[data-chat-retry] svg').evaluate(svg => svg.getAttribute('viewBox') === '0 0 512 512' && svg.querySelector('path')?.getAttribute('transform') === 'translate(44.810770,44.810773)' && svg.closest('button').nextElementSibling?.matches('[data-voice-unavailable]')), 'Retry connection does not use the disconnected plug before the voice warning and graph');
   assert(await page.locator('deep-chat').evaluate(element => element.getMessages().length) === 0, 'Opening offline adds an unsolicited error message');
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).fill('Consulta sin conexión');
   await page.getByRole('textbox', { name: 'Escribe tu consulta' }).press('Enter');

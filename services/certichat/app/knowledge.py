@@ -108,6 +108,8 @@ class Retrieval(BaseModel):
     pageUrl: str | None = Field(default=None, max_length=1500)
     locale: Locale = "es"
     history: list[PreviousQuestion] = Field(default_factory=list, max_length=4)
+    contextIds: list[str] = Field(default_factory=list, max_length=2)
+    continuity: str = Field(default="", max_length=1200)
 
 
 RESOURCE = r"(?:v[ií]deo|recurso|resource|risorsa|gu[ií]a|guide|guida|curso|course|corso|materiale?|tutorial|link|enlace|fuente|source|fonte|lesson|lecci[oó]n|aula|lezione)"
@@ -126,10 +128,10 @@ def reference_positions(message: str) -> list[int]:
 
 def retrieval_query(body: Retrieval, version: str) -> str:
     previous = [turn.question for turn in body.history if turn.version == version]
-    if not previous:
+    if not previous and not body.continuity:
         return body.message
     # ponytail: recent questions resolve references without another model call; bounded to 2,000 UTF-8 bytes.
-    context = "\n".join(previous).encode("utf-8")[-2000:].decode("utf-8", errors="ignore")
+    context = "\n".join([body.continuity, *previous]).encode("utf-8")[-2000:].decode("utf-8", errors="ignore")
     return f"Pregunta actual: {body.message}\n\nPreguntas anteriores (solo contexto):\n{context}"
 
 
@@ -184,14 +186,20 @@ def select_evidence(body: Retrieval, evidence: list[dict], sources: dict, latest
                   if (fragment["id"], fragment["title"], fragment["url"]) in identities]
     # Preserve the ordinary selection order; only a follow-up protects its revalidated references before the cap.
     current = {doc["id"]: doc for doc in latest["documents"]}
+    # Context IDs locate only registered, current evidence on this page. They never supply facts.
+    context_ids = {identifier for identifier in body.contextIds if identifier in current
+                   and current[identifier]["url"].split("#")[0] == (body.pageUrl or "").split("#")[0]}
+    explicit_context = [{"kind": "segment", "document_name": name}
+                        for name, source in sources.items() if source["id"] in context_ids]
     page_context = [{"kind": "segment", "document_name": name} for name, source in sources.items()
                      if source["id"] in current and (source["id"] == "home" or current[source["id"]]["url"] == body.pageUrl)]
-    return supported_fragments(references + page_context + evidence, sources, latest), references + evidence
+    return supported_fragments(explicit_context + references + page_context + evidence, sources, latest), references + evidence
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     root = Path(os.environ.get("CERTICHAT_DATA_DIR", "/data"))
+    root.mkdir(parents=True, exist_ok=True)
     token = os.environ["CERTICHAT_CHAT_INTERNAL_TOKEN"]
     app.state.root, app.state.token, app.state.snapshot = root, token, None
     app.state.lock = asyncio.Lock()

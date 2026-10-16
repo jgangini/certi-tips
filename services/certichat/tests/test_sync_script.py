@@ -1,4 +1,5 @@
 """Exercise the real activation shell flow with fault-injected Docker commands."""
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -26,10 +27,11 @@ def test_deployment_forces_vps_and_preserves_private_credentials(tmp_path):
              "CERTICHAT_REFRESH", "CERTICHAT_QUESTIONS", "CERTICHAT_INDEX_REFRESH_MINUTES",
              "CERTICHAT_INDEX_BUDGET_USD", "CERTICHAT_CHAT_BUDGET_USD",
              "CERTICHAT_INDEX_MODEL", "CERTICHAT_CHAT_MODEL", "CERTICHAT_INDEX_REASONING",
-             "CERTICHAT_CHAT_REASONING", "CERTICHAT_INDEX_MAX_TOKENS", "CERTICHAT_CHAT_MAX_TOKENS", "CERTICHAT_DATA_DIR")
+             "CERTICHAT_CHAT_REASONING", "CERTICHAT_INDEX_MAX_TOKENS", "CERTICHAT_CHAT_MAX_TOKENS", "CERTICHAT_DATA_DIR",
+             "CERTICHAT_VOICE_ENABLED", "CERTICHAT_VOICE_MODEL", "CERTICHAT_VOICE_PILOT_BUDGET_USD", "CERTICHAT_LOCAL_VOICE_PILOT")
     expected = ("VPS", "https://certichat.cloudtechnext.net", "https://jgangini.github.io",
                 "jgangini.github.io", "true", "18741", "12", "42", "7", "12.50", "9.25",
-                "anthropic/claude-haiku-5.5", "openai/gpt-5.4", "high", "medium", "16384", "8192", "/data/claude55-haiku")
+                "anthropic/claude-haiku-5.5", "openai/gpt-5.4", "high", "medium", "16384", "8192", "/data/claude55-haiku", "true", "openai/gpt-audio", "4.25", "false")
     script = tmp_path / "deploy-config.sh"
     script.write_text(setup + "\nprintf '%s\\n' " + " ".join(f'"${{{name}}}"' for name in names) + "\n")
     private = tmp_path / "services/certichat/.env"
@@ -45,7 +47,8 @@ def test_deployment_forces_vps_and_preserves_private_credentials(tmp_path):
            "CERTICHAT_INDEX_MODEL": "anthropic/claude-haiku-5.5", "CERTICHAT_CHAT_MODEL": "openai/gpt-5.4",
            "CERTICHAT_INDEX_REASONING": "high", "CERTICHAT_CHAT_REASONING": "medium",
            "CERTICHAT_INDEX_MAX_TOKENS": "16384", "CERTICHAT_CHAT_MAX_TOKENS": "8192",
-           "CERTICHAT_DATA_DIR": "/data/claude55-haiku"}
+           "CERTICHAT_DATA_DIR": "/data/claude55-haiku", "CERTICHAT_VOICE_ENABLED": "true",
+           "CERTICHAT_VOICE_MODEL": "openai/gpt-audio", "CERTICHAT_VOICE_PILOT_BUDGET_USD": "4.25"}
     for _ in range(2):
         result = subprocess.run(["bash", str(script)], env=env, capture_output=True, text=True, timeout=15)
         assert result.returncode == 0, result.stderr
@@ -58,11 +61,21 @@ def test_deployment_forces_vps_and_preserves_private_credentials(tmp_path):
         assert values["CERTICHAT_POSTGRES_RUNTIME_PASSWORD"] == "'preserved-runtime'"
         assert sum(line.startswith("CERTICHAT_MODE=") for line in private.read_text().splitlines()) == 1
     preserved = private.read_text()
+    # A later deployment/timer must recover the same voice settings without process overrides.
+    inherited = {name: value for name, value in env.items() if name not in (
+        "CERTICHAT_VOICE_ENABLED", "CERTICHAT_VOICE_MODEL", "CERTICHAT_VOICE_PILOT_BUDGET_USD")}
+    result = subprocess.run(["bash", "-c", setup], env=inherited, capture_output=True, text=True, timeout=15)
+    assert result.returncode == 0, result.stderr
+    assert private.read_text() == preserved
     for name, invalid in (("CERTICHAT_REFRESH", "25"), ("CERTICHAT_QUESTIONS", "0"), ("CERTICHAT_QUESTIONS", "101"),
                           ("CERTICHAT_INDEX_REFRESH_MINUTES", "0"), ("CERTICHAT_INDEX_REFRESH_MINUTES", "16"),
                           ("CERTICHAT_INDEX_REFRESH_MINUTES", "1.5"),
                           ("CERTICHAT_INDEX_BUDGET_USD", "NaN"), ("CERTICHAT_CHAT_BUDGET_USD", "0"),
-                          ("CERTICHAT_CHAT_BUDGET_USD", "0.001")):
+                          ("CERTICHAT_CHAT_BUDGET_USD", "0.001"), ("CERTICHAT_CHAT_BUDGET_USD", "50.01"),
+                          ("CERTICHAT_VOICE_ENABLED", "True"), ("CERTICHAT_VOICE_ENABLED", "1"),
+                          ("CERTICHAT_VOICE_MODEL", "unreviewed/model"),
+                          ("CERTICHAT_VOICE_PILOT_BUDGET_USD", "0"), ("CERTICHAT_VOICE_PILOT_BUDGET_USD", "4.59"),
+                          ("CERTICHAT_VOICE_PILOT_BUDGET_USD", "NaN"), ("CERTICHAT_VOICE_PILOT_BUDGET_USD", "0.001")):
         result = subprocess.run(["bash", str(script)], env={**env, name: invalid}, capture_output=True, text=True, timeout=15)
         assert result.returncode != 0
         assert private.read_text() == preserved
@@ -183,3 +196,34 @@ if operation == 'up' and fault == 'candidate' and 'up\\n' not in previous: sys.e
         assert calls.count("stop") == 2 and calls.count("up") == 2
     elif fault in ("prepare_failed", "prepare_signal"):
         assert calls[-1] == "up" and "activate" not in calls and "build" not in calls
+
+
+@pytest.mark.skipif(not os.environ.get("CADDY_BINARY"), reason="Set CADDY_BINARY to the installed Caddy executable for proxy validation")
+def test_public_proxy_limits_match_backend_routes(tmp_path):
+    source = (Path(__file__).resolve().parents[1] / "update-caddy.sh").read_text()
+    config = tmp_path / "Caddyfile"
+    config.write_text(source.split("<<'CADDY'\n", 1)[1].split("\nCADDY", 1)[0])
+    result = subprocess.run([os.environ["CADDY_BINARY"], "adapt", "--adapter", "caddyfile", "--config", str(config)],
+                            capture_output=True, text=True, timeout=15)
+    assert result.returncode == 0, result.stderr
+    limits = {}
+
+    def collect(value):
+        if isinstance(value, dict):
+            for handler in value.get("handle", []):
+                if handler.get("handler") == "request_body":
+                    key = json.dumps(value.get("match"), sort_keys=True)
+                    assert key not in limits
+                    limits[key] = handler["max_size"]
+            for child in value.values():
+                collect(child)
+        elif isinstance(value, list):
+            for child in value:
+                collect(child)
+
+    collect(json.loads(result.stdout))
+    assert limits == {
+        json.dumps([{"path": ["/api/voice"]}], sort_keys=True): 1350000,
+        json.dumps([{"path": ["/api/chat"]}], sort_keys=True): 16384,
+        json.dumps([{"not": [{"path": ["/api/voice", "/api/chat"]}]}], sort_keys=True): 8192,
+    }
