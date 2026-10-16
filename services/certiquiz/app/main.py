@@ -338,7 +338,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         _, room_session = identities(request)
         if not room_session or room_session["kind"] != "player" or room_session["room_code"] != code:
             raise HTTPException(403, "Ingresa como participante de esta sala.")
-        throttle(request, "answer", 20, 60, room_session["token_hash"])
+        throttle(request, "answer", 120, 60, room_session["token_hash"])
         with request.app.state.store.room(code) as (_connection, row, now):
             role, player_id = membership(request, code, row)
             game.answer_question(row["state"], player_id, body.questionId, body.optionId, now)

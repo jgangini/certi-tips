@@ -95,14 +95,17 @@ def host_action(room: dict, action: str, now: int) -> None:
             raise GameError("Espera a que se una al menos una persona.")
         start_question(room, now)
     elif action == "next":
+        if (room.get("transitionUntil") or 0) > now:
+            raise GameError("Espera a que termine la cuenta regresiva.")
         if room["status"] == "reveal":
             room["status"] = "ranking"
             room["deadline"] = None
             room["version"] += 1
         elif room["status"] == "ranking":
-            start_question(room, now)
+            start_question(room, now + 3000)
         else:
             raise GameError("Espera a que termine la pregunta actual.")
+        room["transitionUntil"] = now + 3000
     elif action == "finish":
         if room["status"] == "finished":
             return
@@ -110,6 +113,7 @@ def host_action(room: dict, action: str, now: int) -> None:
         reveal(room)
         room["status"] = "finished"
         room["deadline"] = None
+        room["transitionUntil"] = None
         room["version"] += 1
     else:
         raise GameError("Acción desconocida.", 404)
@@ -123,24 +127,23 @@ def answer_question(room: dict, player_id: str, question_id: str, option_id: str
     if question_id != question["id"]:
         raise GameError("Esta respuesta pertenece a otra pregunta.")
     previous = room["answers"].get(player_id)
-    if previous is not None:
-        if previous == option_id:
-            return  # Retries cannot score twice, including after the reveal.
-        raise GameError("Tu respuesta ya fue registrada y no puede cambiarse.")
+    if previous == option_id:
+        return  # Retries cannot score twice, including after the reveal.
     if room["status"] != "question" or now >= room["deadline"]:
         raise GameError("El tiempo de esta pregunta terminó.")
+    if (room.get("transitionUntil") or 0) > now:
+        raise GameError("Espera a que termine la cuenta regresiva.")
     if player_id not in {player["id"] for player in room["players"]}:
         raise GameError("No formas parte de esta sala.", 403)
     if option_id not in {option["id"] for option in question["options"]}:
         raise GameError("La alternativa no pertenece a esta pregunta.", 422)
     room["answers"][player_id] = option_id
+    room.setdefault("answerPoints", {}).pop(player_id, None)
     if option_id == question["correctOption"]:
         duration = room["secondsPerQuestion"] * 1000
         remaining = min(duration, room["deadline"] - now)
         room.setdefault("answerPoints", {})[player_id] = 500 + 500 * remaining // duration
     room["version"] += 1
-    if len(room["answers"]) == len(room["players"]):
-        reveal(room)
 
 
 def snapshot(code: str, room: dict, role: str, player_id: str | None, now: int,
@@ -178,6 +181,7 @@ def snapshot(code: str, room: dict, role: str, player_id: str | None, now: int,
             "questionCount": room["questionCount"] if "questionCount" in room else len(room["questions"]),
             "secondsPerQuestion": room["secondsPerQuestion"],
             "questionIndex": room["questionIndex"], "serverNow": now, "deadline": room["deadline"],
+            "transitionUntil": room.get("transitionUntil"),
             "playerCount": room.get("playerCount", len(room["players"])),
             "players": [{"id": player["id"], "nickname": player["nickname"]} for player in room["players"]]
                        if room["status"] == "lobby" else [],

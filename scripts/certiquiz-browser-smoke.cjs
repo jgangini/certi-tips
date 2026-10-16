@@ -8,7 +8,7 @@ async (page) => {
   const origin = new URL(page.url()).origin;
   const appUrl = `${origin}/certitips/certiquiz/`;
   const apiOrigin = 'http://127.0.0.1:18740';
-  if (origin !== 'http://127.0.0.1:4173') throw new Error('This check requires the local CertiTips preview on 4173 and CertiQuiz API on 18740.');
+  if (!['http://127.0.0.1:4173', 'http://127.0.0.1:4183'].includes(origin)) throw new Error('This check requires the local CertiTips preview on 4173/4183 and CertiQuiz API on 18740.');
   const assert = (condition, message) => { if (!condition) throw new Error(message); };
   const browser = page.context().browser();
   const contexts = [];
@@ -243,7 +243,7 @@ async (page) => {
     await host.locator('#create-form').waitFor();
     assert(new URL(host.url()).hash === '#host', 'Changing the host fragment did not update the form');
     assert(await host.locator('[type="password"]').count() === 0, 'Guest hosting still asks for a private key');
-    assert(await host.getByLabel('Segundos por pregunta').inputValue() === '10', 'Host duration is not ten seconds by default');
+    assert(await host.getByLabel('Segundos por pregunta').inputValue() === '25', 'Host duration is not twenty-five seconds by default');
     assert((await host.locator('#create-form .hint').innerText()).includes('Hasta 500 participantes'), 'Host hint does not advertise the 500-participant limit');
     assert(await host.locator('#create-form > ol > li.certification-item').count() === 4 && await host.locator('#create-form > ol > li:last-child.setup-actions .certification-number').count() === 1, 'Generate action is not the fourth numbered setup step');
     const setupAction = host.locator('#create-form .setup-actions');
@@ -298,7 +298,7 @@ async (page) => {
     await host.reload(); await host.locator('[data-start]').waitFor();
     assert((await snapshot(host, code)).role === 'host', 'Host room was not restored after refresh');
     const exitRoom = host.locator('[data-exit]');
-    assert(await exitRoom.evaluate(node => node.closest('.actions') && node.nextElementSibling?.hasAttribute('data-start') && node.textContent === 'Finalizar' && node.nextElementSibling.textContent === 'Comenzar'), 'Finish action is not before Comenzar in the lobby actions');
+    assert(await exitRoom.evaluate(node => node.closest('.actions') && node.nextElementSibling?.hasAttribute('data-start') && node.textContent === 'Salir' && node.nextElementSibling.textContent === 'Comenzar'), 'Grey Salir action is not before Comenzar in the lobby actions');
     await exitRoom.click();
     const confirmation = host.locator('dialog[data-confirm]');
     assert(await confirmation.evaluate(node => node.open && node.matches(':modal')), 'Room exit did not open a native modal');
@@ -485,11 +485,11 @@ async (page) => {
     checks.push('PIN invitation, inline duplicate rejection, accessible Unicode aliases, stable sphere nodes/animations/focus, finite absorption, growing foreground core, 96 radial lines, reduced motion, responsive light/dark geometry, cookie restoration, quiet reconnection, host-only start');
 
     await host.locator('[data-start]').click();
-    await first.locator('[data-send]').waitFor(); await second.locator('[data-send]').waitFor();
+    await first.locator('#answer-form').waitFor(); await second.locator('#answer-form').waitFor();
     for (const tab of [host, first, second]) assert(await tab.locator('.welcome, .room-header').count() === 0, 'Active question still shows the welcome or room heading');
     for (const tab of [host, first, second]) assert(await tab.locator('.site-header').evaluate(node => getComputedStyle(node).display === 'none' && document.body.classList.contains('certiquiz-playing')), 'Shared site header remains visible during the game');
-    for (const tab of [host, first, second]) assert(await tab.locator('.game-toolbar .game-close').evaluate(node => node.getAttribute('aria-label') === 'Salir' && node.getBoundingClientRect().width >= 44 && node.getBoundingClientRect().height >= 44 && node.querySelector('svg path')?.getAttribute('d') === 'm6 6 12 12M18 6 6 18'), 'Active question lacks the accessible practice exit button');
-    assert(await first.locator('.game-toolbar-info').evaluate(node => { const brand = node.querySelector('.brand').getBoundingClientRect(); const count = node.querySelector('[data-answer-count]').getBoundingClientRect(); const toolbar = node.closest('.game-toolbar'); const close = toolbar.querySelector('.game-close').getBoundingClientRect(); const meter = toolbar.nextElementSibling.getBoundingClientRect(); return brand.bottom <= count.top && Math.abs(brand.left - count.left) < 1 && close.left > count.right && Math.abs((brand.top + brand.bottom - close.top - close.bottom) / 2) < 1 && Math.abs(meter.top - count.bottom) < 1; }), 'CertiQuiz brand must align with the exit button and the answer count must touch the progress bar');
+    for (const tab of [host, first, second]) assert(await tab.locator('.game-toolbar button, [data-send]').count() === 0 && await tab.locator('.game-actions [data-exit].secondary').count() === 1, 'Question must have only the grey bottom exit and no submit button or top X');
+    assert(await first.locator('.game-toolbar-info').evaluate(node => { const brand = node.querySelector('.brand'); const box = brand.getBoundingClientRect(); const count = node.querySelector('[data-answer-count]').getBoundingClientRect(); const meter = node.closest('.game-toolbar').nextElementSibling.getBoundingClientRect(); return getComputedStyle(brand).gap === '0px' && brand.textContent === 'CertiQuiz' && box.bottom <= count.top && Math.abs(box.left - count.left) < 1 && Math.abs(meter.top - count.bottom) < 1; }), 'CertiQuiz must be joined, with its answer count touching the progress bar');
     let current = await snapshot(first, code);
     assert(!Object.hasOwn(current.question, 'correctOption') && !Object.hasOwn(current.question, 'explanation'), 'The open question exposed its answer');
     const source = bank.find(question => question.id === current.question.id);
@@ -497,6 +497,13 @@ async (page) => {
     const correct = first.locator(`input[name="optionId"][value="${source.correctOption}"]`);
     await correct.check(); await correct.focus();
     await accentFocus(first, correct, 'Light answer option');
+    const different = source.options.filter(option => option.id !== source.correctOption).map(option => option.id);
+    await first.route(`${apiOrigin}/api/rooms/${code}/answers?*`, async route => { await new Promise(resolve => setTimeout(resolve, 180)); await route.continue(); });
+    await first.evaluate(ids => { for (const id of ids) document.querySelector(`#answer-form input[value="${id}"]`).click(); }, [...different.slice(0, 2), source.correctOption]);
+    await first.waitForFunction(() => document.querySelector('#app').getAttribute('aria-busy') === 'false');
+    assert((await snapshot(first, code)).me.answer === source.correctOption && await correct.isEnabled(), 'Latest rapid choice was lost or autosave locked the question');
+    await first.unroute(`${apiOrigin}/api/rooms/${code}/answers?*`);
+    await correct.focus();
     const timerBefore = Number.parseInt(await first.locator('[data-timer]').textContent(), 10);
     const [unchanged] = await Promise.all([
       first.waitForResponse(response => response.status() === 204 && response.request().method() === 'GET' && new URL(response.url()).pathname === `/api/rooms/${code}` && new URL(response.url()).searchParams.has('version'), { timeout: 5000 }),
@@ -514,32 +521,25 @@ async (page) => {
     assert(await correct.evaluate(input => input === document.activeElement), 'Polling stole focus from the selected option');
     const wrong = source.options.find(option => option.id !== source.correctOption).id;
     await second.locator(`input[name="optionId"][value="${wrong}"]`).check();
-    await first.locator('[data-send]').click();
-    await second.locator('[data-send]').click();
     await host.locator('[data-next]').waitFor();
     await first.locator('.explanation').waitFor(); await second.locator('.explanation').waitFor();
     for (const tab of [host, first, second]) assert(await tab.locator('.welcome, .room-header').count() === 0, 'Answer reveal restored the welcome or room heading');
-    await first.locator('.game-close').click();
+    await first.locator('.game-actions [data-exit]').click();
     const playerConfirmation = first.locator('dialog[data-confirm]');
     assert(await playerConfirmation.getByRole('heading').textContent() === '¿Salir de la sala?' && (await playerConfirmation.locator('.confirmation-actions button').allTextContents()).join('/') === 'Cancelar/Aceptar', 'Participant exit lacks the expected confirmation');
     await playerConfirmation.locator('[data-confirm-no]').click();
-    assert(await first.locator('.game-close').evaluate(node => node === document.activeElement) && (await snapshot(first, code)).status === 'reveal', 'Cancelling participant exit changed the room or lost focus');
-    await host.locator('.game-close').click();
+    assert(await first.locator('.game-actions [data-exit]').evaluate(node => node === document.activeElement) && (await snapshot(first, code)).status === 'reveal', 'Cancelling participant exit changed the room or lost focus');
+    await host.locator('.game-actions [data-exit]').click();
     assert(await confirmation.getByRole('heading').textContent() === '¿Finalizar la partida?' && (await confirmation.locator('.confirmation-actions button').allTextContents()).join('/') === 'Cancelar/Aceptar', 'Host exit lacks the finalization confirmation');
     await confirmation.locator('[data-confirm-no]').click();
-    assert(await host.locator('.game-close').evaluate(node => node === document.activeElement), 'Cancelling host exit lost focus');
+    assert(await host.locator('.game-actions [data-exit]').evaluate(node => node === document.activeElement), 'Cancelling host exit lost focus');
     assert(await host.locator('.ranking-card, [data-answer-note]').count() === 0 && await host.locator('.explanation strong').textContent() === 'Explicación', 'Reveal still shows its ranking/instruction or the old explanation heading');
-    assert(await host.locator('[data-finish]').evaluate(node => node.textContent === 'Finalizar' && node.nextElementSibling?.hasAttribute('data-next') && node.nextElementSibling.textContent === 'Siguiente' && node.parentElement.classList.contains('game-actions')), 'Finalizar and Siguiente are not together in the game actions');
-    await host.locator('[data-finish]').click();
-    await confirmation.waitFor({ state: 'visible' });
-    assert(await confirmation.getByRole('heading').textContent() === '¿Finalizar la partida?' && await confirmation.locator('#confirmation-title').evaluate(node => node === document.activeElement), 'Finalizar lacks a focused confirmation heading');
-    assert((await confirmation.locator('.confirmation-actions button').allTextContents()).join('/') === 'Cancelar/Aceptar', 'Finish confirmation uses inconsistent action labels');
-    await confirmation.locator('[data-confirm-no]').click();
-    assert(await host.locator('[data-finish]').evaluate(node => node === document.activeElement), 'Cancelling Finalizar lost its trigger focus');
+    assert(await host.locator('.game-actions [data-exit]').evaluate(node => node.textContent === 'Salir' && node.classList.contains('secondary') && node.nextElementSibling?.hasAttribute('data-next')), 'Grey Salir and Siguiente must be together below the explanation');
     current = await snapshot(first, code);
     const firstPoints = current.me.score;
     assert(current.status === 'reveal' && current.me.correct === true && Number.isInteger(firstPoints) && firstPoints >= 500 && firstPoints <= 1000, 'Correct answer did not earn integer speed points');
     assert((await snapshot(second, code)).me.score === 0, 'Wrong answer scored');
+    for (const [tab, expected] of [[host, '--success'], [first, '--success'], [second, '--accent']]) assert(await tab.locator('.explanation').evaluate((node, variable) => { const probe = document.createElement('i'); probe.style.color = `var(${variable})`; node.append(probe); const color = getComputedStyle(probe).color; probe.remove(); return getComputedStyle(node).borderLeftColor === color; }, expected), 'Explanation border does not match correctness');
     const duplicate = await post(first, `/api/rooms/${code}/answers`, { questionId: current.question.id, optionId: source.correctOption });
     assert([200, 409].includes(duplicate.status), 'Unexpected duplicate-answer response');
     assert((await snapshot(first, code)).me.score === firstPoints, 'Duplicate answer increased score');
@@ -547,15 +547,30 @@ async (page) => {
     checks.push('Shared question, hidden answer until reveal, real empty HTTP204 keeps timer/selection/focus, correct scoring, duplicate safe');
 
     await host.locator('[data-next]').click();
+    for (const tab of [host, first, second]) {
+      await tab.locator('.quiz-countdown[open]').waitFor();
+      await tab.locator('.quiz-countdown').evaluate(node => Promise.allSettled(node.getAnimations().map(animation => animation.finished)));
+      assert(await tab.locator('.quiz-countdown').evaluate(node => {
+        const circle = node.querySelector('output'), style = getComputedStyle(circle), box = node.getBoundingClientRect();
+        const probe = document.createElement('i'); probe.style.color = 'var(--red)'; node.append(probe);
+        const red = getComputedStyle(probe).color; probe.remove();
+        return node.matches(':modal') && box.width >= innerWidth - 1 && box.height >= innerHeight - 1 && style.backgroundColor === red && style.color === 'rgb(255, 255, 255)' && style.borderRadius === '50%' && getComputedStyle(node, '::backdrop').backdropFilter.includes('blur');
+      }), 'Next must block the whole viewport with native glass and a red/white circle');
+    }
+    for (const number of ['2', '3']) await host.waitForFunction(number => document.querySelector('.quiz-countdown[open] output')?.textContent === number, number);
+    await host.keyboard.press('Escape');
+    assert(await host.locator('.quiz-countdown[open]').count() === 1, 'Escape dismissed the synchronized countdown');
+    for (const tab of [host, first, second]) await tab.locator('.quiz-countdown').waitFor({ state: 'detached' });
+    checks.push('Synchronized full-screen native glass, red circle and white 1/2/3, keyboard block and smooth release');
     await first.locator('.ranking-card').waitFor(); await second.locator('.ranking-card').waitFor();
-    for (const tab of [host, first, second]) assert(await tab.locator('.ranking-card .game-close').count() === 1, 'Ranking lacks its exit button');
+    for (const tab of [host, first, second]) assert(await tab.locator('.ranking-card .game-actions [data-exit].secondary').count() === 1 && await tab.locator('.game-toolbar button').count() === 0, 'Ranking lacks its grey bottom exit or still shows a top X');
     for (const tab of [host, first, second]) assert(await tab.locator('.site-header').evaluate(node => getComputedStyle(node).display === 'none'), 'Shared site header returned before the game finished');
     assert(await host.locator('#question-title').count() === 0 && (await snapshot(first, code)).status === 'ranking' && (await snapshot(first, code)).deadline === null, 'Siguiente skipped the shared ranking or started its timer');
     await host.locator('[data-next]').click();
-    await first.locator('[data-send]').waitFor();
+    await first.locator('#answer-form').waitFor();
     const deadlineQuestion = (await snapshot(first, code)).question.id;
     await first.reload();
-    await first.locator('[data-send]').waitFor();
+    await first.locator('#answer-form').waitFor();
     assert((await snapshot(first, code)).question.id === deadlineQuestion, 'Reload lost the current question');
     await first.waitForFunction(() => document.querySelector('.explanation'), null, { timeout: 18000 });
     await host.locator('[data-next]').waitFor();
@@ -582,14 +597,12 @@ async (page) => {
     await join(first, speedCode, 'Equipo A'); await join(second, speedCode, 'Equipo B');
     await host.waitForFunction(() => document.querySelectorAll('[data-players] .player-avatar').length === 2);
     await host.locator('[data-start]').click();
-    await first.locator('[data-send]').waitFor(); await second.locator('[data-send]').waitFor();
+    await first.locator('#answer-form').waitFor(); await second.locator('#answer-form').waitFor();
     current = await snapshot(first, speedCode);
     const speedCorrect = bank.find(question => question.id === current.question.id).correctOption;
     await first.locator(`input[name="optionId"][value="${speedCorrect}"]`).check();
-    await second.locator(`input[name="optionId"][value="${speedCorrect}"]`).check();
-    await first.locator('[data-send]').click();
     await second.waitForTimeout(1000);
-    await second.locator('[data-send]').click();
+    await second.locator(`input[name="optionId"][value="${speedCorrect}"]`).check();
     await host.locator('[data-next]').waitFor(); await host.locator('[data-next]').click();
     await first.locator('.ranking-card').waitFor(); await host.locator('[data-next]').click();
     await first.locator('[data-exit]').waitFor();
@@ -599,7 +612,7 @@ async (page) => {
     assert(await first.locator('.leaderboard thead th').last().textContent() === 'Puntos', 'Leaderboard still labels scores as correct-answer counts');
     checks.push('Second room: faster correct answer earns more integer points and ranks first');
 
-    await host.goto('http://127.0.0.1:4173/certitips/');
+    await host.goto(`${origin}/certitips/`);
     const link = host.getByRole('link', { name: 'CertiQuiz', exact: true });
     await link.waitFor();
     assert(await link.getAttribute('href') === '/certitips/certiquiz/', 'Home link does not stay inside CertiTips');

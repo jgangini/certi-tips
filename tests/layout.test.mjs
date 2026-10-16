@@ -393,14 +393,12 @@ test("CertiQuiz host lobby keeps facts beside its actions and uses a compact con
   for (const source of [chatHtml, script]) assert.doesNotMatch(source, /confirmation-icon|confirmation-question\.svg/);
   assert.doesNotMatch(script, /\(tú\)/);
   assert.match(css, /\.certiquiz-app \.leaderboard \.is-me\s*\{[^}]*background:\s*var\(--chrome-bg\);/);
-  assert.match(script, /send\.disabled = locked \|\| busy; send\.textContent = t\("Enviar"\);/);
   assert.doesNotMatch(script, /Respuesta registrada ✓/);
   assert.doesNotMatch(script, /Respuesta registrada\. Espera a que termine el tiempo\./);
   assert.doesNotMatch(script, /puntos en esta partida/);
   assert.match(script, /const oracleBadgeIcon = '<svg viewBox="0 0 32 32"/);
   assert.match(script, /<p class="result-course">\$\{oracleBadgeIcon\}<span>\$\{escape\(room\.courseTitle\)\}<\/span><\/p>/);
   assert.match(script, /<form id="answer-form" novalidate>/);
-  assert.match(script, /if \(id === 'answer-form' && !form\.querySelector\('input\[name="optionId"\]:checked'\)\) \{\s*showWarning\(t\("Selecciona una de estas opciones\."\)\);/);
   assert.match(css, /\.certiquiz-app \.question\s*\{[^}]*outline:\s*none;/);
   assert.match(css, /\.certiquiz-app \.result-banner \.result-course\s*\{[^}]*display:\s*inline-flex;[^}]*border:\s*1px solid var\(--line\);[^}]*background:\s*var\(--chrome-bg\);/);
   assert.match(css, /\.certiquiz-app \.result-banner \.result-course svg\s*\{[^}]*width:\s*27px;[^}]*height:\s*27px;[^}]*color:\s*var\(--accent\);/);

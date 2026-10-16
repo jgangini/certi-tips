@@ -20,6 +20,8 @@ let stage = '';
 let rankingOrder = [];
 let rankingCode;
 let busy = false;
+let selectedAnswer;
+let countdown;
 let pollTimer;
 let clock = { server: 0, received: 0 };
 let remaining = 0;
@@ -91,10 +93,6 @@ function bindForm(id, callback) {
   document.querySelector(`#${id}`)?.addEventListener('submit', event => {
     event.preventDefault();
     const form = event.currentTarget;
-    if (id === 'answer-form' && !form.querySelector('input[name="optionId"]:checked')) {
-      showWarning(t("Selecciona una de estas opciones."));
-      return;
-    }
     if (id === 'create-form') {
       const invalid = form.querySelector('input[type="number"]:invalid');
       if (invalid) {
@@ -154,7 +152,7 @@ function entry(role = selectedRole) {
   const maxQuestions = Math.min(limits.maxQuestions, catalog.courses[0]?.questionCount || 1);
   const resumeCandidate = role === 'host' && session.host && /^\d{6}$/.test(session.hostRoomCode || '');
   const joinForm = `<h2 id="form-title">${escape(t("Únete a la Sala"))}</h2><p class="muted">${escape(t("Ingresa el código de la sala y participa."))}</p><form id="join-form"><div class="field"><input class="code-input" id="room-code" name="code" aria-label="${escape(t("Código de la sala"))}" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="off"  value="${escape(draftCode)}" required></div><div class="field"><label for="nickname">${escape(t("Tu nombre o alias"))}</label><input id="nickname" name="nickname" autocomplete="nickname" minlength="2" maxlength="30" pattern="[\\p{L}\\p{N} ]+" placeholder="${escape(t("¿Cómo te llamamos?"))}" required></div><div class="actions join-actions"><a class="button secondary" href="${siteBase}certiquiz/" data-entry-exit>${escape(t("Salir"))}</a><button class="button" type="submit" disabled>${escape(t("Entrar"))}</button></div></form>`;
-  const hostForm = `<h2 id="form-title">${escape(t("Anfitrión"))}</h2><p class="muted">${resumeCandidate ? escape(t("Tu sala activa está lista para continuar.")) : escape(t("Configura la partida y genera un código para invitar al equipo."))}</p><form id="create-form" novalidate><ol class="certification-list"><li class="certification-item"><div><span class="certification-number" aria-hidden="true"></span><span id="course-label" class="setup-label">${escape(t("Curso"))}</span><p id="course-hint">${escape(t("Elige qué curso practicará tu equipo."))}</p></div><details class="path-group course-picker"${resumeCandidate ? ' inert aria-disabled="true"' : ''}><summary id="course" aria-labelledby="course-label course-title" aria-describedby="course-hint"><span id="course-title">${escape(catalog.courses[0]?.title || t("Sin cursos disponibles"))}</span></summary><input type="hidden" name="courseId" value="${escape(catalog.courses[0]?.id)}" ${resumeCandidate ? 'disabled' : ''}><div class="path-group-panel" role="group" aria-labelledby="course-label">${catalog.courses.map((course, index) => `<button type="button" data-course="${escape(course.id)}" aria-pressed="${index === 0}">${escape(course.title)}</button>`).join('')}</div></details></li><li class="certification-item"><div><span class="certification-number" aria-hidden="true"></span><label for="question-count">${escape(t("Número de preguntas"))}</label><p id="question-count-hint">${escape(t("Las preguntas se seleccionan del banco del curso."))}</p></div><input id="question-count" name="questionCount" type="number" min="1" max="${maxQuestions}" value="${Math.min(12, maxQuestions)}" aria-describedby="question-count-hint" required ${resumeCandidate ? 'disabled' : ''}></li><li class="certification-item"><div><span class="certification-number" aria-hidden="true"></span><label for="seconds">${escape(t("Segundos por pregunta"))}</label><p id="seconds-hint">${escape(t("Tiempo que tendrá cada participante para responder."))}</p></div><input id="seconds" name="secondsPerQuestion" type="number" min="${limits.minSeconds}" max="${limits.maxSeconds}" value="${Math.min(limits.maxSeconds, Math.max(limits.minSeconds, 10))}" aria-describedby="seconds-hint" required ${resumeCandidate ? 'disabled' : ''}></li><li class="certification-item setup-actions"><div><span class="certification-number" aria-hidden="true"></span><span class="setup-label">${resumeCandidate ? escape(t("Sala activa")) : escape(t("Generar Sala"))}</span><p class="hint">${resumeCandidate ? escape(t("Cargando la configuración de la sala…")) : escape(t('Hasta {count} participantes. Gana quien consigue más puntos; los empates comparten posición.', { count: limits.maxPlayers }))}</p></div><button class="button" type="${resumeCandidate ? 'button' : 'submit'}" ${resumeCandidate ? 'data-resume disabled' : catalog.courses.length ? '' : 'disabled'}>${escape(t("Entrar"))}</button></li></ol></form>`;
+  const hostForm = `<h2 id="form-title">${escape(t("Anfitrión"))}</h2><p class="muted">${resumeCandidate ? escape(t("Tu sala activa está lista para continuar.")) : escape(t("Configura la partida y genera un código para invitar al equipo."))}</p><form id="create-form" novalidate><ol class="certification-list"><li class="certification-item"><div><span class="certification-number" aria-hidden="true"></span><span id="course-label" class="setup-label">${escape(t("Curso"))}</span><p id="course-hint">${escape(t("Elige qué curso practicará tu equipo."))}</p></div><details class="path-group course-picker"${resumeCandidate ? ' inert aria-disabled="true"' : ''}><summary id="course" aria-labelledby="course-label course-title" aria-describedby="course-hint"><span id="course-title">${escape(catalog.courses[0]?.title || t("Sin cursos disponibles"))}</span></summary><input type="hidden" name="courseId" value="${escape(catalog.courses[0]?.id)}" ${resumeCandidate ? 'disabled' : ''}><div class="path-group-panel" role="group" aria-labelledby="course-label">${catalog.courses.map((course, index) => `<button type="button" data-course="${escape(course.id)}" aria-pressed="${index === 0}">${escape(course.title)}</button>`).join('')}</div></details></li><li class="certification-item"><div><span class="certification-number" aria-hidden="true"></span><label for="question-count">${escape(t("Número de preguntas"))}</label><p id="question-count-hint">${escape(t("Las preguntas se seleccionan del banco del curso."))}</p></div><input id="question-count" name="questionCount" type="number" min="1" max="${maxQuestions}" value="${Math.min(12, maxQuestions)}" aria-describedby="question-count-hint" required ${resumeCandidate ? 'disabled' : ''}></li><li class="certification-item"><div><span class="certification-number" aria-hidden="true"></span><label for="seconds">${escape(t("Segundos por pregunta"))}</label><p id="seconds-hint">${escape(t("Tiempo que tendrá cada participante para responder."))}</p></div><input id="seconds" name="secondsPerQuestion" type="number" min="${limits.minSeconds}" max="${limits.maxSeconds}" value="${Math.min(limits.maxSeconds, Math.max(limits.minSeconds, 25))}" aria-describedby="seconds-hint" required ${resumeCandidate ? 'disabled' : ''}></li><li class="certification-item setup-actions"><div><span class="certification-number" aria-hidden="true"></span><span class="setup-label">${resumeCandidate ? escape(t("Sala activa")) : escape(t("Generar Sala"))}</span><p class="hint">${resumeCandidate ? escape(t("Cargando la configuración de la sala…")) : escape(t('Hasta {count} participantes. Gana quien consigue más puntos; los empates comparten posición.', { count: limits.maxPlayers }))}</p></div><button class="button" type="${resumeCandidate ? 'button' : 'submit'}" ${resumeCandidate ? 'data-resume disabled' : catalog.courses.length ? '' : 'disabled'}>${escape(t("Entrar"))}</button></li></ol></form>`;
   app.innerHTML = `${welcome(role)}<section class="card join-card entry-card ${role}-entry" aria-labelledby="form-title">${role === 'host' ? hostForm : joinForm}</section>`;
   prepareNotices();
   const roomCode = app.querySelector('#room-code');
@@ -274,20 +272,20 @@ function lobby() {
   const hostInvitation = `<div class="invite-overview"><div class="invite-code"><strong class="pin">${escape(room.code)}</strong>${invitationQr(invite)}</div><label for="join-address">${escape(t("Enlace de invitación"))}</label><div class="invite-link"><input id="join-address" type="url" value="${escape(invite)}" readonly><button type="button" data-copy aria-label="${escape(t("Copiar enlace de invitación"))}" title="${escape(t("Copiar enlace de invitación"))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="4" y="8" width="12" height="13" rx="2"/><path d="M9 5V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2"/></svg></button></div></div>`;
   const facts = roomFacts(room.questionCount, room.secondsPerQuestion);
   const lobbyWaitTimer = room.role === 'host' && room.lobbyDeadline ? `<output class="lobby-wait-timer" data-lobby-wait-timer role="timer" aria-live="off" aria-label="${escape(t("Tiempo restante para iniciar la sala"))}">${formatCountdown(lobbyWaitSeconds())}</output>` : '';
-  const hostFooter = `<div class="lobby-footer">${facts}<div class="actions game-actions">${lobbyWaitTimer}<button class="button secondary" type="button" data-exit>${escape(t("Finalizar"))}</button><button class="button" type="button" data-start>${escape(t("Comenzar"))}</button></div></div>`;
+  const hostFooter = `<div class="lobby-footer">${facts}<div class="actions game-actions">${lobbyWaitTimer}<button class="button secondary" type="button" data-exit>${escape(t("Salir"))}</button><button class="button" type="button" data-start>${escape(t("Comenzar"))}</button></div></div>`;
   const playerFooter = `<div class="lobby-footer player-lobby-footer">${facts}<div class="actions game-actions"><button class="button secondary" type="button" data-exit>${escape(t("Salir"))}</button></div></div>`;
   return `${roomHeader()}<div class="room-grid"><section class="card join-card"><span class="eyebrow">${room.role === 'host' ? escape(t("INVITA A PARTICIPANTES")) : escape(t("YA ESTÁS DENTRO"))}</span><h2 id="stage-title" tabindex="-1">${room.role === 'host' ? escape(t("Sala de Espera")) : escape(t('¡Todo listo, {name}!', { name: room.me?.nickname || '' }))}</h2>${room.role === 'host' ? hostInvitation : `<p class="muted">${escape(t("El anfitrión iniciará la primera pregunta. Mantén esta página abierta para responder."))}</p>`}${room.role === 'host' ? hostFooter : playerFooter}</section><div class="room-side"><div data-players></div></div></div>`;
 }
-const roomCloseButton = `<button class="quiz-close game-close" type="button" data-exit aria-label="${escape(t("Salir"))}" title="${escape(t("Salir"))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button>`;
+const roomExitButton = `<button class="button secondary" type="button" data-exit>${escape(t("Salir"))}</button>`;
 
 function questionView() {
   const question = room.question;
   const revealed = room.status === 'reveal';
-  return `${roomHeader()}<section class="card"><div class="game-toolbar"><span class="game-toolbar-info"><span class="brand">Certi<span class="brand-accent">Quiz</span></span><span data-answer-count></span></span><span class="game-toolbar-trailing">${revealed ? '' : '<span class="timer" data-timer role="timer" aria-live="off"></span>'}${roomCloseButton}</span></div><progress data-timer-meter max="${room.secondsPerQuestion}" value="${revealed ? 0 : room.secondsPerQuestion}" aria-label="${escape(t("Tiempo restante"))}"></progress><h2 class="question" id="question-title" tabindex="-1">${room.questionIndex + 1}. ${escape(question.text)}</h2><form id="answer-form" novalidate><fieldset aria-labelledby="question-title"><div class="options">${question.options.map((option, index) => `<label class="option${revealed && option.id === question.correctOption ? ' correct' : ''}${revealed && option.id === room.me?.answer && option.id !== question.correctOption ? ' incorrect' : ''}"><input type="radio" name="optionId" value="${escape(option.id)}" ${room.me?.answer === option.id ? 'checked' : ''} ${revealed || room.role === 'host' || room.me?.answer ? 'disabled' : ''} required><span class="option-letter" aria-hidden="true">${String.fromCharCode(65 + index)}</span><span>${escape(option.text)}${revealed && option.id === question.correctOption ? `<span class="visually-hidden">${escape(t("Respuesta correcta"))}</span>` : ''}</span></label>`).join('')}</div></fieldset>${room.role === 'player' && !revealed ? `<div class="actions game-actions"><button class="button" type="submit" data-send>${escape(t("Enviar"))}</button></div>` : ''}</form>${!revealed ? '<p class="answer-note" data-answer-note role="status"></p>' : ''}${revealed ? `<div class="explanation"><strong>${escape(t("Explicación"))}</strong><p>${escape(question.explanation || '')}</p></div>` : ''}${room.role === 'host' ? `<div class="actions game-actions"><button class="button secondary" type="button" data-finish>${escape(t("Finalizar"))}</button>${revealed ? `<button class="button" type="button" data-next>${escape(t("Siguiente"))}</button>` : ''}</div>` : ''}</section>`;
+  return `${roomHeader()}<section class="card"><div class="game-toolbar"><span class="game-toolbar-info"><span class="brand">${certiQuizBrand}</span><span data-answer-count></span></span><span class="game-toolbar-trailing">${revealed ? '' : '<span class="timer" data-timer role="timer" aria-live="off"></span>'}</span></div><progress data-timer-meter max="${room.secondsPerQuestion}" value="${revealed ? 0 : room.secondsPerQuestion}" aria-label="${escape(t("Tiempo restante"))}"></progress><h2 class="question" id="question-title" tabindex="-1">${room.questionIndex + 1}. ${escape(question.text)}</h2><form id="answer-form" novalidate><fieldset aria-labelledby="question-title"><div class="options">${question.options.map((option, index) => `<label class="option${revealed && option.id === question.correctOption ? ' correct' : ''}${revealed && option.id === room.me?.answer && option.id !== question.correctOption ? ' incorrect' : ''}"><input type="radio" name="optionId" value="${escape(option.id)}" ${room.me?.answer === option.id ? 'checked' : ''} ${revealed || room.role === 'host' ? 'disabled' : ''} required><span class="option-letter" aria-hidden="true">${String.fromCharCode(65 + index)}</span><span>${escape(option.text)}${revealed && option.id === question.correctOption ? `<span class="visually-hidden">${escape(t("Respuesta correcta"))}</span>` : ''}</span></label>`).join('')}</div></fieldset></form>${!revealed ? '<p class="answer-note" data-answer-note role="status"></p>' : ''}${revealed ? `<div class="explanation${room.role === 'host' || room.me?.correct ? ' correct' : ''}"><strong>${escape(t("Explicación"))}</strong><p>${escape(question.explanation || '')}</p></div>` : ''}<div class="actions game-actions">${roomExitButton}${room.role === 'host' && revealed ? `<button class="button" type="button" data-next>${escape(t("Siguiente"))}</button>` : ''}</div></section>`;
 }
 
 function ranking() {
-  return `<section class="card ranking-card" id="stage-title" tabindex="-1" aria-label="${escape(t("Clasificación por puntos"))}"><div class="game-toolbar"><span class="brand">Certi<span class="brand-accent">Quiz</span></span>${roomCloseButton}</div>${leaderboard()}${room.role === 'host' ? `<div class="actions game-actions"><button class="button secondary" type="button" data-finish>${escape(t("Finalizar"))}</button><button class="button" type="button" data-next>${escape(t("Siguiente"))}</button></div>` : ''}</section>`;
+  return `<section class="card ranking-card" id="stage-title" tabindex="-1" aria-label="${escape(t("Clasificación por puntos"))}"><div class="game-toolbar"><span class="brand">${certiQuizBrand}</span></div>${leaderboard()}<div class="actions game-actions">${roomExitButton}${room.role === 'host' ? `<button class="button" type="button" data-next>${escape(t("Siguiente"))}</button>` : ''}</div></section>`;
 }
 
 function leaderboard() {
@@ -336,7 +334,7 @@ function confetti() {
 function finished() {
   const leaders = room.leaderboard.filter(player => player.rank === 1);
   const title = leaders.length > 1 ? escape(t("¡Primer puesto compartido!")) : leaders.length ? escape(t('¡Bien hecho, {name}!', { name: leaders[0].nickname })) : escape(t("Gracias por practicar en equipo."));
-  return `${roomHeader()}<section class="result-banner"><h2 id="stage-title" tabindex="-1">${title}</h2>${room.courseTitle ? `<p class="result-course">${oracleBadgeIcon}<span>${escape(room.courseTitle)}</span></p>` : ''}${leaders.length ? podium() + confetti() : ''}</section><section class="card">${leaderboard()}<div class="actions game-actions"><button class="button" type="button" data-exit>${escape(t("Salir"))}</button></div></section>`;
+  return `${roomHeader()}<section class="result-banner"><h2 id="stage-title" tabindex="-1">${title}</h2>${room.courseTitle ? `<p class="result-course">${oracleBadgeIcon}<span>${escape(room.courseTitle)}</span></p>` : ''}${leaders.length ? podium() + confetti() : ''}</section><section class="card">${leaderboard()}<div class="actions game-actions">${roomExitButton}</div></section>`;
 }
 
 function setChatLock(code, active) {
@@ -363,6 +361,7 @@ function showRoom(snapshot) {
   if (new URL(location.href).searchParams.get('room') !== snapshot.code) history.replaceState(null, '', joinUrl());
   if (room.status === 'finished') document.querySelector('[data-confirm]')?.close();
   if (changed) {
+    selectedAnswer = null;
     stage = nextStage;
     rosterObserver?.disconnect(); rosterObserver = null;
     app.innerHTML = room.status === 'lobby' ? lobby() : room.status === 'ranking' ? ranking() : room.status === 'finished' ? finished() : questionView();
@@ -390,12 +389,11 @@ function updateRoom() {
   tick();
   const note = document.querySelector('[data-answer-note]');
   if (!note) return;
-  const answered = Boolean(room.me?.answer);
   if (room.status === 'question') {
-    const locked = answered || remaining <= 0 || room.role === 'host';
-    document.querySelectorAll('#answer-form input').forEach(input => { input.disabled = locked; if (answered) input.checked = input.value === room.me.answer; });
-    const send = document.querySelector('[data-send]'); if (send) { send.disabled = locked || busy; send.textContent = t("Enviar"); }
-    const message = room.role === 'host' ? t("Las respuestas se cierran al terminar el tiempo.") : answered ? '' : remaining <= 0 ? t("Tiempo terminado. Preparando la respuesta…") : '';
+    const locked = remaining <= 0 || room.role === 'host';
+    const choice = selectedAnswer?.questionId === room.question.id ? selectedAnswer.optionId : room.me?.answer;
+    document.querySelectorAll('#answer-form input').forEach(input => { input.disabled = locked; input.checked = input.value === choice; });
+    const message = room.role === 'host' ? t("Las respuestas se cierran al terminar el tiempo.") : remaining <= 0 ? t("Tiempo terminado. Preparando la respuesta…") : '';
     if (note.textContent !== message) note.textContent = message;
   }
 }
@@ -484,6 +482,7 @@ function tick() {
     const label = formatCountdown(seconds);
     if (retryTimer.textContent !== label) retryTimer.textContent = label;
   }
+  syncCountdown();
   if (!room) return;
   const lobbyTimer = document.querySelector('[data-lobby-wait-timer]');
   if (lobbyTimer && room.lobbyDeadline) {
@@ -499,7 +498,27 @@ function tick() {
   const label = `${remaining} s`; if (timer.textContent !== label) timer.textContent = label;
   timer.classList.toggle('urgent', room.status === 'question' && remaining <= 5);
   document.querySelector('[data-timer-meter]').value = seconds;
-  if (remaining <= 0) { document.querySelectorAll('#answer-form input, [data-send]').forEach(input => { input.disabled = true; }); }
+  if (remaining <= 0) { document.querySelectorAll('#answer-form input').forEach(input => { input.disabled = true; }); }
+}
+
+function syncCountdown() {
+  const wait = room ? (room.transitionUntil || 0) - clock.server - (performance.now() - clock.received) : 0;
+  if (wait > 0) {
+    if (!countdown) {
+      countdown = document.createElement('dialog'); countdown.className = 'quiz-countdown';
+      countdown.setAttribute('aria-label', t("Siguiente"));
+      countdown.innerHTML = `<div class="quiz-countdown-core">${rosterRays()}<output role="timer" aria-live="polite" aria-atomic="true"></output></div>`;
+      countdown.addEventListener('cancel', event => event.preventDefault());
+      app.closest('.certiquiz-app').append(countdown); countdown.showModal();
+    }
+    const number = String(Math.max(1, 4 - Math.ceil(wait / 1000)));
+    const counter = countdown.querySelector('output');
+    if (counter.textContent !== number) counter.textContent = number;
+  } else if (countdown) {
+    const closed = countdown; countdown = null; closed.close();
+    Promise.allSettled(closed.getAnimations().map(animation => animation.finished)).then(() => closed.remove());
+    (app.querySelector('#question-title, #stage-title'))?.focus({ preventScroll: true });
+  }
 }
 
 function expireLobby() {
@@ -540,12 +559,20 @@ function bindRoom() {
     }, button);
   });
   for (const command of ['start', 'next']) document.querySelector(`[data-${command}]`)?.addEventListener('click', event => action(async () => showRoom(await request(roomPath(`/${command}`), {})), event.currentTarget));
-  bindForm('answer-form', async data => {
-    if (room.status !== 'question' || room.role !== 'player') return;
-    showRoom(await request(roomPath('/answers'), { questionId: room.question.id, optionId: data.get('optionId') }));
-  });
-  document.querySelector('[data-finish]')?.addEventListener('click', event => {
-    confirmRoomAction(event.currentTarget, t("La partida terminará para todos y se mostrarán los resultados de las preguntas respondidas."), async () => showRoom(await request(roomPath('/finish'), {})));
+  const answerForm = document.querySelector('#answer-form');
+  answerForm?.addEventListener('submit', event => event.preventDefault());
+  answerForm?.addEventListener('change', event => {
+    if (!event.target.matches('input[name="optionId"]') || room.status !== 'question' || room.role !== 'player' || remaining <= 0) return;
+    selectedAnswer = { code: room.code, questionId: room.question.id, optionId: event.target.value };
+    action(async () => {
+      try {
+        // Send changes in order; a pending click keeps the latest choice while the network catches up.
+        while (selectedAnswer && selectedAnswer.optionId !== room.me?.answer && remaining > 0) {
+          const { code, questionId, optionId } = selectedAnswer;
+          showRoom(await request(`/api/rooms/${encodeURIComponent(code)}/answers`, { questionId, optionId }));
+        }
+      } finally { selectedAnswer = null; }
+    });
   });
   document.querySelector('[data-exit]')?.addEventListener('click', event => {
     if (room.role === 'host' && room.status !== 'finished') confirmRoomAction(event.currentTarget, t("Si sales, esta partida terminará para todos. Después podrás crear otra sala."), () => logout('host'));

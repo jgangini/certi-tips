@@ -72,6 +72,12 @@ def join(make, code, nickname):
     return player, response.json()["me"]["id"]
 
 
+def expire_phase(app, code, field="deadline"):
+    with app.state.store.connection() as connection:
+        connection.execute("UPDATE cq_rooms SET state=jsonb_set(state,%s,to_jsonb(0::bigint)) WHERE code=%s",
+                           ([field], code))
+
+
 def test_participants_choose_language_without_changing_room_or_answer_identity(clients):
     make, app = clients
     course = app.state.catalog.get()["practice"]
@@ -114,7 +120,7 @@ def test_join_accepts_a_valid_27_character_nickname(clients):
 
 
 def test_complete_round_hides_answers_and_keeps_tied_ranks(clients, monkeypatch):
-    make, _ = clients
+    make, app = clients
     host, code = host_room(make, 1)
     alice, alice_id = join(make, code, "Alice")
     bob, _ = join(make, code, "Bob")
@@ -129,12 +135,16 @@ def test_complete_round_hides_answers_and_keeps_tied_ranks(clients, monkeypatch)
     assert response.status_code == 200 and response.json()["me"]["correct"] is None
     assert response.json()["me"]["score"] == 0
     state = bob.post(f"/api/rooms/{code}/answers", json={"questionId": question_id, "optionId": "b"}).json()
+    assert state["status"] == "question" and state["answeredCount"] == 2
+    expire_phase(app, code)
+    state = host.get(f"/api/rooms/{code}").json()
     assert state["status"] == "reveal" and state["question"]["correctOption"] == "b"
     assert [entry["rank"] for entry in state["leaderboard"]] == [1, 1]
     assert [entry["score"] for entry in state["leaderboard"]] == [750, 750]
     state = host.post(f"/api/rooms/{code}/next", json={}).json()
     assert state["status"] == "ranking" and state["question"] is None and state["deadline"] is None
     assert alice.get(f"/api/rooms/{code}").json()["status"] == "ranking"
+    expire_phase(app, code, "transitionUntil")
     state = host.post(f"/api/rooms/{code}/next", json={}).json()
     assert state["status"] == "finished" and state["question"] is None
     assert alice.get(f"/api/rooms/{code}").json()["me"]["id"] == alice_id
@@ -236,7 +246,7 @@ def test_concurrent_equivalent_nicknames_create_only_one_participant(clients, da
 
 
 def test_duplicate_concurrent_and_stale_answers_do_not_inflate_scores(clients):
-    make, _ = clients
+    make, app = clients
     host, code = host_room(make)
     alice, _ = join(make, code, "Alice")
     bob, _ = join(make, code, "Bob")
@@ -246,6 +256,10 @@ def test_duplicate_concurrent_and_stale_answers_do_not_inflate_scores(clients):
     with ThreadPoolExecutor(max_workers=4) as pool:
         replies = list(pool.map(lambda client: client.post(f"/api/rooms/{code}/answers", json=payload), [alice, alice, bob, bob]))
     assert all(reply.status_code == 200 for reply in replies)
+    assert host.get(f"/api/rooms/{code}").json()["status"] == "question"
+    assert alice.post(f"/api/rooms/{code}/answers", json={**payload, "optionId": "a"}).status_code == 200
+    assert alice.post(f"/api/rooms/{code}/answers", json=payload).status_code == 200
+    expire_phase(app, code)
     state = host.get(f"/api/rooms/{code}").json()
     assert state["status"] == "reveal" and state["answeredCount"] == 2
     assert all(type(player["score"]) is int and 500 <= player["score"] <= 1000 for player in state["leaderboard"])
@@ -254,6 +268,7 @@ def test_duplicate_concurrent_and_stale_answers_do_not_inflate_scores(clients):
     assert host.get(f"/api/rooms/{code}").json()["leaderboard"] == scores
     assert alice.post(f"/api/rooms/{code}/answers", json={**payload, "optionId": "a"}).status_code == 409
     host.post(f"/api/rooms/{code}/next", json={})
+    expire_phase(app, code, "transitionUntil")
     host.post(f"/api/rooms/{code}/next", json={})
     assert alice.post(f"/api/rooms/{code}/answers", json=payload).status_code == 409
 
@@ -346,13 +361,16 @@ def test_projected_reads_match_full_state_for_host_and_players_in_every_phase(cl
         action = "start" if index == 0 else "next"
         state = host.post(f"/api/rooms/{code}/{action}", json={}).json()
         assert state["questionIndex"] == index
+        expire_phase(app, code, "transitionUntil")
         compare()
         payload = {"questionId": state["question"]["id"], "optionId": "b"}
         assert alice.post(f"/api/rooms/{code}/answers", json=payload).status_code == 200
         compare()
         assert bob.post(f"/api/rooms/{code}/answers", json={**payload, "optionId": "a"}).status_code == 200
         compare()
+        expire_phase(app, code)
         assert host.post(f"/api/rooms/{code}/next", json={}).json()["status"] == "ranking"
+        expire_phase(app, code, "transitionUntil")
         compare()
     assert host.post(f"/api/rooms/{code}/next", json={}).json()["status"] == "finished"
     compare()
@@ -502,7 +520,7 @@ def test_local_development_cookies_are_strict_without_partitioned(clients):
 
 
 def test_five_hundred_players_on_one_network_can_answer_concurrently_and_capacity_is_enforced(clients):
-    make, _ = clients
+    make, app = clients
     host, code = host_room(make, 1)
     assert host.get("/api/catalog").json()["limits"]["maxPlayers"] == 500
     players = [join(make, code, f"Player {number:03}")[0] for number in range(500)]
@@ -513,6 +531,7 @@ def test_five_hundred_players_on_one_network_can_answer_concurrently_and_capacit
         replies = list(pool.map(lambda player: player.post(f"/api/rooms/{code}/answers", json=payload), players))
     failures = Counter((reply.status_code, reply.json().get("detail", "")) for reply in replies if reply.status_code != 200)
     assert not failures, dict(failures)
+    expire_phase(app, code)
     state = host.get(f"/api/rooms/{code}").json()
     assert state["status"] == "reveal" and state["answeredCount"] == 500
     assert state["playerCount"] == len(state["leaderboard"]) == 500 and state["players"] == []

@@ -38,7 +38,7 @@ def test_each_viewer_language_keeps_frozen_options_scoring_and_hidden_answers():
         assert [option["id"] for option in view["question"]["options"]] == [option["id"] for option in original["question"]["options"]]
         assert set(view["question"]) == {"id", "text", "options"}
     game.answer_question(room, player, original["question"]["id"], "b", 1500)
-    reveal = game.snapshot("123456", room, "player", player, 1500, locale="pt")
+    reveal = game.snapshot("123456", room, "player", player, room["deadline"], locale="pt")
     assert reveal["question"]["explanation"] == "pt: explanation"
     assert reveal["question"]["correctOption"] == "b" and reveal["me"]["score"] == 975
     del room["questions"][0]["translations"]
@@ -58,7 +58,8 @@ def test_answers_stay_hidden_and_correctness_scores_only_on_reveal():
     assert all(set(option) == {"id", "text"} for option in state["question"]["options"])
     assert all(player["score"] == 0 for player in state["leaderboard"])
     game.answer_question(room, players[1], question_id, "a", 2000)
-    state = game.snapshot("123456", room, "player", players[0], 2000)
+    assert room["status"] == "question" and len(room["answers"]) == 2
+    state = game.snapshot("123456", room, "player", players[0], room["deadline"])
     assert state["status"] == "reveal" and state["me"]["correct"] is True
     assert state["playerCount"] == 2 and state["players"] == [] and len(state["leaderboard"]) == 2
     assert state["question"]["correctOption"] == "b"
@@ -76,22 +77,39 @@ def test_exact_deadline_rejects_answer_and_reveal_is_scored_once():
     assert [player["score"] for player in room["players"]] == [500, 0]
 
 
-def test_duplicate_answers_are_idempotent_but_changed_or_stale_answers_fail():
+def test_changes_until_deadline_replace_points_without_revealing_early():
     room, players = playing()
     question_id = room["questions"][0]["id"]
     game.answer_question(room, players[0], question_id, "b", 1500)
     version = room["version"]
     game.answer_question(room, players[0], question_id, "b", 1600)
     assert room["version"] == version and room["answerPoints"][players[0]] == 975
-    with pytest.raises(game.GameError, match="cambiarse"):
-        game.answer_question(room, players[0], question_id, "a", 1700)
+    game.answer_question(room, players[0], question_id, "a", 1700)
+    assert players[0] not in room["answerPoints"]
     game.answer_question(room, players[1], question_id, "b", 1800)
-    game.answer_question(room, players[0], question_id, "b", 1850)
-    assert [player["score"] for player in room["players"]] == [975, 960]
-    game.host_action(room, "next", 1900)
-    game.host_action(room, "next", 1950)
+    assert room["status"] == "question" and len(room["answers"]) == 2
+    game.answer_question(room, players[0], question_id, "b", 6000)
+    assert room["answerPoints"][players[0]] == 750
+    with pytest.raises(game.GameError, match="alternativa"):
+        game.answer_question(room, players[0], question_id, "invalid", 7000)
+    with pytest.raises(game.GameError, match="terminó"):
+        game.answer_question(room, players[0], question_id, "a", room["deadline"])
+    game.answer_question(room, players[0], question_id, "b", 12000)
+    assert [player["score"] for player in room["players"]] == [750, 960]
+    game.host_action(room, "next", 12000)
+    with pytest.raises(game.GameError, match="cuenta regresiva"):
+        game.host_action(room, "next", 14999)
+    game.host_action(room, "next", 15000)
+    assert room["transitionUntil"] == 18000 and room["deadline"] == 28000
+    second = room["questions"][1]["id"]
+    for role, player in (("host", None), ("player", players[0])):
+        assert game.snapshot("123456", room, role, player, 16000)["transitionUntil"] == 18000
+    with pytest.raises(game.GameError, match="cuenta regresiva"):
+        game.answer_question(room, players[0], second, "b", 17999)
+    game.answer_question(room, players[0], second, "b", 18000)
+    assert room["answerPoints"][players[0]] == 1000
     with pytest.raises(game.GameError, match="otra pregunta"):
-        game.answer_question(room, players[0], question_id, "b", 2000)
+        game.answer_question(room, players[0], question_id, "b", 19000)
 
 
 def test_nicknames_are_normalized_and_controls_are_rejected():
@@ -145,9 +163,10 @@ def test_last_question_finishes_with_correct_total():
     question_id = room["questions"][0]["id"]
     for player in players:
         game.answer_question(room, player, question_id, "b", 2000)
-    game.host_action(room, "next", 3000)
+    game.advance_clock(room, room["deadline"])
+    game.host_action(room, "next", 12000)
     assert room["status"] == "ranking" and room["deadline"] is None
-    game.host_action(room, "next", 4000)
+    game.host_action(room, "next", 15000)
     state = game.snapshot("123456", room, "player", players[0], 3000)
     assert state["status"] == "finished" and state["me"]["score"] == 950
     assert state["deadline"] is None and state["questionIndex"] == 0
@@ -158,8 +177,9 @@ def test_ranking_waits_for_host_and_next_question_gets_its_full_time():
     question_id = room["questions"][0]["id"]
     for player in players:
         game.answer_question(room, player, question_id, "b", 2000)
+    game.advance_clock(room, room["deadline"])
     version = room["version"]
-    game.host_action(room, "next", 3000)
+    game.host_action(room, "next", 12000)
     assert room["version"] == version + 1 and room["questionIndex"] == 0
     for role, player_id in (("host", None), ("player", players[0])):
         state = game.snapshot("123456", room, role, player_id, 100_000)
@@ -167,7 +187,7 @@ def test_ranking_waits_for_host_and_next_question_gets_its_full_time():
         assert [entry["score"] for entry in state["leaderboard"]] == [950, 950]
     game.host_action(room, "next", 101_000)
     assert room["status"] == "question" and room["questionIndex"] == 1
-    assert room["deadline"] == 111_000 and room["answers"] == {} and room["answerPoints"] == {}
+    assert room["deadline"] == 114_000 and room["answers"] == {} and room["answerPoints"] == {}
     assert [player["score"] for player in room["players"]] == [950, 950]
 
 
@@ -182,6 +202,7 @@ def test_speed_bonus_is_integer_and_only_correct_answers_score(seconds, elapsed,
     question_id = room["questions"][0]["id"]
     game.answer_question(room, players[1], question_id, "a", 1000)
     game.answer_question(room, players[0], question_id, "b", 1000 + elapsed)
+    game.advance_clock(room, room["deadline"])
     assert [player["score"] for player in room["players"]] == [points, 0]
     assert type(room["players"][0]["score"]) is int
 
@@ -191,15 +212,15 @@ def test_speed_ranks_and_points_accumulate_across_questions():
     first = room["questions"][0]["id"]
     game.answer_question(room, players[1], first, "b", 2000)
     game.answer_question(room, players[0], first, "b", 6000)
-    state = game.snapshot("123456", room, "host", None, 6000)
+    state = game.snapshot("123456", room, "host", None, room["deadline"])
     assert [(player["id"], player["score"], player["rank"]) for player in state["leaderboard"]] == [
         (players[1], 950, 1), (players[0], 750, 2)]
-    game.host_action(room, "next", 7000)
-    game.host_action(room, "next", 8000)
+    game.host_action(room, "next", 12000)
+    game.host_action(room, "next", 15000)
     second = room["questions"][1]["id"]
-    game.answer_question(room, players[0], second, "b", 8000)
-    game.answer_question(room, players[1], second, "b", 13000)
-    state = game.snapshot("123456", room, "host", None, 13000)
+    game.answer_question(room, players[0], second, "b", 18000)
+    game.answer_question(room, players[1], second, "b", 23000)
+    state = game.snapshot("123456", room, "host", None, room["deadline"])
     assert [(player["id"], player["score"], player["rank"]) for player in state["leaderboard"]] == [
         (players[0], 1750, 1), (players[1], 1700, 2)]
 
