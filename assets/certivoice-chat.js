@@ -4,22 +4,17 @@ import { voiceContext } from "./certivoice-actions.js";
 export function installVoiceChatControls(chat) {
   let state = { enabled: false, active: false, muted: false }, requestBusy = false;
   const quotaBlocked = () => state.quotaBlocked || chat.shadowRoot?.querySelector('[role="textbox"]')?.getAttribute("aria-disabled") === "true";
-  let hints, hideHintsTimer, hintsLifetime;
+  let hints, hideHintsTimer, hintsTimer, hintSequence = 0, lastHint;
   const hintsAllowed = () => state.enabled && (state.active || state.resume) && ["listening", "paused"].includes(state.phase) && !state.locked && !quotaBlocked();
   function hideHints() {
     clearTimeout(hideHintsTimer);
-    clearTimeout(hintsLifetime);
+    clearTimeout(hintsTimer);
     if (!hints) return;
+    hints.querySelectorAll('[data-voice-hint]').forEach(bubble => bubble.getAnimations().forEach(animation => animation.cancel()));
     hints.dataset.open = "false"; hints.setAttribute("aria-hidden", "true");
     chat.shadowRoot.querySelectorAll('[aria-describedby="certivoice-hints"]').forEach(button => button.removeAttribute("aria-describedby"));
   }
-  function showHints() {
-    clearTimeout(hideHintsTimer);
-    if (!hintsAllowed()) return;
-    if (hints?.dataset.open === "true") {
-      if (chat.shadowRoot.activeElement) { hints.dataset.focused = "true"; clearTimeout(hintsLifetime); }
-      return;
-    }
+  function hintExamples() {
     const context = voiceContext(), has = action => context.targets.some(target => target.action === action), examples = [];
     const viewer = document.querySelector("#diagram-viewer[open]");
     if (has("practice_read")) examples.push(document.querySelector("#quiz dialog[open]") ? t("Lee la confirmación") : t("Lee la pregunta"));
@@ -42,26 +37,63 @@ export function installVoiceChatControls(chat) {
     if (examples.length < 3 && has("open_course")) examples.push(t("Abre el catálogo de cursos"));
     if (examples.length < 3 && document.querySelector('.header-app-link[href*="/certitube/"]')) examples.push(t("Abre CertiTube"));
     if (examples.length < 3 && document.querySelector('.header-app-link[href*="/certiquiz/"]')) examples.push(t("Abre CertiQuiz"));
-    if (!examples.length) return;
+    return [...new Set(examples)];
+  }
+  function rotateHints() {
+    clearTimeout(hintsTimer);
+    if (!hintsAllowed() || hints?.dataset.open !== "true") { hideHints(); return; }
+    const examples = hintExamples();
+    if (!examples.length) { hideHints(); return; }
+    const still = Boolean(chat.shadowRoot.activeElement || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
+    hints.dataset.focused = String(Boolean(chat.shadowRoot.activeElement));
+    const departing = hints.querySelector('[data-leaving="true"]')?.textContent;
+    const before = new Map([...hints.children].map(bubble => [bubble, bubble.getBoundingClientRect()]));
+    for (const bubble of hints.children) {
+      if (still) { bubble.getAnimations().forEach(animation => animation.cancel()); delete bubble.dataset.leaving; }
+    }
+    for (const bubble of [...hints.children]) if (!examples.includes(bubble.textContent) || bubble.dataset.leaving === "true") bubble.remove();
+    if (!still && hints.children.length === Math.min(3, examples.length)) {
+      const oldest = hints.lastElementChild;
+      oldest.dataset.leaving = "true";
+      oldest.animate([{ opacity: 1, translate: "0 0" }, { opacity: 0, translate: "0 -8px" }], { duration: 240, fill: "forwards", easing: "ease-in" });
+      hintsTimer = setTimeout(rotateHints, 240);
+      return;
+    }
+    while (hints.children.length < 3) {
+      const visible = [...hints.children].map(bubble => bubble.textContent), available = examples.filter(text => !visible.includes(text));
+      if (!available.length) break;
+      const choices = available.filter(text => text !== lastHint && text !== departing), pool = choices.length ? choices : available;
+      const bubble = document.createElement("span"); bubble.dataset.voiceHint = ""; bubble.dataset.hintSequence = String(++hintSequence);
+      bubble.textContent = lastHint = pool[Math.floor(Math.random() * pool.length)];
+      hints.prepend(bubble);
+      if (!still) { bubble.animate([{ opacity: 0, translate: "0 18px" }, { opacity: 1, translate: "0 0" }], { duration: 420, easing: "ease-out" }); break; }
+    }
+    [...hints.children].forEach((bubble, index) => {
+      bubble.setAttribute("part", index === 1 ? "voice-hint voice-hint-left" : "voice-hint");
+      bubble.style.setProperty("--hint-order", index);
+      if (!still && before.has(bubble)) {
+        const previous = before.get(bubble), current = bubble.getBoundingClientRect();
+        bubble.animate([{ translate: `${previous.x - current.x}px ${previous.y - current.y}px` }, { translate: "0 0" }], { duration: 420, easing: "ease-out" });
+      }
+    });
+    // ponytail: one local timer, at most three bubbles; every replacement rechecks current controls.
+    if (!still) hintsTimer = setTimeout(rotateHints, hints.children.length < Math.min(3, examples.length) ? 650 : 3500);
+  }
+  function showHints() {
+    clearTimeout(hideHintsTimer);
+    if (!hintsAllowed()) return;
     if (!hints) {
       hints = document.createElement("div"); hints.id = "certivoice-hints"; hints.dataset.voiceHints = "";
       hints.setAttribute("part", "voice-hints"); hints.setAttribute("role", "tooltip"); hints.setAttribute("aria-live", "off");
       chat.shadowRoot.append(hints);
     }
-    hints.replaceChildren();
-    // ponytail: local examples from the current controls, refreshed only on a new hover/focus.
-    for (let index = 0; index < 3 && examples.length; index++) {
-      const bubble = document.createElement("span"); bubble.setAttribute("part", index === 1 ? "voice-hint voice-hint-left" : "voice-hint"); bubble.dataset.voiceHint = "";
-      bubble.style.setProperty("--hint-order", index); bubble.textContent = examples.splice(Math.floor(Math.random() * examples.length), 1)[0];
-      hints.append(bubble);
-    }
+    if (hints.dataset.open !== "true") hints.replaceChildren();
     hints.dataset.open = "true"; hints.setAttribute("aria-hidden", "false");
-    hints.dataset.focused = String(Boolean(chat.shadowRoot.activeElement));
-    if (!chat.shadowRoot.activeElement) hintsLifetime = setTimeout(hideHints, 10000);
     chat.shadowRoot.querySelectorAll('.custom-button:not([aria-disabled="true"])').forEach(button => button.setAttribute("aria-describedby", hints.id));
+    rotateHints();
   }
   chat.addEventListener("pointerenter", event => { if (event.pointerType !== "touch") showHints(); });
-  chat.addEventListener("pointerleave", () => { if (!chat.shadowRoot?.activeElement) hideHintsTimer = setTimeout(hideHints, 180); });
+  chat.addEventListener("pointerleave", () => { if (!chat.shadowRoot?.activeElement) { clearTimeout(hintsTimer); hideHintsTimer = setTimeout(hideHints, 180); } });
   chat.addEventListener("focusin", showHints);
   chat.addEventListener("focusout", () => queueMicrotask(() => { if (!chat.shadowRoot?.activeElement) hideHints(); }));
   chat.addEventListener("keydown", event => { if (event.key === "Escape" && hints?.dataset.open === "true") { event.preventDefault(); event.stopPropagation(); hideHints(); } });

@@ -1,5 +1,6 @@
 // playwright-cli -s=shared-layout run-code --filename scripts/shared-layout-smoke.cjs
 // DOM geometry only, isolated storage and mocked API; no screenshots or paid calls.
+// Add ?motion-check to run only the native course transition regression.
 async page => {
   const base = new URL('/certitips/', page.url());
   const context = await page.context().browser().newContext({ reducedMotion: 'reduce' });
@@ -34,6 +35,67 @@ async page => {
   }, selector);
   const closeTo = (a, b) => Math.abs(a - b) < 1;
   try {
+    if (new URL(page.url()).searchParams.has('motion-check')) {
+      await tab.emulateMedia({ reducedMotion: 'no-preference' });
+      await tab.addInitScript(() => {
+        const start = document.startViewTransition.bind(document);
+        window.__transitions = [];
+        document.startViewTransition = change => {
+          const info = { frames: [], done: false, error: null }, transition = start(change);
+          window.__transitions.push(info);
+          transition.ready.then(() => {
+            const tick = () => {
+              const group = name => {
+                const style = getComputedStyle(document.documentElement, `::view-transition-group(${name})`), matrix = new DOMMatrixReadOnly(style.transform);
+                return { width: parseFloat(style.width), height: parseFloat(style.height), top: matrix.m42, z: parseInt(style.zIndex) || 0 };
+              };
+              info.frames.push({ diagram: group('course-diagram'), reading: group('course-reading'), header: group('course-header'), footer: group('course-footer'),
+                headerBottom: document.querySelector('.site-header').getBoundingClientRect().bottom, footerTop: document.querySelector('.site-footer').getBoundingClientRect().top,
+                image: document.querySelector('[style*="course-diagram"]')?.getBoundingClientRect().toJSON() });
+              if (!info.done) requestAnimationFrame(tick);
+            };
+            requestAnimationFrame(tick);
+          }, error => { info.error = String(error); });
+          transition.finished.finally(() => { info.done = true; });
+          return transition;
+        };
+      });
+      const settle = () => tab.waitForFunction(() => !document.documentElement.classList.contains('is-chat-layout-transition') && !document.documentElement.classList.contains('is-resizing'));
+      for (const width of [1440, 1200, 1024]) for (const edge of ['header', 'footer']) {
+        await tab.setViewportSize({ width, height: 700 });
+        await tab.goto(new URL('es/1Z0-1085-26/governance/', base).href);
+        await tab.locator('[data-chat-open]').waitFor(); await settle();
+        await tab.evaluate(async edge => {
+          await document.fonts.ready;
+          const image = document.querySelectorAll('.diagram img')[1] || document.querySelector('.diagram img');
+          image.loading = 'eager';
+          image.scrollIntoView({ block: 'center', behavior: 'instant' });
+          await image.decode().catch(error => { throw new Error(`${error.message}: ${image.currentSrc} complete=${image.complete} width=${image.naturalWidth}`); });
+          const box = image.closest('.diagram').getBoundingClientRect(), header = document.querySelector('.site-header').getBoundingClientRect(), footer = document.querySelector('.site-footer').getBoundingClientRect();
+          scrollBy({ top: edge === 'header' ? box.top - header.bottom + 60 : box.bottom - footer.top - 60, behavior: 'instant' });
+        }, edge);
+        for (const [index, action] of ['open', 'close'].entries()) {
+          await tab.locator(action === 'open' ? '[data-chat-open]' : '[data-chat-close]').click();
+          await tab.waitForFunction(count => window.__transitions.length === count && window.__transitions.at(-1).done, index + 1);
+          await settle();
+          const info = await tab.evaluate(() => window.__transitions.at(-1)), frames = info.frames.filter(frame => frame.image && frame.diagram.width > 0);
+          assert(!info.error && frames.length >= 3, `Native transition did not animate: ${JSON.stringify(info)}`);
+          assert(frames[0].diagram.width !== frames.at(-1).diagram.width, 'Diagram width must interpolate');
+          assert(frames.some(frame => edge === 'header' ? frame.diagram.top < frame.headerBottom : frame.diagram.top + frame.diagram.height > frame.footerTop), `Fixture does not reach ${edge}`);
+          assert(frames.every(frame => [frame.header, frame.footer].every(chrome => chrome.width >= width - 1 && chrome.height > 0 && chrome.z > Math.max(frame.diagram.z, frame.reading.z))), `Transition content covers ${edge}: ${JSON.stringify(frames[0])}`);
+          assert(frames.every(frame => Math.abs(frame.header.top) < 1 && Math.abs(frame.footer.top + frame.footer.height - 700) < 1), 'Transition chrome leaves viewport edges');
+          assert(frames.every(frame => Math.abs(frame.image.width - frames[0].image.width) < 1), 'Live image must remain at its final layout during animation');
+          assert(await tab.evaluate(() => [...document.querySelectorAll('.site-header,.site-footer,.course-main,.diagram')].every(node => getComputedStyle(node).viewTransitionName === 'none')), 'Transition names survive cleanup');
+          samples.push({ width, edge, action, frames: frames.length });
+        }
+      }
+      await tab.emulateMedia({ reducedMotion: 'reduce' });
+      await tab.locator('[data-chat-open]').click(); await tab.locator('#certichat-panel').waitFor({ state: 'visible' });
+      await tab.locator('[data-chat-close]').click(); await tab.locator('#certichat-panel').waitFor({ state: 'hidden' });
+      assert(await tab.evaluate(() => window.__transitions.length === 2), 'Reduced motion starts a transition');
+      assert(!errors.length, errors.join('; '));
+      return { passed: true, transitions: samples, reducedMotion: true };
+    }
     for (const width of [2560, 1992, 1671, 1510, 1307, 1296, 1239, 1024]) {
       await tab.setViewportSize({ width, height: 1004 });
       for (const theme of ['light', 'dark']) {
@@ -42,6 +104,7 @@ async page => {
           if (tab.url().startsWith(base.href)) await tab.evaluate(() => sessionStorage.clear());
           await tab.goto(new URL(route, base).href);
           await tab.locator(selector).waitFor({ state: 'visible' });
+          await tab.waitForFunction(() => Math.abs(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--footer-height')) - document.querySelector('.site-footer').getBoundingClientRect().height) < 1);
           await tab.evaluate(theme => { document.documentElement.dataset.theme = theme; }, theme);
           const pinned = route === 'certichat/', hasChat = route !== 'certiquiz/';
           for (const open of pinned ? [true] : hasChat ? [false, true, false] : [false]) {

@@ -14,7 +14,7 @@ async (page) => {
     if (await hints.count()) await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').dataset.open !== 'true');
     await page.locator('deep-chat').hover();
     await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]')?.dataset.open === 'true');
-    await page.waitForFunction(() => [...document.querySelector('deep-chat').shadowRoot.querySelectorAll('[data-voice-hint]')].every(item => Number(getComputedStyle(item).opacity) >= .95));
+    await page.waitForFunction(() => { const items = [...document.querySelector('deep-chat').shadowRoot.querySelectorAll('[data-voice-hint]')]; return items.length === 3 && items.every(item => Number(getComputedStyle(item).opacity) >= .95 && item.getAnimations().every(animation => animation.playState !== 'running' || !Number.isFinite(animation.effect.getComputedTiming().endTime))); });
     const view = await hints.evaluate(element => {
       const boxes = [...element.children].map(item => item.getBoundingClientRect()), panel = element.getRootNode().host.closest('#certichat-panel').getBoundingClientRect();
       return { count: boxes.length, tooltip: element.getAttribute('role') === 'tooltip' && element.getAttribute('aria-live') === 'off' && element.getAttribute('aria-hidden') === 'false', actionable: element.querySelectorAll('button,a,[role="button"],[tabindex]').length,
@@ -558,7 +558,59 @@ async (page) => {
     await checkPhase('Listening…');
     await checkHints();
   }
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await mute.evaluate(button => button.blur()); await page.mouse.move(0, 0);
+  await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').dataset.open === 'false');
+  await page.locator('deep-chat').hover();
+  await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').children.length === 3);
+  const fifoRequests = calls.length;
+  await page.locator('deep-chat [data-voice-hints]').evaluate(hints => {
+    window.__hintFIFO = { hints, initial: [...hints.children], removed: [], snapshots: [] };
+    window.__hintObserver = new MutationObserver(records => {
+      for (const record of records) window.__hintFIFO.removed.push(...record.removedNodes);
+      window.__hintFIFO.snapshots.push([...hints.children].map(item => item.textContent));
+    });
+    window.__hintObserver.observe(hints, { childList: true });
+  });
+  await page.waitForFunction(() => window.__hintFIFO.initial.at(-1).dataset.leaving === 'true');
+  assert(await page.evaluate(() => { const { hints, initial } = window.__hintFIFO; return hints.lastElementChild === initial.at(-1) && initial.slice(0, -1).every(item => item.dataset.leaving !== 'true'); }), 'FIFO did not retire the oldest visible hint first');
+  await page.waitForFunction(() => { const { hints, initial } = window.__hintFIFO; return hints.children.length === 3 && !initial.includes(hints.firstElementChild); });
+  const rotated = await page.evaluate(() => {
+    const { hints, initial, removed, snapshots } = window.__hintFIFO, incoming = hints.firstElementChild;
+    const frames = incoming.getAnimations().flatMap(animation => animation.effect.getKeyframes());
+    return { oldest: removed.length === 1 && removed[0] === initial.at(-1), survivors: hints.children[1] === initial[0] && hints.children[2] === initial[1], changed: !initial.some(item => item.textContent === incoming.textContent),
+      fromBelow: frames.some(frame => Number(frame.transform?.match(/translateY\(([\d.]+)px\)/)?.[1]) > 0 || parseFloat(frame.translate?.split(' ').at(-1)) > 0), bounded: snapshots.every(items => items.length <= 3 && new Set(items).size === items.length) };
+  });
+  assert(rotated.oldest && rotated.survivors && rotated.changed && rotated.fromBelow && rotated.bounded, `Hints do not replace FIFO from below without visible duplicates: ${JSON.stringify(rotated)}`);
+  await mute.focus();
+  const focusedHints = await page.locator('deep-chat [data-voice-hints]').innerText();
+  await page.waitForTimeout(4000);
+  assert(await page.locator('deep-chat [data-voice-hints]').innerText() === focusedHints && await page.locator('deep-chat [data-voice-hints]').evaluate(hints => [...hints.children].every(item => item.getAnimations().every(animation => animation.playState !== 'running'))), 'Focused hints kept rotating or animating');
+  await mute.evaluate(button => button.blur()); await page.mouse.move(0, 0);
+  await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').dataset.open === 'false');
+  await page.locator('deep-chat').hover();
+  await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').children.length === 3);
+  await page.locator('deep-chat').dispatchEvent('keydown', { key: 'Escape', bubbles: true });
+  const hiddenHints = await page.locator('deep-chat [data-voice-hints]').innerHTML();
+  await page.waitForTimeout(4000);
+  assert(await page.locator('deep-chat [data-voice-hints]').getAttribute('aria-hidden') === 'true' && await page.locator('deep-chat [data-voice-hints]').innerHTML() === hiddenHints, 'Escape left a hidden hint rotation queued');
+  await mute.evaluate(button => button.blur()); await page.mouse.move(0, 0);
+  await page.emulateMedia({ reducedMotion: 'reduce' }); await page.locator('deep-chat').hover();
+  await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').dataset.open === 'true');
+  const reducedHints = await page.locator('deep-chat [data-voice-hints]').innerHTML();
+  await page.waitForTimeout(4000);
+  assert(await page.locator('deep-chat [data-voice-hints]').innerHTML() === reducedHints && await page.locator('deep-chat [data-voice-hints]').evaluate(hints => [...hints.children].every(item => item.getAnimations().every(animation => animation.playState !== 'running'))), 'Reduced-motion hints kept rotating or animating');
+  assert(calls.length === fifoRequests, 'FIFO hint rotation requested an API');
+  await page.evaluate(() => window.__hintObserver.disconnect());
+  await page.mouse.move(0, 0);
+  await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').dataset.open === 'false');
+  await page.emulateMedia({ reducedMotion: 'no-preference' }); await page.locator('deep-chat').hover();
+  await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').children.length === 3);
   await exit.click();
+  const exitedHints = await page.locator('deep-chat [data-voice-hints]').innerHTML();
+  await page.waitForTimeout(4000);
+  assert(await page.locator('deep-chat [data-voice-hints]').getAttribute('aria-hidden') === 'true' && await page.locator('deep-chat [data-voice-hints]').innerHTML() === exitedHints, 'Exiting voice left a hidden hint rotation queued');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await checkPhase(null);
   assert(await page.evaluate(() => JSON.stringify(window.__presentationChat.getMessages())) === presentationMessages, 'Leaving the compact composer changed presentation history');
   const diagramBeforeTyping = await page.locator('#diagram-viewer').getAttribute('data-source-id');
@@ -795,5 +847,5 @@ async (page) => {
   assert(calls.filter(call => call.path === '/api/voice').every(call => call.body.pageUrl.startsWith('https://jgangini.github.io/certitips/') && !/\/certitips\/(es|en|pt|it)\//.test(call.body.pageUrl)), 'Voice sent a local or localized URL that the real backend rejects');
   assert(errors.length === 0, errors.join('\n'));
   // Idle continuity and granted-permission navigation are included in track/navigation coverage above.
-  return { checks: ['feature flag', 'shared session auth', 'WAV and canonical context', 'VAD turn', 'shared transcript', 'playback and processing interruption', 'track cleanup', 'permission error', 'diagram actions and modal controls', 'navigation and explicit resume', 'absolute continuation offset and original lifetime', 'audio unavailable', 'idempotent explicit retry', 'pending and terminal409', 'rate limit', 'typing and clear', 'input waveform and native send', 'all voice controls borderless with 24px SVG and red hover', 'unavailable native send and status-only errors', 'header warning and presentation recovery', 'session availability recovery without reload', 'native microphone mute and exit', 'RAM and playback24-hour expiry', 'presentation square launcher and shared layout', 'presentation preserves DOM and in-flight request', 'presentation keyboard and restoration', 'two themes', 'three widths', 'edge and reduced motion', '240x48 rounded glass voice composer with colored glow, centered controls, reference colors and 24px text inset', 'localized video navigation and explicit resume', 'first navigation without educational history hides intro in paused composer', 'normal navigation and active reload preserve paused gradient and explicit controls', 'paused cancel persists after reload without losing educational history', 'navigation mode expires after24 hours without renewing or capturing', 'quota blocks voice aria/tab/click/keyboard/direct commands without capture', 'expired quota waits for authoritative positive renewal without auto-capture', 'last valid quota response completes navigation without destination capture', 'lost response recovers the identical UUID and payload atquota0 without another capture', 'text-only recovery atquota0 pauses and adds one shared answer', 'clear removes completed diagram and playback from the next request', 'contextual hints are text-only max3 with no quotes and bottom-up alternating placement', 'hints fit both themes at320/390/1418px and presentation; keyboard Escape and reduced motion'], paidCalls: 0, screenshots: 0 };
+  return { checks: ['feature flag', 'shared session auth', 'WAV and canonical context', 'VAD turn', 'shared transcript', 'playback and processing interruption', 'track cleanup', 'permission error', 'diagram actions and modal controls', 'navigation and explicit resume', 'absolute continuation offset and original lifetime', 'audio unavailable', 'idempotent explicit retry', 'pending and terminal409', 'rate limit', 'typing and clear', 'input waveform and native send', 'all voice controls borderless with 24px SVG and red hover', 'unavailable native send and status-only errors', 'header warning and presentation recovery', 'session availability recovery without reload', 'native microphone mute and exit', 'RAM and playback24-hour expiry', 'presentation square launcher and shared layout', 'presentation preserves DOM and in-flight request', 'presentation keyboard and restoration', 'two themes', 'three widths', 'edge and reduced motion', '240x48 rounded glass voice composer with colored glow, centered controls, reference colors and 24px text inset', 'localized video navigation and explicit resume', 'first navigation without educational history hides intro in paused composer', 'normal navigation and active reload preserve paused gradient and explicit controls', 'paused cancel persists after reload without losing educational history', 'navigation mode expires after24 hours without renewing or capturing', 'quota blocks voice aria/tab/click/keyboard/direct commands without capture', 'expired quota waits for authoritative positive renewal without auto-capture', 'last valid quota response completes navigation without destination capture', 'lost response recovers the identical UUID and payload atquota0 without another capture', 'text-only recovery atquota0 pauses and adds one shared answer', 'clear removes completed diagram and playback from the next request', 'contextual hints are text-only max3 with no quotes and bottom-up alternating placement', 'hints fit both themes at320/390/1418px and presentation; keyboard Escape and reduced motion', 'FIFO hints remove oldest first, add a different message from below and keep max3 unique', 'hint rotation stops for focus, reduced motion, Escape and exit without hidden updates'], paidCalls: 0, screenshots: 0 };
 }
