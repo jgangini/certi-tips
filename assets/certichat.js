@@ -538,16 +538,17 @@ if (root) {
     } catch { if (!changed) change(); cleanup(); }
   }
   function animatePanel(button, fold) {
-    if (presenting || dock || reducedMotion.matches || !panel.animate) return;
+    if (presenting && (!fold || document.startViewTransition) || dock || reducedMotion.matches || !panel.animate) return;
     const box = panel.getBoundingClientRect();
     if (!box.width || !box.height) return;
     // ponytail: fold the real panel briefly; a separate overlay is only needed if scaled content becomes distracting.
-    const small = { transform: `translate(${button.right - box.right}px, ${button.bottom - box.bottom}px) scale(${button.width / box.width}, ${button.height / box.height})`, opacity: 0, borderRadius: getComputedStyle(launcher).borderRadius };
+    const small = presenting ? { transform: "translateX(100%)", opacity: 0 } : { transform: `translate(${button.right - box.right}px, ${button.bottom - box.bottom}px) scale(${button.width / box.width}, ${button.height / box.height})`, opacity: 0, borderRadius: getComputedStyle(launcher).borderRadius };
     const full = { transform: "none", opacity: 1, borderRadius: getComputedStyle(panel).borderRadius };
     return panel.animate(fold ? [full, small] : [small, full], { duration: 320, easing: "cubic-bezier(.22, 1, .36, 1)", fill: fold ? "forwards" : "none" });
   }
   function closePanel(animate = true, focus = true) {
     if (dock || panel.hidden || closing) return;
+    closing = true;
     window.dispatchEvent(new CustomEvent("certivoice:command", { detail: "exit" }));
     try { sessionStorage.removeItem(`${storageKey}:open`); sessionStorage.removeItem(`${storageKey}:reference`); } catch { /* Storage is optional. */ }
     panelAnimation?.cancel();
@@ -565,7 +566,6 @@ if (root) {
     launcher.hidden = false; launcher.style.visibility = "hidden";
     panelAnimation = animatePanel(launcher.getBoundingClientRect(), true);
     if (!panelAnimation) return finish();
-    closing = true;
     panelAnimation.finished.then(finish, finish);
   }
   if (viewer && !dock) {
@@ -590,7 +590,12 @@ if (root) {
     new MutationObserver(syncPresentation).observe(viewer, { attributes: true, attributeFilter: ["class", "open"] });
     new MutationObserver(syncPresentation).observe(panel, { attributes: true, attributeFilter: ["data-voice-mode"] });
     mobileChat.addEventListener("change", syncPresentation);
-    window.addEventListener("certivoice:state", event => { launcherVoiceState = event.detail || {}; syncPresentation(); });
+    window.addEventListener("certivoice:state", event => {
+      const wasVoice = launcherVoiceState.active || launcherVoiceState.resume;
+      launcherVoiceState = event.detail || {};
+      if (wasVoice && !launcherVoiceState.active && !launcherVoiceState.resume && mobileChat.matches && viewer.matches("[open].is-presenting")) closePanel(false);
+      syncPresentation();
+    });
     window.dispatchEvent(new CustomEvent("certivoice:state-request"));
     syncPresentation();
   }

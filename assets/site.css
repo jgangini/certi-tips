@@ -1650,6 +1650,8 @@ html.is-chat-layout-transition:not(:has(#diagram-viewer.is-presenting)) .site-fo
 html.is-chat-layout-transition #diagram-viewer.is-presenting .certichat-panel { view-transition-name: course-chat-panel; }
 ::view-transition-group(course-header), ::view-transition-group(course-footer) { z-index: 1; }
 ::view-transition-group(course-chat-panel) { z-index: 2; }
+::view-transition-old(course-chat-panel):only-child { animation: certichat-panel-out 360ms cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes certichat-panel-out { to { transform: translateX(100%); opacity: 0; } }
 ::view-transition-group(course-reading), ::view-transition-group(course-diagram), ::view-transition-group(course-chat-launcher), ::view-transition-group(course-chat-panel), ::view-transition-group(course-header), ::view-transition-group(course-footer) { animation-duration: 360ms; animation-timing-function: ease; }
 @media (prefers-reduced-motion: reduce) {
   #diagram-viewer::backdrop { animation: none; }

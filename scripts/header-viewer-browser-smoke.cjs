@@ -15,9 +15,10 @@ async (page) => {
       if (!document.startViewTransition) return;
       const start = document.startViewTransition.bind(document);
       document.startViewTransition = change => {
-        const entry = { widths: [], done: false, error: null }, transition = start(change);
+        const entry = { widths: [], chatExit: [], done: false, error: null }, transition = start(change);
         window.__transitions.push(entry);
         transition.ready.then(() => {
+          entry.chatExit = document.getAnimations().filter(animation => animation.animationName === 'certichat-panel-out').flatMap(animation => animation.effect.getKeyframes());
           const tick = () => {
             entry.widths.push(parseFloat(getComputedStyle(document.documentElement, '::view-transition-group(course-reading)').width));
             if (!entry.done) requestAnimationFrame(tick);
@@ -57,6 +58,7 @@ async (page) => {
           await page.waitForFunction(count => window.__transitions.length > count && window.__transitions.at(-1).done, count);
           const entry = await page.evaluate(() => window.__transitions.at(-1));
           assert(!entry.error && entry.widths.length >= 3 && Math.abs(entry.widths.filter(Number.isFinite)[0] - entry.widths.filter(Number.isFinite).at(-1)) > 100, `Presentation ${action} did not interpolate: ${JSON.stringify(entry)}`);
+          if (action === 'close') assert(entry.chatExit.some(frame => frame.transform === 'translateX(100%)'), `Presentation chat did not slide to the right: ${JSON.stringify(entry)}`);
         }
         if (action === 'open') {
           await page.waitForFunction(() => !!document.querySelector('#diagram-viewer').style.getPropertyValue('--presentation-composer-height'));
@@ -80,6 +82,24 @@ async (page) => {
       results.push({ width, theme, animated: width > 800 });
     }
     await page.setViewportSize({ width: 1550, height: 1019 });
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto(`${base}es/1Z0-1157-26/agents/`);
+    await page.evaluate(() => { document.startViewTransition = undefined; });
+    await page.locator('[data-diagram]').first().click();
+    await page.locator('[data-diagram-present]').click();
+    await page.locator('#diagram-viewer [data-chat-open]').click();
+    await page.locator('deep-chat [role="textbox"]').waitFor();
+    const fallback = await page.locator('#certichat-panel').evaluate(panel => {
+      document.querySelector('[data-chat-close]').click();
+      return { hidden: panel.hidden, animations: panel.getAnimations().map(animation => ({ frames: animation.effect.getKeyframes(), duration: animation.effect.getTiming().duration })) };
+    });
+    assert(!fallback.hidden && fallback.animations.some(animation => animation.duration === 320 && animation.frames.at(-1).transform === 'translateX(100%)'), 'Fallback did not animate the real chat panel towards the right');
+    await page.locator('#certichat-panel').waitFor({ state: 'hidden' });
+    await page.locator('#diagram-viewer [data-chat-open]').click();
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    assert(await page.locator('#certichat-panel').evaluate(panel => { document.querySelector('[data-chat-close]').click(); return panel.hidden && !panel.getAnimations().length; }), 'Reduced motion animated or delayed chat folding');
+    await page.locator('[data-close-diagram]').click();
+    await page.locator('[data-close-diagram]').click();
     await page.goto(`${base}es/certitube/`);
     for (const theme of ['light', 'dark']) {
     await page.evaluate(value => document.documentElement.dataset.theme = value, theme);
@@ -95,7 +115,7 @@ async (page) => {
     assert(await footerLink.evaluate(node => getComputedStyle(node).borderRadius === '7px' && getComputedStyle(node).outlineStyle !== 'none'), `Footer focus is not rounded: ${JSON.stringify(await footerLink.evaluate(node => ({radius:getComputedStyle(node).borderRadius,outline:getComputedStyle(node).outline,active:document.activeElement===node,visible:getComputedStyle(node).visibility,tag:node.outerHTML})))}`);
     }
     assert(errors.length === 0, errors.join('; '));
-    return { passed: true, presentationChat: results, roundedFocus: true, chapterHeightPreserved: true, resourceIconInsideLink: true, screenshots: 0, paidCalls: 0 };
+    return { passed: true, presentationChat: results, roundedFocus: true, rightwardPanelExit: true, fallbackAndReducedMotion: true, chapterHeightPreserved: true, resourceIconInsideLink: true, screenshots: 0, paidCalls: 0 };
   }
 
   await page.addInitScript(() => sessionStorage.clear());

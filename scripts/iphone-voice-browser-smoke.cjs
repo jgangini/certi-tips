@@ -21,6 +21,7 @@ async (page) => {
   });
   await phone.addInitScript(() => {
     sessionStorage.clear();
+    localStorage.setItem('certichat:https://jgangini.github.io/certitips/', JSON.stringify({ updatedAt: Date.now(), messages: [{ role: 'user', text: 'Pregunta conservada antes de la presentación.' }, { role: 'ai', text: 'Respuesta conservada del historial.' }] }));
     window.__speechUnlocked = false; window.__warmups = []; window.__spoken = []; window.__microphones = 0;
     window.addEventListener('click', event => { if (event.isTrusted) window.__speechGesture = true; }, true);
     window.addEventListener('certivoice:state', event => { window.__voiceState = event.detail; });
@@ -110,19 +111,35 @@ async (page) => {
     assert(await launcher.getAttribute('aria-label') === 'Activar voz' && await launcher.locator('svg').evaluate(icon => getComputedStyle(icon).maskImage.includes('voice-wave.svg')), 'Mobile presentation launcher is not the accessible audio waveform');
     await launcher.tap();
     await phone.waitForFunction(() => window.__voiceState?.phase === 'listening' && document.querySelector('#certichat-panel').dataset.voiceMode === 'true');
+    assert(await phone.locator('.certichat-heading').isHidden() && await phone.evaluate(() => window.__microphones === 1), 'Presentation audio opened the text chat or captured twice');
+    const imageBeforeExit = await viewer.locator('.dialog-content img').getAttribute('src');
+    await phone.waitForFunction(() => document.querySelector('deep-chat')?.getMessages?.()?.some(message => message.text === 'Respuesta conservada del historial.'));
+    const historyBeforeExit = await phone.locator('deep-chat').evaluate(chat => JSON.stringify(chat.getMessages().map(({ role, text }) => ({ role, text }))));
     for (const width of [320, 394, 768]) for (const theme of ['light', 'dark']) {
       await phone.setViewportSize({ width, height: 852 });
       await phone.evaluate(value => { document.documentElement.dataset.theme = value; }, theme);
       results.push({ route: 'mobile presentation', width, theme, ...(await measure(true)) });
+      await phone.locator('deep-chat [data-voice-command="exit"]').tap();
+      await phone.locator('#certichat-panel').waitFor({ state: 'hidden' });
+      assert(await viewer.evaluate(node => node.open && node.classList.contains('is-presenting')) && await viewer.locator('.dialog-content img').getAttribute('src') === imageBeforeExit, 'Exiting voice closed or changed the presented slide');
+      assert(await launcher.isVisible() && await launcher.getAttribute('aria-expanded') === 'false' && await launcher.evaluate(node => document.activeElement === node), 'Voice exit did not restore the audio launcher and focus');
+      assert(await phone.evaluate(() => !window.__voiceState.active && !window.__voiceState.resume && window.__voiceTrack.stopped), 'Voice exit kept the microphone active or resumable');
+      assert(await phone.locator('deep-chat').evaluate(chat => JSON.stringify(chat.getMessages().map(({ role, text }) => ({ role, text })))) === historyBeforeExit, 'Voice exit changed the shared conversation');
+      assert((await viewer.locator('.dialog-content').boundingBox()).height > 700, 'Voice exit left space reserved for text chat');
+      await launcher.tap();
+      await phone.waitForFunction(() => window.__voiceState?.phase === 'listening' && document.querySelector('#certichat-panel').dataset.voiceMode === 'true');
     }
     await phone.setViewportSize({ width: 394, height: 852 });
-    assert(await phone.locator('.certichat-heading').isHidden() && await phone.evaluate(() => window.__microphones === 1), 'Presentation audio opened the text chat or captured twice');
     await phone.evaluate(() => window.__speakTurn());
     await phone.waitForFunction(() => window.__spoken.length === 1);
+    await phone.locator('deep-chat [data-voice-command="exit"]').tap();
+    await phone.locator('#certichat-panel').waitFor({ state: 'hidden' });
+    assert(await phone.evaluate(() => window.__utterance === null && window.__voiceTrack.stopped), 'Exiting during narration left speech or capture running');
+    assert(await viewer.locator('.dialog-content img').getAttribute('src') === imageBeforeExit, 'Exiting during narration changed the slide');
     await viewer.locator('[data-close-diagram]').tap();
     await viewer.waitFor({ state: 'hidden' });
     assert(await phone.locator('[data-diagram]').first().evaluate(node => document.activeElement === node), 'Closing mobile presentation did not restore focus to its image');
     assert(errors.length === 0, errors.join('\n'));
-    return { passed: true, routes: results, delayedNativeSpeechAfterGesture: true, touchHintsDisabled: true, directPresentationAudio: true, screenshots: 0, paidCalls: 0 };
+    return { passed: true, routes: results, delayedNativeSpeechAfterGesture: true, touchHintsDisabled: true, directPresentationAudio: true, mobileVoiceExitFoldsChat: true, screenshots: 0, paidCalls: 0 };
   } finally { await context.close(); }
 }

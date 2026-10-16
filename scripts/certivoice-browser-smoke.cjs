@@ -622,6 +622,8 @@ async (page) => {
   await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').dataset.open === 'false');
   await page.emulateMedia({ reducedMotion: 'no-preference' }); await page.locator('deep-chat').hover();
   await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').children.length === 3);
+  // Text chat returns on desktop; mobile presentation exit has its own launcher-only regression.
+  await page.setViewportSize({ width: 1280, height: 900 });
   await exit.click();
   const exitedHints = await page.locator('deep-chat [data-voice-hints]').innerHTML();
   await page.waitForTimeout(4000);
