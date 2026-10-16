@@ -2211,7 +2211,16 @@ html[data-theme="dark"] .quiz-heading .eyebrow {
     font-size: 1.14rem;
   }
 }
+@media (max-width: 800px) {
+  .site-header > .brand img { width: 44px; height: 44px; }
+  #diagram-viewer.is-presenting .dialog-toolbar { padding: 8px 12px; gap: 8px; }
+  #diagram-viewer.is-presenting .dialog-toolbar [data-diagram-present],
+  #diagram-viewer.is-presenting .dialog-toolbar kbd { display: none; }
+  #diagram-viewer.is-presenting #diagram-description { padding: 8px 12px; }
+}
 @media (max-width: 480px) {
+  .site-header > .brand img { width: 31px; height: 31px; }
+  #diagram-viewer.is-presenting .dialog-toolbar [data-diagram-menu] { width: 31px; height: 31px; padding: 6px; }
   :root { --chat-launcher-size: 31px; --content-gutter: 20px; }
   .certitips-page .certification-list { margin-right: -18px; padding-right: 18px; }
   .course-groups.is-compact-groups > .path-nav-mobile > summary { padding-right: 6px; }

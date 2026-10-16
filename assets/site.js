@@ -584,7 +584,7 @@ function animateViewer(closing = false, from) {
 }
 function closeViewer() {
   if (!dialog.open || dialog.classList.contains("is-closing")) return;
-  if (dialog.classList.contains("is-presenting")) {
+  if (dialog.classList.contains("is-presenting") && !matchMedia("(max-width: 800px)").matches) {
     const from = dialog.getBoundingClientRect();
     leavePresentation(); animateViewer(false, from); return;
   }
@@ -593,6 +593,7 @@ function closeViewer() {
   const page = target ? null : moduleLinkForImage(src);
   if (target) opener = target;
   const finish = () => {
+    leavePresentation();
     dialog.close();
     dialog.classList.remove("is-closing");
     viewerAnimation?.cancel();
@@ -609,11 +610,12 @@ function closeViewer() {
   animation.finished.then(finish, finish);
 }
 document.querySelectorAll("[data-diagram]").forEach((button) =>
-  button.addEventListener("click", () => {
+  button.addEventListener("click", async () => {
     delete dialog.dataset.voiceReturn;
     opener = button;
     restoreDiagram();
     dialog.showModal();
+    if (!present.hidden && matchMedia("(max-width: 800px)").matches) await togglePresentation();
     animateViewer();
     dialog.querySelector("[data-close-diagram]").focus();
   }),

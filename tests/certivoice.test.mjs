@@ -713,6 +713,7 @@ test("chat shows native send when voice is unavailable and never stores voice er
   const originalWindow = globalThis.window, originalEvent = globalThis.CustomEvent, listeners = new Map(), commands = [], messages = [];
   globalThis.CustomEvent = class { constructor(type, options = {}) { this.type = type; this.detail = options.detail; } };
   globalThis.window = {
+    matchMedia: () => ({ matches: true, addEventListener() {} }),
     addEventListener(name, handler) { const handlers = listeners.get(name) || []; handlers.push(handler); listeners.set(name, handlers); },
     dispatchEvent(event) { for (const handler of listeners.get(event.type) || []) handler(event); },
   };

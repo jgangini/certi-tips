@@ -90,4 +90,4 @@
 
 .chat-explorer-page:has([data-voice-mode="true"]) { position: relative; }
 .chat-explorer-page:has([data-voice-mode="true"]) [data-explorer-chat-slot] { position: absolute; inset: auto 0 20px auto; width: min(240px, calc(100% - 24px)); }
-.certichat-page .certichat #certichat-panel[data-voice-mode="true"] { position: absolute; inset: auto 0 0 auto; width: 100%; }
+@media (min-width: 801px) { .certichat-page .certichat #certichat-panel[data-voice-mode="true"] { position: absolute; inset: auto 0 0 auto; width: 100%; } }

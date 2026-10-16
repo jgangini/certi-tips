@@ -6,7 +6,7 @@ import vm from "node:vm";
 import MarkdownIt from "markdown-it";
 import { layout, sidebar, homeBody, coursesBody, certiquizBody, courseRoute } from "../scripts/layout.mjs";
 
-test("the image viewer refreshes its group, source heading and description when switching diagrams", () => {
+test("the image viewer refreshes its group, source heading and description when switching diagrams", async () => {
   const caption = { textContent: "" }, group = { textContent: "" }, description = { textContent: "" }, enlarged = { addEventListener() {} };
   const close = { focus() {}, addEventListener() {} };
   const dialog = {
@@ -32,9 +32,9 @@ test("the image viewer refreshes its group, source heading and description when 
     querySelectorAll: selector => selector === '.sidebar .nav-link' ? links : buttons,
   };
   const script = readFileSync(new URL("../assets/site.js", import.meta.url), "utf8");
-  vm.runInNewContext(script.slice(script.indexOf('const dialog = document.querySelector("#diagram-viewer");')), { document, window: { addEventListener() {} }, t, URL, location: { href: "https://example.test/course/overview/" } });
+  vm.runInNewContext(script.slice(script.indexOf('const dialog = document.querySelector("#diagram-viewer");')), { document, matchMedia: () => ({ matches: false }), window: { addEventListener() {} }, t, URL, location: { href: "https://example.test/course/overview/" } });
   for (const [index, button] of buttons.entries()) {
-    button.click();
+    await button.click();
     assert.equal(enlarged.src, button.image.src);
     assert.equal(dialog.dataset.sourceId, button.dataset.sourceId);
     assert.equal(caption.textContent, button.dataset.diagramHeading || button.image.alt);

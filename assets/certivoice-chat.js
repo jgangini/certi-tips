@@ -5,7 +5,8 @@ export function installVoiceChatControls(chat, changeLayout = change => change()
   let state = { enabled: false, active: false, muted: false }, requestBusy = false;
   const quotaBlocked = () => state.quotaBlocked || chat.shadowRoot?.querySelector('[role="textbox"]')?.getAttribute("aria-disabled") === "true";
   let hints, hideHintsTimer, hintsTimer, hintSequence = 0, lastHint;
-  const hintsAllowed = () => state.enabled && (state.active || state.resume) && ["listening", "paused"].includes(state.phase) && !state.locked && !quotaBlocked();
+  const hintPointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+  const hintsAllowed = () => hintPointer.matches && state.enabled && (state.active || state.resume) && ["listening", "paused"].includes(state.phase) && !state.locked && !quotaBlocked();
   function hideHints() {
     clearTimeout(hideHintsTimer);
     clearTimeout(hintsTimer);
@@ -14,6 +15,7 @@ export function installVoiceChatControls(chat, changeLayout = change => change()
     hints.dataset.open = "false"; hints.setAttribute("aria-hidden", "true");
     chat.shadowRoot.querySelectorAll('[aria-describedby="certivoice-hints"]').forEach(button => button.removeAttribute("aria-describedby"));
   }
+  hintPointer.addEventListener("change", () => { if (!hintPointer.matches) hideHints(); });
   function hintExamples() {
     const context = voiceContext(), has = action => context.targets.some(target => target.action === action), examples = [];
     const viewer = document.querySelector("#diagram-viewer[open]");

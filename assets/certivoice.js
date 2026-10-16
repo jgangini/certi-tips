@@ -310,6 +310,10 @@ if (root) {
     try {
       const AudioEngine = window.AudioContext || window.webkitAudioContext;
       if (!AudioEngine || !navigator.mediaDevices?.getUserMedia || !window.AudioWorkletNode) throw new Error(t("La voz no está disponible en este navegador. Puedes usar el chat."));
+      // iOS gates speech separately from Web Audio: unlock it within the original tap.
+      if (!automatic && window.speechSynthesis && window.SpeechSynthesisUtterance) {
+        const warmup = new SpeechSynthesisUtterance(""); warmup.volume = 0; speechSynthesis.speak(warmup);
+      }
       context ||= new AudioEngine(); if (!automatic) await context.resume();
       const currentSession = await api("session", undefined, "GET");
       if (token !== epoch) return;

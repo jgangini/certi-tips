@@ -90,7 +90,7 @@ if (root) {
     root.querySelector('.certichat-actions a').hidden = true;
   }
   const viewer = document.querySelector("#diagram-viewer"), homeParent = root.parentNode, homeNext = root.nextSibling;
-  let presenting = false;
+  let presenting = false, launcherVoiceState = {};
   const mobileChat = matchMedia("(max-width: 800px)");
   const launcherContent = document.querySelector(".tube-detail, [data-group-carousel]") || document.querySelector(".course-page .course-main");
   function positionLauncher() {
@@ -374,13 +374,14 @@ if (root) {
       chat.validateInput = text => !busy && !voiceBusy && !quotaText(quota) && Boolean(text?.trim()) && text.length <= 1500;
       const composerSize = viewer && new ResizeObserver(entries => {
         for (const entry of entries) {
-          const height = entry.borderBoxSize[0]?.blockSize || entry.target.offsetHeight;
-          if (height) viewer.style.setProperty(entry.target.classList.contains("certichat-heading") ? "--presentation-heading-height" : "--presentation-composer-height", `${height}px`);
+          const element = entry.target === chat ? chat.shadowRoot.querySelector("#text-input-container") : entry.target;
+          const height = element?.getBoundingClientRect().height;
+          if (height) viewer.style.setProperty(element.classList.contains("certichat-heading") ? "--presentation-heading-height" : "--presentation-composer-height", `${height}px`);
         }
       });
       chat.onComponentRender = () => {
         const composer = chat.shadowRoot.querySelector("#text-input-container");
-        if (composerSize && composer) { composerSize.disconnect(); composerSize.observe(composer); composerSize.observe(root.querySelector(".certichat-heading")); }
+        if (composerSize) { composerSize.disconnect(); composerSize.observe(chat); if (composer) composerSize.observe(composer); composerSize.observe(root.querySelector(".certichat-heading")); }
         chat.shadowRoot.querySelector("#input")?.before(quotaNotice);
         const input = chat.shadowRoot.querySelector('[role="textbox"]');
         input?.setAttribute("aria-label", t("Escribe tu consulta"));
@@ -570,10 +571,13 @@ if (root) {
   if (viewer && !dock) {
     const syncPresentation = () => {
       const active = viewer.open && (viewer.classList.contains("is-presenting") || root.dataset.voiceMode === "true");
+      const voiceLauncher = active && mobileChat.matches;
+      launcher.setAttribute("aria-label", voiceLauncher ? t("Activar voz") : "CertiChat");
+      launcher.disabled = voiceLauncher && (!launcherVoiceState.enabled || launcherVoiceState.quotaBlocked && !launcherVoiceState.retry);
       if (active === presenting) return;
       panelAnimation?.cancel(); panelAnimation = undefined; closing = false;
-      if (root.dataset.voiceMode !== "true") closePanel(false, false);
       presenting = active;
+      if (root.dataset.voiceMode !== "true") closePanel(false, false);
       root.classList.remove("is-beside-content"); launcher.style.removeProperty("top");
       for (const name of ["top", "left", "width", "height"]) panel.style.removeProperty(`--chat-${name}`);
       // ponytail: move the live instance; rebuilding Deep Chat would lose an in-flight response.
@@ -585,6 +589,9 @@ if (root) {
     };
     new MutationObserver(syncPresentation).observe(viewer, { attributes: true, attributeFilter: ["class", "open"] });
     new MutationObserver(syncPresentation).observe(panel, { attributes: true, attributeFilter: ["data-voice-mode"] });
+    mobileChat.addEventListener("change", syncPresentation);
+    window.addEventListener("certivoice:state", event => { launcherVoiceState = event.detail || {}; syncPresentation(); });
+    window.dispatchEvent(new CustomEvent("certivoice:state-request"));
     syncPresentation();
   }
   function syncQuizLock() {
@@ -634,6 +641,13 @@ if (root) {
   launcher.addEventListener("click", async event => {
     if (readQuizLock()) { syncQuizLock(); return; }
     if (!panel.hidden) return closePanel(event.isTrusted);
+    if (presenting && mobileChat.matches && event.isTrusted) {
+      if (busy || voiceBusy) return;
+      // Keep the original tap for Safari audio; mounting the shared composer may await the connection.
+      window.dispatchEvent(new CustomEvent("certivoice:command", { detail: "start" }));
+      if (root.dataset.voiceMode !== "true") return;
+      panel.dataset.voiceMode = "true";
+    }
     const button = launcher.getBoundingClientRect();
     await changeCourseLayout(() => {
       panel.hidden = false; launcher.hidden = true; launcher.setAttribute("aria-expanded", "true");

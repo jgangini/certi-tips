@@ -111,3 +111,10 @@ html[data-theme="dark"] .certichat #certichat-panel[data-voice-mode="true"] { --
 :is([data-voice-video-confirm], [data-voice-lecture-confirm]) p { margin: 0 0 8px; }
 :is([data-voice-video-confirm], [data-voice-lecture-confirm]) button { border: 1px solid var(--line); border-radius: 5px; background: var(--paper); color: var(--ink); padding: 8px; margin: 0 6px 4px 0; }
 :is([data-voice-video-confirm], [data-voice-lecture-confirm]) button:hover { color: var(--red); border-color: var(--red); }
+
+@media (max-width: 800px) {
+  #diagram-viewer.is-presenting .certichat-launcher > svg { background: currentColor; mask: url("./icons/voice-wave.svg") center / contain no-repeat; }
+  .certichat #certichat-panel[data-voice-mode="true"] { inset: auto auto calc(var(--footer-height) + 24px) max(16px, calc(50% - 120px)); }
+  #diagram-viewer.is-presenting > .certichat:has(#certichat-panel[data-voice-mode="true"]) { justify-self: center; }
+  #diagram-viewer.is-presenting #certichat-panel[data-voice-mode="true"] { inset: auto; translate: none; }
+}

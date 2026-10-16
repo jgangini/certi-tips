@@ -39,8 +39,15 @@ async (page) => {
       await page.evaluate(() => window.__sameChat = document.querySelector('deep-chat'));
       await page.locator('[data-chat-close]').click(); await page.locator('#certichat-panel').waitFor({ state: 'hidden' }); await settle();
       await page.locator('[data-diagram]').first().click();
-      await page.locator('[data-diagram-present]').click();
+      if (width > 800) await page.locator('[data-diagram-present]').click();
       await page.waitForFunction(() => document.querySelector('#diagram-viewer.is-presenting [data-chat-open]'));
+      if (width <= 800) {
+        assert(await page.locator('#diagram-viewer [data-chat-open]').isDisabled(), 'Mobile presentation enabled unavailable voice');
+        await page.locator('[data-close-diagram]').click();
+        await page.locator('#diagram-viewer').waitFor({ state: 'hidden' });
+        results.push({ width, theme, directPresentation: true });
+        continue;
+      }
       for (const action of ['open', 'close']) {
         const count = await page.evaluate(() => window.__transitions.length);
         await page.locator(`#diagram-viewer [data-chat-${action}]`).click();
@@ -107,7 +114,7 @@ async (page) => {
         const theme = header.querySelector('.theme-toggle').getBoundingClientRect();
         const panel = document.querySelector('#certichat-panel');
         const logo = header.querySelector('.brand img').getBoundingClientRect(), launcher = document.querySelector('[data-chat-open]')?.getBoundingClientRect();
-        if (logo.width !== 36 || logo.height !== 36) throw new Error(`Logo shrinks at ${innerWidth}px: ${logo.width}x${logo.height}`);
+        if (logo.width !== (innerWidth <= 480 ? 31 : innerWidth <= 800 ? 44 : 36) || logo.height !== logo.width) throw new Error(`Logo shrinks at ${innerWidth}px: ${logo.width}x${logo.height}`);
         if (innerWidth <= 800 && launcher?.width && (launcher.width !== theme.width || launcher.height !== theme.height)) throw new Error(`Chat button differs from header controls at ${innerWidth}px`);
         return { right: headerBox.right - theme.right, edgeRight: theme.right, chatRight: innerWidth > 800 && panel && !panel.hidden ? panel.getBoundingClientRect().right : null, padRight: parseFloat(getComputedStyle(header).paddingRight), overflow: document.documentElement.scrollWidth > innerWidth + 1 };
       });
@@ -139,6 +146,7 @@ async (page) => {
       await viewer.waitFor();
       await viewer.evaluate(node => Promise.all(node.getAnimations().map(animation => animation.finished.catch(() => {}))));
       for (const control of ['[data-diagram-present]', '[data-close-diagram]']) {
+        if (!await viewer.locator(control).isVisible()) continue;
         await viewer.locator(control).hover();
         assert(await viewer.locator(control).evaluate(button => {
           const red = getComputedStyle(document.documentElement).getPropertyValue('--red').trim(), probe = document.createElement('span');
