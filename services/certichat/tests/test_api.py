@@ -13,7 +13,7 @@ import httpx
 import psycopg
 import pytest
 
-from app.main import create_app
+from app.main import conversation_history, create_app
 from app.security import COOKIE, LOCAL_COOKIE, ChatError, network_digest, new_token, token_digest
 from app.settings import Settings
 from app.store import Store
@@ -23,7 +23,7 @@ FRONTEND = "https://jgangini.github.io"
 HEADERS = {"Origin": FRONTEND, "X-CertiChat": "1"}
 VERSION = "a"*64
 TRACE = {"version": VERSION, "nodes": ["00000000-0000-0000-0000-000000000001"], "edges": [], "truncated": False}
-FRAGMENT = {"id": "guide", "title": "Guía", "url": f"{FRONTEND}/certitips/guide.html", "text": "Oracle almacena datos."}
+FRAGMENT = {"id": "a"*64 + "-0000", "title": "Guía", "url": f"{FRONTEND}/certitips/guide.html", "text": "Oracle almacena datos."}
 
 
 @pytest.fixture
@@ -461,10 +461,13 @@ def test_history_retains_four_turns_and_isolates_content_versions(clients):
         with store.pool.connection() as connection:
             connection.execute("INSERT INTO cc_requests(session_hash,request_id,input_hash,network_hash) VALUES (%s,%s,'input','network')",
                                (token, request_id))
-        store.finish_request(token, request_id, {"contentVersion": VERSION, "answer": f"Answer {number}"}, f"Question {number}")
+        sources = [{"id": "second", "title": "Segundo", "url": FRONTEND + "/certitips/second/"},
+                   {"id": "first", "title": "Primero", "url": FRONTEND + "/certitips/first/"}]
+        store.finish_request(token, request_id, {"contentVersion": VERSION, "answer": f"Answer {number}", "sources": sources}, f"Question {number}")
     assert len(store.history(token, VERSION)) == 4
     assert len(store.history(token)) == 4
     assert all(turn["version"] == VERSION for turn in store.history(token))
+    assert all(turn["sources"] == sources for turn in store.history(token))
     assert store.history(token_digest(new_token())) == []
     assert store.history(token, "b"*64) == []
     late = str(uuid4())
@@ -477,7 +480,7 @@ def test_history_retains_four_turns_and_isolates_content_versions(clients):
     assert store.history(token) == []
 
 
-def test_followup_sends_only_own_server_questions_to_retrieval(clients):
+def test_followup_sends_only_own_server_dialogue_and_sources_to_retrieval(clients):
     make, app, calls, _, _ = clients
     client = session(make)
     first = {**question(), "message": "que sabes de dama y oci"}
@@ -489,12 +492,27 @@ def test_followup_sends_only_own_server_questions_to_retrieval(clients):
     queries = [json.loads(call.content) for call in calls if call.url.path == "/retrieve"]
     assert queries[0]["history"] == []
     assert queries[1]["message"] == second["message"]
-    assert queries[1]["history"] == [{"question": first["message"], "version": VERSION}]
+    assert queries[1]["history"] == [{"question": first["message"], "answer": "Oracle almacena datos.", "version": VERSION,
+                                      "sources": [{key: FRAGMENT[key] for key in ("id", "title", "url")}]}]
     stranger = session(make)
     assert stranger.post("/api/chat", json=question()).status_code == 200
     assert json.loads(next(call.content for call in reversed(calls) if call.url.path == "/retrieve"))["history"] == []
     assert client.request("DELETE", "/api/conversation", json={}).status_code == 200
     assert app.state.store.history(token_digest(client.cookies[COOKIE])) == []
+
+
+@pytest.mark.parametrize("bad", [None, {}, [{"id": "forged"}],
+    [{"id": "legacy-id", "title": "Guía", "url": FRAGMENT["url"]}],
+    [{"id": "guide", "title": "Guía", "url": "https://outside.test/"}],
+    [{"id": "x"*201, "title": "Guía", "url": FRAGMENT["url"]}],
+    [{key: FRAGMENT[key] for key in ("id", "title", "url")}]*9])
+def test_history_fields_are_bounded_before_private_retrieval(bad):
+    settings = type("Settings", (), {"site_url": FRONTEND + "/certitips/"})()
+    turn = {"question": "Pregunta", "answer": "Respuesta", "version": VERSION, "sources": bad}
+    assert conversation_history([turn], settings) == [{**turn, "sources": []}]
+    assert conversation_history([{**turn, "answer": "x"*5001}], settings) == []
+    assert conversation_history([{**turn, "question": "x"*1501}], settings) == []
+    assert conversation_history([{**turn, "version": "bad"}], settings) == []
 
 
 def test_idle_retention_sweeps_without_http_traffic(database_url, monkeypatch):

@@ -104,6 +104,26 @@ def public_url(value, settings):
         part in (".", "..") for part in parsed.path.split("/"))
 
 
+def conversation_history(turns, settings):
+    history = []
+    for turn in turns[-4:]:
+        if (not isinstance(turn, dict) or any(not isinstance(turn.get(key), str) or not turn[key].strip()
+                or len(turn[key]) > limit for key, limit in (("question", 1500), ("answer", 5000)))
+                or not isinstance(turn.get("version"), str) or not re.fullmatch(r"[0-9a-f]{64}", turn["version"])):
+            continue
+        sources = turn.get("sources", [])
+        if (not isinstance(sources, list) or len(sources) > 8 or any(
+                not isinstance(source, dict) or any(not isinstance(source.get(key), str) or not source[key].strip()
+                    or len(source[key]) > limit for key, limit in (("id", 200), ("title", 500), ("url", 1024)))
+                or not re.fullmatch(r"[0-9a-f]{64}-[0-9]{4}", source["id"])
+                or not public_url(source["url"], settings) for source in sources)
+                or len({source["id"] for source in sources}) != len(sources)):
+            sources = []
+        history.append({key: turn[key] for key in ("question", "answer", "version")} |
+                       {"sources": [{key: source[key] for key in ("id", "title", "url")} for source in sources]})
+    return history
+
+
 async def retrieve(application, body, history=()):
     settings = application.state.settings
     if body.pageUrl and not public_url(body.pageUrl, settings):
@@ -111,7 +131,7 @@ async def retrieve(application, body, history=()):
     try:
         response = await application.state.client.post(f"{settings.knowledge_url}/retrieve",
                     json={"message": body.message, "pageUrl": body.pageUrl, "locale": body.locale,
-                          "history": [{"question": turn["question"], "version": turn["version"]} for turn in history]},
+                          "history": conversation_history(history, settings)},
                     headers={"Authorization": f"Bearer {settings.chat_internal_token}"}, timeout=25)
         response.raise_for_status()
         result = response.json()
@@ -286,10 +306,9 @@ def create_app(settings=None, *, transport=None):
             async with asyncio.timeout(45):
                 if not await db(store.available):
                     raise ChatError("CertiChat alcanzó su presupuesto de uso. Inténtalo más adelante.", 503, 3600)
-                history = await db(store.history, token_hash)
+                history = conversation_history(await db(store.history, token_hash), request.app.state.settings)
                 version, fragments, graph_trace = await retrieve(request.app, body, history)
-                history = [{"question": turn["question"], "answer": turn["answer"]}
-                           for turn in history if turn["version"] == version]
+                history = [turn for turn in history if turn["version"] == version]
                 answer, sources = await answer_with_decisions(request.app.state.provider, body.message, fragments, history, body.locale)
                 if not sources:
                     graph_trace = {key: value for key, value in graph_trace.items() if key != "sources"}

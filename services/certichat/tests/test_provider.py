@@ -401,13 +401,13 @@ def test_full_unicode_context_remains_bounded_and_skips_oversize_before_later_sm
     def handler(request):
         payload = json.loads(request.content)
         evidence = json.loads(payload["messages"][1]["content"])
-        assert [fragment["id"] for fragment in evidence["fragments"]] == ["S1", "S2"]
-        assert evidence["fragments"][0]["text"] == fragments[0]["text"]
-        assert evidence["history"] == []
+        assert evidence["fragments"] == [{"id": "S1", "title": fragments[-1]["title"],
+                                          "resource_type": "text", "text": fragments[-1]["text"]}]
+        assert evidence["history"] == [{"question": history[-1]["question"]}]
         _, cost = prepare_request("chat/completions", payload, "chat")
         assert cost <= 182880
         return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(
-            {"kind": "grounded", "answer": "Dato final relevante.", "citations": ["S2"]})}}]})
+            {"kind": "grounded", "answer": "Dato final relevante.", "citations": ["S1"]})}}]})
 
     result, ledger = run_provider(handler, lambda provider: provider.answer("🙂"*1500, fragments, history))
     assert result[1][0]["id"] == "doc-7" and ledger.reservations[0][1] <= 182880
@@ -436,7 +436,9 @@ def test_followup_keeps_questions_without_copying_previous_answers_or_reassigned
     calls = []
 
     def handler(request):
-        evidence = json.loads(json.loads(request.content)["messages"][1]["content"])
+        payload = json.loads(request.content)
+        assert payload["messages"][0]["content"] == provider_module.SYSTEM + "\nResponde en español. Conserva nombres oficiales, código e identificadores de las fuentes."
+        evidence = json.loads(payload["messages"][1]["content"])
         calls.append(evidence)
         if len(calls) == 1:
             assert evidence["history"] == []
@@ -459,6 +461,87 @@ def test_followup_keeps_questions_without_copying_previous_answers_or_reassigned
     (first, second), ledger = run_provider(handler, operation)
     assert first == second == (fragments[0]["text"], [{key: fragments[0][key] for key in ("id", "title", "url")}])
     assert len(ledger.reservations) == 2
+
+
+@pytest.mark.parametrize("locale", ["es", "en", "pt", "it"])
+def test_followup_resources_keep_original_positions_and_only_current_citation_aliases(locale):
+    fragment = {"id": "second", "title": "Segundo recurso", "url": "https://site.test/second", "text": "Dato respaldado."}
+    previous = [{"id": "removed", "title": "Recurso retirado", "url": "https://site.test/removed"},
+                {"id": "removed-segment", "title": "Otro segmento retirado", "url": "https://site.test/removed"},
+                {key: fragment[key] for key in ("id", "title", "url")}]
+    history = [{"question": "Recomienda dos recursos", "answer": "Primero el anterior, después el segundo. " + "á"*2000,
+                "sources": previous}]
+
+    def handler(request):
+        payload = json.loads(request.content)
+        context = json.loads(payload["messages"][-1]["content"])
+        assert "Responde en " + provider_module.LANGUAGES[locale] in payload["messages"][0]["content"]
+        assert "nunca para justificar hechos" in payload["messages"][0]["content"]
+        assert context["history"] == [{"question": history[0]["question"], "answer": history[0]["answer"][:1500],
+                                       "sources": [{"position": 2, "id": "S1", "title": fragment["title"]}]}]
+        assert len(provider_module.encoded(context["history"])) <= 6000
+        return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(
+            {"kind": "grounded", "answer": fragment["text"], "citations": ["S1"]})}}]})
+
+    result, ledger = run_provider(handler, lambda provider: provider.answer("Amplía el segundo", [fragment], history, locale))
+    assert result == (fragment["text"], [previous[-1]]) and len(ledger.reservations) == 1
+    assert history[0]["sources"] == previous and len(history[0]["answer"]) > 1500
+
+
+def test_followup_visible_positions_keep_same_url_segments_and_distinct_video_chapters():
+    original = [{"id": "practice-a", "title": "Práctica A", "url": "https://site.test/practice/", "text": "Hecho A."},
+                {"id": "practice-b", "title": "Práctica B", "url": "https://site.test/practice/", "text": "Hecho B."},
+                {"id": "chapter-a", "title": "Capítulo 01:01", "url": "https://site.test/certitube/video/#t-61", "text": "Sensores."},
+                {"id": "chapter-b", "title": "Capítulo 03:43", "url": "https://site.test/certitube/video/#t-223", "text": "Agent Flow."}]
+    previous = [{key: fragment[key] for key in ("id", "title", "url")} for fragment in original]
+    history = [{"question": "Materiales", "answer": "Consulta los enlaces.", "sources": previous}]
+    fragments = [original[i] for i in (3, 1, 2, 0)]
+
+    def handler(request):
+        payload = json.loads(request.content)
+        context = json.loads(payload["messages"][-1]["content"])
+        assert payload["messages"][0]["content"].endswith(provider_module.MEMORY_SYSTEM)
+        assert context["history"][0]["sources"] == [
+            {"position": position, "id": alias, "title": original[i]["title"]}
+            for i, position, alias in ((0, 1, "S4"), (1, 1, "S2"), (2, 2, "S3"), (3, 3, "S1"))]
+        assert [fragment["text"] for fragment in context["fragments"]] == [fragment["text"] for fragment in fragments]
+        return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(
+            {"kind": "grounded", "answer": "Sensores.", "citations": ["S3"]})}}]})
+
+    result, ledger = run_provider(handler, lambda provider: provider.answer("Explica el segundo enlace", fragments, history))
+    assert result == ("Sensores.", [previous[2]]) and len(ledger.reservations) == 1
+    assert history[0]["sources"] == previous
+
+
+def test_memory_instruction_is_removed_when_its_evidence_does_not_fit_final_payload():
+    large = {"id": "large", "title": "T"*500, "url": "https://site.test/large", "text": "🙂"*3000}
+    small = {"id": "small", "title": "Actual", "url": "https://site.test/small", "text": "Hecho vigente."}
+    history = [{"question": "á"*1500, "answer": "Respuesta anterior. "*60,
+                "sources": [{key: large[key] for key in ("id", "title", "url")}]}]
+
+    def handler(request):
+        payload = json.loads(request.content)
+        context = json.loads(payload["messages"][-1]["content"])
+        assert payload["messages"][0]["content"] == provider_module.SYSTEM + "\nResponde en español. Conserva nombres oficiales, código e identificadores de las fuentes."
+        assert context["history"] == [{"question": history[0]["question"]}]
+        assert context["fragments"] == [{"id": "S1", "title": small["title"], "resource_type": "text", "text": small["text"]}]
+        assert len(provider_module.encoded(context["history"])) <= 6000
+        assert prepare_request("chat/completions", payload, "chat")[1] <= 182880
+        return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(
+            {"kind": "grounded", "answer": small["text"], "citations": ["S1"]})}}]})
+
+    result, ledger = run_provider(handler, lambda provider: provider.answer("🙂"*1500, [large, small], history))
+    assert result == (small["text"], [{key: small[key] for key in ("id", "title", "url")}])
+    assert len(ledger.reservations) == 1
+
+
+@pytest.mark.parametrize("field", ["id", "title", "url"])
+def test_previous_answer_without_an_exact_current_source_cannot_become_context(field):
+    fragment = {"id": "current", "title": "Título", "url": "https://site.test/current", "text": "Hecho publicado."}
+    stale = {key: fragment[key] for key in ("id", "title", "url")}
+    stale[field] = "changed"
+    context = provider_module.conversation_context([{"question": "Tema", "answer": "Afirmación antigua", "sources": [stale]}], [fragment])
+    assert context == [{"question": "Tema"}]
 
 
 def test_no_evidence_still_refuses_an_unsupported_factual_answer():

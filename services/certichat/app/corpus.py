@@ -130,7 +130,8 @@ def same_indexed_content(indexed: dict, current: dict) -> bool:
     ) == sorted(tuple(doc[key] for key in keys) for doc in current["documents"])
 
 
-def supported_fragments(evidence: list[dict], sources: dict, latest: dict) -> list[dict]:
+def supported_fragments(evidence: list[dict], sources: dict, latest: dict, *,
+                        limit: int | None = 8, max_bytes: int | None = 16000) -> list[dict]:
     current = {doc["id"]: doc for doc in latest["documents"]}
     candidates, seen = [], set()
     for item in evidence:
@@ -150,9 +151,9 @@ def supported_fragments(evidence: list[dict], sources: dict, latest: dict) -> li
     selected, size = [], 0
     for candidate in candidates:
         length = len(candidate["text"].encode("utf-8"))
-        if len(selected) >= 8:
+        if limit is not None and len(selected) >= limit:
             break
-        if size + length > 16000:
+        if max_bytes is not None and size + length > max_bytes:
             continue
         size += length
         selected.append(candidate)

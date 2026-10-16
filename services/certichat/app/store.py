@@ -151,9 +151,10 @@ class Store:
 
     def history(self, token_hash, version=None):
         with self.pool.connection() as connection:
-            rows = connection.execute("SELECT question,answer,version FROM cc_history WHERE session_hash=%s "
-                                      "AND (%s::text IS NULL OR version=%s) "
-                                      "AND created_at>now()-interval '24 hours' ORDER BY created_at DESC LIMIT 4",
+            rows = connection.execute("SELECT h.question,h.answer,h.version,COALESCE(r.response->'sources','[]'::jsonb) AS sources "
+                                      "FROM cc_history h LEFT JOIN cc_requests r USING(session_hash,request_id) "
+                                      "WHERE h.session_hash=%s AND (%s::text IS NULL OR h.version=%s) "
+                                      "AND h.created_at>now()-interval '24 hours' ORDER BY h.created_at DESC LIMIT 4",
                                       (token_hash, version, version)).fetchall()
             return list(reversed(rows))
 

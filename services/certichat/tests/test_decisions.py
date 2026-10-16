@@ -138,6 +138,24 @@ def test_general_knowledge_does_not_pay_or_wait_for_a_decision():
     assert asyncio.run(answer_with_decisions(Stub(), "Explica IAM", FRAGMENTS, [])) == ("GPT", [])
 
 
+def test_ordered_historical_sources_bypass_the_question_only_video_shortcut():
+    history = [{"question": "Recomienda materiales", "answer": "Primero una guía, luego un video.",
+                "sources": [{key: fragment[key] for key in ("id", "title", "url")} for fragment in FRAGMENTS]}]
+
+    class Stub:
+        settings = SimpleNamespace(jev_video_enabled=True)
+
+        async def request(self, *_):
+            pytest.fail("The question-only shortcut cannot resolve ordered historical citations")
+
+        async def answer(self, message, fragments, received_history, locale):
+            assert message == "Muéstrame el segundo video" and received_history == history
+            assert fragments == FRAGMENTS and locale == "es"
+            return "GPT", []
+
+    assert asyncio.run(answer_with_decisions(Stub(), "Muéstrame el segundo video", FRAGMENTS, history)) == ("GPT", [])
+
+
 def test_video_path_asks_only_the_two_decisions_it_uses():
     request = decision_request("Un video", FRAGMENTS, [], SITE, context_checks=False)
     assert set(request["questions"]) == {"route", "resource"}

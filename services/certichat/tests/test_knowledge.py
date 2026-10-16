@@ -265,11 +265,14 @@ def test_followup_retrieval_uses_only_current_version_questions(tmp_path, monkey
     monkeypatch.setattr(knowledge, "retrieve_evidence", evidence)
     question = "en donde puedo investigar mas sobre este tema o relacion"
     body = knowledge.Retrieval(message=question, history=[
-        {"question": "que sabes de dama y oci", "version": ("a" if current else "b") * 64}])
+        {"question": "que sabes de dama y oci", "answer": "Ambos temas tienen material publicado.",
+         "version": ("a" if current else "b") * 64}])
     asyncio.run(knowledge.retrieve(body, "Bearer test-token"))
     assert queries[0][0] == question
     assert question in queries[0][1]
     assert ("que sabes de dama y oci" in queries[0][1]) is current
+    assert "Ambos temas tienen material publicado." not in queries[0][1]
+    assert ("Preguntas anteriores (solo contexto)" in queries[0][1]) is current
 
 
 def test_retrieval_context_preserves_current_question_and_bounds_recent_history():
@@ -312,10 +315,11 @@ def test_native_document_question_stays_independent_and_balanced_with_graph_cont
     monkeypatch.setitem(sys.modules, "cognee.api.v1.search", SimpleNamespace(
         SearchType=SimpleNamespace(RAG_COMPLETION="document", CHUNKS_LEXICAL="lexical", GRAPH_COMPLETION="graph")))
     evidence = asyncio.run(knowledge.retrieve_evidence(question, context))
-    assert [call[0] for call in calls] == [question, question, context]
+    queries = [question, question, context]
+    assert [call[0] for call in calls] == queries
     assert all(call[1] == {"query_type": lane, "datasets": ["certitips"], "only_context": True,
                           "verbose": True, "include_references": True, "feedback_influence": 0, "top_k": 8}
-               for call, lane in zip(calls, ("document", "lexical", "graph")))
+               for call, lane in zip(calls, ("document", "lexical", "graph") * (len(queries) // 3)))
     fragments = supported_fragments(evidence, sources, manifest)
     assert [f["title"] for f in fragments] == [f"{lane}{i}" for i in range(3) for lane in ("document", "lexical", "graph")][:8]
     assert sum(len(f["text"].encode()) for f in fragments) <= 16000
@@ -341,8 +345,9 @@ def test_native_search_uses_surviving_lane_but_does_not_hide_total_failure(monke
         with pytest.raises(RuntimeError, match="document"):
             asyncio.run(knowledge.retrieve_evidence("Pregunta"))
     else:
-        assert asyncio.run(knowledge.retrieve_evidence("Pregunta")) == [
-            {"kind": "segment", "document_name": lane} for lane in ("document", "lexical", "graph") if lane not in failures]
+        evidence = asyncio.run(knowledge.retrieve_evidence("Pregunta"))
+        assert [item["document_name"] for item in evidence] == [
+            lane for lane in ("document", "lexical", "graph") if lane not in failures]
 
 
 def test_native_lexical_raw_chunks_use_native_provenance_before_source_validation(monkeypatch):
@@ -393,8 +398,8 @@ def test_native_search_timeout_cancels_slow_lane_and_keeps_completed_evidence(mo
     monkeypatch.setitem(sys.modules, "cognee.api.v1.search", SimpleNamespace(
         SearchType=SimpleNamespace(RAG_COMPLETION="document", CHUNKS_LEXICAL="lexical", GRAPH_COMPLETION="graph")))
     monkeypatch.setattr(knowledge.asyncio, "wait_for", bounded)
-    assert asyncio.run(knowledge.retrieve_evidence("Pregunta")) == [
-        {"kind": "segment", "document_name": "current"}] * 2
+    evidence = asyncio.run(knowledge.retrieve_evidence("Pregunta"))
+    assert [item["document_name"] for item in evidence] == ["current", "current"]
     assert cancelled == [True]
 
 
@@ -462,3 +467,229 @@ def test_relocated_page_keeps_context_and_graph_identity_with_current_links(tmp_
     assert result["graphTrace"] == {"version": indexed["contentHash"], "nodes": [node], "edges": [], "truncated": False,
                                     "sources": [{"nodeId": node, "title": doc["title"], "url": current_url}]}
     assert knowledge.app.state.sources == sources and next(iter(sources.values()))["url"] == doc["url"]
+
+
+def test_selection_validates_deduplicates_before_limit_and_preserves_navigation(tmp_path):
+    documents = [{"id": str(i), "title": str(i), "courseId": "course", "url": SITE + str(i),
+                  "text": "Texto vigente."} for i in range(10)]
+    documents += [{"id": "home", "title": "Rutas", "courseId": "site", "url": SITE, "text": "Catálogo."}]
+    sources = segments(documents)
+    latest = {"contentHash": "a" * 64, "documents": [
+        {key: value for key, value in doc.items() if key != "text"} | {"hash": digest(doc["text"])}
+        for doc in documents]}
+    names = list(sources)
+    evidence = [{"kind": "segment", "document_name": name} for name in ["invented", *[names[0]] * 20, *names[1:10]]]
+    latest["documents"][0]["hash"] = digest("Contenido cambiado")
+    fragments, _ = knowledge.select_evidence(knowledge.Retrieval(message="Conceptos", pageUrl=SITE),
+        evidence, sources, latest, tmp_path)
+    assert [fragment["title"] for fragment in fragments] == ["Rutas", *[str(i) for i in range(1, 8)]]
+    assert len(fragments) == 8
+    assert not any(item["id"] in ("invented", names[0].removesuffix(".txt")) for item in fragments)
+
+
+@pytest.mark.parametrize("change", [None, "version", "hash", "removed", "title", "url"])
+def test_history_sources_require_exact_current_identity_and_manifest(tmp_path, change):
+    document = {"id": "video", "title": "Vídeo", "courseId": "site", "url": SITE + "certitube/video/",
+                "text": "Explicación de herramientas y agentes."}
+    sources = segments([document])
+    name = next(iter(sources)).removesuffix(".txt")
+    latest = {"contentHash": "a" * 64, "documents": [
+        {key: value for key, value in document.items() if key != "text"} | {"hash": digest(document["text"])}]}
+    previous = {"question": "Dame un vídeo", "answer": "Seleccioné este vídeo.", "version": "a" * 64,
+                "sources": [{"id": name, "title": document["title"], "url": document["url"]}]}
+    if change == "version":
+        previous["version"] = "b" * 64
+    elif change == "hash":
+        latest["documents"][0]["hash"] = "b" * 64
+    elif change == "removed":
+        latest["documents"] = []
+    elif change in {"title", "url"}:
+        previous["sources"][0][change] = "Inventado" if change == "title" else SITE + "wrong/"
+    body = knowledge.Retrieval(message="Explícame ese vídeo", history=[previous])
+    fragments, _ = knowledge.select_evidence(body, [], sources, latest, tmp_path)
+    assert bool(fragments) is (change is None)
+    if fragments:
+        assert fragments[0]["text"] == document["text"] and fragments[0]["id"] == name
+    context = knowledge.retrieval_query(body, latest["contentHash"])
+    assert "Seleccioné este vídeo." not in context
+
+
+def test_native_candidate_count_and_search_count_stay_fixed_with_history(monkeypatch):
+    calls = []
+
+    async def search(query, **options):
+        calls.append((query, options["top_k"], options["query_type"]))
+        return []
+
+    monkeypatch.setitem(sys.modules, "cognee", SimpleNamespace(search=search))
+    monkeypatch.setitem(sys.modules, "cognee.api.v1.search", SimpleNamespace(
+        SearchType=SimpleNamespace(RAG_COMPLETION="document", CHUNKS_LEXICAL="lexical", GRAPH_COMPLETION="graph")))
+    asyncio.run(knowledge.retrieve_evidence("current", "bounded history"))
+    assert calls == [("current", 8, "document"), ("current", 8, "lexical"), ("bounded history", 8, "graph")]
+
+
+@pytest.mark.parametrize("locale,message,ordinal", [
+    ("es", "Explícame el segundo video", True), ("en", "Explain the second", True),
+    ("pt", "Explique o segundo vídeo", True), ("it", "Spiega la seconda risorsa", True),
+    ("es", "Amplía ese recurso", False), ("en", "Explain that resource", False),
+    ("pt", "Explique esse recurso", False), ("it", "Spiega quella risorsa", False),
+])
+@pytest.mark.parametrize("duplicate_url", [False, True])
+def test_explicit_previous_reference_survives_eight_distractors(tmp_path, locale, message, ordinal, duplicate_url):
+    documents = [{"id": f"distractor{i}", "title": f"Distractor {i}", "courseId": "course",
+                  "url": SITE + f"distractor{i}/", "text": "Información ajena a la referencia."} for i in range(8)]
+    documents += [{"id": f"prior{i}", "title": f"Previo {i}", "courseId": "site",
+                   "url": SITE + f"certitube/prior{i}/", "text": "Contenido publicado del recurso."} for i in range(2)]
+    if duplicate_url:
+        documents.insert(9, {**documents[8], "id": "prior-extra", "text": "Otro segmento del primer recurso."})
+    sources = segments(documents)
+    latest = {"contentHash": "a" * 64, "documents": [
+        {key: value for key, value in doc.items() if key != "text"} | {"hash": digest(doc["text"])} for doc in documents]}
+    names = list(sources)
+    previous = [{"id": names[i].removesuffix(".txt"), "title": documents[i]["title"], "url": documents[i]["url"]}
+                for i in range(8, len(documents)) if ordinal or i == len(documents) - 1]
+    body = knowledge.Retrieval(message=message, locale=locale, history=[
+        {"question": "Materiales", "answer": "Recursos recomendados.", "version": latest["contentHash"], "sources": previous}])
+    evidence = [{"kind": "segment", "document_name": name} for name in names[:8]]
+    fragments, _ = knowledge.select_evidence(body, evidence, sources, latest, tmp_path)
+    assert len(fragments) == 8 and fragments[0]["id"] == previous[-1]["id"]
+    # A removed second source must not silently turn the original first source into the second.
+    latest["documents"] = latest["documents"][:-1]
+    fragments, _ = knowledge.select_evidence(body, evidence, sources, latest, tmp_path)
+    assert all(fragment["id"] not in {source["id"] for source in previous} for fragment in fragments)
+
+
+@pytest.mark.parametrize("locale,followup,new_topic", [
+    ("es", "¿Cómo se llama esa función y para qué sirve?", "Ahora explícame almacenamiento"),
+    ("en", "What is that feature called and what does it do?", "Now explain storage"),
+    ("pt", "Como se chama essa função e para que serve?", "Agora explique armazenamento"),
+    ("it", "Come si chiama quella funzione e a cosa serve?", "Ora spiega archiviazione"),
+])
+def test_followup_restores_current_sources_and_answer_without_changing_new_topic_selection(tmp_path, monkeypatch, locale, followup, new_topic):
+    from app.provider import conversation_context
+    documents = [{"id": f"current{i}", "title": f"Current {i}", "courseId": "course", "url": SITE + f"current{i}/",
+                  "text": "Texto publicado vigente."} for i in range(8)]
+    documents += [{"id": name, "title": name, "courseId": "course", "url": SITE + name + "/",
+                   "text": "Evidencia vigente de " + name} for name in ("Auto-Tiering", "Online Resizing")]
+    documents += [{"id": "home", "title": "Rutas", "courseId": "site", "url": SITE, "text": "Catálogo vigente."}]
+    sources = segments(documents)
+    latest = {"contentHash": "a" * 64, "documents": [
+        {key: value for key, value in doc.items() if key != "text"} | {"hash": digest(doc["text"])} for doc in documents]}
+    names = list(sources)
+    previous = [{"id": names[i].removesuffix(".txt"), "title": documents[i]["title"], "url": documents[i]["url"]} for i in (8, 9)]
+    turn = {"question": "Elige una función de OCI", "answer": "Elijo Online Resizing.", "version": latest["contentHash"], "sources": previous}
+    native = [{"kind": "segment", "document_name": name} for name in names[:8]]
+    monkeypatch.setattr(knowledge, "localized_evidence", lambda *_: [native[-1]])
+    body = knowledge.Retrieval(message=new_topic, locale=locale, pageUrl=documents[1]["url"], history=[turn])
+    baseline, _ = knowledge.select_evidence(body.model_copy(update={"history": []}), native, sources, latest, tmp_path)
+    selected, _ = knowledge.select_evidence(body, native, sources, latest, tmp_path)
+    assert selected == baseline
+    assert [item["title"] for item in selected] == ["Current 1", "Rutas", "Current 0", "Current 7", "Current 2", "Current 3", "Current 4", "Current 5"]
+    body.message = followup
+    selected, trace = knowledge.select_evidence(body, native, sources, latest, tmp_path)
+    assert [item["id"] for item in selected[:2]] == [item["id"] for item in previous]
+    assert [item["id"] for item in selected[2:]] == [item["id"] for item in baseline[:6]]
+    assert len(selected) == 8 and sum(len(item["text"].encode()) for item in selected) <= 16000
+    assert [item["document_name"] for item in trace[:2]] == [item["id"] for item in previous]
+    assert conversation_context([turn], selected)[0]["answer"] == turn["answer"]
+    # A changed response topic without sources must not revive references from an older turn.
+    body.history.append(knowledge.PreviousQuestion(question="Otro tema", version=latest["contentHash"]))
+    assert knowledge.select_evidence(body, native, sources, latest, tmp_path)[0] == baseline
+
+
+@pytest.mark.parametrize("message", ["Explain that resource", "Explica ese recurso", "Explique esse recurso", "Spiega quella risorsa",
+    "Compare the first and second resource", "Compara el primero y el segundo", "What is the second availability domain?",
+    "Ahora explícame almacenamiento", "Now explain storage", "Agora explique armazenamento", "Ora spiega archiviazione"])
+def test_ambiguous_reference_and_topic_change_do_not_choose_previous_resource(message):
+    previous = [{"id": f"{i}"*64 + "-0000", "title": f"Source {i}", "url": SITE + f"source{i}/"} for i in (1, 2)]
+    body = knowledge.Retrieval(message=message, history=[
+        {"question": "Materiales", "version": "a"*64, "sources": previous}])
+    assert knowledge.previous_reference(body, "a"*64) is None
+    body.message = "Explain the second"
+    assert knowledge.previous_reference(body, "a"*64).id == previous[1]["id"]
+    assert knowledge.previous_reference(body, "b"*64) is None
+    body.history.append(knowledge.PreviousQuestion(question="Another topic", version="a"*64))
+    assert knowledge.previous_reference(body, "a"*64) is None
+
+
+@pytest.mark.parametrize("locale,message", [
+    ("es", "Compara el primero y el segundo"), ("en", "Compare the first and second resource"),
+    ("pt", "Compare o primeiro e o segundo recurso"), ("it", "Confronta la prima e la seconda risorsa"),
+])
+def test_ordinal_comparison_keeps_both_previous_resources(locale, message):
+    previous = [{"id": str(i)*64 + "-0000", "title": f"Recurso {i}", "url": SITE + f"source{i}/"} for i in (1, 2)]
+    body = knowledge.Retrieval(message=message, locale=locale, history=[
+        {"question": "Materiales", "version": "a"*64, "sources": previous}])
+    assert knowledge.previous_reference(body, "a"*64) is None
+    assert knowledge.followup_sources(body, "a"*64) == body.history[-1].sources
+
+
+@pytest.mark.parametrize("locale,index", [("es", 0), ("en", 1), ("pt", 2), ("it", 3)])
+@pytest.mark.parametrize("family,messages", [
+    ("h01", (
+        "Del segundo recurso de la lista de enlaces, ¿una política restringida elimina permisos amplios concedidos por otra? Explica por qué.",
+        "In the second resource in the link list, does a restricted policy remove broad permissions granted by another policy? Explain why.",
+        "No segundo recurso da lista de links, uma política restrita elimina permissões amplas concedidas por outra política? Explique por quê.",
+        "Nel secondo materiale dell'elenco dei link, una policy restrittiva elimina le autorizzazioni estese concesse da un'altra policy? Spiega perché.",
+    )),
+    ("h02", (
+        "En la segunda práctica que enumeraste en tu explicación, ¿cómo se llama la función y puede mover objetos a Archive?",
+        "In the second practice exercise you numbered in your explanation, what is the feature called, and can it move objects to Archive?",
+        "No segundo exercício que você numerou na explicação, como se chama a funcionalidade e ela pode mover objetos para Archive?",
+        "Nel secondo esercizio che hai numerato nella spiegazione, come si chiama la funzionalità e può spostare gli oggetti in Archive?",
+    )),
+    ("h03", (
+        "¿Cómo se llama esa técnica y necesita que ya existan etiquetas de segmentos para los clientes?",
+        "What is that technique called, and does it require existing customer segment labels?",
+        "Como se chama essa técnica e ela exige que já existam rótulos de segmentos para os clientes?",
+        "Come si chiama quella tecnica e richiede etichette dei segmenti dei clienti già esistenti?",
+    )),
+    ("h04", (
+        "¿En qué minuto de ese video se presenta Agent Flow y qué datos consulta?",
+        "At what time in that video is Agent Flow introduced, and what data does it query?",
+        "Em que minuto desse vídeo o Agent Flow é apresentado e quais dados ele consulta?",
+        "A quale minuto di quel video viene presentato Agent Flow e quali dati consulta?",
+    )),
+    ("h05", (
+        "¿Debo seguir ese consejo con un volumen que contiene datos importantes? Si no, ¿qué debo comprobar primero?",
+        "Should I follow that advice for a volume containing important data? If not, what should I check first?",
+        "Devo seguir esse conselho para um volume com dados importantes? Se não, o que devo verificar primeiro?",
+        "Devo seguire quel consiglio per un volume che contiene dati importanti? In caso contrario, cosa devo controllare prima?",
+    )),
+    ("h06", (
+        "Amplía ese recurso.", "Expand on that resource.", "Explique melhor esse material.", "Approfondisci quel materiale.",
+    )),
+], ids=["h01", "h02", "h03", "h04", "h05", "h06"])
+def test_saved_followup_expressions_keep_last_turn_references(locale, index, family, messages):
+    count = 1 if family in {"h03", "h04", "h05"} else 2
+    previous = [{"id": str(i)*64 + "-0000", "title": f"Recurso {i}",
+                 "url": SITE + ("practice/" if family == "h02" else f"source{i}/")} for i in range(1, count + 1)]
+    body = knowledge.Retrieval(message=messages[index], locale=locale, history=[
+        {"question": "Materiales", "answer": "1. Primera práctica. 2. Segunda práctica.",
+         "version": "a"*64, "sources": previous}])
+    expected = body.history[-1].sources[-1:] if family == "h01" else body.history[-1].sources
+    assert knowledge.followup_sources(body, "a"*64) == expected
+    if family == "h02":
+        # The narrative numbers exercises; the UI shows one URL for both source segments.
+        assert knowledge.previous_reference(body, "a"*64) is None
+        assert len(expected) == 2 and len({source.url for source in expected}) == 1
+    body.history[-1].version = "b"*64
+    assert knowledge.followup_sources(body, "a"*64) == []
+    body.history[-1].version = "a"*64
+    body.history.append(knowledge.PreviousQuestion(question="Otro tema", version="a"*64))
+    assert knowledge.followup_sources(body, "a"*64) == []
+
+
+@pytest.mark.parametrize("locale,message", [
+    ("es", "Ahora explícame cómo se aplica IAM en OCI"),
+    ("en", "Now explain how IAM applies in OCI"),
+    ("pt", "Agora explique como se aplica IAM na OCI"),
+    ("it", "Ora spiega come si applica IAM in OCI"),
+])
+def test_explicit_new_subject_does_not_restore_previous_resources(locale, message):
+    previous = [{"id": str(i)*64 + "-0000", "title": f"Almacenamiento {i}",
+                 "url": SITE + f"storage{i}/"} for i in (1, 2)]
+    body = knowledge.Retrieval(message=message, locale=locale, history=[
+        {"question": "Almacenamiento", "version": "a"*64, "sources": previous}])
+    assert knowledge.previous_reference(body, "a"*64) is None
+    assert knowledge.followup_sources(body, "a"*64) == []

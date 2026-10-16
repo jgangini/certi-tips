@@ -70,7 +70,7 @@ def test_equivalent_queries_recover_same_canonical_ids_without_providers(tmp_pat
     calls = []
 
     async def native(message, context):
-        # Exercise the fusion contract, not a claimed evaluation of real multilingual embeddings.
+        # Exercise canonical lookup, not a claimed evaluation of real multilingual embeddings.
         calls.append((message, context))
         return [{"kind": "segment", "document_name": name} for name in sources] if locale == "es" else []
 
@@ -131,3 +131,39 @@ def test_projection_rejects_unknown_locale_duplicate_path_and_oversized_text(cha
     change(value)
     with pytest.raises(ValueError):
         localization.validate_projection(value, "en", manifest["contentHash"])
+
+
+@pytest.mark.parametrize("locale,query,new_topic", [
+    ("en", "How do I store information?", "How do I configure a load balancer?"),
+    ("pt", "Como armazenar informações?", "Como configuro um balanceador?"),
+    ("it", "Come archiviare informazioni?", "Come configuro un bilanciatore?"),
+])
+def test_localized_query_does_not_reuse_previous_topic(tmp_path, locale, query, new_topic):
+    sources, manifest, files = fixture()
+    publish(tmp_path, manifest, files)
+    expected = supported_fragments(localization.localized_evidence(tmp_path, locale, query, sources, manifest),
+                                   sources, manifest)
+    previous_sources = [{key: fragment[key] for key in ("id", "title", "url")} for fragment in expected]
+    body = knowledge.Retrieval(message=new_topic, locale=locale, history=[
+        {"question": query, "answer": "Oracle almacena datos.", "version": manifest["contentHash"],
+         "sources": previous_sources}])
+    assert knowledge.select_evidence(body, [], sources, manifest, tmp_path)[0] == []
+    body = knowledge.Retrieval(message=query, locale=locale, history=[
+        {"question": new_topic, "answer": "", "version": manifest["contentHash"]}])
+    assert knowledge.select_evidence(body, [], sources, manifest, tmp_path)[0] == expected
+
+
+@pytest.mark.parametrize("locale,document", [("en", "Actual status"), ("pt", "Estado anterior"), ("it", "Solo testo")])
+def test_context_labels_never_become_multilingual_lexical_search_terms(tmp_path, locale, document):
+    sources, manifest, files = fixture()
+    projection = json.loads(files[locale + ".json"])
+    for entry in projection["segments"]:
+        entry.update(title=document, text=document)
+    files[locale + ".json"] = json.dumps(projection).encode()
+    metadata = json.loads(files["manifest.json"])
+    metadata["locales"][locale] = digest(files[locale + ".json"])
+    files["manifest.json"] = json.dumps(metadata).encode()
+    publish(tmp_path, manifest, files)
+    body = knowledge.Retrieval(message="zzquestion", locale=locale, history=[
+        {"question": "zzhistory", "answer": "zzanswer", "version": manifest["contentHash"]}])
+    assert knowledge.select_evidence(body, [], sources, manifest, tmp_path)[0] == []
