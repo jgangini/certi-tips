@@ -94,7 +94,9 @@
   .tube-watch { position: sticky; top: var(--header); z-index: 3; max-height: calc((100dvh - var(--header) - var(--footer-height)) / 2); }
   .tube-browse { flex: none; overflow: visible; padding-bottom: 0; }
   .tube-chapters { top: calc(var(--header) + var(--tube-watch-height)); }
-  .tube-videos a { display: flex; gap: var(--layout-gap); padding: 16px; }
+  .tube-videos ol { padding: 8px; }
+  .tube-videos a { display: flex; gap: var(--layout-gap); padding: 16px; border-radius: 7px; }
+  .tube-videos a strong { font-size: 1.45rem; line-height: 1.05; }
   .tube-videos img { width: 40%; }
   .tube-videos a > span { align-self: flex-start; padding: 0; }
   .tube-video-summary { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; margin-top: 8px; color: var(--muted); font-size: .8rem; line-height: 1.5; }

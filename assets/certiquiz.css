@@ -34,10 +34,10 @@ html[data-theme="dark"] .certiquiz-app { --shadow: none; }
 .certiquiz-app .role-icon svg { display: block; width: 52px; height: 52px; }
 .certiquiz-app .role-copy { display: grid; gap: 10px; min-width: 0; }
 .certiquiz-app .role-title { font-size: 30px; letter-spacing: -.035em; line-height: 1.2; }
-.certiquiz-app .entry-card { max-width: calc(56.521739% - 13.565217px); }
-.certiquiz-app .host-entry { max-width: none; padding: 24px 24px 30px; border-top-width: 1px; border-top-color: var(--line); border-radius: var(--radius); box-shadow: none; }
-.certiquiz-app .host-entry h2 { font-size: clamp(1.8rem, 3vw, 2.4rem); margin: 9px 0 10px; }
-.certiquiz-app .host-entry > p { margin-bottom: 28px; }
+.certiquiz-app .entry-card { max-width: calc(56.521739% - 13.565217px); padding: 24px 24px 30px; border-top-width: 1px; border-top-color: var(--line); border-radius: var(--radius); box-shadow: none; }
+.certiquiz-app .host-entry { max-width: none; }
+.certiquiz-app .entry-card h2 { font-size: clamp(1.8rem, 3vw, 2.4rem); margin: 9px 0 10px; }
+.certiquiz-app .entry-card > p { margin-bottom: 28px; }
 .certiquiz-app .host-entry .certification-item { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 .certiquiz-app .host-entry .certification-number, .certiquiz-app .host-entry .certification-item label, .certiquiz-app .setup-label { color: var(--ink); font-family: monospace; font-size: 17px; font-weight: 700; line-height: 1.2; text-transform: uppercase; }
 .certiquiz-app .host-entry .certification-item label, .certiquiz-app .setup-label { display: block; margin-bottom: 5px; }
@@ -82,7 +82,7 @@ html[data-theme="dark"] .certiquiz-app { --shadow: none; }
 .certiquiz-app .actions.game-actions { justify-content: flex-end; }
 .certiquiz-app .actions.game-actions .button { width: auto; }
 .certiquiz-app .player-entry input:focus-visible { outline: none; box-shadow: none; }
-.certiquiz-app .player-entry #join-form { padding-top: 6px; }
+.certiquiz-app .player-entry #join-form { padding-top: 20px; border-top: 1px solid var(--line); }
 .certiquiz-app .player-entry .join-actions { justify-content: flex-end; border-top: 1px solid var(--line); margin-top: 24px; padding-top: 20px; }
 .certiquiz-app .player-entry .join-actions .button { width: 140px; }
 .certiquiz-app .notice-countdown { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; min-width: 68px; min-height: 36px; margin-left: auto; padding: 7px 9px; border: 1px solid currentColor; border-radius: 8px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; white-space: nowrap; }

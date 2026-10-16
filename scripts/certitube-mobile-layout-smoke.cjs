@@ -2,6 +2,7 @@
 // YouTube is simulated; no screenshots or external requests.
 async page => {
   const origin = new URL(page.url()).origin;
+  const base = new URL(page.url()).pathname.match(/^\/certitips\/(?:es|en|pt|it)\//)?.[0] || '/certitips/';
   if (origin !== 'http://127.0.0.1:4173') throw new Error('Use the local preview.');
   const assert = (ok, message) => { if (!ok) throw new Error(message); };
   const context = await page.context().browser().newContext({ reducedMotion: 'reduce' });
@@ -20,11 +21,11 @@ async page => {
   tab.on('pageerror', error => errors.push(error.message));
   const settle = () => tab.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   try {
-    for (const [width, height] of [[320,844], [394,852], [480,852], [800,900], [800,390], [801,900], [882,830], [963,830], [963,926], [963,480], [995,926], [1000,900], [1001,900], [1280,900]]) {
+    for (const [width, height] of [[320,844], [394,852], [480,852], [800,900], [800,390], [801,900], [882,830], [928,926], [963,830], [963,926], [963,480], [995,926], [1000,900], [1001,900], [1280,900]]) {
       const pageScroll = width > 800 && width <= 1000;
       const scroller = pageScroll ? 'html' : width <= 800 ? '.tube-browse' : '.tube-detail';
       await tab.setViewportSize({ width, height });
-      await tab.goto(`${origin}/certitips/certitube/`);
+      await tab.goto(`${origin}${base}certitube/`);
       await tab.waitForFunction(() => window.__tube && document.querySelector('[data-tube-loading]').hidden);
       await tab.evaluate(() => document.fonts.ready);
       for (const theme of ['light', 'dark']) {
@@ -71,6 +72,13 @@ async page => {
               : image.width >= document.querySelector('.tube-browse').clientWidth - 2 && title.top >= image.bottom + 8;
           }), pageScroll);
           assert(cards, `${width}/${height}: recommendation images and text have the wrong arrangement`);
+          if (pageScroll) {
+            const titleSizes = await tab.locator('.tube-videos a strong').evaluateAll(titles => {
+              const heading = getComputedStyle(document.querySelector('.tube-heading strong'));
+              return titles.every(title => getComputedStyle(title).fontSize === heading.fontSize && getComputedStyle(title).lineHeight === heading.lineHeight);
+            });
+            assert(titleSizes, 'Recommendation titles do not match the player title size');
+          }
           await tab.locator(scroller).evaluate(e => e.scrollTo({ top: 600, behavior: 'instant' }));
           await settle();
           const pinned = await tab.locator('.tube-watch').evaluate(e => e.getBoundingClientRect().top);
@@ -83,8 +91,16 @@ async page => {
           assert(lastFits.last + 23 <= lastFits.button, `${width}/${height}: chat covers the final video ${JSON.stringify(lastFits)}`);
           if (pageScroll) {
             const frameEnd = await tab.locator('.tube-player').evaluate(e => e.getBoundingClientRect().bottom);
-            assert(Math.abs(frameEnd - lastFits.last - 1) < 1, `${width}/${height}: empty space remains inside the frame`);
+            assert(Math.abs(frameEnd - lastFits.last - 9) < 1, `${width}/${height}: the frame loses its small inner border clearance`);
             assert(Math.abs(lastFits.button - frameEnd - 24) < 1, `${width}/${height}: chat is not separated from the frame by 24px`);
+            const lastLink = tab.locator('.tube-videos li:last-child a');
+            const linkHeight = await lastLink.evaluate(e => e.getBoundingClientRect().height);
+            await lastLink.hover({ position: { x: 8, y: linkHeight - 4 } });
+            const borderFits = await lastLink.evaluate(e => {
+              const box = e.getBoundingClientRect(), frame = e.closest('.tube-player'), bounds = frame.getBoundingClientRect(), style = getComputedStyle(e), red = getComputedStyle(frame).borderTopColor;
+              return box.left >= bounds.left + 8 && box.right <= bounds.right - 8 && box.bottom <= bounds.bottom - 8 && parseFloat(style.borderRadius) > 0 && ['Top','Right','Bottom','Left'].every(side => style[`border${side}Color`] === red);
+            });
+            assert(borderFits, `${width}/${height}: the last recommendation's red border is clipped`);
           }
         } else {
           assert(await tab.locator('.tube-player').evaluate(e => e.getBoundingClientRect().height > 400), 'Desktop player layout changed');

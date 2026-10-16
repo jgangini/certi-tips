@@ -2,6 +2,7 @@
 // Layout-only API doubles; never creates, starts or ends a real room.
 async page => {
   const origin = new URL(page.url()).origin;
+  const base = new URL(page.url()).pathname.match(/^\/certitips\/(?:es|en|pt|it)\//)?.[0] || '/certitips/';
   if (origin !== 'http://127.0.0.1:4173') throw new Error('Use the local preview.');
   const assert = (ok, message) => { if (!ok) throw new Error(message); };
   const context = await page.context().browser().newContext({ reducedMotion: 'reduce' });
@@ -14,19 +15,30 @@ async page => {
     if (url.pathname === `/api/rooms/${lobby.code}`) return route.fulfill({ json: lobby });
     return url.origin === origin ? route.continue() : route.abort();
   });
-  const tab = await context.newPage(), checks = [];
+  const tab = await context.newPage(), checks = [], participantHeadings = new Map();
   try {
-    for (const width of [320, 394, 480, 800, 801]) {
+    for (const width of [320, 394, 480, 800, 801, 1146]) {
       await tab.setViewportSize({ width, height: 852 });
       for (const state of ['', '#participant', '#host', '?room=123456']) {
         inRoom = state.startsWith('?');
-        await tab.goto(`${origin}/certitips/certiquiz/${state}`);
+        await tab.goto(`${origin}${base}certiquiz/${state}`);
         await tab.locator('.welcome').waitFor({ state: 'attached' });
         for (const theme of ['light', 'dark']) {
           const dark = await tab.locator('html').getAttribute('data-theme') === 'dark';
           if (dark !== (theme === 'dark')) await tab.locator('.theme-toggle').click();
           await tab.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
           assert(await tab.locator('.welcome').isVisible() === (width > 800), `${width}/${state}: breadcrumb visibility`);
+          if (state === '#participant' || state === '#host') {
+            const heading = await tab.locator('.entry-card').evaluate(e => {
+              const css = getComputedStyle(e.querySelector('h2')), card = getComputedStyle(e);
+              return { font: css.fontSize, line: css.lineHeight, margin: css.margin, padding: card.paddingTop, border: card.borderTopWidth === '1px' && card.borderTopColor === card.borderRightColor };
+            });
+            if (width > 800) assert(heading.border, `${width}/${state}/${theme}: entry retains its red border`);
+            if (state === '#participant') {
+              assert(await tab.locator('.player-entry > .eyebrow').count() === 0 && await tab.locator('.player-entry > p').isVisible(), 'Participant lacks the host-style title and introduction');
+              participantHeadings.set(`${width}/${theme}`, heading);
+            } else assert(JSON.stringify(heading) === JSON.stringify(participantHeadings.get(`${width}/${theme}`)), `${width}/${theme}: participant and host heading styles differ`);
+          }
           if (width <= 800 && state) {
             const fit = await tab.locator('.join-card:not(.role-card)').evaluate(e => {
               const r = e.getBoundingClientRect(), main = document.querySelector('main').getBoundingClientRect();

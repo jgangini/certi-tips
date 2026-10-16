@@ -582,7 +582,7 @@ html:not([data-theme="dark"]) .hero-ambient { background: var(--chrome-bg); }
   mask-image: linear-gradient(135deg, black, transparent 82%);
   opacity: 0.38;
 }
-html:not([data-theme="dark"]) .hero-ambient::before { filter: blur(34px) grayscale(1); }
+html:not([data-theme="dark"]) .hero-ambient::before { filter: blur(34px) grayscale(1) brightness(.55); }
 @keyframes hero-magma-sweep {
   0%, 100% { transform: translate3d(-20%, -12%, 0) rotate(0deg) scale(1.04); }
   32% { transform: translate3d(10%, -4%, 0) rotate(44deg) scale(1.12); }
@@ -1442,8 +1442,15 @@ dialog:not(#diagram-viewer)[open]::backdrop { opacity: 1; }
   dialog:not(#diagram-viewer)[open] { opacity: 0; transform: translateY(8px) scale(.985); }
   dialog:not(#diagram-viewer)[open]::backdrop { opacity: 0; }
 }
+html:has(#language-transition[open]) { overflow: hidden; }
+#language-transition { width: 32px; height: 32px; overflow: hidden; border: 0; border-radius: 0; outline: none; background: transparent; box-shadow: none; }
+#language-transition[open], #language-transition[open]::backdrop { opacity: 1; transform: none; transition: none; }
+@media (prefers-reduced-motion: no-preference) {
+  dialog#language-transition, dialog#language-transition::backdrop { transition-duration: 450ms; }
+}
 @media (prefers-reduced-motion: reduce) {
   dialog:not(#diagram-viewer), dialog:not(#diagram-viewer)::backdrop { transition: none; }
+  #language-transition .certichat-spinner { animation: none; }
 }
 .search-dialog {
   width: min(620px, calc(100vw - 24px));

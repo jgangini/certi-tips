@@ -11,6 +11,27 @@ if (!/^(?:es|en|pt|it)\//.test(location.pathname.slice(siteBase.length))) {
 }
 
 const languageMenu = document.querySelector('.language-menu');
+const languageTransition = document.getElementById('language-transition');
+let languageTransitionTimer;
+languageTransition?.addEventListener('cancel', event => event.preventDefault());
+function clearLanguageTransition() {
+  clearTimeout(languageTransitionTimer);
+  languageTransition?.close();
+  try { sessionStorage.removeItem('certitips:language-transition'); } catch { /* Navigation works without storage. */ }
+}
+if (languageTransition?.open) {
+  const ready = () => {
+    if (document.readyState === 'loading' || document.querySelector('main [aria-busy="true"]')) return;
+    observer.disconnect();
+    // ponytail: navigation timing includes loading; only pad fast transitions.
+    languageTransitionTimer = setTimeout(clearLanguageTransition, Math.max(0, 700 - performance.now()));
+  };
+  const observer = new MutationObserver(ready);
+  observer.observe(document.querySelector('main'), { subtree: true, childList: true, attributes: true, attributeFilter: ['aria-busy'] });
+  document.addEventListener('DOMContentLoaded', ready, { once: true });
+  ready();
+}
+addEventListener('pageshow', event => { if (event.persisted) clearLanguageTransition(); });
 function updateLanguageLink(link) {
   const target = new URL(link.href);
   if (document.body.dataset.page === '404') target.pathname = new URL(localizedURL(location.href, link.dataset.languageLink)).pathname;
@@ -20,9 +41,15 @@ function updateLanguageLink(link) {
 }
 for (const link of document.querySelectorAll('[data-language-link]')) {
   updateLanguageLink(link);
-  link.addEventListener('click', () => {
+  link.addEventListener('click', event => {
     updateLanguageLink(link);
     try { localStorage.setItem('certitips:locale', link.dataset.languageLink); } catch { /* Navigation works without storage. */ }
+    if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || link.dataset.languageLink === locale) return;
+    event.preventDefault();
+    languageMenu.open = false;
+    languageTransition.showModal();
+    try { sessionStorage.setItem('certitips:language-transition', link.href); } catch { /* The next page remains usable without storage. */ }
+    requestAnimationFrame(() => requestAnimationFrame(() => location.assign(link.href)));
   });
 }
 languageMenu?.addEventListener('toggle', () => {

@@ -184,7 +184,7 @@ async (page) => {
     await host.getByLabel('Código de la sala').waitFor();
     assert(await host.locator('#create-form').count() === 0 && await host.locator('#join-form').count() === 1, 'Participant role does not isolate its form');
     assert(new URL(host.url()).hash === '#participant', 'Participant role does not have a shareable URL fragment');
-    assert(await host.getByRole('heading', { name: 'Únete a la Sala', exact: true }).count() === 1 && await host.locator('.player-entry > .eyebrow').textContent() === 'INGRESO DE PARTICIPANTE', 'Participant form does not use the room heading and entry eyebrow');
+    assert(await host.getByRole('heading', { name: 'Únete a la Sala', exact: true }).count() === 1 && await host.locator('.player-entry > .muted').textContent() === 'Ingresa el código de la sala y participa.', 'Participant form does not use the shared title and introduction');
     assert(await host.locator('#join-form .hint, #join-form .fact-row').count() === 0, 'Participant form exposes room details before joining');
     const participantAction = await host.locator('#join-form .join-actions').evaluate(node => {
       const exit = node.querySelector('[data-entry-exit]');
