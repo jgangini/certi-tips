@@ -332,7 +332,7 @@ if (root) {
       chat.messageStyles = { default: { shared: { bubble: { maxWidth: "92%", fontSize: "14px", lineHeight: "1.45" } }, ai: { bubble: { backgroundColor: "var(--hover)", color: "var(--ink)" } }, user: { bubble: { backgroundColor: "var(--accent)", color: "var(--on-red)" } } } };
       chat.messageStyles.loading = { message: { styles: { bubble: { backgroundColor: "var(--hover)", color: "var(--muted)", display: "flex", alignItems: "center", justifyContent: "center", width: "56px", height: "36px", padding: "0", boxSizing: "border-box" } } } };
       chat.remarkable = { html: false, applyHTML: false };
-      chat.auxiliaryStyle = "* { overflow-wrap: anywhere; } #messages, #text-input { scrollbar-color: var(--scrollbar) transparent; scrollbar-width: thin; } #chat-view { grid-template-rows: minmax(0, 1fr) auto auto; } #certichat-quota { justify-self: center; max-width: calc(100% - 24px); box-sizing: border-box; margin: 8px 12px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--chrome-bg); color: var(--muted); text-align: center; font-size: .68rem; font-variant-numeric: tabular-nums; line-height: 1.4; } #certichat-quota[hidden] { display: none; } a { color: var(--blue); text-decoration: underline; } a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; } @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }";
+      chat.auxiliaryStyle = "* { overflow-wrap: anywhere; } #messages, #text-input { scrollbar-color: var(--scrollbar) transparent; scrollbar-width: thin; } #chat-view { grid-template-rows: minmax(0, 1fr) auto auto; } #certichat-quota { justify-self: center; max-width: calc(100% - 24px); box-sizing: border-box; margin: 8px 12px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--chrome-bg); color: var(--muted); text-align: center; font-size: .68rem; font-variant-numeric: tabular-nums; line-height: 1.4; } #certichat-quota[hidden] { display: none; } a { color: var(--blue); text-decoration: underline; } a:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; } @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }";
       // ponytail: the native completion class also covers restored history; no extra render pass or observers.
       // ponytail: override the native disabled filter on hover; the submission guard stays unchanged.
       chat.auxiliaryStyle += `.outer-message-container:last-child { margin-bottom: 10px; }
@@ -351,7 +351,7 @@ if (root) {
         .ai-message:not(.streamed-message) a[data-link-kind="certitips"]::before { mask-image: url("${new URL("./icons/certitips-course.svg", import.meta.url).href}"); }
         .ai-message:not(.streamed-message) a[data-link-kind="certitube"]::before { mask-image: url("${new URL("./icons/certitube.svg", import.meta.url).href}"); }`;
       if (dock) chat.auxiliaryStyle += `${responseSelector}:not(.streamed-message) { border: 1px solid transparent; cursor: pointer; } ${responseSelector}:not(.streamed-message):hover { border-color: var(--red); } ${responseSelector}:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }`;
-      refreshVoice = installVoiceChatControls(chat);
+      refreshVoice = installVoiceChatControls(chat, changeCourseLayout);
       chat.onInput = () => refreshVoice(busy);
       chat.introMessage = { text: t("Hola. Resuelve tus dudas sobre las guías y prácticas del sitio.") };
       chat.history = saved.messages.map(({ role, text }) => ({ role, text }));
@@ -372,7 +372,15 @@ if (root) {
       chat.errorMessages = { displayServiceErrorMessages: true };
       chat.requestBodyLimits = { maxMessages: 1 };
       chat.validateInput = text => !busy && !voiceBusy && !quotaText(quota) && Boolean(text?.trim()) && text.length <= 1500;
+      const composerSize = viewer && new ResizeObserver(entries => {
+        for (const entry of entries) {
+          const height = entry.borderBoxSize[0]?.blockSize || entry.target.offsetHeight;
+          if (height) viewer.style.setProperty(entry.target.classList.contains("certichat-heading") ? "--presentation-heading-height" : "--presentation-composer-height", `${height}px`);
+        }
+      });
       chat.onComponentRender = () => {
+        const composer = chat.shadowRoot.querySelector("#text-input-container");
+        if (composerSize && composer) { composerSize.disconnect(); composerSize.observe(composer); composerSize.observe(root.querySelector(".certichat-heading")); }
         chat.shadowRoot.querySelector("#input")?.before(quotaNotice);
         const input = chat.shadowRoot.querySelector('[role="textbox"]');
         input?.setAttribute("aria-label", t("Escribe tu consulta"));
@@ -496,10 +504,10 @@ if (root) {
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   let panelAnimation, closing = false, layoutTransition;
   async function changeCourseLayout(change, animate) {
-    const main = document.querySelector('.course-page:not([data-page^="certitube"]) .course-main');
-    if (!animate || reducedMotion.matches || presenting || dock || mobileChat.matches || !main || !document.startViewTransition) return change();
+    const main = presenting ? viewer.querySelector('.dialog-content') : document.querySelector('.course-page:not([data-page^="certitube"]) .course-main');
+    if (!animate || reducedMotion.matches || dock || mobileChat.matches || !main || !document.startViewTransition) return change();
     while (layoutTransition) { layoutTransition.skipTransition(); await layoutTransition.finished.catch(() => {}); }
-    const figure = [...main.querySelectorAll('.diagram')].map(element => {
+    const figure = [...main.querySelectorAll(presenting ? 'img' : '.diagram')].map(element => {
       const box = element.getBoundingClientRect();
       return { element, area: box.width * Math.max(0, Math.min(innerHeight, box.bottom) - Math.max(0, box.top)) };
     }).sort((a, b) => b.area - a.area)[0];
@@ -521,7 +529,7 @@ if (root) {
       // Native snapshots interpolate the visible figure while text reflows once at its final width.
       transition = document.startViewTransition(() => {
         changed = true; change();
-        if (!panel.hidden && !document.body.classList.contains('is-compact-nav') && main.getBoundingClientRect().width < panel.offsetWidth) document.querySelector('.menu-toggle')?.click();
+        if (!presenting && !panel.hidden && !document.body.classList.contains('is-compact-nav') && main.getBoundingClientRect().width < panel.offsetWidth) document.querySelector('.menu-toggle')?.click();
       });
       layoutTransition = transition;
       transition.finished.catch(() => {}).finally(cleanup);

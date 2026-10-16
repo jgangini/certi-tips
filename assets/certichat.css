@@ -18,7 +18,7 @@ html[data-theme="dark"] .certichat { --chat-glass-surface: rgba(20, 18, 28, .97)
 .certichat [hidden] { display: none !important; }
 .certichat button { font-family: inherit; cursor: pointer; }
 .certichat button:disabled { cursor: default; opacity: .55; }
-.certichat button:focus-visible, .certichat a:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+.certichat button:focus-visible, .certichat a:focus-visible { outline: 3px solid var(--red); outline-offset: 3px; }
 .certichat-panel { position: absolute; right: 0; bottom: 0; width: min(420px, calc(100vw - 32px)); height: calc(100dvh - var(--header) - var(--footer-height) - 36px); display: flex; flex-direction: column; overflow: hidden; background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-top: 4px solid var(--red); border-radius: var(--radius); box-shadow: var(--panel-shadow); transform-origin: right bottom; }
 .certichat-panel > :not(.certichat-messages) { flex-shrink: 0; }
 .certichat-heading #certichat-title { display: block; line-height: 1.05; }
@@ -67,13 +67,17 @@ html[data-theme="dark"] .certichat { --chat-glass-surface: rgba(20, 18, 28, .97)
 #diagram-viewer.is-presenting .certichat-launcher { width: 36px; height: 36px; min-height: 36px; padding: 0; gap: 0; border-radius: 7px; }
 #diagram-viewer.is-presenting .certichat-launcher > svg { width: 22px; height: 22px; }
 #diagram-viewer.is-presenting .certichat-launcher > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-#diagram-viewer.is-presenting:has(.certichat-panel:not([hidden]):not([data-voice-mode="true"])) { grid-template-columns: minmax(0, 1fr) minmax(320px, 420px); grid-template-rows: auto minmax(0, 1fr) auto auto; }
-#diagram-viewer.is-presenting:has(.certichat-panel:not([hidden]):not([data-voice-mode="true"])) .dialog-toolbar { grid-column: 1 / -1; }
-#diagram-viewer.is-presenting > .certichat:has(.certichat-panel:not([hidden]):not([data-voice-mode="true"])) { grid-column: 2; grid-row: 2 / -1; justify-self: stretch; align-self: stretch; margin: 0; min-width: 0; min-height: 0; }
+#diagram-viewer.is-presenting:has(.certichat-panel:not([hidden]):not([data-voice-mode="true"])) { grid-template-columns: minmax(0, 1fr) minmax(320px, 420px); grid-template-rows: auto minmax(0, 1fr) auto; }
+#diagram-viewer.is-presenting:has(.certichat-panel:not([hidden]):not([data-voice-mode="true"])) .dialog-toolbar { grid-column: 1; }
+#diagram-viewer.is-presenting > .certichat:has(.certichat-panel:not([hidden]):not([data-voice-mode="true"])) { grid-column: 2; grid-row: 1 / -1; justify-self: stretch; align-self: stretch; margin: 0; min-width: 0; min-height: 0; }
 #diagram-viewer.is-presenting:has(.certichat-panel[hidden]) .diagram-slide-count { margin-right: 66px; }
 #diagram-viewer.is-presenting:has([data-voice-mode="true"]) .diagram-slide-count { margin-right: 270px; margin-bottom: 26px; }
 @media (max-width: 380px) { #diagram-viewer.is-presenting:has([data-voice-mode="true"]) .diagram-slide-count { margin-right: 20px; margin-bottom: 78px; } }
-#diagram-viewer.is-presenting .certichat-panel { position: static; inset: auto; width: 100%; height: 100%; min-height: 0; border-radius: 0; box-shadow: none; padding-bottom: env(safe-area-inset-bottom); }
+#diagram-viewer.is-presenting .certichat-panel { position: static; inset: auto; width: 100%; height: 100%; min-height: 0; border-top: 0; border-bottom: 0; border-radius: 0; box-shadow: none; padding-bottom: env(safe-area-inset-bottom); }
+@media (min-width: 801px) {
+  #diagram-viewer.is-presenting:has(.certichat-panel:not([hidden]):not([data-voice-mode="true"])) .dialog-toolbar { box-sizing: border-box; height: var(--presentation-heading-height, 64px); padding-block: 0; }
+  #diagram-viewer.is-presenting:has(.certichat-panel:not([hidden]):not([data-voice-mode="true"])) #diagram-description { box-sizing: border-box; height: var(--presentation-composer-height, 52px); max-height: none; padding-block: 0; align-content: center; }
+}
 @media (max-width: 800px) {
   #diagram-viewer.is-presenting:has(.certichat-panel:not([hidden]):not([data-voice-mode="true"])) { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(80px, 1fr) auto minmax(220px, 1.4fr) auto; overflow-y: auto; }
   #diagram-viewer.is-presenting > .certichat:has(.certichat-panel:not([hidden]):not([data-voice-mode="true"])) { grid-column: 1; grid-row: 4; }
@@ -91,7 +95,7 @@ html[data-theme="dark"] .certichat #certichat-panel[data-voice-mode="true"] { --
 .certichat deep-chat::part(voice-hint) { --hint-tail: calc(100% - 24px); --hint-shape: polygon(0 8px, 4px 8px, 4px 4px, 8px 4px, 8px 0, calc(100% - 8px) 0, calc(100% - 8px) 4px, calc(100% - 4px) 4px, calc(100% - 4px) 8px, 100% 8px, 100% calc(100% - 20px), calc(100% - 4px) calc(100% - 20px), calc(100% - 4px) calc(100% - 16px), calc(100% - 8px) calc(100% - 16px), calc(100% - 8px) calc(100% - 12px), var(--hint-tail) calc(100% - 12px), var(--hint-tail) calc(100% - 4px), calc(var(--hint-tail) - 4px) calc(100% - 4px), calc(var(--hint-tail) - 4px) 100%, calc(var(--hint-tail) - 8px) 100%, calc(var(--hint-tail) - 8px) calc(100% - 12px), 8px calc(100% - 12px), 8px calc(100% - 16px), 4px calc(100% - 16px), 4px calc(100% - 20px), 0 calc(100% - 20px)); position: relative; isolation: isolate; box-sizing: border-box; max-width: calc(100% - 20px); padding: 11px 14px 23px; clip-path: var(--hint-shape); background: var(--ink); color: var(--ink); font-family: inherit; font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; animation: certivoice-hint-float 3s ease-in-out infinite alternate; animation-delay: calc(var(--hint-order) * -700ms); }
 .certichat deep-chat::part(voice-hint-left) { --hint-tail: 32px; align-self: flex-start; }
 .certichat deep-chat::part(voice-hint)::before { content: ""; position: absolute; inset: 2px; z-index: -1; clip-path: var(--hint-shape); background: var(--paper); }
-@keyframes certivoice-hint-float { to { transform: translateY(-3px); } }
+@keyframes certivoice-hint-float { to { transform: translateY(-6px); } }
 @media (prefers-reduced-motion: reduce) { .certichat deep-chat::part(voice-hint) { animation: none; } }
 .chat-explorer-page:has([data-voice-mode="true"]) { grid-template-columns: minmax(0, 1fr); }
 .chat-explorer-page:has([data-voice-mode="true"]) .chat-explorer-section { display: flex; }

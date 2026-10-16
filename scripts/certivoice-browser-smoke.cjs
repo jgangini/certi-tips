@@ -38,6 +38,7 @@ async (page) => {
     assert(await wave.getAttribute('title') === await page.evaluate(() => window.__voiceState.error), 'Paused error is not available on Resume');
   };
   const checkPhase = async label => {
+    await page.waitForFunction(() => document.querySelector('deep-chat')?.shadowRoot?.querySelector('#certichat-quota'));
     const view = await page.locator('deep-chat').evaluate(chat => {
       const shadow = chat.shadowRoot, phase = shadow.querySelector('#certivoice-phase'), messages = shadow.querySelector('#messages'), input = shadow.querySelector('#input'), textbox = shadow.querySelector('[role="textbox"]');
       const panel = chat.closest('#certichat-panel'), heading = panel.querySelector('.certichat-heading'), container = shadow.querySelector('#text-input-container');
@@ -388,11 +389,11 @@ async (page) => {
       const controls = await mute.evaluate(element => {
         const other = element.getRootNode().querySelector('[data-certivoice-icon="exit"]').closest('.custom-button');
         const a = element.getBoundingClientRect(), b = other.getBoundingClientRect();
-        return { width: a.width, height: a.height, left: a.left, right: b.right, top: a.top, bottom: a.bottom, viewport: innerWidth, viewportHeight: innerHeight, separated: a.right <= b.left, appearances: [element, other].map(button => { const style = getComputedStyle(button), icon = button.querySelector('svg').getBoundingClientRect(); return { background: style.backgroundColor, border: style.borderWidth, radius: style.borderRadius, iconWidth: icon.width, iconHeight: icon.height }; }) };
+        return { width: a.width, height: a.height, left: a.left, right: b.right, top: a.top, bottom: a.bottom, viewport: innerWidth, viewportHeight: innerHeight, separated: a.right <= b.left, appearances: [element, other].map(button => { const style = getComputedStyle(button), icon = button.querySelector('svg').getBoundingClientRect(); return { background: style.backgroundColor, border: style.borderWidth, radius: style.borderRadius, focused: button.matches(':focus-visible'), iconWidth: icon.width, iconHeight: icon.height }; }) };
       });
       assert(controls.width >= 44 && controls.height >= 44 && controls.left >= 0 && controls.right <= controls.viewport && controls.top >= 0 && controls.bottom <= controls.viewportHeight && controls.separated, `Inline voice controls overflow or overlap at${width}/${theme}`);
       const expectedIcon = await page.locator('[data-chat-open] svg').evaluate(icon => parseFloat(getComputedStyle(icon).width));
-      assert(controls.appearances.every(item => item.background === 'rgba(0, 0, 0, 0)' && item.border === '0px' && item.radius === '0px' && item.iconWidth === expectedIcon && item.iconHeight === expectedIcon), `Voice controls retain circles or mismatched SVG size at${width}/${theme}`);
+      assert(controls.appearances.every(item => item.background === 'rgba(0, 0, 0, 0)' && item.border === '0px' && item.radius === (item.focused ? '7px' : '0px') && item.iconWidth === expectedIcon && item.iconHeight === expectedIcon), `Voice controls retain circles or mismatched SVG size at${width}/${theme}`);
       await checkPhase('Listening…');
       await checkHints();
       for (const control of [mute, exit]) {
@@ -582,6 +583,21 @@ async (page) => {
       fromBelow: frames.some(frame => Number(frame.transform?.match(/translateY\(([\d.]+)px\)/)?.[1]) > 0 || parseFloat(frame.translate?.split(' ').at(-1)) > 0), bounded: snapshots.every(items => items.length <= 3 && new Set(items).size === items.length) };
   });
   assert(rotated.oldest && rotated.survivors && rotated.changed && rotated.fromBelow && rotated.bounded, `Hints do not replace FIFO from below without visible duplicates: ${JSON.stringify(rotated)}`);
+  await mute.hover();
+  await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').dataset.open === 'false', null, { timeout: 1000 });
+  assert(await page.locator('deep-chat [data-voice-hints]').getAttribute('aria-hidden') === 'true', `Microphone hover opens tips: ${JSON.stringify(await mute.evaluate(node => ({hover:node.matches(':hover'),focused:node.matches(':focus'),open:node.getRootNode().querySelector('[data-voice-hints]').dataset.open,hit:node.getRootNode().elementFromPoint(node.getBoundingClientRect().x+22,node.getBoundingClientRect().y+22)?.outerHTML?.slice(0,160)})))}`);
+  await exit.hover();
+  assert(await page.locator('deep-chat [data-voice-hints]').getAttribute('aria-hidden') === 'true', 'Exit hover opens tips');
+  await page.locator('deep-chat').hover();
+  await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').dataset.open === 'true');
+  assert(await page.locator('deep-chat [data-voice-hints]').evaluate(node => [...node.children].some(bubble => bubble.getAnimations().some(animation => animation.effect.getTiming().iterations === Infinity))), 'Tips do not float');
+  await mute.click();
+  await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').dataset.open === 'false');
+  await page.locator('deep-chat').hover();
+  await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').dataset.open === 'true');
+  await mute.click();
+  await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').dataset.open === 'false');
+  await mute.evaluate(button => button.blur()); await page.mouse.move(0, 0);
   await mute.focus();
   const focusedHints = await page.locator('deep-chat [data-voice-hints]').innerText();
   await page.waitForTimeout(4000);

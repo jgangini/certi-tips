@@ -121,6 +121,7 @@ button:disabled {
   opacity: 0.55;
 }
 :focus-visible {
+  border-radius: 7px;
   outline: 3px solid var(--accent);
   outline-offset: 4px;
 }
@@ -1644,10 +1645,12 @@ html.is-resizing :is(.course-page, .site-header, .home-main, .hero-ambient, .cou
 html.is-chat-layout-transition :is(.course-page, .site-header, .sidebar, .course-main) { transition: none !important; }
 html.is-chat-layout-transition::view-transition { pointer-events: none; }
 /* Named snapshots leave normal stacking contexts; keep fixed chrome above the moving content. */
-html.is-chat-layout-transition .site-header { view-transition-name: course-header; }
-html.is-chat-layout-transition .site-footer { view-transition-name: course-footer; }
+html.is-chat-layout-transition:not(:has(#diagram-viewer.is-presenting)) .site-header, html.is-chat-layout-transition #diagram-viewer.is-presenting .dialog-toolbar { view-transition-name: course-header; }
+html.is-chat-layout-transition:not(:has(#diagram-viewer.is-presenting)) .site-footer, html.is-chat-layout-transition #diagram-viewer.is-presenting #diagram-description { view-transition-name: course-footer; }
+html.is-chat-layout-transition #diagram-viewer.is-presenting .certichat-panel { view-transition-name: course-chat-panel; }
 ::view-transition-group(course-header), ::view-transition-group(course-footer) { z-index: 1; }
-::view-transition-group(course-reading), ::view-transition-group(course-diagram), ::view-transition-group(course-chat-launcher), ::view-transition-group(course-header), ::view-transition-group(course-footer) { animation-duration: 360ms; animation-timing-function: ease; }
+::view-transition-group(course-chat-panel) { z-index: 2; }
+::view-transition-group(course-reading), ::view-transition-group(course-diagram), ::view-transition-group(course-chat-launcher), ::view-transition-group(course-chat-panel), ::view-transition-group(course-header), ::view-transition-group(course-footer) { animation-duration: 360ms; animation-timing-function: ease; }
 @media (prefers-reduced-motion: reduce) {
   #diagram-viewer::backdrop { animation: none; }
   .diagram-slide-count, .diagram-presentation-nav, #diagram-viewer::after { transition: none !important; }
@@ -1655,6 +1658,7 @@ html.is-chat-layout-transition .site-footer { view-transition-name: course-foote
   .course-groups details::details-content, .nav-branch::details-content { transition: none !important; }
 }
 #diagram-viewer[open][aria-describedby] {
+  transform-origin: top left;
   display: flex;
   flex-direction: column;
 }

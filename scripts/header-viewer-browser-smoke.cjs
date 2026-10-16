@@ -5,6 +5,92 @@ async (page) => {
   const base = `${new URL(page.url()).origin}/certitips/`;
   const assert = (value, message) => { if (!value) throw new Error(message); };
   const viewerOnly = new URL(page.url()).searchParams.has('viewer-check');
+  if (new URL(page.url()).searchParams.has('presentation-chat-check')) {
+    const errors = [], results = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.route('**/api/**', route => route.fulfill({ headers: { 'Access-Control-Allow-Origin': new URL(base).origin, 'Access-Control-Allow-Credentials': 'true', 'Access-Control-Allow-Headers': 'X-CertiChat, Content-Type', 'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS' }, json: { mode: 'LOCAL', authenticated: true, verificationRequired: false, available: true, voice: { enabled: false }, quota: { remaining: 20 } } }));
+    await page.addInitScript(() => {
+      sessionStorage.clear();
+      window.__transitions = [];
+      if (!document.startViewTransition) return;
+      const start = document.startViewTransition.bind(document);
+      document.startViewTransition = change => {
+        const entry = { widths: [], done: false, error: null }, transition = start(change);
+        window.__transitions.push(entry);
+        transition.ready.then(() => {
+          const tick = () => {
+            entry.widths.push(parseFloat(getComputedStyle(document.documentElement, '::view-transition-group(course-reading)').width));
+            if (!entry.done) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        }, error => entry.error = String(error));
+        transition.finished.finally(() => entry.done = true);
+        return transition;
+      };
+    });
+    const settle = () => page.waitForFunction(() => !document.documentElement.classList.contains('is-chat-layout-transition'));
+    for (const width of [1550, 1024, 390]) for (const theme of ['light', 'dark']) {
+      await page.setViewportSize({ width, height: 1019 });
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+      await page.goto(`${base}es/1Z0-1157-26/agents/`);
+      await page.evaluate(theme => document.documentElement.dataset.theme = theme, theme);
+      await page.locator('[data-chat-open]').click();
+      await page.locator('deep-chat [role="textbox"]').waitFor(); await settle();
+      await page.evaluate(() => window.__sameChat = document.querySelector('deep-chat'));
+      await page.locator('[data-chat-close]').click(); await page.locator('#certichat-panel').waitFor({ state: 'hidden' }); await settle();
+      await page.locator('[data-diagram]').first().click();
+      await page.locator('[data-diagram-present]').click();
+      await page.waitForFunction(() => document.querySelector('#diagram-viewer.is-presenting [data-chat-open]'));
+      for (const action of ['open', 'close']) {
+        const count = await page.evaluate(() => window.__transitions.length);
+        await page.locator(`#diagram-viewer [data-chat-${action}]`).click();
+        await page.locator('#certichat-panel').waitFor({ state: action === 'open' ? 'visible' : 'hidden' });
+        await settle();
+        if (width > 800 && await page.evaluate(() => !!document.startViewTransition)) {
+          await page.waitForFunction(count => window.__transitions.length > count && window.__transitions.at(-1).done, count);
+          const entry = await page.evaluate(() => window.__transitions.at(-1));
+          assert(!entry.error && entry.widths.length >= 3 && Math.abs(entry.widths.filter(Number.isFinite)[0] - entry.widths.filter(Number.isFinite).at(-1)) > 100, `Presentation ${action} did not interpolate: ${JSON.stringify(entry)}`);
+        }
+        if (action === 'open') {
+          await page.waitForFunction(() => !!document.querySelector('#diagram-viewer').style.getPropertyValue('--presentation-composer-height'));
+          const boxes = await page.evaluate(() => {
+            const viewer = document.querySelector('#diagram-viewer'), chat = document.querySelector('deep-chat'), rect = selector => viewer.querySelector(selector).getBoundingClientRect().toJSON();
+            return { panel: rect('#certichat-panel'), toolbar: rect('.dialog-toolbar'), heading: rect('.certichat-heading'), caption: rect('#diagram-description'), input: chat.shadowRoot.querySelector('#text-input-container').getBoundingClientRect().toJSON(), same: chat === window.__sameChat, border: getComputedStyle(viewer.querySelector('#certichat-panel')).borderTopWidth };
+          });
+          assert(boxes.same, 'Presentation replaced the shared chat');
+          if (width > 800) assert(Math.abs(boxes.panel.top - 4) < 1 && boxes.toolbar.right <= boxes.panel.left + 1 && Math.abs(boxes.toolbar.height - boxes.heading.height) < 1 && Math.abs(boxes.caption.top - boxes.input.top) < 1 && Math.abs(boxes.caption.height - boxes.input.height) < 1 && boxes.border === '0px', `Presentation bands misaligned: ${JSON.stringify(boxes)}`);
+          else assert(boxes.panel.width <= width && boxes.panel.top >= boxes.caption.bottom - 1, 'Mobile presentation does not stack');
+          await page.keyboard.press('Tab'); await page.locator(width > 800 ? '.certichat-actions a' : '[data-chat-close]').focus();
+          assert(await page.locator(width > 800 ? '.certichat-actions a' : '[data-chat-close]').evaluate(node => getComputedStyle(node).outlineColor === 'rgb(199, 70, 52)' && getComputedStyle(node).outlineStyle !== 'none'), 'Chat keyboard focus is not visible red');
+        }
+      }
+      await page.locator('[data-close-diagram]').click();
+      // The real dialog remains open while it returns from presentation to the enlarged viewer.
+      assert(await page.locator('#diagram-viewer').evaluate(node => node.open && !node.classList.contains('is-presenting') && node.getAnimations().some(animation => animation.effect.getTiming().duration === 300)), 'Leaving presentation has no smooth return');
+      await page.locator('#diagram-viewer').evaluate(node => Promise.all(node.getAnimations().map(animation => animation.finished.catch(() => {}))));
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.locator('[data-close-diagram]').click(); await page.locator('#diagram-viewer').waitFor({ state: 'hidden' });
+      results.push({ width, theme, animated: width > 800 });
+    }
+    await page.setViewportSize({ width: 1550, height: 1019 });
+    await page.goto(`${base}es/certitube/`);
+    for (const theme of ['light', 'dark']) {
+    await page.evaluate(value => document.documentElement.dataset.theme = value, theme);
+    await page.keyboard.press('Tab'); await page.locator('.brand').focus();
+    assert(await page.locator('.brand').evaluate(node => getComputedStyle(node).borderRadius === '7px' && getComputedStyle(node).outlineStyle !== 'none'), 'Logo focus is not rounded');
+    const chapter = page.locator('.tube-chapters a').nth(2), nav = page.locator('.tube-chapters');
+    const before = await nav.boundingBox(); await chapter.focus();
+    assert(await chapter.evaluate(node => parseFloat(getComputedStyle(node).outlineOffset) < 0), 'Chapter focus clips outside the scrolling strip');
+    assert((await nav.boundingBox()).height === before.height, 'Chapter focus changes the navigation height');
+    const resource = page.locator('.tube-resources a').last(); await resource.focus();
+    assert(await resource.evaluate(node => !!node.querySelector('svg') && node.getBoundingClientRect().width < node.closest('li').getBoundingClientRect().width - 20), 'Resource focus is not limited to the link and icon');
+    const footerLink = page.locator('.site-footer a').last(); await page.keyboard.press('Tab'); await footerLink.focus();
+    assert(await footerLink.evaluate(node => getComputedStyle(node).borderRadius === '7px' && getComputedStyle(node).outlineStyle !== 'none'), `Footer focus is not rounded: ${JSON.stringify(await footerLink.evaluate(node => ({radius:getComputedStyle(node).borderRadius,outline:getComputedStyle(node).outline,active:document.activeElement===node,visible:getComputedStyle(node).visibility,tag:node.outerHTML})))}`);
+    }
+    assert(errors.length === 0, errors.join('; '));
+    return { passed: true, presentationChat: results, roundedFocus: true, chapterHeightPreserved: true, resourceIconInsideLink: true, screenshots: 0, paidCalls: 0 };
+  }
+
   await page.addInitScript(() => sessionStorage.clear());
   const routes = ['certiquiz/', '', 'courses/', '1Z0-1122-26/practice/', 'certitube/', 'certichat/'];
   if (!viewerOnly) for (const width of [1576, 1280, 1195, 900, 798, 619, 480, 320]) {

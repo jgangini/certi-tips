@@ -1,7 +1,7 @@
 import { t } from "./i18n.js";
 import { voiceContext } from "./certivoice-actions.js";
 
-export function installVoiceChatControls(chat) {
+export function installVoiceChatControls(chat, changeLayout = change => change()) {
   let state = { enabled: false, active: false, muted: false }, requestBusy = false;
   const quotaBlocked = () => state.quotaBlocked || chat.shadowRoot?.querySelector('[role="textbox"]')?.getAttribute("aria-disabled") === "true";
   let hints, hideHintsTimer, hintsTimer, hintSequence = 0, lastHint;
@@ -81,7 +81,7 @@ export function installVoiceChatControls(chat) {
   }
   function showHints() {
     clearTimeout(hideHintsTimer);
-    if (!hintsAllowed()) return;
+    if (!hintsAllowed() || chat.shadowRoot.querySelector('[data-voice-command="mute"]:hover, [data-voice-command="exit"]:hover')) { hideHints(); return; }
     if (!hints) {
       hints = document.createElement("div"); hints.id = "certivoice-hints"; hints.dataset.voiceHints = "";
       hints.setAttribute("part", "voice-hints"); hints.setAttribute("role", "tooltip"); hints.setAttribute("aria-live", "off");
@@ -92,7 +92,11 @@ export function installVoiceChatControls(chat) {
     chat.shadowRoot.querySelectorAll('.custom-button:not([aria-disabled="true"])').forEach(button => button.setAttribute("aria-describedby", hints.id));
     rotateHints();
   }
-  chat.addEventListener("pointerenter", event => { if (event.pointerType !== "touch") showHints(); });
+  chat.addEventListener("pointermove", event => {
+    if (event.pointerType === "touch") return;
+    if (event.composedPath().some(node => node.matches?.('[data-voice-command="mute"], [data-voice-command="exit"]'))) hideHints();
+    else if (hints?.dataset.open !== "true") showHints();
+  }, { capture: true });
   chat.addEventListener("pointerleave", () => { if (!chat.shadowRoot?.activeElement) { clearTimeout(hintsTimer); hideHintsTimer = setTimeout(hideHints, 180); } });
   chat.addEventListener("focusin", showHints);
   chat.addEventListener("focusout", () => queueMicrotask(() => { if (!chat.shadowRoot?.activeElement) hideHints(); }));
@@ -108,11 +112,13 @@ export function installVoiceChatControls(chat) {
       disabled: { container: { default: { display: "none" } } },
     } },
     onClick: current => {
+      hideHints();
       // Deep Chat's visual disabled state still needs an availability and busy guard.
       if (current === "disabled" || command === "mute" && state.locked || command === "start" && (!state.enabled || requestBusy || quotaBlocked() && !state.retry)) return;
-      window.dispatchEvent(new CustomEvent("certivoice:command", { detail: command }));
+      const dispatch = () => window.dispatchEvent(new CustomEvent("certivoice:command", { detail: command }));
+      if (command === "exit") changeLayout(dispatch, true); else dispatch();
       // Deep Chat focuses the textbox after every custom click; voice controls should not open the mobile keyboard.
-      queueMicrotask(() => chat.shadowRoot?.querySelector('[role="textbox"]')?.blur());
+      queueMicrotask(() => { chat.shadowRoot?.querySelector('[role="textbox"]')?.blur(); hideHints(); });
     },
   }));
   for (const control of controls) {
@@ -123,14 +129,14 @@ export function installVoiceChatControls(chat) {
   chat.submitButtonStyles = { ...chat.submitButtonStyles, position: "inside-end" };
   chat.auxiliaryStyle = (chat.auxiliaryStyle || "") + ' :host([data-voice-mode]) { overflow: visible !important; } #certivoice-hints { opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(6px); transition: opacity 180ms ease, transform 180ms ease, visibility 0s 180ms; } #certivoice-hints[data-open="true"] { opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(0); transition-delay: 0s; } #certivoice-hints[data-focused="true"] [part~="voice-hint"] { animation: none !important; opacity: 1; } @media (prefers-reduced-motion: reduce) { #certivoice-hints { transform: none; transition: none; } }';
   chat.auxiliaryStyle = (chat.auxiliaryStyle || "") + ' :host([data-voice-mode]), :host([data-voice-mode]) :is(#chat-view, #input, #text-input-container) { background: transparent !important; } :host([data-voice-mode]) #input { height: 46px; min-height: 0; } :host([data-voice-mode]) #text-input-container { border-top: 0 !important; height: 100%; min-height: 0; } :host([data-voice-mode]) #text-input { box-sizing: border-box; height: 100%; min-height: 0; padding-block: 0 !important; } :host([data-voice-mode]) .custom-button { color: var(--voice-ink) !important; inset-block-end: 50% !important; transform: translateY(50%) !important; } :host([data-voice-mode]) [data-certivoice-icon] { width: var(--voice-icon-size, 22px) !important; height: var(--voice-icon-size, 22px) !important; } :host([data-voice-mode]) #certivoice-phase { left: 24px; color: var(--voice-ink, var(--ink)); }';
-  chat.auxiliaryStyle = (chat.auxiliaryStyle || "") + ' :host([data-voice-resume="true"]) [data-voice-command="start"] { inset-inline-end: 56px !important; } [data-voice-command="mute"] { inset-inline-end: 56px !important; } [data-voice-command="exit"] { inset-inline-end: 8px !important; } #text-input-container { min-height: 52px; } .custom-button[aria-disabled="true"] { opacity: .45; cursor: not-allowed; } .custom-button:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; } [data-voice-command="mute"][aria-pressed="true"] [data-certivoice-icon], .custom-button:not([aria-disabled="true"]):is(:hover, :focus-visible) [data-certivoice-icon] { color: var(--red) !important; } :host([data-voice-mode]) #messages, :host([data-voice-mode]) #certichat-quota { display: none; } :host([data-voice-mode]) #chat-view { grid-template-rows: auto; } :host([data-voice-mode]) #text-input { visibility: hidden; } #certivoice-phase { position: absolute; inset: 0 108px 0 12px; display: flex; align-items: center; justify-content: flex-start; color: var(--ink); pointer-events: none; } #certivoice-phase[hidden] { display: none; } #certivoice-phase .voice-dot { display: inline-block; animation: voice-dot-bounce 1.2s ease-in-out infinite; } #certivoice-phase .voice-dot:nth-child(2) { animation-delay: .15s; } #certivoice-phase .voice-dot:nth-child(3) { animation-delay: .3s; } #certivoice-phase[data-phase="paused"] .voice-dot { animation: none; } @keyframes voice-dot-bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-3px); } } @media (prefers-reduced-motion: reduce) { #certivoice-phase .voice-dot { animation: none; } }';
+  chat.auxiliaryStyle = (chat.auxiliaryStyle || "") + ' :host([data-voice-resume="true"]) [data-voice-command="start"] { inset-inline-end: 56px !important; } [data-voice-command="mute"] { inset-inline-end: 56px !important; } [data-voice-command="exit"] { inset-inline-end: 8px !important; } #text-input-container { min-height: 52px; } .custom-button[aria-disabled="true"] { opacity: .45; cursor: not-allowed; } .custom-button:focus-visible { border-radius: 7px !important; outline: 2px solid var(--red); outline-offset: 2px; } [data-voice-command="mute"][aria-pressed="true"] [data-certivoice-icon], .custom-button:not([aria-disabled="true"]):is(:hover, :focus-visible) [data-certivoice-icon] { color: var(--red) !important; } :host([data-voice-mode]) #messages, :host([data-voice-mode]) #certichat-quota { display: none; } :host([data-voice-mode]) #chat-view { grid-template-rows: auto; } :host([data-voice-mode]) #text-input { visibility: hidden; } #certivoice-phase { position: absolute; inset: 0 108px 0 12px; display: flex; align-items: center; justify-content: flex-start; color: var(--ink); pointer-events: none; } #certivoice-phase[hidden] { display: none; } #certivoice-phase .voice-dot { display: inline-block; animation: voice-dot-bounce 1.2s ease-in-out infinite; } #certivoice-phase .voice-dot:nth-child(2) { animation-delay: .15s; } #certivoice-phase .voice-dot:nth-child(3) { animation-delay: .3s; } #certivoice-phase[data-phase="paused"] .voice-dot { animation: none; } @keyframes voice-dot-bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-3px); } } @media (prefers-reduced-motion: reduce) { #certivoice-phase .voice-dot { animation: none; } }';
   const onKeyboard = event => {
     if (![" ", "Enter"].includes(event.key) || event.repeat) return;
     if (event.currentTarget.getAttribute("aria-disabled") === "true") { event.preventDefault(); return; }
     if (event.key === " ") { event.preventDefault(); event.currentTarget.click(); }
     queueMicrotask(() => {
       const target = state.active || state.resume ? chat.shadowRoot?.querySelector(`[data-certivoice-icon="${state.active ? "mute" : "start"}"]`)?.closest(".custom-button") : chat.shadowRoot?.querySelector('[role="textbox"]');
-      target?.focus();
+      target?.focus(); hideHints();
     });
   };
 
@@ -141,6 +147,7 @@ export function installVoiceChatControls(chat) {
     if (!input) return;
     const label = (state.active || state.resume) && { connecting: "Connecting…", listening: "Listening…", thinking: "Thinking…", speaking: "Speaking…", paused: "Paused…" }[state.phase];
     const panel = chat.closest?.("#certichat-panel"), heading = panel?.querySelector(".certichat-heading");
+    const enteringVoice = label && panel && !panel.hasAttribute("data-voice-mode");
     const messages = shadow.querySelector("#messages");
     const moveFocus = label && (messages?.contains(shadow.activeElement) || heading?.contains(document.activeElement));
     for (const element of [chat, panel].filter(Boolean)) {
@@ -196,6 +203,7 @@ export function installVoiceChatControls(chat) {
       if (command === "mute") button.setAttribute("aria-pressed", String(state.muted));
       button.addEventListener("keydown", onKeyboard);
     });
+    if (enteringVoice && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) panel.animate([{ opacity: 0, translate: "0 8px" }, { opacity: 1, translate: "0 0" }], { duration: 280, easing: "ease-out" });
     if (moveFocus) shadow.querySelector(`[data-certivoice-icon="${state.active ? "mute" : "start"}"]`)?.closest(".custom-button")?.focus();
   }
   window.addEventListener("certivoice:state", event => {

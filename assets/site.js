@@ -570,21 +570,24 @@ dialog.addEventListener("keydown", event => {
   event.preventDefault();
   showSlide(slideIndex + (event.key === "ArrowRight" ? 1 : -1));
 });
-function animateViewer(closing = false) {
-  if (reduceViewerMotion.matches || !dialog.animate || !opener?.getBoundingClientRect) return;
-  const source = opener.getBoundingClientRect(), target = dialog.getBoundingClientRect();
+function animateViewer(closing = false, from) {
+  if (reduceViewerMotion.matches || !dialog.animate || !from && !opener?.getBoundingClientRect) return;
+  const source = from || opener.getBoundingClientRect(), target = dialog.getBoundingClientRect();
   if (!source.width || !target.width) return;
   // ponytail: scale the real dialog from its thumbnail; no cloned image or second overlay to keep in sync.
   const small = `translate(${source.left - target.left}px, ${source.top - target.top}px) scale(${source.width / target.width}, ${source.height / target.height})`;
   viewerAnimation?.cancel();
-  viewerAnimation = dialog.animate(closing ? [{ transform: "none", opacity: 1 }, { transform: small, opacity: 0 }] : [{ transform: small, opacity: 0 }, { transform: "none", opacity: 1 }], {
+  viewerAnimation = dialog.animate(closing ? [{ transform: "none", opacity: 1 }, { transform: small, opacity: 0 }] : [{ transform: small, opacity: from ? 1 : 0 }, { transform: "none", opacity: 1 }], {
     duration: 300, easing: "cubic-bezier(.22, 1, .36, 1)", fill: closing ? "forwards" : "none",
   });
   return viewerAnimation;
 }
 function closeViewer() {
   if (!dialog.open || dialog.classList.contains("is-closing")) return;
-  if (dialog.classList.contains("is-presenting")) return leavePresentation();
+  if (dialog.classList.contains("is-presenting")) {
+    const from = dialog.getBoundingClientRect();
+    leavePresentation(); animateViewer(false, from); return;
+  }
   const src = dialog.querySelector(".dialog-content img").src;
   const target = [...document.querySelectorAll("[data-diagram]")].find(button => new URL(button.dataset.diagram, location.href).href === src);
   const page = target ? null : moduleLinkForImage(src);

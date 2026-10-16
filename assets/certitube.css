@@ -19,6 +19,7 @@
 .tube-chapters a[aria-current="true"] { background: var(--red); border-color: var(--red); color: var(--on-red); }
 .tube-chapters a[aria-current="true"] .tube-time { border-color: currentColor; }
 .tube-chapters a:hover { border-color: var(--red); }
+.tube-chapters a:focus-visible { outline-offset: -3px; }
 .tube-scroll { flex-shrink: 0; width: 32px; height: 32px; min-height: 32px; padding: 0; }
 .tube-scroll svg { width: 14px; height: 14px; }
 .tube-scroll:disabled { display: none; }
@@ -35,7 +36,8 @@
 .tube-resources li { display: flex; align-items: baseline; gap: 8px; margin: 6px 0; }
 .tube-resources li svg { flex-shrink: 0; width: 12px; height: 12px; fill: currentColor; }
 .tube-resources li, .tube-resources a { color: var(--ink); }
-.tube-resources a { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.tube-resources a { display: inline-flex; flex: 0 1 auto; align-items: baseline; gap: 8px; min-width: 0; max-width: 100%; }
+.tube-resources a span { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .tube-resources li:is(:hover, :focus-within), .tube-resources li:is(:hover, :focus-within) a { color: var(--red); }
 .course-page[data-page^="certitube"] { --sidebar: 0px; }
 .course-page[data-page^="certitube"] :is(.course-main, .prose) { max-width: none; }
