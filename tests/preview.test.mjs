@@ -140,8 +140,9 @@ test("the opt-in preview proxy preserves local sessions and rejects other caller
       ["/api/session?target=http://attacker.test", { headers: valid }, 404],
       ["/api/chat", { headers: valid }, 404],
       ["/api/session", { method: "PATCH", headers: valid }, 404],
-      ["/api/chat", { method: "POST", headers: { ...valid, "Content-Type": "application/json", "Content-Length": "16385" }, chunks: ["x".repeat(16385)] }, 413],
-      ["/api/voice", { method: "POST", headers: { ...valid, "Content-Type": "application/json", "Content-Length": "1350001" }, chunks: ["x".repeat(1350001)] }, 413],
+      // ponytail: reject declared sizes before uploading; chunked tests below exercise actual bytes.
+      ["/api/chat", { method: "POST", headers: { ...valid, "Content-Type": "application/json", "Content-Length": "16385" } }, 413],
+      ["/api/voice", { method: "POST", headers: { ...valid, "Content-Type": "application/json", "Content-Length": "1350001" } }, 413],
     ];
     for (const [pathname, options, expected] of cases) assert.equal((await request(page, pathname, options)).status, expected, `${options.method || "GET"} ${pathname} ${JSON.stringify(options.headers)}`);
     assert.equal(started.length, before);
