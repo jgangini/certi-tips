@@ -146,7 +146,7 @@ async (page) => {
     } } });
     window.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; } };
     window.__voiceOptions = sessionStorage.getItem('__voiceOptions') === 'none' ? [] : [{ name: 'Microsoft Sabina', lang: 'es-MX' }];
-    Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: { getVoices: () => window.__voiceOptions, speak: value => { if (value.text) window.__voiceUtterance = value; }, cancel: () => { window.__voiceUtterance = null; } } });
+    Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: { getVoices: () => window.__voiceOptions, speak: value => { if (value.text) { window.__voiceUtterance = value; queueMicrotask(() => value.onstart?.()); } }, cancel: () => { window.__voiceUtterance = null; } } });
     window.__speakTurn = () => {
       const emit = value => window.__voicePort.onmessage?.({ data: new Float32Array(2048).fill(value) });
       for (let i = 0; i < 3; i++) emit(.1);

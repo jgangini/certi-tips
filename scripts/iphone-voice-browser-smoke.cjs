@@ -43,12 +43,20 @@ async (page) => {
     window.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; this.volume = 1; } };
     Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: {
       getVoices: () => [{ name: 'Mónica', lang: 'es-ES' }],
+      get speaking() { return Boolean(window.__warmupPending || window.__utterance); },
       speak(utterance) {
         if (window.__speechGesture) window.__speechUnlocked = true;
         if (!window.__speechUnlocked) return; // WebKit silently ignores speech before the first gesture.
-        if (!utterance.text) window.__warmups.push({ volume: utterance.volume, gesture: window.__speechGesture });
-        else { window.__utterance = utterance; window.__spoken.push(utterance.text); }
-      }, cancel() { window.__utterance = null; },
+        if (!utterance.text) {
+          window.__warmups.push({ volume: utterance.volume, gesture: window.__speechGesture });
+          window.__warmupPending = true; // A silent primer can occupy WebKit's native queue until canceled.
+        } else if (!window.__warmupPending) {
+          window.__utterance = utterance;
+          const started = utterance.onstart;
+          window.__startNative = () => { window.__spoken.push(utterance.text); started?.(); };
+          if (!window.__holdNativeStart) queueMicrotask(window.__startNative);
+        }
+      }, cancel() { if (!window.__warmupPending && !window.__utterance) window.__idleCancels = (window.__idleCancels || 0) + 1; window.__warmupPending = false; window.__utterance = null; },
     } });
     window.__speakTurn = () => {
       const emit = value => window.__voicePort.onmessage?.({ data: new Float32Array(2048).fill(value) });
@@ -88,14 +96,28 @@ async (page) => {
       }
       await phone.setViewportSize({ width: 394, height: 852 });
       assert(await phone.evaluate(() => window.__warmups.length === 1 && window.__warmups[0].gesture && window.__warmups[0].volume === 0), 'Speech was not silently unlocked within the initial tap');
-      await phone.evaluate(() => window.__speakTurn());
-      await phone.waitForFunction(() => window.__spoken.length === 1);
+      assert(await phone.evaluate(() => !window.__warmupPending), 'The silent Safari primer still blocks the native speech queue after activation');
+      await phone.evaluate(() => { window.__holdNativeStart = true; window.__speakTurn(); });
+      await phone.waitForFunction(() => window.__utterance);
+      assert(await phone.evaluate(() => !window.__idleCancels), 'Canceling an idle native queue immediately before speak risks WebKit dropping the answer');
+      assert(await phone.evaluate(() => window.__voiceState.phase === 'thinking' && !window.__spoken.length), 'The UI claimed Speaking before the native start event');
+      await phone.evaluate(() => { window.__holdNativeStart = false; window.__startNative(); });
+      await phone.waitForFunction(() => window.__spoken.length === 1 && window.__voiceState.phase === 'speaking');
       assert(await phone.evaluate(() => window.__utterance.volume === 1 && window.__utterance.voice.name === 'Mónica'), 'The delayed answer was muted or changed the selected voice');
       assert(calls.at(-1).body.audioOutput === 'browser', 'Native speech unexpectedly requested paid output');
       await phone.evaluate(() => window.__utterance.onend());
       await phone.locator('deep-chat [data-voice-command="mute"]').tap();
       await phone.waitForFunction(() => window.__voiceState?.phase === 'paused');
       await measure();
+      if (route === 'es/') {
+        await phone.locator('deep-chat [data-voice-command="mute"]').tap();
+        await phone.evaluate(() => { window.__holdNativeStart = true; window.__utterance = null; window.__speakTurn(); });
+        await phone.waitForFunction(() => window.__utterance && window.__voiceState.phase === 'thinking');
+        await phone.waitForFunction(() => window.__voiceState.phase === 'paused' && window.__voiceState.error);
+        assert(await phone.evaluate(() => window.__voiceTrack.stopped && !window.__utterance), 'Missing native start left a false Speaking state or live capture');
+        await phone.evaluate(() => window.__startNative());
+        assert(await phone.evaluate(() => window.__voiceState.phase === 'paused' && !window.__voiceState.active), 'A late native start revived canceled speech');
+      }
       await phone.locator('deep-chat [data-voice-command="exit"]').tap();
       assert(await phone.evaluate(() => window.__voiceTrack.stopped), 'Exiting voice leaked a microphone track');
     }
@@ -140,6 +162,6 @@ async (page) => {
     await viewer.waitFor({ state: 'hidden' });
     assert(await phone.locator('[data-diagram]').first().evaluate(node => document.activeElement === node), 'Closing mobile presentation did not restore focus to its image');
     assert(errors.length === 0, errors.join('\n'));
-    return { passed: true, routes: results, delayedNativeSpeechAfterGesture: true, touchHintsDisabled: true, directPresentationAudio: true, mobileVoiceExitFoldsChat: true, screenshots: 0, paidCalls: 0 };
+    return { passed: true, routes: results, delayedNativeSpeechAfterGesture: true, silentPrimerCanceled: true, truthfulNativeStartAndTimeout: true, touchHintsDisabled: true, directPresentationAudio: true, mobileVoiceExitFoldsChat: true, screenshots: 0, paidCalls: 0 };
   } finally { await context.close(); }
 }

@@ -94,6 +94,7 @@ Elegir el archivo según el cambio y usar una sesión nueva por comprobación:
 | `certichat-browser-smoke.cjs` | Sesión, cuotas, reintentos, fuentes, Markdown seguro y restauración; API simulada, sin llamadas pagadas. |
 | `certichat-explorer-smoke.cjs` | Grafo, tarjetas, enfoque, ondas y evidencia por respuesta; API simulada. |
 | `certitube-browser-smoke.cjs` | Último video por incorporación, accesos de portada/encabezado, búsqueda real y reintentos, barra inferior de capítulos, cita temporal, historial, errores de YouTube y ajuste compartido del chat; API simulada, sin capturas. |
+| `iphone-voice-browser-smoke.cjs` | Voz móvil: gesto original de Safari, cola silenciosa pendiente, inicio nativo confirmado y ausente/tardío; centrado global, presentación y salida sin chat de texto. Chromium y WebKit de escritorio usan audio simulado; no acreditan reproducción física en iPhone. |
 | `certichat-mobile-smoke.cjs` | Pie de página, panel móvil y navegación; área visible simulada, no teclado físico de iOS. |
 | `language-transition-smoke.cjs` | Cambio de idioma en portada, cursos, CertiTube, CertiChat y CertiQuiz; respuestas retenidas, bloqueo modal, desvanecimiento, historial y movimiento reducido, sin APIs reales ni capturas. |
 | `certiquiz-mobile-layout-smoke.cjs` | Formularios y salas con API simulada; ancho completo móvil y encabezados y bordes compartidos entre participante y anfitrión. |

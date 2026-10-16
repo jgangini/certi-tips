@@ -13,7 +13,7 @@ if (root) {
   let session, voiceError = "", active = false, muted = false, context, release, detector, controller, playback = readPlayback(), speech, output, utterance, epoch = 0, widget, pending, pendingSent = false, pendingSince, pendingExpiry, lastActivity = 0, starting = false, checkingSession = false, rejectVerification;
   const edge = document.querySelector("[data-voice-edge]");
   let lecture, lectureTimer, nativeVoice, lastExplained;
-  let stopEdge, videoLocked = false, videoConfirmation;
+  let stopEdge, nativeStartTimer, videoLocked = false, videoConfirmation;
   const chatParent = config.parentNode, chatNext = config.nextSibling;
   const quotaBlocked = () => Number.isFinite(session?.quota?.remaining) && session.quota.remaining <= 0;
   const emit = (name, detail) => window.dispatchEvent(new CustomEvent(name, { detail }));
@@ -22,7 +22,7 @@ if (root) {
     if (error) { voiceError = text; if (lecture) lecture.running = false; }
     const enabled = session?.voice?.enabled === true && session.available !== false && !config.hidden;
     const resume = enabled && !active && !starting && Boolean(pendingNavigation(readNavigation(), location.href, siteBase));
-    const phase = starting ? "connecting" : !active ? resume ? "paused" : "off" : output || utterance ? "speaking" : controller ? "thinking" : muted ? "paused" : "listening";
+    const phase = starting ? "connecting" : !active ? resume ? "paused" : "off" : output || utterance && speech?.started ? "speaking" : controller || utterance ? "thinking" : muted ? "paused" : "listening";
     status.setAttribute("aria-live", (active || starting || resume) && (!voiceError || starting) ? "off" : "polite");
     status.textContent = text;
     if (edge) edge.dataset.state = resume ? "paused" : active ? phase === "thinking" ? "processing" : phase === "paused" ? "muted" : phase : "off";
@@ -40,7 +40,11 @@ if (root) {
     stopEdge?.(); stopEdge = null;
     if (output && playback && speech?.track) playback.heardCharacters = Math.min(5000, speech.offset + heardCharacters(speech.text, context.currentTime - speech.started, speech.duration));
     if (output) { output.onended = null; try { output.stop(); } catch { /* Already ended. */ } output = null; }
-    if (utterance) { utterance.onend = null; utterance.onerror = null; utterance.onboundary = null; speechSynthesis.cancel(); utterance = null; }
+    clearTimeout(nativeStartTimer);
+    const nativePending = utterance || window.speechSynthesis?.speaking || window.speechSynthesis?.pending;
+    if (utterance) { utterance.onstart = null; utterance.onend = null; utterance.onerror = null; utterance.onboundary = null; utterance = null; }
+    // Clear the silent iOS primer too; idle WebKit cancellations can swallow the next speak.
+    if (nativePending) window.speechSynthesis.cancel();
     savePlayback();
   }
   function pause(message = t("Voz pausada. Pulsa Activar voz para continuar."), error = false, preserveMode = true) {
@@ -134,6 +138,7 @@ if (root) {
     else lectureTimer = setTimeout(() => lectureTurn(), 0);
   }
   function finishSpeech(offset, text) {
+    clearTimeout(nativeStartTimer);
     stopEdge?.(); stopEdge = null; output = null; utterance = null;
     if (speech.track && playback) playback.heardCharacters = Math.min(5000, offset + text.length);
     if (speech.track && speech.diagramId) lastExplained = { id: speech.diagramId, title: speech.title };
@@ -191,11 +196,19 @@ if (root) {
     const textStatus = `${text} ${t("Respuesta disponible como texto. Te escucho…")}`;
     if (!nativeVoice) { if (lecture && progress) lecture.running = false; setStatus(textStatus); return; }
     const pronunciation = nativePronunciation(text, nativeVoice);
-    utterance = new SpeechSynthesisUtterance(pronunciation.text); utterance.voice = nativeVoice; utterance.lang = nativeVoice.lang;
+    const current = utterance = new SpeechSynthesisUtterance(pronunciation.text); utterance.voice = nativeVoice; utterance.lang = nativeVoice.lang;
+    utterance.onstart = () => {
+      if (utterance !== current || token !== epoch || !active) return;
+      clearTimeout(nativeStartTimer); speech.started = true; setStatus(t("Hablando. Puedes interrumpir."));
+    };
     utterance.onboundary = event => { if (speech.track && playback && Number.isInteger(event.charIndex)) playback.heardCharacters = Math.min(5000, offset + pronunciation.sourceIndex(event.charIndex)); };
     utterance.onend = () => finishSpeech(offset, text);
-    utterance.onerror = () => { utterance = null; if (lecture) lecture.running = false; if (speech.after) { const after = speech.after; speech.after = null; after(); } else if (quotaBlocked()) pause(t("Se alcanzó un límite de uso. Inténtalo más tarde.")); else setStatus(textStatus); };
-    speechSynthesis.speak(utterance); setStatus(t("Hablando. Puedes interrumpir."));
+    utterance.onerror = () => { clearTimeout(nativeStartTimer); utterance = null; if (lecture) lecture.running = false; if (speech.after) { const after = speech.after; speech.after = null; after(); } else if (quotaBlocked()) pause(t("Se alcanzó un límite de uso. Inténtalo más tarde.")); else setStatus(textStatus); };
+    nativeStartTimer = setTimeout(() => {
+      if (utterance === current && !speech.started) pause(t("La respuesta está disponible como texto. El audio no está disponible."), true);
+    }, 5000);
+    setStatus(t("Preparando la respuesta…"));
+    speechSynthesis.speak(utterance);
   }
   async function selectNativeVoice() {
     if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
@@ -315,6 +328,7 @@ if (root) {
         const warmup = new SpeechSynthesisUtterance(""); warmup.volume = 0; speechSynthesis.speak(warmup);
       }
       context ||= new AudioEngine(); if (!automatic) await context.resume();
+      interrupt();
       const currentSession = await api("session", undefined, "GET");
       if (token !== epoch) return;
       checkingSession = false; session = currentSession;

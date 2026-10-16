@@ -52,7 +52,7 @@ async (page) => {
     window.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; } };
     Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: {
       getVoices: () => ['es', 'en', 'pt', 'it'].map(lang => ({ name: 'Microsoft Sabina', lang })),
-      speak: value => { window.__spoken.push(value.text); window.__utterance = value; window.__utterances.push(value); if (!window.__holdSpeech) queueMicrotask(() => value.onend?.()); }, cancel() { if (window.__utterance) window.__utterance.canceled = true; },
+      speak: value => { window.__spoken.push(value.text); window.__utterance = value; window.__utterances.push(value); queueMicrotask(() => value.onstart?.()); if (!window.__holdSpeech) queueMicrotask(() => value.onend?.()); }, cancel() { if (window.__utterance) window.__utterance.canceled = true; },
     } });
     window.__speakTurn = () => {
       const emit = value => window.__voicePort.onmessage?.({ data: new Float32Array(2048).fill(value) });
