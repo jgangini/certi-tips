@@ -211,10 +211,11 @@ class Store:
             if connection.execute("SELECT 1 FROM cc_requests WHERE session_hash=%s AND status='pending' "
                                   "AND active_until>now()", (token_hash,)).fetchone():
                 raise ChatError("Espera a que termine la consulta para borrar la conversación.", 409)
-            connection.execute("DELETE FROM cc_history WHERE session_hash=%s", (token_hash,))
-            connection.execute("DELETE FROM cc_continuity WHERE session_hash=%s", (token_hash,))
+            # Lock/invalidate request rows before deleting memory so a late completion cannot restore it.
             connection.execute("UPDATE cc_requests SET response=NULL,status=CASE WHEN status='pending' THEN 'failed' ELSE status END "
                                "WHERE session_hash=%s", (token_hash,))
+            connection.execute("DELETE FROM cc_history WHERE session_hash=%s", (token_hash,))
+            connection.execute("DELETE FROM cc_continuity WHERE session_hash=%s", (token_hash,))
 
     @staticmethod
     def spending(connection, purpose):

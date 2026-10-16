@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { runInNewContext } from "node:vm";
 import MarkdownIt from "markdown-it";
 import { Remarkable } from "remarkable";
 import { annotateHeadings, pageDocuments, corpusArtifacts, contentHash } from "../scripts/certichat-corpus.mjs";
@@ -54,14 +55,51 @@ test("chat Markdown formats emphasis, lists, quotes and code in current and rest
   }
 });
 
-test("CertiChat countdown appears only for an exhausted quota until its server renewal time", () => {
+test("CertiChat counts seconds and keeps an exhausted quota blocked until server confirmation", () => {
   const now = Date.parse("2026-10-11T12:00:00Z");
-  assert.equal(quotaText({ resetAt: "2026-10-11T18:00:00Z", remaining: 0 }, now), "Tus consultas se renovarán en 06:00");
-  assert.equal(quotaText({ resetAt: "2026-10-11T12:01:01Z", remaining: 0 }, now), "Tus consultas se renovarán en 00:02");
-  assert.equal(quotaText({ resetAt: "2026-10-12T12:00:00Z", remaining: -1 }, now), "Tus consultas se renovarán en 24:00");
+  assert.equal(quotaText({ resetAt: "2026-10-11T18:00:00Z", remaining: 0 }, now), "Tus consultas se renovarán en 06:00:00");
+  assert.equal(quotaText({ resetAt: "2026-10-11T18:00:00Z", remaining: 0 }, now + 1000), "Tus consultas se renovarán en 05:59:59");
+  assert.equal(quotaText({ resetAt: "2026-10-11T12:01:01Z", remaining: 0 }, now), "Tus consultas se renovarán en 00:01:01");
+  assert.equal(quotaText({ resetAt: "2026-10-12T12:00:00Z", remaining: -1 }, now), "Tus consultas se renovarán en 24:00:00");
   for (const remaining of [20, 19, 1, null, undefined, "0", NaN, Infinity]) assert.equal(quotaText({ resetAt: "2026-10-11T18:00:00Z", remaining, minuteRemaining: 0 }, now), "");
-  for (const resetAt of [null, undefined, "bad", "2026-10-11T11:00:00Z", "2026-10-11T12:00:00Z"]) assert.equal(quotaText({ resetAt, remaining: 0 }, now), "");
+  for (const resetAt of [null, undefined, "bad"]) assert.equal(quotaText({ resetAt, remaining: 0 }, now), "");
+  for (const resetAt of ["2026-10-11T11:00:00Z", "2026-10-11T12:00:00Z"]) assert.equal(quotaText({ resetAt, remaining: 0 }, now), "Tus consultas se renovarán en 00:00:00");
   assert.equal(quotaText(undefined, now), "");
+});
+
+test("quota expiry coalesces session checks, backs off failures and publishes only server updates", async () => {
+  const source = readFileSync(new URL("../assets/certichat.js", import.meta.url), "utf8");
+  let now = Date.parse("2026-10-11T12:00:00Z"), tick;
+  const requests = [], events = [], notice = {}, input = { setAttribute() {}, classList: { toggle() {} } };
+  const sandbox = {
+    quota: undefined, quotaNotice: notice, preview: false, busy: false, voiceBusy: false,
+    Date: { now: () => now, parse: Date.parse }, quotaText: value => quotaText(value, now),
+    chat: { shadowRoot: { querySelector: () => input }, disableSubmitButton(value) { this.disabled = value; } },
+    refreshVoice() {}, setInterval(callback, delay) { assert.equal(delay, 1000); tick = callback; },
+    window: { dispatchEvent: event => events.push(event) }, CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options.detail; } },
+    api(route, body, method) { assert.equal(route, "session"); assert.equal(body, undefined); assert.equal(method, "GET"); return new Promise((resolve, reject) => requests.push({ resolve, reject })); },
+  };
+  runInNewContext(`${source.slice(source.indexOf("  let quotaRefresh"), source.indexOf("\n  function persist()"))}\nfunction updateAccess(session) { updateQuota(session.quota); }`, sandbox);
+  const exhausted = { remaining: 0, resetAt: new Date(now + 1000).toISOString() };
+  const flush = () => new Promise(resolve => setImmediate(resolve));
+  sandbox.updateQuota(exhausted); tick();
+  assert.equal(events.length, 1); assert.equal(events[0].type, "certichat:quota"); assert.equal(events[0].detail.quota, exhausted);
+  assert.equal(requests.length, 0); assert.equal(input.contentEditable, "false");
+  now += 1000; tick(); tick();
+  assert.equal(requests.length, 1); assert.equal(events.length, 1); assert.equal(notice.textContent, "Tus consultas se renovarán en 00:00:00");
+  requests[0].reject(new Error("Offline")); await flush();
+  now += 4999; tick(); assert.equal(requests.length, 1);
+  now++; tick(); assert.equal(requests.length, 2);
+  requests[1].resolve({ quota: null }); await flush();
+  assert.equal(sandbox.chat.disabled, true); assert.equal(events.length, 1);
+  now += 5000; tick(); assert.equal(requests.length, 3);
+  requests[2].resolve({ quota: { ...exhausted } }); await flush();
+  assert.equal(events.length, 2); assert.equal(sandbox.chat.disabled, true);
+  now += 29999; tick(); assert.equal(requests.length, 3);
+  now++; tick(); assert.equal(requests.length, 4);
+  requests[3].resolve({ quota: { remaining: 20, resetAt: null } }); await flush();
+  assert.equal(notice.hidden, true); assert.equal(input.contentEditable, "true"); assert.equal(sandbox.chat.disabled, false);
+  assert.equal(events.length, 3); now += 60000; tick(); assert.equal(requests.length, 4); assert.equal(events.length, 3);
 });
 
 test("CertiChat includes unique verified section links with every sourced answer", () => {

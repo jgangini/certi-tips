@@ -2,19 +2,20 @@
 // Isolated local browser, mocked API in either build mode; no screenshots or paid calls.
 async (page) => {
   const base = new URL('/certitips/', page.url()).href;
+  await page.goto('about:blank');
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   const assert = (condition, message) => { if (!condition) throw new Error(message); };
   const calls = [], requests = [], errors = [], responses = new Map();
   const answer = '<img src="https://evil.invalid/leak" onerror="alert(1)">\n![imagen](https://evil.invalid/) [enlace](javascript:alert(1))\nLos agentes utilizan herramientas y consultan las guías para resolver una tarea. Revisa las fuentes de esta respuesta para ampliar los conceptos y practicar con los ejemplos publicados en el sitio.\n\n1. **DAMA**\n2. `OCI`';
   const guideURL = 'https://jgangini.github.io/certitips/1Z0-1157-26/agents/#conceptos-clave';
-  const guidePath = new URL(guideURL).pathname + new URL(guideURL).hash;
+  const guidePath = new URL(guideURL).pathname.replace('/certitips/', '/certitips/es/') + new URL(guideURL).hash;
   let quota = { remaining: 20, limit: 20, refreshHours: 6, resetAt: null, minuteRemaining: 2, retryAfter: 0 };
   let authenticated = true, available = true, sessionError = true, rateLimited = false, loseResponse = false, failOnce = 0, deletionError = false;
   let mode = 'VPS';
   let pendingSession, releaseSession;
   const waitForReply = async (text, canSubmit = true) => page.waitForFunction(({ expected, canSubmit }) => {
     const chat = document.querySelector('deep-chat'), last = chat?.getMessages().at(-1);
-    return last?.role === 'ai' && last.text.includes(expected) && chat.validateInput('Siguiente consulta') === canSubmit;
+    return !chat?.shadowRoot.querySelector('[role="textbox"]').innerText.trim() && last?.role === 'ai' && last.text.includes(expected) && chat.validateInput('Siguiente consulta') === canSubmit;
   }, { expected: text, canSubmit });
   const waitForReady = async () => page.waitForFunction(() => {
     return document.querySelector('deep-chat')?.shadowRoot?.querySelector('#certichat-quota') &&
@@ -117,6 +118,7 @@ async (page) => {
   await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
   const connecting = page.getByRole('status', { name: 'Conectando con el asistente', exact: true });
   await connecting.waitFor();
+  await page.waitForFunction(() => document.querySelector('deep-chat'));
   assert(await page.locator('[data-chat-status]').count() === 0 && await page.locator('[data-chat-messages]').isHidden(), 'Connection shows text or messages beside the initial spinner');
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   const spinner = page.locator('.certichat-spinner');
@@ -385,16 +387,19 @@ async (page) => {
   });
   assert(controlsSeparate, 'Chat launcher overlaps lesson completion');
   // Server quota fixtures exercise exhaustion and expiry without using paid API calls.
-  quota = { ...quota, remaining: 1, resetAt: new Date(Date.now() + 6 * 3600000).toISOString() };
+  quota = { ...quota, remaining: 1, resetAt: null };
   await page.getByRole('button', { name: 'CertiChat', exact: true }).click();
   await waitForReady();
+  const quotaNow = Date.now();
+  await page.clock.setFixedTime(new Date(quotaNow));
+  quota = { ...quota, resetAt: new Date(quotaNow + 65000).toISOString() };
   const input = page.getByRole('textbox', { name: 'Escribe tu consulta' });
   assert(await quotaNotice.isHidden() && await input.isEditable(), 'Last available question was blocked');
   await input.fill('Última consulta disponible');
   await input.press('Enter');
   await waitForReply(answer, false);
   await waitForReady();
-  assert(/^Tus consultas se renovarán en \d{2}:[0-5]\d$/.test(await quotaNotice.textContent()), 'Exhausted allowance has no HH:MM countdown');
+  assert((await quotaNotice.textContent()).endsWith('00:01:05'), 'Exhausted allowance has no HH:MM:SS countdown');
   assert(!(await input.isEditable()) && await input.getAttribute('aria-disabled') === 'true', 'Exhausted allowance leaves the textbox editable');
   assert(await submit.getAttribute('aria-disabled') === 'true', 'Exhausted allowance leaves submit enabled');
   const exhaustedCalls = calls.filter(item => item.path === '/api/chat').length;
@@ -405,13 +410,51 @@ async (page) => {
   await page.waitForTimeout(50);
   assert(calls.filter(item => item.path === '/api/chat').length === exhaustedCalls, 'Exhausted allowance sent another API request');
   assert(await page.locator('deep-chat').evaluate(element => JSON.stringify(element.getMessages())) === exhaustedTranscript, 'Blocking quota submission changed the conversation');
+  await page.locator('deep-chat').evaluate(element => { window.__quotaChat = element; });
+  for (const [elapsed, expected] of [[1000, '00:01:04'], [2000, '00:01:03']]) {
+    await page.clock.setFixedTime(new Date(quotaNow + elapsed));
+    await page.waitForFunction(expected => document.querySelector('deep-chat')?.shadowRoot?.querySelector('#certichat-quota')?.textContent.endsWith(expected), expected, { timeout: 2200 });
+  }
+  for (const width of [1280, 320]) {
+    await page.setViewportSize({ width, height: 740 });
+    for (const theme of ['light', 'dark']) {
+      await page.evaluate(theme => document.documentElement.dataset.theme = theme, theme);
+      const tag = await quotaNotice.evaluate(element => {
+        const holder = document.createElement('div'); holder.className = 'status-page';
+        const key = document.createElement('kbd'); key.textContent = 'F5'; holder.append(key); document.body.append(holder);
+        const style = getComputedStyle(element), reference = getComputedStyle(key);
+        const matching = ['backgroundColor', 'color', 'borderTopColor', 'borderTopWidth', 'borderRadius'].every(name => style[name] === reference[name]) && style.fontSize === getComputedStyle(document.querySelector('.diagram > span')).fontSize && style.paddingTop === '4px' && style.paddingRight === '8px';
+        const luminance = value => value.match(/[\d.]+/g).slice(0, 3).map(Number).map(v => v / 255).map(v => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4).reduce((sum, value, index) => sum + value * [.2126, .7152, .0722][index], 0);
+        const a = luminance(style.color), b = luminance(style.backgroundColor), box = element.getBoundingClientRect();
+        const result = { matching, contrast: (Math.max(a, b) + .05) / (Math.min(a, b) + .05), fits: box.left >= 0 && box.right <= innerWidth + 1 && element.scrollWidth <= element.clientWidth + 1, visible: !element.hidden && style.display !== 'none' };
+        holder.remove(); return result;
+      });
+      assert(tag.matching && tag.contrast >= 4.5 && tag.fits && tag.visible, `Quota tag differs from F5 or is unreadable at ${width}/${theme}: ${JSON.stringify(tag)}`);
+    }
+  }
+  pendingSession = new Promise(resolve => { releaseSession = resolve; });
+  const renewalCalls = calls.filter(item => item.path === '/api/session' && item.method === 'GET').length;
+  const renewal = page.waitForRequest(request => new URL(request.url()).pathname === '/api/session' && request.method() === 'GET');
+  await page.clock.setFixedTime(new Date(quotaNow + 65000));
+  await renewal;
+  await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('#certichat-quota').textContent.endsWith('00:00:00'));
+  assert(!(await input.isEditable()) && await submit.getAttribute('aria-disabled') === 'true', 'Local expiry enabled input while the quota GET is pending');
+  await page.clock.setFixedTime(new Date(quotaNow + 67000));
+  await page.waitForTimeout(1200);
+  assert(calls.filter(item => item.path === '/api/session' && item.method === 'GET').length === renewalCalls + 1, 'Quota renewal started concurrent session GETs');
+  const expiredResponse = page.waitForResponse(response => new URL(response.url()).pathname === '/api/session' && response.request().method() === 'GET');
+  releaseSession(); pendingSession = undefined;
+  await expiredResponse; await page.waitForTimeout(50);
+  assert(!(await input.isEditable()) && await submit.getAttribute('aria-disabled') === 'true' && (await quotaNotice.textContent()).endsWith('00:00:00'), 'A server quota still at zero enabled the composer');
+  assert(await page.locator('deep-chat').evaluate(element => element === window.__quotaChat && JSON.stringify(element.getMessages())) === exhaustedTranscript, 'Quota ticks or renewal recreated the chat or changed its transcript');
+  assert(calls.filter(item => item.path === '/api/chat').length === exhaustedCalls, 'Quota expiry automatically submitted a question');
   quota = { remaining: 20, limit: 20, refreshHours: 6, resetAt: null, minuteRemaining: 2, retryAfter: 0 };
-  await page.clock.setFixedTime(new Date(Date.now() + 6 * 3600000));
+  await page.clock.setFixedTime(new Date(quotaNow + 98000));
   await page.waitForFunction(() => {
     const root = document.querySelector('deep-chat')?.shadowRoot;
     return root?.querySelector('#certichat-quota')?.hidden && root.querySelector('[role="textbox"]')?.isContentEditable;
-  }, undefined, { timeout: 35000 });
-  assert(await quotaNotice.isHidden() && await input.isEditable(), 'Quota expiry did not restore the textbox and hide the countdown');
+  }, undefined, { timeout: 2500 });
+  assert(await quotaNotice.isHidden() && await input.isEditable(), 'Positive server quota did not restore the textbox and hide the countdown');
   await input.fill('Consulta después de renovar');
   assert(await submit.getAttribute('aria-disabled') !== 'true', 'Quota expiry left submit disabled');
   await input.press('Enter');
@@ -419,5 +462,5 @@ async (page) => {
   await waitForReady();
   assert(calls.filter(item => item.path === '/api/chat').length === exhaustedCalls + 1, 'Renewed allowance did not submit exactly one question');
   assert(errors.length === 0, `Page errors: ${errors.join('; ')}`);
-  return { checks: ['lazy local bundle', 'home answer hover has no graph selection border or tab stop', 'offline opens without banner or unsolicited error', 'offline Enter returns local feedback without API call', 'named submit and keyboard activation', 'Shift+Enter newline', 'incremental streaming locks repeated submit and clear', 'safe Markdown with compact lists and verified guide links in new and restored answers', 'guide links retain anchors and the open conversation', 'removed sources block stays absent', 'API contract', 'countdown only for exhausted allowance; input and submit block until expiry', 'minute rate limit does not exhaust the six-hour allowance', 'completed streaming history persists across navigation and reload without automatic submission', 'cancel preserves conversation', 'confirmed clear persists and preserves quota', 'errors inside chat and retry visibility', 'idempotent transport retry after reload', 'reload during streaming preserves UUID and avoids another generation', 'definitive failure retry', 'mobile fullscreen and desktop geometry', 'launcher visibility and close controls', 'Escape focus', 'unavailable answers locally without Turnstile or chat call', 'missing Turnstile fails closed with local feedback', 'Turnstile server handshake', 'dark theme', 'completion control coexistence'], requests: calls.length, errors };
+  return { checks: ['lazy local bundle', 'home answer hover has no graph selection border or tab stop', 'offline opens without banner or unsolicited error', 'offline Enter returns local feedback without API call', 'named submit and keyboard activation', 'Shift+Enter newline', 'incremental streaming locks repeated submit and clear', 'safe Markdown with compact lists and verified guide links in new and restored answers', 'guide links retain anchors and the open conversation', 'removed sources block stays absent', 'API contract', 'HH:MM:SS updates each second and preserves the transcript', 'minute rate limit does not exhaust the six-hour allowance', 'completed streaming history persists across navigation and reload without automatic submission', 'cancel preserves conversation', 'confirmed clear persists and preserves quota', 'errors inside chat and retry visibility', 'idempotent transport retry after reload', 'reload during streaming preserves UUID and avoids another generation', 'definitive failure retry', 'mobile fullscreen and desktop geometry', 'launcher visibility and close controls', 'Escape focus', 'unavailable answers locally without Turnstile or chat call', 'missing Turnstile fails closed with local feedback', 'Turnstile server handshake', 'dark theme', 'completion control coexistence', 'quota tag matches F5 colors and caption font in both themes at320/1280px', 'expiry stays blocked during a single held GET and zero server allowance; only positive quota restores input'], requests: calls.length, errors };
 }

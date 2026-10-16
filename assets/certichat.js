@@ -40,9 +40,9 @@ export function configureChatMarkdown(markdown, siteRoot) {
 
 export function quotaText(quota, now = Date.now()) {
   const reset = typeof quota?.resetAt === "string" ? Date.parse(quota.resetAt) : NaN;
-  if (!Number.isFinite(quota?.remaining) || quota.remaining > 0 || !Number.isFinite(reset) || reset <= now) return "";
-  const minutes = Math.ceil((reset - now) / 60000);
-  return t("Tus consultas se renovarán en {time}", {time: `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`});
+  if (!Number.isFinite(quota?.remaining) || quota.remaining > 0 || !Number.isFinite(reset)) return "";
+  const seconds = Math.max(0, Math.ceil((reset - now) / 1000));
+  return t("Tus consultas se renovarán en {time}", {time: [Math.floor(seconds / 3600), Math.floor(seconds / 60) % 60, seconds % 60].map(value => String(value).padStart(2, "0")).join(":")});
 }
 
 export function answerWithReferences(answer, sources, siteRoot) {
@@ -175,10 +175,22 @@ if (root) {
   const quotaNotice = document.createElement("div");
   quotaNotice.id = "certichat-quota";
   quotaNotice.hidden = true;
+  let quotaRefresh, quotaRefreshAfter = 0;
   function updateQuota(value = quota) {
+    const changed = value !== quota;
     quota = value;
+    if (changed) window.dispatchEvent(new CustomEvent("certichat:quota", { detail: { quota } }));
     quotaNotice.textContent = quotaText(quota);
     quotaNotice.hidden = !quotaNotice.textContent;
+    if (!preview && !quotaNotice.hidden && Date.parse(quota.resetAt) <= Date.now() && !quotaRefresh && Date.now() >= quotaRefreshAfter) {
+      const requestedQuota = quota;
+      // ponytail: one session check at expiry; keep the last quota until the server confirms renewal.
+      quotaRefresh = api("session", undefined, "GET").then(session => {
+        if (!Number.isFinite(session.quota?.remaining) || session.quota.remaining <= 0 && !Number.isFinite(Date.parse(session.quota.resetAt))) throw new Error("Quota unavailable");
+        quotaRefreshAfter = Date.now() + 30000;
+        if (quota === requestedQuota) updateAccess(session);
+      }).catch(() => { quotaRefreshAfter = Date.now() + 5000; }).finally(() => { quotaRefresh = undefined; });
+    }
     const input = chat?.shadowRoot.querySelector('[role="textbox"]');
     if (!input) return;
     const exhausted = !quotaNotice.hidden;
@@ -189,7 +201,7 @@ if (root) {
     chat.disableSubmitButton(exhausted || voiceBusy);
     refreshVoice(busy);
   }
-  setInterval(() => updateQuota(), 30000);
+  setInterval(() => updateQuota(), 1000);
 
   function persist() {
     // Deep Chat's simulated stream drops custom metadata; keep evidence aligned by response position.
@@ -320,7 +332,7 @@ if (root) {
       chat.messageStyles = { default: { shared: { bubble: { maxWidth: "92%", fontSize: "14px", lineHeight: "1.45" } }, ai: { bubble: { backgroundColor: "var(--hover)", color: "var(--ink)" } }, user: { bubble: { backgroundColor: "var(--accent)", color: "var(--on-red)" } } } };
       chat.messageStyles.loading = { message: { styles: { bubble: { backgroundColor: "var(--hover)", color: "var(--muted)", display: "flex", alignItems: "center", justifyContent: "center", width: "56px", height: "36px", padding: "0", boxSizing: "border-box" } } } };
       chat.remarkable = { html: false, applyHTML: false };
-      chat.auxiliaryStyle = "* { overflow-wrap: anywhere; } #messages, #text-input { scrollbar-color: var(--scrollbar) transparent; scrollbar-width: thin; } #chat-view { grid-template-rows: minmax(0, 1fr) auto auto; } #certichat-quota { color: var(--muted); text-align: center; font-size: 12px; line-height: 1.4; padding: 8px 12px; } #certichat-quota[hidden] { display: none; } a { color: var(--blue); text-decoration: underline; } a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; } @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }";
+      chat.auxiliaryStyle = "* { overflow-wrap: anywhere; } #messages, #text-input { scrollbar-color: var(--scrollbar) transparent; scrollbar-width: thin; } #chat-view { grid-template-rows: minmax(0, 1fr) auto auto; } #certichat-quota { justify-self: center; max-width: calc(100% - 24px); box-sizing: border-box; margin: 8px 12px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--chrome-bg); color: var(--muted); text-align: center; font-size: .68rem; font-variant-numeric: tabular-nums; line-height: 1.4; } #certichat-quota[hidden] { display: none; } a { color: var(--blue); text-decoration: underline; } a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; } @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }";
       // ponytail: the native completion class also covers restored history; no extra render pass or observers.
       // ponytail: override the native disabled filter on hover; the submission guard stays unchanged.
       chat.auxiliaryStyle += `.outer-message-container:last-child { margin-bottom: 10px; }
@@ -662,7 +674,7 @@ if (root) {
     confirmation.setAttribute("aria-busy", "true");
     try {
       const result = preview ? { quota } : await api("conversation", {}, "DELETE");
-      chat.clearMessages(); responseTraces.length = 0; completedTrace = undefined; pendingRequest = undefined; persist();
+      chat.clearMessages(); responseTraces.length = 0; completedTrace = undefined; completedRequest = undefined; pendingRequest = undefined; textNavigation = undefined; persist();
       window.dispatchEvent(new CustomEvent("certichat:cleared"));
       publishTrace(root.dataset.siteRoot, "idle");
       updateQuota(result.quota); if (!preview) setStatus(""); confirmation.close();

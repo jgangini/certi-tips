@@ -1,6 +1,9 @@
 """Shared 24-hour continuity and conservative voice accounting, using disposable PostgreSQL."""
 
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
+from threading import Event, get_ident
+from types import SimpleNamespace
 from dataclasses import replace
 from decimal import Decimal
 import os
@@ -255,3 +258,61 @@ def test_local_pilot_serializes_chat_and_voice_reservations_against_one_total(me
     with ThreadPoolExecutor(max_workers=2) as executor:
         assert sorted(executor.map(reserve, ("chat", "voice"))) == [False, True]
     assert memory_store.spend_breakdown()["voicePilotMicro"] == 3_000_000
+
+
+def test_clear_serializes_late_completion_and_preserves_quota_and_spending(memory_store, monkeypatch):
+    store, request_id = memory_store, str(uuid4())
+    old_id, _ = add_turn(store, 0, "voice", "Old shared memory")
+    store.begin_request("session", request_id, "input", "network", "voice")
+    reservation = store.reserve("chat", 100, "voice")
+    store.settle(reservation, 20)
+    with store.pool.connection() as connection:
+        connection.execute("UPDATE cc_requests SET active_until=now()-interval '1 second' WHERE request_id=%s", (request_id,))
+    quota, spending = store.quota("session", "voice"), store.spend_breakdown()
+    deleted, resume, finishing = Event(), Event(), Event()
+    threads, original = {}, store.pool.connection
+
+    @contextmanager
+    def observed_connection(*args, **kwargs):
+        with original(*args, **kwargs) as connection:
+            def execute(sql, *parameters):
+                if sql.startswith("UPDATE cc_requests SET status="):
+                    threads["finish_pid"] = connection.info.backend_pid
+                    finishing.set()
+                result = connection.execute(sql, *parameters)
+                if get_ident() == threads.get("clear") and sql.startswith("DELETE FROM cc_history"):
+                    deleted.set()
+                    assert resume.wait(5), "Clear test barrier timed out"
+                return result
+            yield SimpleNamespace(execute=execute)
+
+    monkeypatch.setattr(store.pool, "connection", observed_connection)
+
+    def clear():
+        threads["clear"] = get_ident()
+        store.clear_history("session")
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        clearing = executor.submit(clear)
+        try:
+            assert deleted.wait(2), "Clear never reached history deletion"
+            late = executor.submit(store.finish_request, "session", request_id,
+                {"answer": "Late answer", "contentVersion": VERSION, "educational": True},
+                "Late question", "voice", "Late continuity")
+            assert finishing.wait(2), "Late completion never started"
+            deadline = time.monotonic() + 2
+            while not late.done() and time.monotonic() < deadline:
+                with original() as connection:
+                    waiting = connection.execute("SELECT wait_event_type FROM pg_stat_activity WHERE pid=%s",
+                                                 (threads["finish_pid"],)).fetchone()
+                if waiting and waiting["wait_event_type"] == "Lock":
+                    break
+                time.sleep(.01)
+            assert late.done() or waiting and waiting["wait_event_type"] == "Lock", "Completion neither finished nor waited for clear"
+        finally:
+            resume.set()
+        clearing.result(timeout=3)
+        late.result(timeout=3)
+    assert store.history("session") == [] and store.continuity("session") is None
+    assert store.request_result("session", old_id) is None and store.request_result("session", request_id) is None
+    assert store.quota("session", "voice") == quota and store.spend_breakdown() == spending

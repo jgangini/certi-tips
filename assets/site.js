@@ -546,6 +546,7 @@ async function togglePresentation() {
 }
 present.addEventListener("click", togglePresentation);
 present.addEventListener("certivoice:activate", event => { event.detail.completion = togglePresentation(); });
+window.addEventListener("certichat:cleared", () => { delete dialog.dataset.voiceReturn; });
 dialog.addEventListener("certivoice:visibility", event => {
   const request = event.detail;
   if (request?.name === "suspend" && dialog.open) {

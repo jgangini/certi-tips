@@ -511,6 +511,19 @@ const settleVoice = () => new Promise(setImmediate);
 const unavailableVoice = { authenticated: true, available: true };
 const enabledVoice = { ...unavailableVoice, voice: { enabled: true } };
 
+test("an exhausted lecture pauses before advancing or requesting another segment", async () => {
+  const source = readFileSync(new URL("../assets/certivoice.js", import.meta.url), "utf8");
+  const lectureTurn = source.slice(source.indexOf("  async function lectureTurn("), source.indexOf("  async function say("));
+  const pauses = [], actions = [];
+  await vm.runInNewContext(`${lectureTurn}\nlectureTurn(true)`, {
+    lecture: { running: true, consent: true }, active: true, muted: false, controller: null, videoLocked: false,
+    quotaBlocked: () => true, t: text => text, pause: message => pauses.push(message),
+    performVoiceAction: action => actions.push(action),
+  });
+  assert.deepEqual(pauses, ["Se alcanzó un límite de uso. Inténtalo más tarde."]);
+  assert.deepEqual(actions, []);
+});
+
 test("a granted navigation handoff is consumed before permission awaits and resumes only once", async () => {
   const key = "certivoice:https://site.test/:navigation", now = 1000000, url = "http://127.0.0.1/course/";
   const storage = new Map([[key, JSON.stringify({ url, createdAt: now - 60000, session: true, pending: true, autoResume: true, resumeAt: now })]]);
@@ -709,6 +722,7 @@ test("chat shows native send when voice is unavailable and never stores voice er
   const buttons = Object.fromEntries(["start", "mute", "exit"].map(name => [name, { style: {}, dataset: {}, attributes: {}, setAttribute(name, value) { this.attributes[name] = value; }, addEventListener() {} }]));
   const chat = {
     dataset: {},
+    addEventListener() {},
     attributes: {}, setAttribute(name, value) { this.attributes[name] = value; }, removeAttribute(name) { delete this.attributes[name]; },
     getMessages: () => messages, addMessage: value => messages.push(value),
     shadowRoot: { querySelector(selector) {

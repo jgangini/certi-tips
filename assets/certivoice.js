@@ -10,11 +10,12 @@ if (root) {
   const navigationKey = `certivoice:${config.dataset.siteRoot}:navigation`;
   const playbackKey = `certivoice:${config.dataset.siteRoot}:playback`;
   const local = ["localhost", "127.0.0.1", "[::1]"], preview = local.includes(location.hostname) && !local.includes(new URL(config.dataset.api).hostname);
-  let session, voiceError = "", active = false, muted = false, context, release, detector, controller, playback = readPlayback(), speech, output, utterance, epoch = 0, widget, pending, pendingSince, pendingExpiry, lastActivity = 0, starting = false, checkingSession = false, rejectVerification;
+  let session, voiceError = "", active = false, muted = false, context, release, detector, controller, playback = readPlayback(), speech, output, utterance, epoch = 0, widget, pending, pendingSent = false, pendingSince, pendingExpiry, lastActivity = 0, starting = false, checkingSession = false, rejectVerification;
   const edge = document.querySelector("[data-voice-edge]");
   let lecture, lectureTimer, nativeVoice, lastExplained;
   let stopEdge, videoLocked = false, videoConfirmation;
   const chatParent = config.parentNode, chatNext = config.nextSibling;
+  const quotaBlocked = () => Number.isFinite(session?.quota?.remaining) && session.quota.remaining <= 0;
   const emit = (name, detail) => window.dispatchEvent(new CustomEvent(name, { detail }));
   function setStatus(text, error = false) {
     if (error && (active || starting)) { pause(text, true); return; }
@@ -32,7 +33,7 @@ if (root) {
       indicator.setAttribute("title", message); indicator.setAttribute("aria-label", message);
     }
     config.dataset.voiceMode = String(Boolean(active || starting || resume));
-    emit("certivoice:state", { enabled, active: active || starting, phase, error: voiceError, muted, locked: videoLocked, retry: Boolean(pending), resume });
+    emit("certivoice:state", { enabled, quotaBlocked: quotaBlocked(), active: active || starting, phase, error: voiceError, muted, locked: videoLocked, retry: Boolean(pending && pendingSent), resume });
   }
   function interrupt() {
     if (speech) speech.after = null;
@@ -139,10 +140,12 @@ if (root) {
     savePlayback(); detector?.reset(); lastActivity = Date.now();
     setStatus(muted ? t("Micrófono silenciado.") : t("Te escucho…"));
     if (speech.after) { const after = speech.after; speech.after = null; after(); return; }
+    if (quotaBlocked()) { pause(t("Se alcanzó un límite de uso. Inténtalo más tarde.")); return; }
     if (lecture?.running && lecture.consent && !muted) lectureTimer = setTimeout(() => lectureTurn(true), 0);
   }
   async function lectureTurn(advance = false) {
     if (!lecture?.running || !lecture.consent || !active || muted || controller || videoLocked) return;
+    if (quotaBlocked()) { pause(t("Se alcanzó un límite de uso. Inténtalo más tarde.")); return; }
     const token = epoch;
     try {
       const viewer = document.querySelector("#diagram-viewer.is-presenting[open]");
@@ -191,7 +194,7 @@ if (root) {
     utterance = new SpeechSynthesisUtterance(pronunciation.text); utterance.voice = nativeVoice; utterance.lang = nativeVoice.lang;
     utterance.onboundary = event => { if (speech.track && playback && Number.isInteger(event.charIndex)) playback.heardCharacters = Math.min(5000, offset + pronunciation.sourceIndex(event.charIndex)); };
     utterance.onend = () => finishSpeech(offset, text);
-    utterance.onerror = () => { utterance = null; if (lecture) lecture.running = false; setStatus(textStatus); };
+    utterance.onerror = () => { utterance = null; if (lecture) lecture.running = false; if (speech.after) { const after = speech.after; speech.after = null; after(); } else if (quotaBlocked()) pause(t("Se alcanzó un límite de uso. Inténtalo más tarde.")); else setStatus(textStatus); };
     speechSynthesis.speak(utterance); setStatus(t("Hablando. Puedes interrumpir."));
   }
   async function selectNativeVoice() {
@@ -214,10 +217,12 @@ if (root) {
   async function submitPending(token) {
     expireMemory();
     if (!pending || controller) return;
+    if (quotaBlocked() && !pendingSent) { clearPending(); pause(t("Se alcanzó un límite de uso. Inténtalo más tarde.")); return; }
     voiceError = "";
     controller = new AbortController(); const abort = controller, timer = setTimeout(() => abort.abort(), 130000);
     setStatus(t("Preparando la respuesta…")); emit("certivoice:busy", true);
     try {
+      pendingSent = true;
       const result = await api("voice", pending, "POST", abort.signal);
       if (token !== epoch || !active) return;
       if (result.requestId !== pending.requestId || typeof result.answer !== "string" || result.answer.length > 12000 || typeof result.transcript !== "string" || result.transcript.length > 1500) throw new Error(t("La respuesta de voz no es válida."));
@@ -261,10 +266,14 @@ if (root) {
       if (error.status && !(error.status === 409 && error.code === "request_pending")) clearPending();
       if (error.code === "voice_contract") { voiceError = error.message; await say(error.message, null, undefined, token); return; }
       pause((error.name === "AbortError" ? t("La consulta tardó demasiado. Pulsa Reintentar para recuperar su resultado.") : error.message || t("Sin conexión. Vuelve a intentarlo.")) + wait, true);
+      if (error.status === 429) {
+        const paused = epoch;
+        try { const value = await api("session", undefined, "GET"); if (paused === epoch) emit("certichat:session", value); } catch { /* Keep the server limit error until session recovery succeeds. */ }
+      }
     } finally {
       clearTimeout(timer); if (controller === abort) controller = null;
       if (token === epoch) detector?.reset();
-      if (!controller) { emit("certivoice:busy", false); setStatus(status.textContent); }
+      if (!controller) { emit("certivoice:busy", false); if (active && quotaBlocked() && !output && !utterance) pause(t("Se alcanzó un límite de uso. Inténtalo más tarde.")); else setStatus(status.textContent); }
     }
   }
   async function navigate(action) {
@@ -294,6 +303,8 @@ if (root) {
     if (starting) return;
     if (config.hidden) { pause(t("La voz no está disponible en este momento."), false, false); return; }
     expireMemory();
+    const recovery = retry && pending && pendingSent;
+    if (quotaBlocked() && !recovery) return;
     starting = true; checkingSession = true; const token = ++epoch;
     setStatus(t("Activando el micrófono…"));
     try {
@@ -307,10 +318,15 @@ if (root) {
       if (session.available === false || config.hidden) throw new Error(t("La voz no está disponible en este momento."));
       applySession(session);
       if (!automatic && (!session.authenticated || session.verificationRequired)) await verifyAccess();
+      emit("certichat:session", session);
+      if (quotaBlocked() && !recovery) throw new Error(t("Se alcanzó un límite de uso. Inténtalo más tarde."));
       if (!session.authenticated || session.verificationRequired) throw new Error(t("Verifica tu acceso para continuar."));
       if (token !== epoch) return;
       nativeVoice ||= await selectNativeVoice();
       if (token !== epoch) return;
+      // Recover the already submitted UUID without opening another microphone session.
+      if (quotaBlocked() && recovery) { active = true; starting = false; await submitPending(token); return; }
+      if (quotaBlocked()) throw new Error(t("Se alcanzó un límite de uso. Inténtalo más tarde."));
       detector = new VoiceActivity(context.sampleRate);
       const stopCapture = await captureVoice(context, chunk => {
         if (!active || muted) return;
@@ -322,14 +338,14 @@ if (root) {
         }
         if (event.chunks) { lastActivity = Date.now(); send(event.chunks).catch(() => pause(t("No se pudo preparar el audio."), true)); }
       }, () => pause(t("El micrófono se desconectó. Vuelve a activar la voz."), true));
-      if (token !== epoch) { stopCapture.stop(); return; }
+      if (token !== epoch || quotaBlocked()) { stopCapture.stop(); if (token === epoch) pause(t("Se alcanzó un límite de uso. Inténtalo más tarde.")); return; }
       release = stopCapture;
       if (automatic) {
         // Capture permission is already granted; bound browsers that still require a playback gesture.
         let timer;
         try { await Promise.race([context.resume(), new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(t("Pulsa Reanudar para continuar con el micrófono."))), 1500); })]); }
         finally { clearTimeout(timer); }
-        if (token !== epoch) return;
+        if (token !== epoch || quotaBlocked()) { stopCapture.stop(); if (token === epoch) pause(t("Se alcanzó un límite de uso. Inténtalo más tarde.")); return; }
       }
       const resume = pendingNavigation(readNavigation(), location.href, siteBase);
       try { sessionStorage.setItem(navigationKey, JSON.stringify({ url: location.href, createdAt: resume?.createdAt ?? Date.now(), session: true })); } catch { /* Voice remains usable without session continuity. */ }
@@ -348,14 +364,21 @@ if (root) {
   function clearNavigation() { try { sessionStorage.removeItem(navigationKey); } catch { /* Optional continuity. */ } }
   function readPlayback() { try { const raw = sessionStorage.getItem(playbackKey); return raw?.length <= 26000 ? restoreVoicePlayback(JSON.parse(raw)) : null; } catch { return null; } }
   function savePlayback() { playback = restoreVoicePlayback(playback); try { if (playback) sessionStorage.setItem(playbackKey, JSON.stringify(playback)); else sessionStorage.removeItem(playbackKey); } catch { /* Playback also works without continuity storage. */ } }
-  function clearPending() { pending = null; pendingSince = undefined; clearTimeout(pendingExpiry); setStatus(status.textContent); }
+  function clearPending() { pending = null; pendingSent = false; pendingSince = undefined; clearTimeout(pendingExpiry); setStatus(status.textContent); }
   function expireMemory() { const saved = readNavigation(); if (saved && !voiceMemoryFresh(saved.createdAt)) pause(t("Voz pausada por inactividad."), false, false); if (pending && !voiceMemoryFresh(pendingSince)) clearPending(); if (playback && !voiceMemoryFresh(playback.createdAt)) { playback = null; savePlayback(); } }
   function toggleMute() { if (videoLocked || !active && !starting) return; if (lecture) lecture.running = false; clearTimeout(lectureTimer); muted = !muted; release?.setMuted(muted); detector?.reset(); lastActivity = Date.now(); setStatus(muted ? t("Micrófono silenciado.") : t("Te escucho…")); }
   window.addEventListener("certichat:activity", () => { if (active || starting || readNavigation()) pause(t("Voz pausada mientras usas el chat."), false, false); });
   window.addEventListener("certichat:session", event => { if (event.detail) applySession(event.detail); });
+  window.addEventListener("certichat:quota", event => {
+    if (!session || !event.detail?.quota) return;
+    const blocked = quotaBlocked();
+    session = { ...session, quota: event.detail.quota };
+    if (blocked && !quotaBlocked()) voiceError = "";
+    setStatus(status.textContent);
+  });
   window.addEventListener("certivoice:state-request", () => setStatus(status.textContent));
   window.addEventListener("certivoice:command", event => { if (event.detail === "exit") pause(undefined, false, false); else if (event.detail === "mute") toggleMute(); else if (event.detail === "interrupt" && active) { if (lecture) lecture.running = false; clearTimeout(lectureTimer); interrupt(); detector?.reset(); setStatus(t("Te escucho…")); } else if (event.detail === "start" && !config.hidden && !active && !starting) start(Boolean(pending)); });
-  window.addEventListener("certichat:cleared", () => { pause(undefined, false, false); clearPending(); playback = null; clearNavigation(); try { sessionStorage.removeItem(playbackKey); } catch { /* Optional continuity. */ } });
+  window.addEventListener("certichat:cleared", () => { pause(undefined, false, false); clearPending(); playback = null; speech = null; lastExplained = null; clearNavigation(); try { sessionStorage.removeItem(playbackKey); } catch { /* Optional continuity. */ } });
   document.addEventListener("click", event => {
     if (!active || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
     const link = event.target.closest?.("a[href]");

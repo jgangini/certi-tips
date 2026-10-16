@@ -1,6 +1,7 @@
 import { siteBase } from "./i18n.js";
 
 const returnKey = `certivoice:${siteBase}:practice-return`;
+if (typeof window !== "undefined") window.addEventListener("certichat:cleared", () => { try { sessionStorage.removeItem(returnKey); } catch { /* Tab storage is optional. */ } });
 export function practiceReturnURL(now = Date.now()) {
   try {
     const value = JSON.parse(sessionStorage.getItem(returnKey));

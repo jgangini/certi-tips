@@ -91,5 +91,5 @@ if (doc?.querySelector("[data-certichat]")) {
     const heading = [...doc.querySelectorAll(".prose :is(h2,h3)[data-source-id]")].find(element => element.dataset.sourceId === event.detail.targetId);
     if (heading) { captureDiagram(); record({ kind: "section", state: "highlighted", targetId: heading.dataset.sourceId, pageUrl: voicePageURL(doc) }); }
   });
-  window.addEventListener("certichat:cleared", () => save([]));
+  window.addEventListener("certichat:cleared", () => { previousDiagram = undefined; practiceSignature = ""; save([]); });
 }
