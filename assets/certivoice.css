@@ -2,7 +2,7 @@
 .certivoice-edge {
   --voice-level: 0;
   --voice-spread: calc(15.47px + 20.23px * var(--voice-level));
-  --voice-corner: calc(52px + 30px * var(--voice-level));
+  --voice-corner: calc(42px + 24px * var(--voice-level));
   position: fixed; inset: 0; z-index: 10000; pointer-events: none; opacity: 0; border-radius: 0;
   transition: opacity .2s;
 }
