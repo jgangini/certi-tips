@@ -1,7 +1,7 @@
 .certivoice-verification { margin-top: 8px; }
 .certivoice-edge {
   --voice-level: 0;
-  --voice-spread: calc(26px + 34px * var(--voice-level));
+  --voice-spread: calc(18.2px + 23.8px * var(--voice-level));
   --voice-corner: calc(52px + 30px * var(--voice-level));
   position: fixed; inset: 0; z-index: 10000; pointer-events: none; opacity: 0; border-radius: 0;
   background: conic-gradient(from 45deg, #05d9ff, #3972ff, #a646ff, #ff35ad, #ff665c, #ffd84f, #05d9ff);

@@ -694,7 +694,7 @@ test("layout moves the contents into the sidebar while preserving reading and si
   assert.match(html, /<aside[^]*href="\/certitips\/EXAM-1\/agents\/#conceptos-clave"[^]*<\/aside>/);
   assert.match(html, /<article class="prose"><h2 id="conceptos-clave">Conceptos<\/h2><\/article>/);
   assert.match(html, /class="site-footer"/);
-  assert.match(html, /Hecho con .* en Certi<span class="brand-accent">Tips<\/span> .* Desarrollado por <a href="https:\/\/www\.linkedin\.com\/in\/jgangini\/"[^>]*>Joel Gangini<\/a>/);
+  assert.match(html, /Hecho con .* en <span class="footer-brand">CertiTips<\/span> .* Desarrollado por <a href="https:\/\/www\.linkedin\.com\/in\/jgangini\/"[^>]*>Joel Gangini<\/a>/);
   assert.doesNotMatch(html, /Mejorar esta guía/);
   assert.match(html, /id="diagram-viewer"/);
   assert.match(html, /data-mark-complete="agents"/);
