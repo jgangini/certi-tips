@@ -18,8 +18,9 @@ async (page) => {
   });
   await page.route('http://127.0.0.1:18741/**', async route => {
     const request = route.request(), path = new URL(request.url()).pathname;
-    const headers = { 'access-control-allow-origin': origin, 'access-control-allow-credentials': 'true', 'access-control-allow-methods': 'GET,POST,DELETE,OPTIONS', 'access-control-allow-headers': 'x-certichat,content-type' };
+    const headers = { 'access-control-allow-origin': origin, 'access-control-allow-credentials': 'true', 'access-control-allow-methods': 'GET,POST,DELETE,OPTIONS', 'access-control-allow-headers': 'x-certichat,content-type,traceparent,x-request-id' };
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    if (path === '/api/events') return route.fulfill({ status: 204, headers });
     const body = request.postDataJSON(); calls.push({ path, method: request.method(), body });
     if (path === '/api/voice') {
       const result = replies.shift();
@@ -103,7 +104,7 @@ async (page) => {
     if (await page.locator('#certichat-panel').isHidden()) await page.locator('[data-chat-open]').click();
     await wave.waitFor({ state: 'visible' });
   };
-  const listen = async () => { await wave.click(); await phase('listening'); };
+  const listen = async () => { if (await page.locator('#certichat-panel').isHidden()) await page.locator('[data-chat-open]').click(); await wave.click(); await phase('listening'); };
   const turn = async (action, extra = {}, followups = []) => {
     replies.push({ answer: '', transcript: 'Una orden de navegación.', educational: false, sources: [], contentVersion: 'test', action, ...extra }, ...followups);
     const response = page.waitForResponse(value => new URL(value.url()).pathname === '/api/voice');
@@ -476,6 +477,7 @@ async (page) => {
 
   await open('es/1Z0-1157-26/agents/'); if (await exit.isVisible()) await exit.click();
   const clearConversation = async () => {
+    if (await page.locator("#certichat-panel").isHidden()) await page.locator("[data-chat-open]").click();
     await page.waitForFunction(() => !document.querySelector('[data-chat-clear]').disabled);
     await page.locator('[data-chat-clear]').click(); await page.locator('[data-chat-confirm-yes]').click();
     await page.waitForFunction(() => !document.querySelector('[data-chat-confirm-yes]').closest('dialog').open);
@@ -483,6 +485,7 @@ async (page) => {
     assert((await activity()).length === 0, 'Clear retained or immediately reinserted the current activity');
   };
   const sendChat = async text => {
+    if (await page.locator("#certichat-panel").isHidden()) await page.locator("[data-chat-open]").click();
     const input = page.locator('deep-chat [role="textbox"]');
     await input.fill(text);
     await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('.input-button.inside-end:not(.custom-button)')?.getAttribute('aria-disabled') !== 'true');

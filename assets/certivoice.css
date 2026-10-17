@@ -6,17 +6,9 @@
   position: fixed; inset: 0; z-index: 10000; pointer-events: none; opacity: 0; border-radius: 0;
   background: conic-gradient(from 45deg, #05d9ff, #3972ff, #a646ff, #ff35ad, #ff665c, #ffd84f, #05d9ff);
   background-size: 150% 150%;
-  mask: linear-gradient(to bottom, #fff, #ffffffd9 5px, #ffffff66 14px, transparent var(--voice-spread)),
-    linear-gradient(to top, #fff, #ffffffd9 5px, #ffffff66 14px, transparent var(--voice-spread)),
-    linear-gradient(to right, #fff, #ffffffd9 5px, #ffffff66 14px, transparent var(--voice-spread)),
-    linear-gradient(to left, #fff, #ffffffd9 5px, #ffffff66 14px, transparent var(--voice-spread)),
-    radial-gradient(circle at bottom right, transparent 42%, #ffffffb3 82%, #fff) top left / var(--voice-corner) var(--voice-corner) no-repeat,
-    radial-gradient(circle at bottom left, transparent 42%, #ffffffb3 82%, #fff) top right / var(--voice-corner) var(--voice-corner) no-repeat,
-    radial-gradient(circle at top right, transparent 42%, #ffffffb3 82%, #fff) bottom left / var(--voice-corner) var(--voice-corner) no-repeat,
-    radial-gradient(circle at top left, transparent 42%, #ffffffb3 82%, #fff) bottom right / var(--voice-corner) var(--voice-corner) no-repeat;
-  filter: blur(2px);
   transition: opacity .2s;
 }
+.certivoice-edge .voice-edge-cutout { x: var(--voice-spread); y: var(--voice-spread); width: calc(100% - 2 * var(--voice-spread)); height: calc(100% - 2 * var(--voice-spread)); rx: var(--voice-corner); }
 .certivoice-edge:is([data-state="listening"], [data-state="processing"], [data-state="speaking"], [data-state="paused"]) { opacity: .86; animation: certivoice-glow 6s ease-in-out infinite alternate; }
 .certivoice-edge[data-state="paused"] { opacity: .6; }
 .certivoice-edge[data-state="processing"] { animation-duration: 3s; }

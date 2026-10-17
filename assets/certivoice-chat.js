@@ -1,11 +1,11 @@
 import { t } from "./i18n.js";
 import { voiceContext } from "./certivoice-actions.js";
 
-export function installVoiceChatControls(chat, changeLayout = change => change()) {
+export function installVoiceChatControls(chat) {
   let state = { enabled: false, active: false, muted: false }, requestBusy = false;
   const quotaBlocked = () => state.quotaBlocked || chat.shadowRoot?.querySelector('[role="textbox"]')?.getAttribute("aria-disabled") === "true";
   let hints, hideHintsTimer, hintsTimer, hintSequence = 0, lastHint;
-  const hintPointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+  const hintPointer = window.matchMedia("(min-width: 801px) and (hover: hover) and (pointer: fine)");
   const hintsAllowed = () => hintPointer.matches && state.enabled && (state.active || state.resume) && ["listening", "paused"].includes(state.phase) && !state.locked && !quotaBlocked();
   function hideHints() {
     clearTimeout(hideHintsTimer);
@@ -81,9 +81,9 @@ export function installVoiceChatControls(chat, changeLayout = change => change()
     // ponytail: one local timer, at most three bubbles; every replacement rechecks current controls.
     if (!still) hintsTimer = setTimeout(rotateHints, hints.children.length < Math.min(3, examples.length) ? 650 : 3500);
   }
-  function showHints() {
+  function showHints(event) {
     clearTimeout(hideHintsTimer);
-    if (!hintsAllowed() || chat.shadowRoot.querySelector('[data-voice-command="mute"]:hover, [data-voice-command="exit"]:hover')) { hideHints(); return; }
+    if (!hintsAllowed() || event?.type !== "focusin" && chat.shadowRoot.querySelector('[data-voice-command="mute"]:hover, [data-voice-command="exit"]:hover')) { hideHints(); return; }
     if (!hints) {
       hints = document.createElement("div"); hints.id = "certivoice-hints"; hints.dataset.voiceHints = "";
       hints.setAttribute("part", "voice-hints"); hints.setAttribute("role", "tooltip"); hints.setAttribute("aria-live", "off");
@@ -118,7 +118,8 @@ export function installVoiceChatControls(chat, changeLayout = change => change()
       // Deep Chat's visual disabled state still needs an availability and busy guard.
       if (current === "disabled" || command === "mute" && state.locked || command === "start" && (!state.enabled || requestBusy || quotaBlocked() && !state.retry)) return;
       const dispatch = () => window.dispatchEvent(new CustomEvent("certivoice:command", { detail: command }));
-      if (command === "exit") changeLayout(dispatch, true); else dispatch();
+      const close = command === "exit" && chat.closest?.(".certichat")?.querySelector("[data-chat-close]");
+      if (close) close.click(); else dispatch();
       // Deep Chat focuses the textbox after every custom click; voice controls should not open the mobile keyboard.
       queueMicrotask(() => { chat.shadowRoot?.querySelector('[role="textbox"]')?.blur(); hideHints(); });
     },
@@ -141,6 +142,8 @@ export function installVoiceChatControls(chat, changeLayout = change => change()
       target?.focus(); hideHints();
     });
   };
+
+  chat.auxiliaryStyle = (chat.auxiliaryStyle || "") + ' @media (max-width: 800px) { :host([data-voice-mode]) #input { height: 52px !important; } :host([data-voice-mode]) #text-input-container { min-height: 0 !important; } :host([data-voice-mode]) .custom-button { width: var(--voice-control-size, 44px) !important; height: var(--voice-control-size, 44px) !important; } :host([data-voice-mode]) [data-voice-command="mute"], :host([data-voice-resume="true"]) [data-voice-command="start"] { inset-inline-end: calc(36px + var(--voice-control-size, 44px)) !important; } :host([data-voice-mode]) [data-voice-command="exit"] { inset-inline-end: 12px !important; background: #fff !important; border-radius: 50% !important; } :host([data-voice-mode]) [data-voice-command="exit"] [data-certivoice-icon] { color: #111827 !important; } :host([data-voice-mode]) [data-voice-command="mute"][aria-pressed="true"] { border-radius: 50% !important; border: 1px solid var(--red) !important; background: color-mix(in srgb, var(--red) 12%, transparent) !important; } :host([data-voice-mode]) #certivoice-phase { left: 20px; right: calc(56px + 2 * var(--voice-control-size, 44px)); } :host([data-voice-mode]) [data-certivoice-icon] { width: 22px !important; height: 22px !important; } } @media (max-width: 480px) { :host([data-voice-mode]) [data-certivoice-icon] { width: 17px !important; height: 17px !important; } }';
 
   function refresh(busy = false) {
     requestBusy = busy;

@@ -348,3 +348,12 @@ La selección incluyó preguntas simples, compuestas, tres variantes de DAMA/OCI
 El corpus vigente contiene 528 documentos derivados de 50 Markdown: 50 introducciones, 279 apartados, 198 preguntas explicadas y una portada. La evaluación reutilizó el índice existente; no volvió a pagar su extracción. Un cambio de organización o URL no exige reconstruirlo si el conjunto de IDs, títulos, cursos y textos sigue coincidiendo.
 
 En la aceptación pública inicial desde GitHub Pages se verificaron Turnstile y cookie persistente, respuesta con las tres certificaciones Foundation y fuente en la portada, explicación de región frente a dominio de disponibilidad con sección válida, y rechazo de una petición ajena al sitio que intentaba cambiar el rol. Borrar y recargar conservaron la cuota. Estas comprobaciones de acceso son independientes de la evaluación del modelo.
+
+
+## Registros operativos correlacionados
+
+La API emite eventos JSON de esquema1 a la salida del contenedor: UTC, severidad, servicio, evento, `trace_id`, `span_id`, `request_id`, ruta, estado y duración. Acepta `traceparent` W3C y `X-Request-ID` válidos; los sustituye por valores propios si no lo son y los devuelve en respuesta. No registra cuerpos, IP, cookies, consultas URL, transcripciones ni audio. Las excepciones de voz conservan sólo fase, código y estado. El middleware cubre también rechazos de guardas y respuestas fallidas; omite health satisfactorio.
+
+`POST /api/events` admite hasta12 eventos tipados/8192bytes de una sesión verificada, con el mismo origen y CSRF; utiliza un rate limit separado y no consume cuota de preguntas ni gasto de proveedor. Los eventos `browser.*` son observaciones del cliente. La recepción no demuestra audibilidad. El cliente agrupa cada2segundos, acota24elementos en memoria y deja de enviar ante fallo, sin reintentos ni efecto sobre la voz.
+
+`./scripts/certichat-logs.ps1 -Since 10m` muestra sólo estos JSON por SSH; `-TraceId <32hex>` filtra una traza y `-Follow` sigue hasta55segundos. Docker conserva10MB×3 por contenedor. Grafana Alloy/Loki puede consumir este formato sin cambiar el código; no hay lector público ni exportación a terceros instalada por esta corrección. El procedimiento del agente está en [.codex/observabilidad-certichat.md](../../.codex/observabilidad-certichat.md).

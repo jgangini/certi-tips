@@ -1,0 +1,25 @@
+# Observabilidad de CertiChat
+
+Al depurar una incidencia de voz o API, consultar primero los eventos reales del despliegue vigente. El navegador y la API comparten un `trace_id` W3C; cada solicitud tiene `request_id` y `span_id`. La traza de la pestaña dura como máximo 24 horas desde su creación y atraviesa la navegación sin renovar esa fecha. `data-voice-trace` en el nodo `[data-certichat]` permite identificarla en DOM; no es una credencial.
+
+## Flujo de diagnóstico del agente
+
+1. Verificar commit de Pages y versión del backend. Mantener separadas la reproducción con hardware, las simulaciones y la comprobación de publicación.
+2. Leer `./scripts/certichat-logs.ps1 -Since 10m`; filtrar `-TraceId <32 hex>` cuando esté disponible. Durante una prueba del usuario, añadir `-Follow`; termina a los 55 segundos y puede repetirse mientras la depuración siga activa. Guardar artefactos sólo en `output/`, nunca conversaciones o credenciales en instrucciones.
+3. Correlacionar `http.request`, `voice.request`, `voice.complete`/`voice.failure` y `browser.*`. Registrar hipótesis, evento que la respalda, cambio mínimo y resultado. Un HTTP200 prueba transporte, no salida audible. `speech.start` prueba el evento nativo, no que haya sonido por el altavoz.
+4. Después de cada cambio, ejecutar regresiones pertinentes, publicar mediante el flujo autorizado y repetir la comprobación de registros. Investigar proactivamente un nuevo fallo observado durante esa prueba antes de declarar éxito. No lanzar consultas pagadas, renovar límites, reconstruir índices, cambiar modelos ni habilitar temporizadores de indexación para generar evidencia de logs.
+5. Si faltan eventos del dispositivo, pedir una reproducción después de recargar la publicación; no atribuir un fallo de iPhone a un mock. En iOS, un documento nuevo requiere Reanudar por toque; no forzar una narración automática que acabe en timeout y aviso amarillo.
+
+## Contrato de registros
+
+Cada línea es JSON con `schema_version:1`, `timestamp` UTC RFC3339, `severity`, `service`, `event`, `trace_id`, `span_id` y `request_id`. Los eventos HTTP añaden ruta de plantilla, método, estado y duración; no registran consultas URL, IP, cabeceras, cookies ni cuerpos. `voice.*` añade fase, salida solicitada, nombre de acción y código de error, sin transcripción, respuesta o audio. La fuente `server` es una observación del servicio; `browser` es diagnóstico aportado por el cliente, no una prueba de hardware.
+
+`POST /api/events` exige sesión verificada, origen/CSRF, JSON de hasta 8192 bytes y como máximo 12 eventos de esquema estricto. Usa un bucket separado del rate limiter existente, sin consumir cuota de preguntas ni reservar coste de proveedor. El navegador agrupa cada dos segundos, conserva como máximo 24 eventos en RAM y abandona la telemetría si falla: no repite llamadas ni interrumpe la voz. El envío keepalive al salir es de mejor esfuerzo, no un ledger transaccional.
+
+Eventos de cliente: `state`, `context`, `capture`, `speech`, `api`, `action`, `navigation`; guardan sólo metadatos enumerados. Nunca añadir el texto de estado a los logs: puede contener una respuesta completa. El inicio nativo ausente tiene plazo de cinco segundos; una pista `mute`/`ended` o contexto interrumpido no debe quedar en Listening.
+
+## Consulta e integración futura
+
+El driver JSON de Docker conserva su rotación de 10 MB × 3; no hay endpoint público para leer logs. El script opera por SSH de sólo lectura. El formato se puede ingerir mediante `loki.source.docker` de Grafana Alloy y procesar como JSON en Loki; servicio/entorno son etiquetas de baja cardinalidad. Mantener `trace_id`, `span_id` y `request_id` como campos consultables, no como etiquetas. No instalar ni enviar datos a un servicio externo sin el encargo correspondiente.
+
+Referencias: [W3C Trace Context](https://www.w3.org/TR/trace-context/), [Grafana Alloy: loki.source.docker](https://grafana.com/docs/alloy/latest/reference/components/loki/loki.source.docker/). La rotación y los límites son decisiones locales de CertiChat, no garantías de esos servicios.

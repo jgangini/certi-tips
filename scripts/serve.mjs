@@ -24,7 +24,7 @@ if (!Number.isInteger(chatProxyPort) || chatProxyPort < 0 || chatProxyPort > 655
 const chatRoutes = {
   "/api/health": ["GET"], "/api/session": ["GET", "POST"],
   "/api/graph": ["GET"], "/api/chat": ["POST"],
-  "/api/voice": ["POST"], "/api/conversation": ["DELETE"],
+  "/api/events": ["POST"], "/api/voice": ["POST"], "/api/conversation": ["DELETE"],
 };
 
 function proxyChat(request, response, url, origin) {
@@ -51,13 +51,13 @@ function proxyChat(request, response, url, origin) {
   }
   // ponytail: opt-in loopback bridge for isolated previews; the shared API keeps its 4173 origin policy.
   const headers = { Origin: "http://127.0.0.1:4173", "X-CertiChat": "1" };
-  for (const name of ["content-type", "content-length", "cookie"])
+  for (const name of ["content-type", "content-length", "cookie", "traceparent", "x-request-id"])
     if (request.headers[name]) headers[name] = request.headers[name];
   if (request.headers["transfer-encoding"] === "chunked") headers["Transfer-Encoding"] = "chunked";
   const upstream = http.request({ hostname: "127.0.0.1", port: chatProxyPort, path: url.pathname, method: request.method, headers }, incoming => {
     if (response.writableEnded || response.destroyed) { incoming.destroy(); return; }
     const forwarded = { "Cache-Control": "no-store" };
-    for (const name of ["content-type", "content-encoding", "set-cookie", "retry-after"])
+    for (const name of ["content-type", "content-encoding", "set-cookie", "retry-after", "traceparent", "x-request-id"])
       if (incoming.headers[name]) forwarded[name] = incoming.headers[name];
     response.writeHead(incoming.statusCode, forwarded);
     incoming.on("error", () => response.destroy());

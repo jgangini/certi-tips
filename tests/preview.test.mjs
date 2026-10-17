@@ -63,6 +63,7 @@ test("the opt-in preview proxy preserves local sessions and rejects other caller
     incoming.on("end", () => {
       completed.push({ path: incoming.url, method: incoming.method, headers: incoming.headers, body: Buffer.concat(chunks).toString() });
       response.setHeader("Content-Type", "application/json");
+      for (const name of ["traceparent", "x-request-id"]) if (incoming.headers[name]) response.setHeader(name, incoming.headers[name]);
       if (incoming.url === "/api/chat") {
         response.writeHead(429, { "Retry-After": "17" }).end('{"detail":"mock quota"}');
       } else if (incoming.url === "/api/session") {
@@ -107,6 +108,14 @@ test("the opt-in preview proxy preserves local sessions and rejects other caller
       const result = await request(page, pathname, { method, headers: method === "GET" ? pathname.endsWith("health") ? { "Sec-Fetch-Site": "same-origin" } : get : { ...valid, "Content-Type": "application/json" }, chunks: method === "GET" ? [] : ["{}"] });
       assert.equal(result.status, 200, pathname);
     }
+    const traceHeaders = { traceparent: "00-1234567890abcdef1234567890abcdef-1234567890abcdef-01", "X-Request-ID": "12345678-1234-4234-8234-1234567890ab" };
+    const events = await request(page, "/api/events", { method: "POST", headers: { ...valid, ...traceHeaders, "Content-Type": "application/json" }, chunks: ['{"events":[]}'] });
+    assert.equal(events.status, 200);
+    for (const [name, value] of Object.entries(traceHeaders)) {
+      assert.equal(events.headers[name.toLowerCase()], value);
+      assert.equal(completed.at(-1).headers[name.toLowerCase()], value);
+    }
+    assert.equal((await request(page, "/api/events", { method: "POST", headers: { ...valid, "Content-Type": "application/json" }, chunks: ["x".repeat(8193)] })).status, 413);
     const chunkedDelete = await request(page, "/api/conversation", { method: "DELETE", headers: { ...valid, "Content-Type": "application/json", "Transfer-Encoding": "chunked" }, chunks: ["{", "}"] });
     assert.equal(chunkedDelete.status, 200, "chunked JSON DELETE preserves body framing");
     assert.equal(completed.at(-1).body, "{}");

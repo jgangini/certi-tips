@@ -6,13 +6,16 @@ async (page) => {
   const mute = page.locator('deep-chat [data-certivoice-icon="mute"]').locator('..');
   const exit = page.locator('deep-chat [data-certivoice-icon="exit"]').locator('..');
   const submit = page.locator('deep-chat .input-button.inside-end:not(.custom-button)');
-  const restartVoice = async () => { await wave.click(); await page.waitForFunction(() => window.__voiceState?.phase === 'listening'); };
+  const openChat = async () => { await page.waitForFunction(() => !document.documentElement.classList.contains("chat-restoring")); if (await page.locator("#certichat-panel").isHidden()) await page.locator("[data-chat-open]").click(); await page.locator("#certichat-panel").waitFor({ state: "visible" }); };
+  const closeVoice = async () => { await exit.click(); await page.locator("#certichat-panel").waitFor({ state: "hidden" }); assert(await page.locator("[data-chat-open]").isVisible(), "Voice Exit did not close the chat globally"); await openChat(); };
+  const restartVoice = async () => { await openChat(); await wave.click(); await page.waitForFunction(() => window.__voiceState?.phase === 'listening'); };
   const checkHints = async () => {
     const requestsBefore = calls.length, hints = page.locator('deep-chat [data-voice-hints]');
     await page.locator('deep-chat').evaluate(chat => chat.shadowRoot.activeElement?.blur());
     await page.mouse.move(0, 0);
     if (await hints.count()) await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').dataset.open !== 'true');
     await page.locator('deep-chat').hover();
+    if (page.viewportSize().width <= 800) { assert(await hints.evaluate(node => node.dataset.open !== 'true' && node.getAttribute('aria-hidden') === 'true'), 'Mobile width displayed desktop hints'); return; }
     await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]')?.dataset.open === 'true');
     await page.waitForFunction(() => { const items = [...document.querySelector('deep-chat').shadowRoot.querySelectorAll('[data-voice-hint]')]; return items.length === 3 && items.every(item => Number(getComputedStyle(item).opacity) >= .95 && item.getAnimations().every(animation => animation.playState !== 'running' || !Number.isFinite(animation.effect.getComputedTiming().endTime))); });
     const view = await hints.evaluate(element => {
@@ -63,9 +66,9 @@ async (page) => {
       return { text: phase.getAttribute('aria-label'), visibleText: phase.textContent, hidden: phase.hidden, lang: phase.lang, live: phase.getAttribute('aria-live'), inert: messages.inert, aria: messages.getAttribute('aria-hidden'), messagesDisplay: getComputedStyle(messages).display,
         mode: chat.dataset.voiceMode === 'true' && panel.dataset.voiceMode === 'true', headingHidden: getComputedStyle(heading).display === 'none', headingInert: heading.inert, headingAria: heading.getAttribute('aria-hidden'),
         readonly: textbox.getAttribute('aria-readonly'), editable: textbox.isContentEditable, textboxHidden: getComputedStyle(textbox).visibility === 'hidden', quotaHidden: getComputedStyle(shadow.querySelector('#certichat-quota')).display === 'none',
-        geometry: phase.parentElement === container && a.width > 0 && Math.abs(d.height - 48) < 1 && Math.abs(a.top - b.top) <= 1 && Math.abs(a.bottom - b.bottom) <= 1 && Math.abs(a.left - b.left - 24) < 1 && a.right <= b.right - 100 && Math.abs(center(a) - center(d)) < 1 && buttonBoxes.every(box => box.height === 44 && Math.abs(center(box) - center(d)) < 1),
+        geometry: phase.parentElement === container && a.width > 0 && Math.abs(d.height - (innerWidth <= 800 ? 52 : 48)) < 1 && Math.abs(a.top - b.top) <= 1 && Math.abs(a.bottom - b.bottom) <= 1 && Math.abs(a.left - b.left - (innerWidth <= 800 ? 20 : 24)) < 1 && a.right <= b.right - 100 && Math.abs(center(a) - center(d)) < 1 && buttonBoxes.every(box => box.height === (innerWidth <= 480 ? 31 : 44) && Math.abs(center(box) - center(d)) < 1),
         surfaceContrast, launcherContrast, launcherGlass,
-        compactStyle: d.width <= 242 && style.borderRadius === (document.querySelector('.complete-button') ? getComputedStyle(document.querySelector('.complete-button')).borderRadius : '30px') && style.borderTopWidth === '1px' && style.borderTopColor === launcherStyle.borderTopColor && (style.position !== 'fixed' || (innerWidth <= 800 ? Math.abs((d.left + d.right) / 2 - innerWidth / 2) < 1 : style.bottom === anchorStyle.bottom && style.right === anchorStyle.right)) && glowColors.length >= 6 && glowColors.every(([r, g, b]) => r !== g || g !== b) && style.animationName === (matchMedia('(prefers-reduced-motion: reduce)').matches ? 'none' : 'certivoice-shadow') && style.transform === 'none' && style.backgroundColor === launcherStyle.backgroundColor && style.backgroundImage === launcherStyle.backgroundImage && surfaceContrast.text >= 4.5 && surfaceContrast.control >= 3 && getComputedStyle(phase).color === launcherStyle.color && style.backdropFilter.includes('blur(16px)') && Number(anchorStyle.zIndex) > Number(edgeStyle.zIndex) && edgeStyle.backgroundImage.includes('conic-gradient') && edgeStyle.borderRadius === '0px' && edgeStyle.pointerEvents === 'none' && (!matchMedia('(prefers-reduced-motion: reduce)').matches || edgeStyle.animationName === 'none') && [chat, shadow.querySelector('#chat-view'), input, container].every(element => getComputedStyle(element).backgroundColor === 'rgba(0, 0, 0, 0)') && getComputedStyle(phase).font === launcherStyle.font && [...phase.children].every(child => child.getBoundingClientRect().right <= a.right + 1),
+        compactStyle: innerWidth <= 800 ? (Math.abs(d.width - innerWidth) < 1 && Math.abs(d.bottom - innerHeight) < 1 && style.borderRadius === '0px' && style.boxShadow === 'none' && style.animationName === 'none' && document.querySelector('[data-voice-edge]').getBoundingClientRect().bottom <= d.top + 1) : d.width <= 242 && style.borderRadius === (document.querySelector('.complete-button') ? getComputedStyle(document.querySelector('.complete-button')).borderRadius : '30px') && style.borderTopWidth === '1px' && style.borderTopColor === launcherStyle.borderTopColor && (style.position !== 'fixed' || (innerWidth <= 800 ? Math.abs((d.left + d.right) / 2 - innerWidth / 2) < 1 : style.bottom === anchorStyle.bottom && style.right === anchorStyle.right)) && glowColors.length >= 6 && glowColors.every(([r, g, b]) => r !== g || g !== b) && style.animationName === (matchMedia('(prefers-reduced-motion: reduce)').matches ? 'none' : 'certivoice-shadow') && style.transform === 'none' && style.backgroundColor === launcherStyle.backgroundColor && style.backgroundImage === launcherStyle.backgroundImage && surfaceContrast.text >= 4.5 && surfaceContrast.control >= 3 && getComputedStyle(phase).color === launcherStyle.color && style.backdropFilter.includes('blur(16px)') && Number(anchorStyle.zIndex) > Number(edgeStyle.zIndex) && edgeStyle.backgroundImage.includes('conic-gradient') && edgeStyle.borderRadius === '0px' && edgeStyle.pointerEvents === 'none' && (!matchMedia('(prefers-reduced-motion: reduce)').matches || edgeStyle.animationName === 'none') && [chat, shadow.querySelector('#chat-view'), input, container].every(element => getComputedStyle(element).backgroundColor === 'rgba(0, 0, 0, 0)') && getComputedStyle(phase).font === launcherStyle.font && [...phase.children].every(child => child.getBoundingClientRect().right <= a.right + 1),
         dots: dots.length === 3 && (staticDots ? dots.every(dot => dot.animation === 'none') : dots.every(dot => dot.animation === 'voice-dot-bounce') && dots.map(dot => dot.delay).join(',') === '0s,0.15s,0.3s'),
         historyClean: !chat.getMessages().some(message => /^(?:Listening|Thinking|Speaking|Connecting|Paused)…$/.test(message.text)),
         inputVisible: getComputedStyle(input).visibility === 'visible', liveStatus: document.querySelector('[data-voice-status]').getAttribute('aria-live'), error: window.__voiceState.error, title: phase.title };
@@ -81,12 +84,12 @@ async (page) => {
     assert(await page.evaluate(() => !window.__voiceState.active && !window.__voicePort && !window.__voiceTrack && window.__voiceMicRequests === 0 && !window.__voiceUtterance), 'Paused destination opened a microphone or spoke without a gesture');
     await page.waitForFunction(() => Number(getComputedStyle(document.querySelector('[data-voice-edge]')).opacity) > 0);
     const edge = await page.locator('[data-voice-edge]').evaluate(element => ({ state: element.dataset.state, background: getComputedStyle(element).backgroundImage, mask: getComputedStyle(element).maskImage, pointer: getComputedStyle(element).pointerEvents, radius: getComputedStyle(element).borderRadius }));
-    assert(edge.state === 'paused' && edge.background.includes('conic-gradient') && (edge.mask.match(/linear-gradient/g) || []).length === 4 && (edge.mask.match(/radial-gradient/g) || []).length === 4 && edge.pointer === 'none' && edge.radius === '0px', `Paused destination lost the noninteractive gradient edge: ${JSON.stringify(edge)}`);
+    assert(edge.state === 'paused' && edge.background.includes('conic-gradient') && edge.mask.includes('#voice-edge-mask') && edge.pointer === 'none' && edge.radius === '0px', `Paused destination lost the noninteractive gradient edge: ${JSON.stringify(edge)}`);
     assert(await wave.isVisible() && await exit.isVisible() && await mute.isHidden() && await submit.isHidden(), 'Paused destination must offer Resume and Exit only');
     assert(/reanudar|resume/i.test(await wave.getAttribute('aria-label')), 'Paused waveform is not labeled Resume');
     for (const button of [wave, exit]) {
       const geometry = await button.evaluate(element => { const style = getComputedStyle(element), box = element.getBoundingClientRect(), icon = element.querySelector('svg').getBoundingClientRect(); return { width: box.width, height: box.height, left: box.left, right: box.right, bottom: box.bottom, viewport: innerWidth, viewportHeight: innerHeight, expectedIcon: parseFloat(getComputedStyle(document.querySelector('[data-chat-open] svg')).width), iconWidth: icon.width, iconHeight: icon.height, border: style.borderWidth, radius: style.borderRadius, background: style.backgroundColor }; });
-      assert(geometry.width === 44 && geometry.height === 44 && geometry.iconWidth === geometry.expectedIcon && geometry.iconHeight === geometry.expectedIcon && geometry.left >= 0 && geometry.right <= geometry.viewport && geometry.bottom <= geometry.viewportHeight && geometry.border === '0px' && geometry.radius === '0px' && geometry.background === 'rgba(0, 0, 0, 0)', `Paused control geometry/style is invalid: ${JSON.stringify(geometry)}`);
+      assert(geometry.width === (page.viewportSize().width <= 480 ? 31 : 44) && geometry.height === (page.viewportSize().width <= 480 ? 31 : 44) && geometry.iconWidth === geometry.expectedIcon && geometry.iconHeight === geometry.expectedIcon && geometry.left >= 0 && geometry.right <= geometry.viewport && geometry.bottom <= geometry.viewportHeight && geometry.border === '0px' && (page.viewportSize().width <= 800 && button === exit ? geometry.radius === '50%' && geometry.background === 'rgb(255, 255, 255)' : geometry.radius === '0px' && geometry.background === 'rgba(0, 0, 0, 0)'), `Paused control geometry/style is invalid: ${JSON.stringify(geometry)}`);
     }
     const a = await wave.boundingBox(), b = await exit.boundingBox();
     assert(a.x + a.width <= b.x, 'Resume and Exit overlap');
@@ -98,8 +101,9 @@ async (page) => {
   page.on('pageerror', error => errors.push(error.message));
   await page.route('http://127.0.0.1:18741/**', async route => {
     const request = route.request(), path = new URL(request.url()).pathname;
-    const headers = { 'access-control-allow-origin': new URL(base).origin, 'access-control-allow-credentials': 'true', 'access-control-allow-methods': 'GET,POST,DELETE,OPTIONS', 'access-control-allow-headers': 'x-certichat,content-type' };
+    const headers = { 'access-control-allow-origin': new URL(base).origin, 'access-control-allow-credentials': 'true', 'access-control-allow-methods': 'GET,POST,DELETE,OPTIONS', 'access-control-allow-headers': 'x-certichat,content-type,traceparent,x-request-id' };
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    if (path === '/api/events') return route.fulfill({ status: 204, headers });
     const body = request.postDataJSON(); calls.push({ path, method: request.method(), body });
     if (path === '/api/voice') {
       if (failTransport) { failTransport = false; if (consumeLostQuota) { quota = { ...quota, remaining: 0 }; consumeLostQuota = false; } return route.abort('failed'); }
@@ -178,7 +182,7 @@ async (page) => {
   await checkResume(emptyHistory);
   assert(await page.evaluate(() => JSON.parse(sessionStorage.getItem('certivoice:https://jgangini.github.io/certitips/:navigation')).createdAt) === modeCreatedAt, 'Navigation or reload extended the voice mode lifetime');
   assert(calls.filter(call => call.path === '/api/voice').length === firstCommandCount, 'Reload retried the first navigation command');
-  await exit.click();
+  await closeVoice();
   await checkPhase(null);
   assert(await page.locator('deep-chat').evaluate(chat => JSON.stringify(chat.getMessages())) === emptyHistory, 'Canceling a command invented a conversation turn');
   reply = initialReply;
@@ -240,7 +244,7 @@ async (page) => {
   assert(await page.evaluate(() => window.__voiceState.active && !window.__voiceState.retry && !window.__voiceTrack.stopped), 'Contract rejection stopped valid capture or retained a paid retry');
   assert(calls.filter(call => call.path === '/api/voice').length === beforeRejection + 1 && await page.locator('deep-chat').evaluate(chat => JSON.stringify(chat.getMessages())) === beforeRejectionHistory, 'Contract rejection retried or polluted history');
   contractRejected = false;
-  await exit.click();
+  await closeVoice();
   await page.evaluate(() => sessionStorage.setItem('__voiceOptions', 'none')); await page.reload(); await restartVoice();
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   reply = { answer: 'Audio simulado.', transcript: 'Continúa.', educational: false, audio: { format: 'wav', data: 'UklGRg==' }, sources: [], contentVersion: 'test' };
@@ -250,7 +254,7 @@ async (page) => {
   await page.evaluate(() => window.dispatchEvent(new CustomEvent('certivoice:command', { detail: 'interrupt' })));
   assert(await page.evaluate(() => window.__voiceOutput.stopped && !document.querySelector('[data-voice-edge]').style.getPropertyValue('--voice-level')), 'WAV interruption did not stop audio and remove its glow level');
   assert(calls.filter(call => call.path === '/api/voice').at(-1).body.audioOutput === 'provider', 'Missing native voice did not request provider audio');
-  await exit.click();
+  await closeVoice();
   await page.evaluate(() => sessionStorage.removeItem('__voiceOptions')); await page.reload(); await restartVoice();
   await page.emulateMedia({ reducedMotion: 'reduce' });
   reply = educationalReply;
@@ -264,7 +268,7 @@ async (page) => {
   await page.evaluate(() => window.dispatchEvent(new CustomEvent('certivoice:command', { detail: 'interrupt' })));
   assert(await page.evaluate(() => window.__voiceUtterance === null), 'Interruption did not stop playback');
   assert(await page.locator('[data-voice-edge]').getAttribute('data-state') === 'listening', 'Interruption did not resume listening');
-  await exit.click();
+  await closeVoice();
   assert(await page.evaluate(() => window.__voiceStopped > 0), 'Stop left the microphone open');
   assert(await page.locator('[data-voice-edge]').getAttribute('data-state') === 'off', 'Stop left the edge active');
   await page.evaluate(() => { window.__voiceDeny = true; });
@@ -391,14 +395,14 @@ async (page) => {
         const a = element.getBoundingClientRect(), b = other.getBoundingClientRect();
         return { width: a.width, height: a.height, left: a.left, right: b.right, top: a.top, bottom: a.bottom, viewport: innerWidth, viewportHeight: innerHeight, separated: a.right <= b.left, appearances: [element, other].map(button => { const style = getComputedStyle(button), icon = button.querySelector('svg').getBoundingClientRect(); return { background: style.backgroundColor, border: style.borderWidth, radius: style.borderRadius, focused: button.matches(':focus-visible'), iconWidth: icon.width, iconHeight: icon.height }; }) };
       });
-      assert(controls.width >= 44 && controls.height >= 44 && controls.left >= 0 && controls.right <= controls.viewport && controls.top >= 0 && controls.bottom <= controls.viewportHeight && controls.separated, `Inline voice controls overflow or overlap at${width}/${theme}`);
+      assert(controls.width >= (width <= 480 ? 31 : 44) && controls.height >= (width <= 480 ? 31 : 44) && controls.left >= 0 && controls.right <= controls.viewport && controls.top >= 0 && controls.bottom <= controls.viewportHeight && controls.separated, `Inline voice controls overflow or overlap at${width}/${theme}`);
       const expectedIcon = await page.locator('[data-chat-open] svg').evaluate(icon => parseFloat(getComputedStyle(icon).width));
-      assert(controls.appearances.every(item => item.background === 'rgba(0, 0, 0, 0)' && item.border === '0px' && item.radius === (item.focused ? '7px' : '0px') && item.iconWidth === expectedIcon && item.iconHeight === expectedIcon), `Voice controls retain circles or mismatched SVG size at${width}/${theme}`);
+      assert(controls.appearances.every((item, index) => (width <= 800 && index === 1 ? item.background === 'rgb(255, 255, 255)' && item.radius === '50%' : item.background === 'rgba(0, 0, 0, 0)' && item.radius === (item.focused ? '7px' : '0px')) && item.border === '0px' && item.iconWidth === expectedIcon && item.iconHeight === expectedIcon), `Voice controls retain circles or mismatched SVG size at${width}/${theme}`);
       await checkPhase('Listening…');
       await checkHints();
       for (const control of [mute, exit]) {
         await control.hover();
-        assert(await control.evaluate(element => getComputedStyle(element.querySelector('svg')).color === getComputedStyle(document.querySelector('.brand-accent')).color), 'Voice SVG hover is not red');
+        assert(await control.evaluate(element => getComputedStyle(element.querySelector('svg')).color === (innerWidth <= 800 && element.dataset.voiceCommand === 'exit' ? 'rgb(17, 24, 39)' : getComputedStyle(document.querySelector('.brand-accent')).color)), 'Voice SVG hover color is incorrect');
       }
     }
   }
@@ -431,7 +435,7 @@ async (page) => {
     assert(await mute.evaluate(element => element.getAttribute('aria-pressed') === 'false' && getComputedStyle(element.querySelector('svg')).color === getComputedStyle(element.getRootNode().querySelector('#certivoice-phase')).color), `Unmuted SVG retained the muted color in ${theme}`);
   }
   const retainedMessages = await page.locator('deep-chat').evaluate(chat => JSON.stringify(chat.getMessages()));
-  await exit.click();
+  await closeVoice();
   await checkPhase(null);
   assert(await page.locator('deep-chat').evaluate(chat => JSON.stringify(chat.getMessages())) === retainedMessages, 'Exiting voice changed the conversation');
   assert(await page.evaluate(() => window.__voiceUtterance === null), 'Exit kept speech playing');
@@ -464,13 +468,14 @@ async (page) => {
   assert(calls.filter(call => call.path === '/api/voice').at(-1).body.context.completedDiagramId === completedBeforeClear, 'Clear regression did not first establish a completed diagram');
   await page.waitForFunction(() => window.__voiceState?.phase === 'listening');
   reply = beforeClearReply;
-  await exit.click();
+  await closeVoice();
   await checkPhase(null);
   await page.locator('#diagram-viewer [data-close-diagram]').click();
   if (await page.locator('[data-chat-open]').isVisible()) await page.locator('[data-chat-open]').click();
   await page.locator('deep-chat [role="textbox"]').fill('Escribiendo');
   await page.locator('[data-chat-clear]').click(); await page.locator('[data-chat-confirm-yes]').click();
   await page.locator('[data-chat-confirm]').waitFor({ state: 'hidden' });
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   assert(await page.evaluate(() => sessionStorage.getItem('certivoice:https://jgangini.github.io/certitips/:playback') === null && !window.__voiceState.retry), 'Clear kept voice continuity');
   await page.locator('deep-chat [role="textbox"]').fill('');
   await wave.click();
@@ -500,7 +505,7 @@ async (page) => {
   const freshBody = calls.filter(call => call.path === '/api/voice').at(-1).body;
   assert(!freshBody.playback && !('createdAt' in freshBody), 'Expired progress or client retention fields leaked into the request');
   await page.evaluate(() => window.__restoreVoiceClock());
-  await exit.click();
+  await closeVoice();
   await page.evaluate(() => {
     window.__presentationChat = document.querySelector('deep-chat');
     window.__presentationParent = document.querySelector('[data-certichat]').parentNode;
@@ -559,6 +564,7 @@ async (page) => {
     await checkPhase('Listening…');
     await checkHints();
   }
+  await page.setViewportSize({ width: 1418, height: 900 });
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await mute.evaluate(button => button.blur()); await page.mouse.move(0, 0);
   await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').dataset.open === 'false');
@@ -622,9 +628,9 @@ async (page) => {
   await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').dataset.open === 'false');
   await page.emulateMedia({ reducedMotion: 'no-preference' }); await page.locator('deep-chat').hover();
   await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').children.length === 3);
-  // Text chat returns on desktop; mobile presentation exit has its own launcher-only regression.
+  // Global Exit closes the panel; reopen it explicitly for the remaining text-chat checks.
   await page.setViewportSize({ width: 1280, height: 900 });
-  await exit.click();
+  await closeVoice();
   const exitedHints = await page.locator('deep-chat [data-voice-hints]').innerHTML();
   await page.waitForTimeout(4000);
   assert(await page.locator('deep-chat [data-voice-hints]').getAttribute('aria-hidden') === 'true' && await page.locator('deep-chat [data-voice-hints]').innerHTML() === exitedHints, 'Exiting voice left a hidden hint rotation queued');
@@ -644,7 +650,9 @@ async (page) => {
   await page.locator('deep-chat [role="textbox"]').fill('');
   await wave.click();
   await page.waitForFunction(() => window.__voiceState?.active && document.querySelector('[data-voice-edge]').dataset.state === 'listening');
-  await mute.focus(); await page.keyboard.press('Escape');
+  await page.mouse.move(0, 0); await page.locator('#diagram-viewer [data-close-diagram]').focus(); await mute.focus();
+  await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]')?.dataset.open === 'true');
+  await page.keyboard.press('Escape');
   assert(await page.locator('deep-chat [data-voice-hints]').getAttribute('aria-hidden') === 'true' && await page.locator('#certichat-panel').isVisible(), 'First Escape did not dismiss hints while preserving the voice panel');
   await page.keyboard.press('Escape');
   await page.locator('#certichat-panel').waitFor({ state: 'hidden' });
@@ -750,7 +758,7 @@ async (page) => {
   await page.reload();
   await checkResume(beforeVideoCommand);
   assert(calls.filter(call => call.path === '/api/voice').length === navigationCalls, 'Normal navigation or reload submitted/retried audio');
-  await exit.click();
+  await closeVoice();
   await checkPhase(null);
   assert(await page.locator('deep-chat').evaluate(chat => JSON.stringify(chat.getMessages())) === beforeVideoCommand, 'Exiting paused voice lost educational history');
   await page.reload();
@@ -781,7 +789,7 @@ async (page) => {
   await checkPhase('Listening…');
   assert(calls.filter(call => call.path === '/api/voice').length === beforeAutomatic + 1, 'Automatic navigation generated or replayed audio');
   assert(await page.locator('deep-chat').evaluate(chat => JSON.stringify(chat.getMessages())) === beforeVideoCommand, 'Automatic voice navigation changed history');
-  await exit.click(); await page.reload(); await page.waitForFunction(() => window.__voiceState?.enabled);
+  await closeVoice(); await page.reload(); await page.waitForFunction(() => window.__voiceState?.enabled);
   assert(await page.evaluate(() => !window.__voiceState.active && !window.__voiceState.resume && window.__voiceMicRequests === 0), 'Explicit Exit allowed automatic microphone activation after reload');
   await wave.waitFor({ state: 'visible' });
   const quotaNow = Date.now(), quotaPosts = calls.filter(call => call.method === 'POST').length;
@@ -830,7 +838,7 @@ async (page) => {
   await wave.focus(); await page.keyboard.press('Space');
   await page.waitForFunction(() => window.__voiceState?.phase === 'listening');
   assert(await page.evaluate(() => window.__voiceMicRequests === 1), 'Restored quota did not require exactly one explicit microphone activation');
-  await exit.click();
+  await closeVoice();
   await page.evaluate(() => window.removeEventListener('certivoice:command', window.__countQuotaCommands));
   quota = { remaining: 1, limit: 20, resetAt: new Date(await page.evaluate(() => Date.now()) + 60000).toISOString() };
   await refreshSession(); await restartVoice();
@@ -842,7 +850,7 @@ async (page) => {
   await page.waitForFunction(() => window.__voiceState?.enabled && window.__voiceState.quotaBlocked && window.__voiceState.phase === 'paused');
   assert(await wave.getAttribute('aria-disabled') === 'true' && await page.evaluate(() => !window.__voiceState.active && window.__voiceMicRequests === 0), 'The last navigation did not complete safely without destination auto-capture');
   assert(calls.filter(call => call.path === '/api/voice').length === beforeLastNavigation + 1, 'Last-quota navigation repeated its request');
-  await exit.click();
+  await closeVoice();
   quota = { remaining: 1, limit: 20, resetAt: new Date(await page.evaluate(() => Date.now()) + 60000).toISOString() };
   await refreshSession(); await restartVoice();
   const beforeLostResponse = calls.filter(call => call.path === '/api/voice').length;
@@ -861,9 +869,9 @@ async (page) => {
   assert(await page.evaluate(() => window.__voiceMicRequests) === recoveryCaptures, 'Cached-result recovery opened another microphone');
   assert(await wave.getAttribute('aria-disabled') === 'true' && await page.evaluate(() => window.__voiceMicRequests) === recoveryCaptures, 'Completed recovery reopened exhausted voice');
   assert(await page.locator('deep-chat').evaluate(chat => chat.getMessages().filter(message => message.role === 'ai' && message.text === 'Respuesta recuperada sin otra captura.').length) === 1, 'Recovered answer was lost or duplicated');
-  await exit.click();
+  await closeVoice();
   assert(calls.filter(call => call.path === '/api/voice').every(call => call.body.pageUrl.startsWith('https://jgangini.github.io/certitips/') && !/\/certitips\/(es|en|pt|it)\//.test(call.body.pageUrl)), 'Voice sent a local or localized URL that the real backend rejects');
   assert(errors.length === 0, errors.join('\n'));
   // Idle continuity and granted-permission navigation are included in track/navigation coverage above.
-  return { checks: ['feature flag', 'shared session auth', 'WAV and canonical context', 'VAD turn', 'shared transcript', 'playback and processing interruption', 'track cleanup', 'permission error', 'diagram actions and modal controls', 'navigation and explicit resume', 'absolute continuation offset and original lifetime', 'audio unavailable', 'idempotent explicit retry', 'pending and terminal409', 'rate limit', 'typing and clear', 'input waveform and native send', 'all voice controls borderless with 24px SVG and red hover', 'unavailable native send and status-only errors', 'header warning and presentation recovery', 'session availability recovery without reload', 'native microphone mute and exit', 'RAM and playback24-hour expiry', 'presentation square launcher and shared layout', 'presentation preserves DOM and in-flight request', 'presentation keyboard and restoration', 'two themes', 'three widths', 'edge and reduced motion', '240x48 rounded glass voice composer with colored glow, centered controls, reference colors and 24px text inset', 'localized video navigation and explicit resume', 'first navigation without educational history hides intro in paused composer', 'normal navigation and active reload preserve paused gradient and explicit controls', 'paused cancel persists after reload without losing educational history', 'navigation mode expires after24 hours without renewing or capturing', 'quota blocks voice aria/tab/click/keyboard/direct commands without capture', 'expired quota waits for authoritative positive renewal without auto-capture', 'last valid quota response completes navigation without destination capture', 'lost response recovers the identical UUID and payload atquota0 without another capture', 'text-only recovery atquota0 pauses and adds one shared answer', 'clear removes completed diagram and playback from the next request', 'contextual hints are text-only max3 with no quotes and bottom-up alternating placement', 'hints fit both themes at320/390/1418px and presentation; keyboard Escape and reduced motion', 'FIFO hints remove oldest first, add a different message from below and keep max3 unique', 'hint rotation stops for focus, reduced motion, Escape and exit without hidden updates'], paidCalls: 0, screenshots: 0 };
+  return { checks: ['feature flag', 'shared session auth', 'WAV and canonical context', 'VAD turn', 'shared transcript', 'playback and processing interruption', 'track cleanup', 'permission error', 'diagram actions and modal controls', 'navigation and explicit resume', 'absolute continuation offset and original lifetime', 'audio unavailable', 'idempotent explicit retry', 'pending and terminal409', 'rate limit', 'typing and clear', 'input waveform and native send', 'all voice controls borderless with 24px SVG and red hover', 'unavailable native send and status-only errors', 'header warning and presentation recovery', 'session availability recovery without reload', 'native microphone mute and exit', 'RAM and playback24-hour expiry', 'presentation square launcher and shared layout', 'presentation preserves DOM and in-flight request', 'presentation keyboard and restoration', 'two themes', 'three widths', 'edge and reduced motion', '240x48 rounded glass voice composer with colored glow, centered controls, reference colors and 24px text inset', 'localized video navigation and explicit resume', 'first navigation without educational history hides intro in paused composer', 'normal navigation and active reload preserve paused gradient and explicit controls', 'paused cancel persists after reload without losing educational history', 'navigation mode expires after24 hours without renewing or capturing', 'quota blocks voice aria/tab/click/keyboard/direct commands without capture', 'expired quota waits for authoritative positive renewal without auto-capture', 'last valid quota response completes navigation without destination capture', 'lost response recovers the identical UUID and payload atquota0 without another capture', 'text-only recovery atquota0 pauses and adds one shared answer', 'clear removes completed diagram and playback from the next request', 'contextual hints are text-only max3 with no quotes and bottom-up alternating placement', 'mobile widths suppress hints; desktop hints fit both themes and presentation with keyboard Escape and reduced motion', 'FIFO hints remove oldest first, add a different message from below and keep max3 unique', 'hint rotation stops for focus, reduced motion, Escape and exit without hidden updates'], paidCalls: 0, screenshots: 0 };
 }

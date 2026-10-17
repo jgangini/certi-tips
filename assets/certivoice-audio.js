@@ -114,7 +114,7 @@ export class VoiceActivity {
 export async function captureVoice(context, onSamples, onEnded) {
   const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false });
   try {
-    stream.getTracks().forEach(track => track.addEventListener?.("ended", onEnded, { once: true }));
+    stream.getTracks().forEach(track => { track.addEventListener?.("ended", onEnded, { once: true }); track.addEventListener?.("mute", onEnded, { once: true }); });
     const worklet = new URL("./certivoice-capture.js", import.meta.url);
     worklet.search = new URL(import.meta.url).search;
     await context.audioWorklet.addModule(worklet.href);
@@ -123,7 +123,7 @@ export async function captureVoice(context, onSamples, onEnded) {
     source.connect(node); node.connect(silent); silent.connect(context.destination);
     node.port.onmessage = event => onSamples(event.data);
     return {
-      stop() { node.port.onmessage = null; source.disconnect(); node.disconnect(); silent.disconnect(); stream.getTracks().forEach(track => track.stop()); },
+      stop() { node.port.onmessage = null; source.disconnect(); node.disconnect(); silent.disconnect(); stream.getTracks().forEach(track => { track.removeEventListener?.("ended", onEnded); track.removeEventListener?.("mute", onEnded); track.stop(); }); },
       setMuted(value) { stream.getAudioTracks().forEach(track => { track.enabled = !value; }); },
     };
   } catch (error) { stream.getTracks().forEach(track => track.stop()); throw error; }

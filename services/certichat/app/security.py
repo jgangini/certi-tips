@@ -79,7 +79,7 @@ class GuardMiddleware:
         if self.cors is None:
             self.cors = CORSMiddleware(self.checked_request, allow_origins=list(settings.allowed_origins),
                                       allow_credentials=True, allow_methods=["GET", "POST", "DELETE"],
-                                      allow_headers=["Content-Type", "X-CertiChat"], expose_headers=["Retry-After"], max_age=600)
+                                      allow_headers=["Content-Type", "X-CertiChat", "Traceparent", "X-Request-ID"], expose_headers=["Retry-After", "Traceparent", "X-Request-ID"], max_age=600)
         await self.cors(scope, receive, send)
 
     async def checked_request(self, scope, receive, send):

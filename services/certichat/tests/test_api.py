@@ -821,3 +821,49 @@ def test_selected_diagram_excludes_foreign_source_even_after_current_local_hash_
     evidence = json.loads(sent["messages"][-1]["content"])["fragments"]
     assert [fragment["title"] for fragment in evidence] == [doc["title"] for doc in documents[:3]]
     assert response.json()["graphTrace"]["nodes"] == []
+
+
+def test_browser_events_correlate_without_charging_or_recording_content(clients, caplog):
+    from app.telemetry import JsonFormatter, logger
+    make, _application, calls, _turnstile, _knowledge = clients
+    assert make().post("/api/events", json={"events": [{"name": "state", "at": 1}]}).status_code == 401
+    client = session(make)
+    quota = client.get("/api/session").json()["quota"]
+    trace, request_id = "a" * 32, str(uuid4())
+    before_calls = len(calls)
+    logger.addHandler(caplog.handler)
+    try:
+        response = client.post("/api/events", headers={"traceparent": f"00-{trace}-{'b' * 16}-01", "X-Request-ID": request_id},
+                               json={"events": [{"name": "speech", "at": 1, "native_event": "error", "native_error": "not-allowed", "platform": "ios"}]})
+        assert response.status_code == 204
+        assert response.headers["traceparent"].split("-")[1] == trace
+        assert response.headers["x-request-id"] == request_id
+        records = [json.loads(JsonFormatter().format(record)) for record in caplog.records if record.name == logger.name]
+        assert any(record["event"] == "browser.speech" and record["trace_id"] == trace and record["source"] == "browser" for record in records)
+        assert any(record["event"] == "http.request" and record["route"] == "/api/events" and record["request_id"] == request_id and record["status"] == 204 for record in records)
+        assert client.post("/api/events", json={"events": [{"name": "speech", "at": 1, "transcript": "DO NOT LOG THIS"}]}).status_code == 422
+        assert "DO NOT LOG THIS" not in json.dumps([JsonFormatter().format(record) for record in caplog.records if record.name == logger.name])
+        assert len(calls) == before_calls
+        assert client.get("/api/session").json()["quota"] == quota
+    finally:
+        logger.removeHandler(caplog.handler)
+
+
+def test_browser_events_keep_csrf_size_and_separate_rate_limit(clients):
+    make, application, _calls, _turnstile, _knowledge = clients
+    client = session(make)
+    body = {"events": [{"name": "state", "at": 1}]}
+    assert client.post("/api/events", headers={"Origin": "https://other.test"}, json=body).status_code == 403
+    assert client.post("/api/events", json={"events": [{"name": "state", "at": 1}] * 13}).status_code == 422
+    assert client.post("/api/events", content="x" * 8193, headers={"Content-Type": "application/json"}).status_code == 413
+    original = application.state.store.session_attempt
+    seen = []
+    def limited(bucket):
+        seen.append(bucket)
+        raise ChatError("limited", 429, 60)
+    application.state.store.session_attempt = limited
+    try:
+        assert client.post("/api/events", json=body).status_code == 429
+        assert len(seen) == 1 and seen[0].endswith(":events")
+    finally:
+        application.state.store.session_attempt = original

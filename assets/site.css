@@ -381,7 +381,7 @@ html:has(.has-course-groups) { scroll-padding-top: calc(var(--header) + var(--co
   min-height: 44px;
   padding: 8px;
   white-space: nowrap;
-  background: var(--white);
+  background: var(--paper);
   color: var(--ink);
   border: 1px solid var(--line);
   border-radius: 7px;
@@ -1359,16 +1359,15 @@ body[data-course="data-governance"] .diagram > span {
   text-align: center;
 }
 .site-footer > span { min-width: 0; white-space: nowrap; }
-.footer-heart,
 .site-footer a {
   color: var(--red-dark);
 }
 .footer-heart {
-  font-size: 1.5em;
-  line-height: 0;
-  vertical-align: -0.08em;
+  width: 1.25em;
+  height: 1.25em;
+  color: var(--red);
+  vertical-align: -0.3em;
 }
-html[data-theme="dark"] .footer-heart,
 html[data-theme="dark"] .site-footer a {
   color: #ee5e4a;
 }

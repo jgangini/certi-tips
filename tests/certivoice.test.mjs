@@ -486,6 +486,7 @@ function voiceController(api = "http://127.0.0.1:18741", options = {}) {
     MutationObserver: class { constructor(callback) { this.callback = callback; } observe(target) { observers.set(target, this.callback); } },
     sessionStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, String(value)), removeItem: key => storage.delete(key) },
     setInterval: callback => intervals.push(callback), setTimeout() {}, clearTimeout() {},
+    voiceDiagnostics: () => ({ record() {}, headers: () => ({}), enable() {}, flush() {} }),
     t: text => text, siteBase: "/", voiceContext: () => ({}), restoreVoicePlayback: value => restoreVoicePlayback(value, clock.now),
     pendingNavigation: (value, current, base) => pendingNavigation(value, current, base, clock.now), shouldResumeNavigation: (value, current, base) => shouldResumeNavigation(value, current, base, clock.now), validVoiceNavigation, voiceMemoryFresh: value => voiceMemoryFresh(value, clock.now), VoiceActivity,
     captureVoice: async (_, onChunk, onDisconnect) => { state.microphones++; state.disconnect = onDisconnect; return { stop() { state.stopped++; }, setMuted() {} }; },

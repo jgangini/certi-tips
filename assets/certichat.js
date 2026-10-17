@@ -351,7 +351,7 @@ if (root) {
         .ai-message:not(.streamed-message) a[data-link-kind="certitips"]::before { mask-image: url("${new URL("./icons/certitips-course.svg", import.meta.url).href}"); }
         .ai-message:not(.streamed-message) a[data-link-kind="certitube"]::before { mask-image: url("${new URL("./icons/certitube.svg", import.meta.url).href}"); }`;
       if (dock) chat.auxiliaryStyle += `${responseSelector}:not(.streamed-message) { border: 1px solid transparent; cursor: pointer; } ${responseSelector}:not(.streamed-message):hover { border-color: var(--red); } ${responseSelector}:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }`;
-      refreshVoice = installVoiceChatControls(chat, changeCourseLayout);
+      refreshVoice = installVoiceChatControls(chat);
       chat.onInput = () => refreshVoice(busy);
       chat.introMessage = { text: t("Hola. Resuelve tus dudas sobre las guías y prácticas del sitio.") };
       chat.history = saved.messages.map(({ role, text }) => ({ role, text }));
@@ -547,8 +547,10 @@ if (root) {
     return panel.animate(fold ? [full, small] : [small, full], { duration: 320, easing: "cubic-bezier(.22, 1, .36, 1)", fill: fold ? "forwards" : "none" });
   }
   function closePanel(animate = true, focus = true) {
-    if (dock || panel.hidden || closing) return;
+    if (panel.hidden || closing) return;
     closing = true;
+    // Hide the voice dock before restoring the composer, so Exit never flashes the text chat.
+    if (panel.hasAttribute("data-voice-mode")) { animate = false; panel.hidden = true; }
     window.dispatchEvent(new CustomEvent("certivoice:command", { detail: "exit" }));
     try { sessionStorage.removeItem(`${storageKey}:open`); sessionStorage.removeItem(`${storageKey}:reference`); } catch { /* Storage is optional. */ }
     panelAnimation?.cancel();
@@ -570,7 +572,7 @@ if (root) {
   }
   if (viewer && !dock) {
     const syncPresentation = () => {
-      const active = viewer.open && (viewer.classList.contains("is-presenting") || root.dataset.voiceMode === "true");
+      const active = viewer.open && (viewer.classList.contains("is-presenting") || root.dataset.voiceMode === "true" || root.parentNode === viewer);
       const voiceLauncher = active && mobileChat.matches;
       launcher.setAttribute("aria-label", voiceLauncher ? t("Activar voz") : "CertiChat");
       launcher.disabled = voiceLauncher && (!launcherVoiceState.enabled || launcherVoiceState.quotaBlocked && !launcherVoiceState.retry);

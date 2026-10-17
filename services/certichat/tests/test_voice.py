@@ -340,10 +340,16 @@ def test_voice_endpoint_failure_logs_only_request_metadata(clients, phase, caplo
 
     setattr(fake, phase, fail)
     data = body()
-    response = client.post("/api/voice", json=data)
+    from app.telemetry import logger
+    logger.addHandler(caplog.handler)
+    try:
+        response = client.post("/api/voice", json=data)
+    finally:
+        logger.removeHandler(caplog.handler)
     assert response.status_code == 502 and response.json()["code"] == "voice_contract"
-    records = [record.getMessage() for record in caplog.records if record.name == "app.main"]
-    assert records == [f"Voice request failed: request_id={data['requestId']} phase={phase} code=voice_contract status=502"]
+    records = [record.fields for record in caplog.records if record.name == logger.name and record.getMessage() == "voice.failure"]
+    assert len(records) == 1 and records[0]["request_id"] == data["requestId"]
+    assert records[0]["phase"] == phase and records[0]["error_code"] == "voice_contract" and records[0]["status"] == 502
     assert "PRIVATE_TRANSCRIPT_AUDIO_HEADERS" not in caplog.text and data["audio"] not in caplog.text
 
 

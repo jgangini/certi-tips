@@ -20,6 +20,7 @@ Los idiomas publicados son español, inglés, portugués de Brasil e italiano. L
 | Cambiar componentes, estilos, navegación, chat o visor | [Diseño de interfaz](diseno-interfaz.md) |
 | Crear, editar o revisar gráficos didácticos | [Diseño de diagramas](diagram-design.md) y la guía de contenido correspondiente |
 | Elegir comandos de comprobación o validar cambios | [Validación y herramientas](validation.md) |
+| Diagnosticar voz, navegación de audio o fallos de API | [Observabilidad de CertiChat](observabilidad-certichat.md) |
 | Revisar una regla tras un defecto repetido | La guía afectada y las entradas pertinentes del [registro histórico](improvement-log.md) |
 
 ## Mapa mínimo del proyecto

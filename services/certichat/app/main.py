@@ -27,6 +27,7 @@ from .security import ChatError, GuardMiddleware, cookie_name, network_digest, n
 from .settings import Settings, Locale
 from .decisions import answer_with_decisions
 from .store import Store
+from .telemetry import BrowserBatch, EventMiddleware, emit
 from .voice import LectureBody, PageActivity, VoiceBody, VoiceProvider, wav_seconds
 
 CLEANUP_SECONDS = 60
@@ -305,6 +306,7 @@ def create_app(settings=None, *, transport=None):
 
     application = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
     application.add_middleware(GuardMiddleware)
+    application.add_middleware(EventMiddleware)
 
     @application.exception_handler(ChatError)
     async def chat_error(_request, error):
@@ -458,6 +460,14 @@ def create_app(settings=None, *, transport=None):
                 raise ChatError("La consulta tardó demasiado. Inténtalo más tarde.", 504) from None
             raise
 
+    @application.post("/api/events", status_code=204)
+    async def browser_events(body: BrowserBatch, request: Request):
+        await identity(request)
+        await db(request.app.state.store.session_attempt, network(request) + ":events")
+        for event in body.events:
+            emit("browser." + event.name, source="browser", **event.model_dump(exclude_none=True, exclude={"name"}))
+        return Response(status_code=204)
+
     @application.post("/api/voice")
     async def voice(body: VoiceBody | LectureBody, request: Request):
         if not request.app.state.settings.voice_enabled:
@@ -479,6 +489,7 @@ def create_app(settings=None, *, transport=None):
         previous = await db(store.begin_request, token_hash, body.requestId, input_hash, network(request), "voice")
         if previous is not None:
             return {**previous, "quota": await db(store.quota, token_hash, "voice")}
+        emit("voice.request", source="server", request_id=body.requestId, audio_output=body.audioOutput, mode="lecture" if isinstance(body, LectureBody) else "turn")
         started = time.monotonic()
         phase = "intent"
         try:
@@ -559,11 +570,13 @@ def create_app(settings=None, *, transport=None):
                 result["quota"] = await db(store.quota, token_hash, "voice")
                 await db(store.finish_request, token_hash, body.requestId, result, intent["transcript"], "voice", card,
                          memory["since"] if memory else None)
+                emit("voice.complete", source="server", request_id=body.requestId, action=(result.get("action") or {}).get("name"),
+                     audio_output=body.audioOutput, audio_error=bool(result.get("audioError")), duration_ms=round((time.monotonic() - started) * 1000))
                 return result
         except BaseException as error:
-            logging.getLogger(__name__).warning("Voice request failed: request_id=%s phase=%s code=%s status=%s",
-                body.requestId, phase, (error.code or type(error).__name__) if isinstance(error, ChatError) else type(error).__name__,
-                error.status if isinstance(error, ChatError) else 504 if isinstance(error, TimeoutError) else 500)
+            emit("voice.failure", source="server", request_id=body.requestId, phase=phase,
+                 error_code=(error.code or type(error).__name__) if isinstance(error, ChatError) else type(error).__name__,
+                 status=error.status if isinstance(error, ChatError) else 504 if isinstance(error, TimeoutError) else 500)
             with anyio.CancelScope(shield=True):
                 await db(store.finish_request, token_hash, body.requestId)
             if isinstance(error, TimeoutError):

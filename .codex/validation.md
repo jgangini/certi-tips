@@ -18,7 +18,7 @@ Si una tarea documental pasa a modificar código o configuración, iniciar la fa
 
 Para contenido/interfaz multilingüe seguir [Internacionalización](internacionalizacion.md): preparar manifiesto, generar, comprobar y compilar antes de las pruebas. Validar también el paquete publicado de CertiQuiz, los cuatro idiomas y la ausencia de raster en diagramas. El único PNG publicado permitido es el logo para compartir.
 
-Requiere Node.js 24 y npm; arquitectura y operaciones usan PowerShell 7.3 o posterior. El flujo de arquitectura necesita Git, Graphify y Sentrux disponibles en `PATH`; npm no los instala. En Windows, usar `npm.cmd` y `npx.cmd` si interfieren los lanzadores de PowerShell.
+Requiere Node.js 24 y npm; arquitectura y operaciones usan PowerShell 7.3 o posterior. El flujo de arquitectura necesita Git, Graphify y Sentrux disponibles en `PATH`; npm no los instala. En Windows, usar `npm.cmd` y `npx.cmd` si interfieren los lanzadores de PowerShell. Antes de `npm test`, activar el entorno i18n o anteponer su carpeta Scripts a PATH: algunas pruebas invocan `python` directamente; `I18N_PYTHON` por sí solo no evita el acceso directo de Microsoft Store.
 
 ```powershell
 ./scripts/arch-preflight.ps1
@@ -52,6 +52,8 @@ Los dos scripts incluyen los archivos fuente nuevos mediante un índice Git y un
 | `scripts/check-architecture-rules.ps1` | Ejecutar tras modificar reglas, scripts de arquitectura o actualizar Sentrux; comprueba límites y la limpieza/restauración de esos scripts tanto con éxito como con fallo. |
 
 ## Pruebas Node
+
+`scripts/check-certichat-logs.ps1` comprueba el lector JSON, filtro de traza, seguimiento acotado, opciones SSH y rechazo de argumentos inválidos con un sustituto local; no usa la red.
 
 `npm test` descubre `tests/*.test.mjs`. Para un archivo: `node --test --test-isolation=none tests/site.test.mjs`. El ejecutor sin aislamiento evita el error `spawn EPERM` del entorno Windows; las pruebas deben restaurar los valores globales que modifiquen.
 
@@ -94,7 +96,7 @@ Elegir el archivo según el cambio y usar una sesión nueva por comprobación:
 | `certichat-browser-smoke.cjs` | Sesión, cuotas, reintentos, fuentes, Markdown seguro y restauración; API simulada, sin llamadas pagadas. |
 | `certichat-explorer-smoke.cjs` | Grafo, tarjetas, enfoque, ondas y evidencia por respuesta; API simulada. |
 | `certitube-browser-smoke.cjs` | Último video por incorporación, accesos de portada/encabezado, búsqueda real y reintentos, barra inferior de capítulos, cita temporal, historial, errores de YouTube y ajuste compartido del chat; API simulada, sin capturas. |
-| `iphone-voice-browser-smoke.cjs` | Voz móvil: gesto original de Safari, cola silenciosa pendiente, inicio nativo confirmado y ausente/tardío; centrado global, presentación y salida sin chat de texto. Chromium y WebKit de escritorio usan audio simulado; no acreditan reproducción física en iPhone. |
+| `iphone-voice-browser-smoke.cjs` | Voz móvil: gesto original de Safari, cola silenciosa pendiente, inicio nativo confirmado y ausente/tardío; tres turnos consecutivos con captura y narración separadas, pista mute/contexto interrumpido, captura tardía al cerrar, reanudación explícita tras navegar, barra inferior fuera del borde, esquinas sin parches, controles móviles, presentación y cierre global sin chat de texto. Chromium y WebKit de escritorio usan audio simulado; no acreditan reproducción física en iPhone. |
 | `certichat-mobile-smoke.cjs` | Pie de página, panel móvil y navegación; área visible simulada, no teclado físico de iOS. |
 | `language-transition-smoke.cjs` | Cambio de idioma en portada, cursos, CertiTube, CertiChat y CertiQuiz; respuestas retenidas, bloqueo modal, desvanecimiento, historial y movimiento reducido, sin APIs reales ni capturas. |
 | `certiquiz-mobile-layout-smoke.cjs` | Formularios y salas con API simulada; ancho completo móvil y encabezados y bordes compartidos entre participante y anfitrión. |
