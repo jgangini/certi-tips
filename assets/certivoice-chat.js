@@ -4,11 +4,12 @@ import { voiceContext } from "./certivoice-actions.js";
 export function installVoiceChatControls(chat) {
   let state = { enabled: false, active: false, muted: false }, requestBusy = false;
   const quotaBlocked = () => state.quotaBlocked || chat.shadowRoot?.querySelector('[role="textbox"]')?.getAttribute("aria-disabled") === "true";
-  let hints, hideHintsTimer, hintsTimer, hintSequence = 0, lastHint;
+  let hints, showHintsTimer, hideHintsTimer, hintsTimer, hintSequence = 0, lastHint;
   const hintPointer = window.matchMedia("(min-width: 801px) and (hover: hover) and (pointer: fine)");
-  const hintsAllowed = () => hintPointer.matches && state.enabled && (state.active || state.resume) && ["listening", "paused"].includes(state.phase) && !state.locked && !quotaBlocked();
+  const hintsAllowed = () => hintPointer.matches && state.enabled && (state.active || state.resume) && ["listening", "paused"].includes(state.phase) && !state.muted && !state.locked && !quotaBlocked();
   function hideHints() {
-    clearTimeout(hideHintsTimer);
+    clearTimeout(showHintsTimer); showHintsTimer = null;
+    clearTimeout(hideHintsTimer); hideHintsTimer = null;
     clearTimeout(hintsTimer);
     if (!hints) return;
     hints.querySelectorAll('[data-voice-hint]').forEach(bubble => bubble.getAnimations().forEach(animation => animation.cancel()));
@@ -24,15 +25,16 @@ export function installVoiceChatControls(chat) {
     if (has("practice_next")) examples.push(t("Siguiente pregunta"));
     if (has("practice_start")) examples.push(t("Comenzar la práctica"));
     if (viewer && context.diagramId) {
-      examples.push(t("Explícame esta lámina"), t("Amplía esta explicación"), t("Dame un ejemplo de este diagrama"));
+      examples.push(t("Explícame esta lámina"), t("Amplía esta explicación"), t("Dame un ejemplo de este diagrama"), t("Profundiza en este tema"), t("Consulta la documentación para complementar"));
       if (viewer.classList.contains("is-presenting")) {
         if (viewer.querySelectorAll("[data-slide-number]").length > 1) examples.push(t("Siguiente lámina"));
-        if (has("lecture_start")) examples.push(t("Continúa con toda la presentación"));
+        if (has("lecture_start")) examples.push(t("Da la charla completa de este módulo"), t("Continúa con toda la presentación"));
       } else if (has("start_presentation")) examples.push(t("Inicia la presentación"));
     } else if (context.sectionId) {
       examples.push(t("Resume esta sección"), t("Dame un ejemplo de este tema"), t("Explícame los conceptos clave"));
       if (context.diagramId && has("open_diagram")) examples.push(t("Abre este diagrama"));
     }
+    if (!viewer && !document.querySelector("#quiz") && (has("start_presentation") || has("course_presentation"))) examples.push(t("Inicia la presentación"));
     if (has("return_presentation")) examples.push(t("Vuelve a la presentación"));
     if (has("video_chapter")) examples.push(t("Resume este capítulo"), t("Explícame este video"));
     if (has("catalog_group")) examples.push(t("Muestra los grupos de cursos"));
@@ -82,7 +84,8 @@ export function installVoiceChatControls(chat) {
     if (!still) hintsTimer = setTimeout(rotateHints, hints.children.length < Math.min(3, examples.length) ? 650 : 3500);
   }
   function showHints(event) {
-    clearTimeout(hideHintsTimer);
+    clearTimeout(showHintsTimer); showHintsTimer = null;
+    clearTimeout(hideHintsTimer); hideHintsTimer = null;
     if (!hintsAllowed() || event?.type !== "focusin" && chat.shadowRoot.querySelector('[data-voice-command="mute"]:hover, [data-voice-command="exit"]:hover')) { hideHints(); return; }
     if (!hints) {
       hints = document.createElement("div"); hints.id = "certivoice-hints"; hints.dataset.voiceHints = "";
@@ -94,14 +97,28 @@ export function installVoiceChatControls(chat) {
     chat.shadowRoot.querySelectorAll('.custom-button:not([aria-disabled="true"])').forEach(button => button.setAttribute("aria-describedby", hints.id));
     rotateHints();
   }
+  function drainHints() {
+    clearTimeout(showHintsTimer); showHintsTimer = null;
+    clearTimeout(hintsTimer);
+    clearTimeout(hideHintsTimer);
+    const bubble = hints?.lastElementChild;
+    if (!bubble || hints.dataset.open !== "true") { hideHints(); return; }
+    bubble.getAnimations().filter(animation => animation.effect.getTiming().iterations !== Infinity).forEach(animation => animation.cancel());
+    const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 240;
+    bubble.animate([{ opacity: 1 }, { opacity: 0 }], { duration, fill: "forwards" });
+    hideHintsTimer = setTimeout(() => { bubble.remove(); hideHintsTimer = setTimeout(drainHints, 360); }, duration);
+  }
   chat.addEventListener("pointermove", event => {
     if (event.pointerType === "touch") return;
-    if (event.composedPath().some(node => node.matches?.('[data-voice-command="mute"], [data-voice-command="exit"]'))) hideHints();
-    else if (hints?.dataset.open !== "true") showHints();
+    if (event.composedPath().some(node => node.matches?.('[data-voice-command="mute"], [data-voice-command="exit"]'))) { hideHints(); return; }
+    if (!hintsAllowed() || showHintsTimer || hints?.dataset.open === "true" && !hideHintsTimer) return;
+    clearTimeout(hideHintsTimer); hideHintsTimer = null;
+    hints?.querySelectorAll("[data-voice-hint]").forEach(bubble => bubble.getAnimations().filter(animation => animation.effect.getTiming().iterations !== Infinity).forEach(animation => animation.cancel()));
+    showHintsTimer = setTimeout(() => { showHintsTimer = null; if (chat.matches(":hover")) showHints(); }, 3000);
   }, { capture: true });
-  chat.addEventListener("pointerleave", () => { if (!chat.shadowRoot?.activeElement) { clearTimeout(hintsTimer); hideHintsTimer = setTimeout(hideHints, 180); } });
-  chat.addEventListener("focusin", showHints);
-  chat.addEventListener("focusout", () => queueMicrotask(() => { if (!chat.shadowRoot?.activeElement) hideHints(); }));
+  chat.addEventListener("pointerleave", drainHints);
+  chat.addEventListener("focusin", event => { if (event.composedPath().some(node => node.matches?.(":focus-visible"))) showHints(event); });
+  chat.addEventListener("focusout", () => queueMicrotask(() => { if (!chat.shadowRoot?.activeElement) { if (chat.matches(":hover")) rotateHints(); else drainHints(); } }));
   chat.addEventListener("keydown", event => { if (event.key === "Escape" && hints?.dataset.open === "true") { event.preventDefault(); event.stopPropagation(); hideHints(); } });
   const icons = { start: "wave", mute: "mute", exit: "exit" };
   const controls = Object.keys(icons).map(command => ({
@@ -126,13 +143,13 @@ export function installVoiceChatControls(chat) {
   }));
   for (const control of controls) {
     const base = control.styles.button.default;
-    control.styles.button.active = { ...base, container: { default: { ...base.container.default, color: "var(--red)" } } };
+    control.styles.button.active = { ...base, container: { default: { ...base.container.default, color: "#fff", backgroundColor: "var(--red)", borderRadius: "50%" } } };
   }
   chat.customButtons = [...(chat.customButtons || []), ...controls];
   chat.submitButtonStyles = { ...chat.submitButtonStyles, position: "inside-end" };
   chat.auxiliaryStyle = (chat.auxiliaryStyle || "") + ' :host([data-voice-mode]) { overflow: visible !important; } #certivoice-hints { opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(6px); transition: opacity 180ms ease, transform 180ms ease, visibility 0s 180ms; } #certivoice-hints[data-open="true"] { opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(0); transition-delay: 0s; } #certivoice-hints[data-focused="true"] [part~="voice-hint"] { animation: none !important; opacity: 1; } @media (prefers-reduced-motion: reduce) { #certivoice-hints { transform: none; transition: none; } }';
   chat.auxiliaryStyle = (chat.auxiliaryStyle || "") + ' :host([data-voice-mode]), :host([data-voice-mode]) :is(#chat-view, #input, #text-input-container) { background: transparent !important; } :host([data-voice-mode]) #input { height: 46px; min-height: 0; } :host([data-voice-mode]) #text-input-container { border-top: 0 !important; height: 100%; min-height: 0; } :host([data-voice-mode]) #text-input { box-sizing: border-box; height: 100%; min-height: 0; padding-block: 0 !important; } :host([data-voice-mode]) .custom-button { color: var(--voice-ink) !important; inset-block-end: 50% !important; transform: translateY(50%) !important; } :host([data-voice-mode]) [data-certivoice-icon] { width: var(--voice-icon-size, 22px) !important; height: var(--voice-icon-size, 22px) !important; } :host([data-voice-mode]) #certivoice-phase { left: 24px; color: var(--voice-ink, var(--ink)); }';
-  chat.auxiliaryStyle = (chat.auxiliaryStyle || "") + ' :host([data-voice-resume="true"]) [data-voice-command="start"] { inset-inline-end: 56px !important; } [data-voice-command="mute"] { inset-inline-end: 56px !important; } [data-voice-command="exit"] { inset-inline-end: 8px !important; } #text-input-container { min-height: 52px; } .custom-button[aria-disabled="true"] { opacity: .45; cursor: not-allowed; } .custom-button:focus-visible { border-radius: 7px !important; outline: 2px solid var(--red); outline-offset: 2px; } [data-voice-command="mute"][aria-pressed="true"] [data-certivoice-icon], .custom-button:not([aria-disabled="true"]):is(:hover, :focus-visible) [data-certivoice-icon] { color: var(--red) !important; } :host([data-voice-mode]) #messages, :host([data-voice-mode]) #certichat-quota { display: none; } :host([data-voice-mode]) #chat-view { grid-template-rows: auto; } :host([data-voice-mode]) #text-input { visibility: hidden; } #certivoice-phase { position: absolute; inset: 0 108px 0 12px; display: flex; align-items: center; justify-content: flex-start; color: var(--ink); pointer-events: none; } #certivoice-phase[hidden] { display: none; } #certivoice-phase .voice-dot { display: inline-block; animation: voice-dot-bounce 1.2s ease-in-out infinite; } #certivoice-phase .voice-dot:nth-child(2) { animation-delay: .15s; } #certivoice-phase .voice-dot:nth-child(3) { animation-delay: .3s; } #certivoice-phase[data-phase="paused"] .voice-dot { animation: none; } @keyframes voice-dot-bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-3px); } } @media (prefers-reduced-motion: reduce) { #certivoice-phase .voice-dot { animation: none; } }';
+  chat.auxiliaryStyle = (chat.auxiliaryStyle || "") + ' :host([data-voice-resume="true"]) [data-voice-command="start"] { inset-inline-end: 56px !important; } [data-voice-command="mute"] { inset-inline-end: 56px !important; } [data-voice-command="exit"] { inset-inline-end: 8px !important; } #text-input-container { min-height: 52px; } .custom-button[aria-disabled="true"] { opacity: .45; cursor: not-allowed; } .custom-button:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; } .custom-button:not([aria-disabled="true"]):is(:hover, :focus-visible) [data-certivoice-icon] { color: var(--red) !important; } :host([data-voice-mode]) [data-voice-command="exit"] { border-radius: 50% !important; background: var(--voice-exit-surface) !important; } :host([data-voice-mode]) [data-voice-command="exit"] [data-certivoice-icon] { color: var(--voice-exit-ink) !important; } :host([data-voice-mode]) [data-voice-command="mute"][aria-pressed="true"], :host([data-voice-mode]) .custom-button:not([aria-disabled="true"]):active { border-radius: 50% !important; background: var(--red) !important; } :host([data-voice-mode]) [data-voice-command="mute"][aria-pressed="true"] [data-certivoice-icon], :host([data-voice-mode]) .custom-button:not([aria-disabled="true"]):active [data-certivoice-icon] { color: #fff !important; } :host([data-voice-mode]) #messages, :host([data-voice-mode]) #certichat-quota { display: none; } :host([data-voice-mode]) #chat-view { grid-template-rows: auto; } :host([data-voice-mode]) #text-input { visibility: hidden; } #certivoice-phase { position: absolute; inset: 0 108px 0 12px; display: flex; align-items: center; justify-content: flex-start; color: var(--ink); pointer-events: none; } #certivoice-phase[hidden] { display: none; } #certivoice-phase .voice-dot { display: inline-block; animation: voice-dot-bounce 1.2s ease-in-out infinite; } #certivoice-phase .voice-dot:nth-child(2) { animation-delay: .15s; } #certivoice-phase .voice-dot:nth-child(3) { animation-delay: .3s; } #certivoice-phase[data-phase="paused"] .voice-dot { animation: none; } @keyframes voice-dot-bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-3px); } } @media (prefers-reduced-motion: reduce) { #certivoice-phase .voice-dot { animation: none; } }';
   // Keep the existing renewal notice visible when the compact voice bar cannot resume.
   chat.auxiliaryStyle += ' :host([data-voice-phase="paused"]) #certichat-quota:not([hidden]) { display: block; position: absolute; inset: auto 8px calc(100% + 8px); box-sizing: border-box; margin: 0; padding: 8px 12px; border: 1px solid var(--red); border-radius: 8px; background: var(--paper); color: var(--ink); font-size: 13px; line-height: 1.4; text-align: center; }';
   const onKeyboard = event => {
@@ -145,7 +162,7 @@ export function installVoiceChatControls(chat) {
     });
   };
 
-  chat.auxiliaryStyle = (chat.auxiliaryStyle || "") + ' @media (max-width: 800px) { :host([data-voice-mode]) #input { height: 52px !important; } :host([data-voice-mode]) #text-input-container { min-height: 0 !important; } :host([data-voice-mode]) .custom-button { width: var(--voice-control-size, 44px) !important; height: var(--voice-control-size, 44px) !important; } :host([data-voice-mode]) [data-voice-command="mute"], :host([data-voice-resume="true"]) [data-voice-command="start"] { inset-inline-end: calc(24px + var(--voice-control-size, 44px)) !important; } :host([data-voice-mode]) [data-voice-command="exit"] { inset-inline-end: 12px !important; background: #fff !important; border-radius: 50% !important; } :host([data-voice-mode]) [data-voice-command="exit"] [data-certivoice-icon] { color: #111827 !important; } :host([data-voice-mode]) [data-voice-command="mute"][aria-pressed="true"] { border-radius: 50% !important; border: 1px solid var(--red) !important; background: color-mix(in srgb, var(--red) 12%, transparent) !important; } :host([data-voice-mode]) #certivoice-phase { left: 20px; right: calc(44px + 2 * var(--voice-control-size, 44px)); } :host([data-voice-mode]) [data-certivoice-icon] { width: 22px !important; height: 22px !important; } } @media (max-width: 480px) { :host([data-voice-mode]) [data-certivoice-icon] { width: 17px !important; height: 17px !important; } }';
+  chat.auxiliaryStyle = (chat.auxiliaryStyle || "") + ' @media (max-width: 800px) { :host([data-voice-mode]) #input { height: 52px !important; } :host([data-voice-mode]) #text-input-container { min-height: 0 !important; } :host([data-voice-mode]) .custom-button { width: var(--voice-control-size, 44px) !important; height: var(--voice-control-size, 44px) !important; } :host([data-voice-mode]) [data-voice-command="mute"], :host([data-voice-resume="true"]) [data-voice-command="start"] { inset-inline-end: calc(24px + var(--voice-control-size, 44px)) !important; } :host([data-voice-mode]) [data-voice-command="exit"] { inset-inline-end: 12px !important; } :host([data-voice-mode]) #certivoice-phase { left: 20px; right: calc(44px + 2 * var(--voice-control-size, 44px)); } }';
 
   function refresh(busy = false) {
     requestBusy = busy;
@@ -183,9 +200,9 @@ export function installVoiceChatControls(chat) {
       }
       phase.dataset.phase = state.phase || "off";
       phase.title = state.error || "";
-      const launcher = chat.closest(".certichat")?.querySelector("[data-chat-open]");
-      phase.style.font = getComputedStyle(launcher || input).font;
-      chat.style.setProperty("--voice-icon-size", launcher?.querySelector("svg") ? getComputedStyle(launcher.querySelector("svg")).width : "22px");
+      const search = document.querySelector(".site-header .search-toggle"), reference = document.querySelector(".site-header .header-app-link svg");
+      phase.style.font = getComputedStyle(search || input).font;
+      chat.style.setProperty("--voice-icon-size", reference ? getComputedStyle(reference).width : "24px");
       messages.inert = Boolean(label);
       if (label) messages.setAttribute("aria-hidden", "true"); else messages.removeAttribute("aria-hidden");
     }

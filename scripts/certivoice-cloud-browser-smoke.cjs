@@ -66,6 +66,49 @@ async (page) => {
       assert(Math.abs(edge.base-12)<.1&&Math.abs(edge.peak-(reduced?12:13.2))<.1&&edge.peak/edge.base<=1.101&&edge.peakRadius/edge.radius<=1.101&&edge.mask==='url(#voice-edge-mask)','Edge thickness or movement exceeded the 10 percent bound: '+JSON.stringify(edge));
     }
     await page.emulateMedia({reducedMotion:'no-preference'});
+    for (const theme of ['light','dark']) {
+      await page.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);
+      await mute.click();await page.waitForFunction(()=>window.__voiceState.muted);
+      const design=await page.locator('deep-chat').evaluate(chat=>{
+        const shadow=chat.shadowRoot,panel=getComputedStyle(chat.closest('#certichat-panel')),phase=getComputedStyle(shadow.querySelector('#certivoice-phase')),search=getComputedStyle(document.querySelector('.site-header .search-toggle'));
+        const mic=shadow.querySelector('[data-voice-command="mute"]'),exit=shadow.querySelector('[data-voice-command="exit"]'),m=getComputedStyle(mic),e=getComputedStyle(exit),dark=document.documentElement.dataset.theme==='dark';
+        const size=parseFloat(getComputedStyle(document.querySelector('.site-header .header-app-link svg')).width);
+        return {surface:panel.backgroundColor===search.backgroundColor&&panel.backgroundImage==='none'&&(innerWidth<=800||panel.borderTopColor===search.borderTopColor),font:phase.font===search.font&&phase.fontWeight==='400'&&phase.color===search.color,
+          mic:m.borderRadius==='50%'&&m.backgroundColor===getComputedStyle(document.querySelector('.brand-accent')).color&&getComputedStyle(mic.querySelector('svg')).color==='rgb(255, 255, 255)',
+          exit:e.borderRadius==='50%'&&e.backgroundColor===(dark?'rgb(255, 255, 255)':'rgb(17, 17, 17)')&&getComputedStyle(exit.querySelector('svg')).color===(dark?'rgb(17, 17, 17)':'rgb(255, 255, 255)'),
+          icons:[mic,exit].every(button=>{const box=button.querySelector('svg').getBoundingClientRect();return box.width===size&&box.height===size;})};
+      });
+      assert(Object.values(design).every(Boolean),'Voice design differs from Search/header reference in '+theme+'/'+ios+': '+JSON.stringify(design));
+      await mute.click();await page.waitForFunction(()=>!window.__voiceState.muted);
+    }
+    if (!ios) for (const theme of ['light','dark']) {
+      await page.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);
+      const hints=page.locator('deep-chat [data-voice-hints]');
+      await page.mouse.move(0,0);await page.locator('deep-chat').evaluate(chat=>chat.shadowRoot.activeElement?.blur());
+      await page.waitForFunction(()=>document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]')?.dataset.open!=='true');
+      await page.locator('deep-chat').hover();await page.waitForTimeout(2300);
+      assert(await page.locator('deep-chat').evaluate(chat=>chat.shadowRoot.querySelector('[data-voice-hints]')?.dataset.open!=='true'),'Hints opened before three seconds');
+      await page.waitForFunction(()=>document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]')?.children.length===3);
+      await page.mouse.move(0,0);
+      await page.waitForFunction(()=>document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').children.length===2);
+      await page.locator('deep-chat').hover();
+      await page.waitForFunction(()=>document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').children.length===3);
+      assert(await hints.evaluate(node=>[...node.children].every(bubble=>bubble.getAnimations().some(animation=>animation.effect.getTiming().iterations===Infinity))),'Reentry stopped floating or lost pending rotation');
+      await page.mouse.move(0,0);
+      await page.waitForFunction(()=>document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').children.length===2);
+      await page.waitForFunction(()=>document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').children.length===1);
+      await page.waitForFunction(()=>document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]').dataset.open==='false');
+      await page.locator('deep-chat').hover();await page.waitForTimeout(900);await page.mouse.move(0,0);await page.waitForTimeout(2300);
+      assert(await hints.getAttribute('aria-hidden')==='true','Brief hover left a delayed opening queued');
+      await page.locator('deep-chat').hover();await page.waitForFunction(()=>document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]')?.dataset.open==='true');
+      await mute.click();await page.waitForFunction(()=>window.__voiceState.muted);
+      const before=await hints.innerHTML();await page.locator('deep-chat').hover();await mute.focus();await page.waitForTimeout(4000);
+      assert(await hints.evaluate((node,before)=>node.dataset.open==='false'&&node.getAttribute('aria-hidden')==='true'&&node.innerHTML===before&&!node.getRootNode().querySelector('[aria-describedby="certivoice-hints"]'),before),'Mute allowed hints to reopen or keep rotating in '+theme);
+      await mute.click();await page.waitForFunction(()=>!window.__voiceState.muted&&window.__voiceState.phase==='listening');
+      await mute.evaluate(node=>node.blur());await page.mouse.move(0,0);await page.locator('deep-chat').hover();
+      await page.waitForFunction(()=>document.querySelector('deep-chat').shadowRoot.querySelector('[data-voice-hints]')?.dataset.open==='true');
+    }
+    await page.mouse.move(0,0);
     await page.evaluate(()=>window.__talk());await speaking();
     assert(calls.filter(c=>c.path==='/api/voice').at(-1).body.audioOutput==='browser','Cloud TTS changed the educational reasoning path');
     assert(calls.filter(c=>c.path==='/api/speech').at(-1).body.text===literal,'Mixed-language text was rewritten');
@@ -112,5 +155,5 @@ async (page) => {
     await exit.click();fail=false;
   }
   assert(errors.length===0,errors.join('; '));
-  return {checks:40,platforms:['desktop','iPhone simulation'],tts,paidInferences:0,screenshots:0};
+  return {checks:64,platforms:['desktop','iPhone simulation'],tts,paidInferences:0,screenshots:0};
 }

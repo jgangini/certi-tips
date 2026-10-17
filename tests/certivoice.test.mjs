@@ -822,9 +822,9 @@ test("chat shows native send when voice is unavailable and never stores voice er
       const { container, svg } = control.styles.button[state];
       assert.equal(container.default.width, "44px");
       assert.equal(container.default.height, "44px");
-      assert.equal(container.default.backgroundColor, "transparent");
+      assert.equal(container.default.backgroundColor, state === "active" ? "var(--red)" : "transparent");
       assert.equal(container.default.border, "none");
-      assert.equal(container.default.borderRadius, "0");
+      assert.equal(container.default.borderRadius, state === "active" ? "50%" : "0");
       assert.equal(svg.styles.default.width, "24px");
       assert.equal(svg.styles.default.height, "24px");
     }
@@ -886,5 +886,28 @@ test("returning from a document aside resumes verified cloud narration at its pr
     assert.equal(calls.length, 1); assert.equal(calls[0][0], saved.playback.answer.slice(10));
     assert.equal(calls[0][2].requestId, saved.playback.requestId); assert.equal(calls[0][2].offset, 10);
     assert.equal(env.playback.createdAt, saved.playback.createdAt);
+  }
+});
+
+
+test("voice examples cover slide detail, document detours and lecture scope only where available", () => {
+  const source = readFileSync(new URL("../assets/certivoice-chat.js", import.meta.url), "utf8");
+  const hints = source.slice(source.indexOf("  function hintExamples("), source.indexOf("  function rotateHints("));
+  const examples = ({ presenting = false, viewer = true, section = false, actions = [], practice = false } = {}) => vm.runInNewContext(`${hints}\nhintExamples()`, {
+    t: text => text, voiceContext: () => ({ diagramId: viewer ? "course#slide" : undefined, sectionId: section ? "course#section" : undefined, targets: actions.map(action => ({ action })) }),
+    document: { querySelector: selector => selector === "#diagram-viewer[open]" && viewer ? { classList: { contains: () => presenting }, querySelectorAll: () => [{}, {}] } : selector === "#quiz" && practice ? {} : null },
+  });
+  const slide = examples({ presenting: true, actions: ["lecture_start"] });
+  for (const value of ["Explícame esta lámina", "Profundiza en este tema", "Consulta la documentación para complementar", "Da la charla completa de este módulo", "Continúa con toda la presentación"]) assert(slide.includes(value), value);
+  assert(!examples({ actions: [] }).includes("Da la charla completa de este módulo"));
+  assert(examples({ viewer: false, actions: ["course_presentation"] }).includes("Inicia la presentación"), "An image-less module must offer its nearest available presentation");
+  assert(examples({ viewer: false, section: true, actions: ["start_presentation"] }).includes("Inicia la presentación"));
+  const practice = examples({ viewer: false, practice: true, actions: ["practice_read", "course_presentation"] });
+  assert(practice.includes("Lee la pregunta") && !practice.includes("Inicia la presentación"));
+  const ui = JSON.parse(readFileSync(new URL("../data/es/ui.json", import.meta.url), "utf8"));
+  const translations = JSON.parse(readFileSync(new URL("../data/i18n.json", import.meta.url), "utf8")).overrides;
+  for (const [, text] of hints.matchAll(/t\("([^"]+)"\)/g)) {
+    assert.equal(ui[text], text, "Voice hint missing from UI dictionary: " + text);
+    for (const locale of ["en", "pt", "it"]) assert(translations[locale][text], locale + " missing hint: " + text);
   }
 });
