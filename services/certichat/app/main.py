@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 import hashlib
 import json
 import logging
+from pathlib import Path
 import re
 import time
 from urllib.parse import urlsplit
@@ -29,6 +30,8 @@ from .decisions import answer_with_decisions
 from .store import Store
 from .telemetry import BrowserBatch, EventMiddleware, emit
 from .voice import LectureBody, PageActivity, VoiceBody, VoiceProvider, wav_seconds
+
+PUBLISHED_CONTEXT_DIRECTORY = Path(__file__).with_name("published")
 
 CLEANUP_SECONDS = 60
 
@@ -170,10 +173,12 @@ async def retrieve(application, body, history=(), continuity="", context_ids=Non
                 raise ValueError("Invalid fragment")
             ids.add(fragment["id"])
         trace = validate_trace(result["graphTrace"])
-        if settings.local_voice_corpus_dir and (context_ids or history) and (not context_ids or not any(
+        # The image may carry the public build; it is read-only evidence, never a fabricated graph index.
+        context_directory = settings.local_voice_corpus_dir or (str(PUBLISHED_CONTEXT_DIRECTORY) if settings.mode == "VPS" and PUBLISHED_CONTEXT_DIRECTORY.is_dir() else "")
+        if context_directory and (context_ids or history) and (not context_ids or not any(
                 fragment.get("sourceId") == context_ids[0] for fragment in fragments)):
             try:
-                local = await db(verified_local_context, settings.local_voice_corpus_dir, body.pageUrl or "", context_ids or [], history, fragments)
+                local = await db(verified_local_context, context_directory, body.pageUrl or "", context_ids or [], history, fragments)
             except (OSError, ValueError, KeyError, TypeError):
                 raise ChatError("El corpus local del diagrama no está disponible o su contenido cambió. Actualiza el build antes de continuar.",
                                 503, code="voice_context_unavailable") from None
@@ -536,6 +541,8 @@ def create_app(settings=None, *, transport=None):
                             except ChatError as error:
                                 result["audioError"] = error.code or "voice_provider"
                 else:
+                    if intent["expand"]:
+                        result["expanded"] = True
                     query = ChatBody(requestId=body.requestId, message=intent["transcript"], pageUrl=body.pageUrl, locale=body.locale)
                     phase = "retrieval"
                     version, fragments, trace = await retrieve(request.app, query, history, memory["text"] if memory else "",

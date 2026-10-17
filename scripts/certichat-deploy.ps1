@@ -55,6 +55,14 @@ function Invoke-Checked([scriptblock]$Action) {
     if ($LASTEXITCODE -ne 0) { throw "CertiChat operation failed ($LASTEXITCODE)." }
 }
 
+# Package the exact public build as read-only context for SVG narration without rebuilding Cognee.
+$corpusRoot = Join-Path $releaseRoot 'dist/assets/certichat'
+$publishedRoot = Join-Path $releaseRoot 'services/certichat/app/published'
+$publishedManifest = Get-Content -LiteralPath (Join-Path $corpusRoot 'manifest.json') -Raw | ConvertFrom-Json
+if ($publishedManifest.schemaVersion -ne 1 -or $publishedManifest.contentHash -cne (Get-FileHash -LiteralPath (Join-Path $corpusRoot 'corpus.json') -Algorithm SHA256).Hash.ToLowerInvariant()) { throw 'Build corpus failed hash validation. Compile before deploying.' }
+New-Item -ItemType Directory -Path $publishedRoot -Force | Out-Null
+foreach ($name in @('manifest.json', 'corpus.json')) { Copy-Item -LiteralPath (Join-Path $corpusRoot $name) -Destination (Join-Path $publishedRoot $name) }
+
 # Explicit source roots and exclusions keep production credentials and unrelated work out of the release.
 Invoke-Checked { & tar -czf $archive -C $releaseRoot --exclude=.env --exclude='.env.*' --exclude=.private --exclude=__pycache__ --exclude=.pytest_cache services/certichat }
 $entries = & tar -tzf $archive

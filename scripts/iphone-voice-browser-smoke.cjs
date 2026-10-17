@@ -18,7 +18,8 @@ async (page) => {
       // The real answer arrives after network/permission work, outside the original tap.
       await new Promise(resolve => setTimeout(resolve, 40));
       const action = nextAction; nextAction = undefined;
-      return route.fulfill({ headers, json: { requestId: body.requestId, answer: 'Respuesta de audio después de la red.', transcript: 'Explica este tema.', educational: !action, ...(action ? { action } : {}), sources: [], contentVersion: 'test', quota } });
+      const lecture = body.mode === 'lecture' ? { step: 1, startedAt: Date.now() / 1000, done: true, courseId: 'oci-foundations-2026' } : action?.name === 'lecture_start' ? { step: 0, startedAt: Date.now() / 1000, done: false } : undefined;
+      return route.fulfill({ headers, json: { requestId: body.requestId, answer: body.mode === 'lecture' ? 'Explicación automática de la primera lámina.' : 'Respuesta de audio después de la red.', transcript: body.mode === 'lecture' ? '' : 'Explica este tema.', educational: !action, ...(action ? { action } : {}), ...(lecture ? { lecture } : {}), sources: [], contentVersion: 'test', quota } });
     }
     return route.fulfill({ headers, json: { mode: 'LOCAL', authenticated: true, verificationRequired: false, available: true, voice: { enabled: true, maxSeconds: 30 }, quota } });
   });
@@ -213,6 +214,21 @@ async (page) => {
     await phone.waitForFunction(() => window.__voiceState.phase === 'listening');
 
     await phone.locator('.header-app-link[href$="/certitube/"]').tap(); await arrived('es/certitube/');
+    await phone.locator('.site-header .brand').tap(); await arrived('es/');
+    await phone.locator('.header-app-link[href$="/courses/"]').tap(); await arrived('es/courses/');
+    await phone.locator('main a[href$="/1Z0-1085-26/overview/"]').first().tap(); await arrived('es/1Z0-1085-26/overview/');
+    nextAction = { name: 'start_presentation' }; await phone.evaluate(() => window.__speakTurn());
+    await phone.waitForURL('**/es/1Z0-1085-26/oci-architecture/#diagram-*'); await finishSpeech();
+    assert(await phone.locator('#diagram-viewer').evaluate(viewer => viewer.open && viewer.classList.contains('is-presenting')), 'iPhone did not resolve presentation from an image-less overview');
+    const diagram = await phone.locator('#diagram-viewer').getAttribute('data-source-id');
+    const captureCount = await phone.evaluate(() => window.__microphones);
+    nextAction = { name: 'lecture_start', targetId: diagram }; await phone.evaluate(() => window.__speakTurn());
+    await phone.waitForFunction(() => window.__voiceState.phase === 'speaking');
+    await phone.evaluate(() => window.__utterance.onend());
+    await phone.waitForFunction(() => window.__utterance?.text === 'Explicación automática de la primera lámina.');
+    assert(await phone.evaluate(count => window.__voiceState.phase === 'speaking' && window.__microphones === count, captureCount), 'Lecture transition reacquired iPhone capture or required Resume');
+    await phone.evaluate(() => window.__utterance.onend()); await phone.waitForFunction(() => window.__voiceState.phase === 'listening');
+    await phone.locator('#diagram-viewer [data-close-diagram]').tap(); await phone.locator('#diagram-viewer').waitFor({ state: 'hidden' });
     await phone.locator('.site-header .brand').tap(); await arrived('es/');
   };
   try {

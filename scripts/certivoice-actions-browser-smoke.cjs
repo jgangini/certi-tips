@@ -146,9 +146,9 @@ async (page) => {
   await listen();
   await navigation({ name: 'open_course', targetId: 'course:1Z0-1157-26' }, new URL('es/1Z0-1157-26/overview/', base).href);
   await listen();
-  const overviewURL = page.url();
-  await turn({ name: 'start_presentation' }); await phase('listening');
-  assert(page.url() === overviewURL && !await page.locator('#diagram-viewer').evaluate(dialog => dialog.open), 'A module without images silently selected a different module');
+  await turn({ name: 'start_presentation' });
+  await page.waitForURL(new URL('es/1Z0-1157-26/agents/#diagram-agent-loop.svg', base).href); await phase('listening');
+  assert(await page.locator('#diagram-viewer').evaluate(dialog => dialog.open && dialog.classList.contains('is-presenting')), 'An image-less overview did not start its nearest course presentation');
   await navigation({ name: 'open_module', targetId: 'module:1Z0-1157-26/langchain' }, new URL('es/1Z0-1157-26/langchain/', base).href);
   await listen();
   await turn({ name: 'course_presentation', targetId: 'course:1Z0-1157-26' });
@@ -475,11 +475,11 @@ async (page) => {
     visitedModules.push(module.slug); await listen();
   }
   await navigation({ name: 'open_module', targetId: 'module:1Z0-1085-26/overview' }, new URL('es/1Z0-1085-26/overview/', base).href); await listen();
-  await turn({ name: 'start_presentation' }); await phase('listening');
-  assert(await page.locator('[data-diagram]').count() === 0 && !await page.locator('#diagram-viewer').evaluate(dialog => dialog.open), 'Overview without diagrams opened a presentation');
-  assert(await page.evaluate(() => window.__spoken.some(text => text.includes('Este módulo no contiene imágenes para presentar.'))), 'Overview omitted its deterministic no-images explanation');
+  await turn({ name: 'start_presentation' });
+  await page.waitForURL('**/es/1Z0-1085-26/oci-architecture/#diagram-*'); await phase('listening');
+  assert(await page.locator('#diagram-viewer').evaluate(dialog => dialog.open && dialog.classList.contains('is-presenting')), 'Overview did not open its nearest registered diagram');
   visitedModules.push('overview');
-  checks.push('all eight OCI Foundations module pages load, and overview reports no images without leaving its route');
+  checks.push('all eight OCI Foundations module pages load, and image-less overview resolves the nearest course diagram');
 
   await open('en/1Z0-1085-26/overview/');
   outputRegistry.overviewEn = await page.evaluate(async () => { const module = await import(document.querySelector('script[src*="/assets/site.js"]').src.replace('site.js', 'certivoice-actions.js')); return { pageUrl: module.voicePageURL(), context: module.voiceContext() }; });
@@ -542,6 +542,58 @@ async (page) => {
   assert(freshTrail.length === 1 && freshTrail[0].at === retainedAt && JSON.stringify(await activity()) === JSON.stringify(freshTrail), 'Activity expiry retained stale data or extended a valid entry lifetime');
   await clearConversation();
   checks.push('canceled practice navigation records cancellation; clear and per-entry24-hour expiry remove shared activity without renewing it');
+
+  await open('es/1Z0-1085-26/overview/'); await listen();
+  await page.evaluate(() => { window.__holdSpeech = true; window.__asideChat = document.querySelector('deep-chat'); });
+  await turn({ name: 'start_presentation' });
+  await page.waitForURL('**/es/1Z0-1085-26/oci-architecture/#diagram-*');
+  await page.waitForFunction(() => document.querySelector('#diagram-viewer').classList.contains('is-presenting'));
+  await phase('speaking'); await page.evaluate(() => window.__utterance.onend()); await phase('listening');
+  checks.push('image-less course overview starts the nearest registered presentation without a second activation');
+  const originSlide = await page.locator('#diagram-viewer').getAttribute('data-source-id');
+  const asideSource = await page.evaluate(async () => {
+    const response = await fetch('/certitips/es/1Z0-1085-26/iam/');
+    const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+    const heading = doc.querySelector('.prose h2[id]');
+    return { id: heading.dataset.sourceId, title: heading.textContent, url: 'https://jgangini.github.io/certitips/1Z0-1085-26/iam/#' + heading.id };
+  });
+  await turn(null, { expanded: true, educational: true, transcript: 'Profundiza y relaciona este concepto con la lámina.', answer: 'Ampliación con una sección verificada del curso.', sources: [asideSource] });
+  await page.waitForURL('**/es/1Z0-1085-26/iam/#*'); await phase('speaking');
+  assert(await page.locator('#diagram-viewer').evaluate(viewer => !viewer.open) && await page.locator('.prose').isVisible(), 'Expanded explanation did not reveal its cited document');
+  assert(await page.evaluate(() => Boolean(window.CSS?.highlights?.get('certivoice-phrase')?.size || document.querySelector('mark[data-voice-highlight]'))), 'Expanded explanation did not highlight actual guide text');
+  await page.evaluate(() => window.__utterance.onend());
+  await page.waitForURL('**/es/1Z0-1085-26/oci-architecture/#diagram-*'); await phase('listening');
+  assert(await page.locator('#diagram-viewer').evaluate((viewer, id) => viewer.open && viewer.classList.contains('is-presenting') && viewer.dataset.sourceId === id, originSlide), 'Expanded explanation did not return to its original slide');
+  assert(await page.evaluate(() => document.querySelector('deep-chat') === window.__asideChat), 'Document aside replaced the live chat');
+  checks.push('expanded explanation navigates to the cited guide, highlights real text and returns to the same presentation slide');
+  const asideLectureText = 'Texto original de la charla que continúa después del paréntesis.';
+  const asideLectureSegment = (step, done) => ({ educational: true, transcript: '', answer: step === 1 ? asideLectureText : 'Siguiente lámina después del paréntesis.', sources: [], contentVersion: 'test', lecture: { step, startedAt: Date.now() / 1000, done, courseId: 'oci-foundations-2026' } });
+  await turn({ name: 'lecture_start', targetId: originSlide }, { lecture: { step: 0, startedAt: Date.now() / 1000, done: false } }, [asideLectureSegment(1, false)]);
+  await phase('speaking'); await page.evaluate(() => window.__utterance.onend());
+  await page.waitForFunction(text => window.__utterance?.text === text, asideLectureText);
+  await page.evaluate(() => window.__utterance.onboundary({ charIndex: 12 }));
+  const originalAsideLifetime = await page.evaluate(() => JSON.parse(sessionStorage.getItem('certivoice:https://jgangini.github.io/certitips/:playback')).createdAt);
+  await turn(null, { expanded: true, educational: true, answer: 'Detalle intermedio sobre la sección citada.', sources: [asideSource] });
+  await page.waitForURL('**/es/1Z0-1085-26/iam/#*'); await phase('speaking');
+  const beforeAsideReturn = voices().length;
+  await page.evaluate(() => window.__utterance.onend());
+  await page.waitForURL('**/es/1Z0-1085-26/oci-architecture/#diagram-*');
+  await page.waitForFunction(text => window.__utterance?.text === text, asideLectureText.slice(12));
+  assert(voices().length === beforeAsideReturn, 'Returning from an aside requested or regenerated already verified narration');
+  assert(await page.evaluate(() => JSON.parse(sessionStorage.getItem('certivoice:https://jgangini.github.io/certitips/:playback')).createdAt) === originalAsideLifetime, 'Returning from an aside renewed the original narration lifetime');
+  replies.push(asideLectureSegment(2, true));
+  await page.evaluate(() => window.__utterance.onend());
+  await page.waitForFunction(() => window.__utterance?.text === 'Siguiente lámina después del paréntesis.');
+  assert(voices().at(-1).body.context.diagramId !== originSlide && voices().at(-1).body.mode === 'lecture', 'Lecture did not continue to the next slide after finishing the interrupted narration');
+  await page.evaluate(() => window.__utterance.onend()); await phase('listening');
+  checks.push('an expanded aside resumes the original validated narration offset and then continues the authorized lecture');
+  await turn(null, { expanded: true, educational: true, answer: 'Otro paréntesis que se cancela.', sources: [asideSource] });
+  await page.waitForURL('**/es/1Z0-1085-26/iam/#*'); await phase('speaking');
+  await page.evaluate(() => { window.__asideEnd = window.__utterance.onend; });
+  await exit.click(); await page.locator('#certichat-panel').waitFor({ state: 'hidden' });
+  await page.evaluate(() => window.__asideEnd());
+  assert(page.url().includes('/iam/') && await page.evaluate(() => !window.__voiceState.active && !document.querySelector('#diagram-viewer').open), 'A canceled aside returned to presentation or revived voice');
+  checks.push('Exit cancels an expanded aside and ignores its late native speech completion');
 
   assert(replies.length === 0 && errors.length === 0, `Unconsumed responses or browser errors: ${JSON.stringify({ remaining: replies.length, errors })}`);
   assert(voices().every(call => call.body.pageUrl.startsWith('https://jgangini.github.io/certitips/') && !/\/certitips\/(es|en|pt|it)\//.test(call.body.pageUrl)), 'Voice or lecture sent a nonpublic page URL');

@@ -1,4 +1,4 @@
-import { t, canonicalURL, siteBase } from "./i18n.js";
+import { t, canonicalURL, localizedURL, siteBase } from "./i18n.js";
 import { practiceTargets, performPracticeAction, guardPracticeNavigation } from "./certivoice-practice.js";
 import { studyResults, practiceReturnURL, rememberPracticeReturn, highlightPhrase } from "./certivoice-study.js";
 
@@ -27,6 +27,8 @@ function actionTargets(doc) {
     if (route) for (const action of ["open_course", "course_presentation"]) add(action, `course:${route[1]}`, link.querySelector("strong")?.textContent, link);
   }
   for (const section of doc.querySelectorAll("[data-group-carousel] .path-section[id]")) add("catalog_group", `group:${section.id}`, section.querySelector("h2")?.textContent, section);
+  const overview = [...doc.querySelectorAll("#course-section-list .nav-link[href]")].find(link => new URL(canonicalURL(link.href)).pathname === `${siteBase}${doc.body?.dataset.courseRoute}/overview/`);
+  if (overview) add("course_presentation", `course:${doc.body.dataset.courseRoute}`, doc.querySelector("h1")?.textContent || overview.textContent, overview);
   for (const link of doc.querySelectorAll("#course-section-list .nav-link[href]")) {
     const url = validVoiceNavigation(link.href, location.href, siteBase);
     const route = url && new URL(canonicalURL(url.href)).pathname.slice(siteBase.length).match(/^([\w-]+\/[\w-]+)\/$/);
@@ -88,7 +90,7 @@ async function activateDiagram(button) {
   return detail.completion ? Boolean(await detail.completion) : false;
 }
 
-async function coursePresentation(link) {
+async function coursePresentation(link, doc = document, nearest = false) {
   const overview = validVoiceNavigation(link.href, location.href, siteBase);
   if (!overview) return null;
   const prefix = new URL("../", overview).pathname;
@@ -97,6 +99,13 @@ async function coursePresentation(link) {
     if (!response.ok) return null;
     const items = await response.json();
     if (!Array.isArray(items) || items.length > 1000) return null;
+    if (nearest) {
+      const modules = [...doc.querySelectorAll("#course-section-list .nav-link[href]")].map(link => new URL(link.href).pathname);
+      const current = modules.indexOf(location.pathname);
+      // ponytail: use the real course order; at equal distance prefer the following module.
+      const distance = item => { try { const index = modules.indexOf(new URL("../", new URL(item?.src, overview)).pathname); return index < 0 || current < 0 ? Infinity : Math.abs(index - current) * 2 + Number(index < current); } catch { return Infinity; } };
+      items.sort((a, b) => distance(a) - distance(b));
+    }
     for (const item of items) {
       const image = validVoiceNavigation(item?.src, location.href, prefix);
       const relative = image?.pathname.slice(prefix.length).match(/^([\w-]+)\/img\/([\w.-]+\.svg)$/);
@@ -107,6 +116,42 @@ async function coursePresentation(link) {
     }
   } catch { /* The published catalog remains usable when its gallery is unavailable. */ }
   return null;
+}
+
+export function explanationSource(sources, doc = document) {
+  const course = doc.body?.dataset.courseRoute, page = new URL(voicePageURL(doc));
+  if (!/^[\w-]+$/.test(course || "") || !Array.isArray(sources)) return;
+  const prefix = `${siteBase}${course}/`;
+  // ponytail: one cited section per aside; a tour of several sections needs an explicit narration plan.
+  // Prefer an actual guide citation; SVG citations fall back to their containing section.
+  const candidates = sources.slice(0, 8).map(source => {
+    try {
+      const url = new URL(source.url, page);
+      if (url.origin !== page.origin || url.username || url.password || url.search) return;
+      url.pathname = new URL(canonicalURL(url.href)).pathname;
+      const relative = url.pathname.slice(prefix.length);
+      if (!url.pathname.startsWith(prefix) || !/^[\w-]+\/(?:img\/[\w.-]+\.svg)?$/.test(relative) || relative.startsWith("practice/")) return;
+      const image = relative.includes("/img/"), svg = image || url.hash.startsWith("#diagram-");
+      const target = image ? new URL("../", url) : url;
+      if (image) target.hash = `diagram-${relative.split("/").at(-1)}`;
+      const local = new URL(localizedURL(target.href)); local.host = location.host; local.protocol = location.protocol;
+      return { navigation: local.href, svg };
+    } catch { return; }
+  }).filter(Boolean).sort((a, b) => Number(a.svg) - Number(b.svg));
+  const target = candidates[0];
+  if (!target) return;
+  return { navigation: target.navigation, reveal() {
+    const viewer = doc.querySelector("#diagram-viewer[open]");
+    viewer?.dispatchEvent(new CustomEvent("certivoice:visibility", { detail: { name: "suspend" } }));
+    const anchor = doc.getElementById(decodeURIComponent(new URL(target.navigation).hash.slice(1)));
+    const headings = [...doc.querySelectorAll(".prose :is(h2,h3)[id]")];
+    const heading = anchor?.matches("h2,h3") ? anchor : headings.filter(item => anchor && item.compareDocumentPosition(anchor) & 4).at(-1) || headings[0];
+    if (!heading) return false;
+    let paragraph = heading.nextElementSibling;
+    while (paragraph && !paragraph.matches("p, h2, h3")) paragraph = paragraph.nextElementSibling;
+    const text = (paragraph?.matches("p") ? paragraph : heading).textContent.trim().split(/[\r\n]/)[0].slice(0, 200);
+    return highlightPhrase(text, doc);
+  } };
 }
 
 export function validVoiceNavigation(value, current, base) {
@@ -215,7 +260,9 @@ export async function performVoiceAction(action, doc = document) {
     const first = doc.querySelector("[data-diagram][data-source-id]");
     const current = doc.querySelector("#diagram-viewer[open][data-source-id]");
     const targetId = current?.dataset.sourceId || first?.dataset.sourceId;
-    return targetId ? performVoiceAction({ ...action, targetId }, doc) : { error: t("Este módulo no contiene imágenes para presentar. Puedes elegir otro módulo.") };
+    if (targetId) return performVoiceAction({ ...action, targetId }, doc);
+    const overview = [...doc.querySelectorAll("#course-section-list .nav-link[href]")].find(link => new URL(canonicalURL(link.href)).pathname === `${siteBase}${doc.body?.dataset.courseRoute}/overview/`);
+    return overview && await coursePresentation(overview, doc, true) || { error: t("Este módulo no contiene imágenes para presentar. Puedes elegir otro módulo.") };
   }
   const target = ["open_course", "open_module", "course_presentation", "catalog_group", "set_language", "set_theme", "highlight_section", "video_chapter", "video_play", "video_close", "open_diagram", "start_presentation", "lecture_start", "return_presentation"].includes(action.name)
     ? actionTargets(doc).find(item => item.action === action.name && item.id === action.targetId) : undefined;
@@ -232,7 +279,7 @@ export async function performVoiceAction(action, doc = document) {
   if (["open_course", "open_module", "course_presentation", "set_language"].includes(action.name)) {
     if (!target) return { error: t("No hay un destino disponible para esa acción.") };
     if (action.name === "course_presentation") {
-      const destination = await coursePresentation(target.element);
+      const destination = await coursePresentation(target.element, doc);
       return destination ? guardPracticeNavigation(action, target.label, doc) || destination : { error: t("No se pudo abrir ese diagrama.") };
     }
     const url = validVoiceNavigation(target.element.href, location.href, siteBase);

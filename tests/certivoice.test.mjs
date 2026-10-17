@@ -547,6 +547,39 @@ test("microphone mute preserves narration, scheduled lecture and subsequent slid
   assert.deepEqual(calls.filter(([name]) => name === "mic"), [["mic", true], ["mic", false]]);
 });
 
+test("iOS keeps playback unlocked between the lecture transition and its subsequent segments", async () => {
+  const source = readFileSync(new URL("../assets/certivoice.js", import.meta.url), "utf8");
+  const finish = source.slice(source.indexOf("  async function finishSpeech("), source.indexOf("  async function lectureTurn("));
+  const calls = [], timers = [];
+  const context = { active: true, speech: { after: () => calls.push("continuation") }, playback: null, output: {}, utterance: {},
+    stopEdge: null, nativeStartTimer: null, clearTimeout() {}, savePlayback() {}, detector: { reset() {} }, lastActivity: 0,
+    separateCapture: true, release: null, lecture: null, quotaBlocked: () => false, openCapture: () => { throw new Error("Unexpected capture"); },
+    setTimeout: fn => timers.push(fn), lectureTurn: advance => calls.push(advance), setStatus() {}, t: text => text };
+  vm.createContext(context);
+  await vm.runInContext(`${finish}\nfinishSpeech(0, "confirmed")`, context);
+  assert.deepEqual(calls, ["continuation"]);
+  context.speech = {}; context.lecture = { running: true, consent: true };
+  await vm.runInContext('finishSpeech(0, "segment")', context);
+  assert.equal(timers.length, 1); await timers[0]();
+  assert.deepEqual(calls, ["continuation", true]);
+});
+
+test("an image-less module starts from the nearest valid gallery entry in course order", async () => {
+  const names = ["location", "matchMedia", "fetch"], saved = names.map(name => Object.getOwnPropertyDescriptor(globalThis, name));
+  const route = "https://site.test/certitips/es/COURSE/";
+  const links = ["overview", "before", "empty", "after", "last"].map(name => ({ href: route + name + "/", textContent: name }));
+  const doc = { body: { dataset: { courseRoute: "COURSE" } }, querySelector: () => null, querySelectorAll: () => links };
+  try {
+    globalThis.matchMedia = () => ({ matches: true }); globalThis.location = new URL(route + "empty/");
+    const entry = name => ({ src: route + name + "/img/test.svg", sourceId: `course/${name}#diagram-test.svg` });
+    globalThis.fetch = async () => ({ ok: true, json: async () => [{ src: "http://[" }, entry("before"), entry("after"), entry("last")] });
+    const result = await performVoiceAction({ name: "start_presentation" }, doc);
+    assert.equal(result.navigation, route + "after/#diagram-test.svg");
+    globalThis.location = new URL(route + "last/");
+    assert.equal((await performVoiceAction({ name: "start_presentation" }, doc)).navigation, route + "last/#diagram-test.svg");
+  } finally { names.forEach((name, i) => saved[i] ? Object.defineProperty(globalThis, name, saved[i]) : delete globalThis[name]); }
+});
+
 test("an exhausted lecture pauses before advancing or requesting another segment", async () => {
   const source = readFileSync(new URL("../assets/certivoice.js", import.meta.url), "utf8");
   const lectureTurn = source.slice(source.indexOf("  async function lectureTurn("), source.indexOf("  async function say("));

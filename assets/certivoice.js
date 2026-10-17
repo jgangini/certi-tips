@@ -1,7 +1,7 @@
 import { navigateSite } from "./site-navigation.js";
-import { t, locale, language, canonicalURL, siteBase } from "./i18n.js";
+import { t, locale, language, canonicalURL, localizedURL, siteBase } from "./i18n.js";
 import { animateVoiceEdge, captureVoice, encodeVoiceWav, heardCharacters, nativePronunciation, preferredNativeVoice, restoreVoicePlayback, voiceMemoryFresh, VoiceActivity } from "./certivoice-audio.js";
-import { performVoiceAction, voiceContext, voicePageURL, pendingNavigation, shouldResumeNavigation, validVoiceNavigation } from "./certivoice-actions.js";
+import { performVoiceAction, explanationSource, voiceContext, voicePageURL, pendingNavigation, shouldResumeNavigation, validVoiceNavigation } from "./certivoice-actions.js";
 import { activityTrail } from "./certichat-activity.js";
 import { voiceDiagnostics } from "./certivoice-telemetry.js";
 
@@ -16,7 +16,7 @@ if (root) {
   const local = ["localhost", "127.0.0.1", "[::1]"], preview = local.includes(location.hostname) && !local.includes(new URL(config.dataset.api).hostname);
   let session, voiceError = "", active = false, muted = false, context, release, detector, controller, playback = readPlayback(), speech, output, utterance, epoch = 0, widget, pending, pendingSent = false, pendingSince, pendingExpiry, lastActivity = 0, starting = false, checkingSession = false, rejectVerification;
   const edge = document.querySelector("[data-voice-edge]");
-  let lecture, lectureTimer, nativeVoice, nativeVoiceLocale = locale, lastExplained;
+  let lecture, lectureTimer, nativeVoice, nativeVoiceLocale = locale, lastExplained, aside;
   let stopEdge, nativeStartTimer, videoLocked = false, videoConfirmation, navigating = false;
   const separateCapture = /iPhone|iPad|iPod/.test(navigator.userAgent) || navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
   const originalAudioType = navigator.audioSession?.type;
@@ -55,10 +55,11 @@ if (root) {
     if (nativePending) window.speechSynthesis.cancel();
     savePlayback();
   }
-  function pause(message = t("Voz pausada. Pulsa Activar voz para continuar."), error = false, preserveMode = true) {
-    clearTimeout(lectureTimer); if (lecture) lecture.running = false;
+  function pause(message = t("Voz pausada. Pulsa Activar voz para continuar."), error = false, preserveMode = true, reason = "session_pause") {
+    if (active || starting) diagnostics.record("action", { action: reason, phase: reportedPhase || "listening", muted });
+    aside = null; clearTimeout(lectureTimer); if (lecture) lecture.running = false;
     if (!preserveMode) { clearNavigation(); dismissVideo(); lecture = null; }
-    epoch++; active = false; starting = false; checkingSession = false; muted = false; interrupt(error ? "error_pause" : "session_pause"); controller?.abort(); controller = null;
+    epoch++; active = false; starting = false; checkingSession = false; muted = false; interrupt(error ? "error_pause" : reason); controller?.abort(); controller = null;
     rejectVerification?.(new Error("Cancelled")); rejectVerification = null; verification.hidden = true;
     if (widget !== undefined && window.turnstile) { window.turnstile.remove(widget); widget = undefined; }
     release?.stop(); release = null; detector?.reset();
@@ -147,12 +148,47 @@ if (root) {
     if (output || utterance) speech.after = () => { lectureTimer = setTimeout(() => lectureTurn(), 0); };
     else lectureTimer = setTimeout(() => lectureTurn(), 0);
   }
+  async function returnFromAside(saved, token) {
+    if (aside !== saved || token !== epoch || !active) return;
+    try {
+      if (!await navigateSite(saved.url, { source: "voice" }) || token !== epoch || !active || aside !== saved) return;
+      const result = await performVoiceAction({ name: "start_presentation", targetId: saved.diagramId });
+      if (result.error) throw new Error(result.error);
+      if (aside !== saved || token !== epoch || !active) return;
+      diagnostics.record("action", { action: "explanation_returned" });
+      aside = null; lecture = saved.lecture; lastExplained = saved.lastExplained;
+      const previous = restoreVoicePlayback(saved.playback);
+      if (nativeVoice && previous && previous.heardCharacters < previous.answer.length) {
+        playback = previous;
+        await say(previous.answer.slice(previous.heardCharacters), null, { requestId: previous.requestId, answer: previous.answer, offset: previous.heardCharacters }, token);
+      } else if (lecture?.running && !quotaBlocked()) await lectureTurn();
+      else await finishSpeech(0, "", false);
+    } catch (error) { if (token === epoch && active) { aside = null; if (lecture) lecture.running = false; setStatus(error.message, true); } }
+  }
+  async function explainAside(result, token) {
+    const viewer = document.querySelector("#diagram-viewer[open].is-presenting[data-source-id]");
+    if (result.expanded === true && viewer && !aside) {
+      const target = explanationSource(result.sources);
+      if (!target) return;
+      const url = new URL(localizedURL(voicePageURL())); url.host = location.host; url.protocol = location.protocol; url.hash = viewer.dataset.sourceId.split("#")[1];
+      aside = { url: url.href, diagramId: viewer.dataset.sourceId, lecture: lecture?.interrupted ? { ...lecture, running: true, interrupted: false } : null, playback: speech?.track ? playback && { ...playback } : null, lastExplained };
+      const saved = aside;
+      try {
+        if (!await navigateSite(target.navigation, { source: "voice" }) || token !== epoch || !active || aside !== saved) { if (aside === saved) aside = null; return; }
+        if (target.reveal()) diagnostics.record("action", { action: "explanation_document" });
+      } catch { if (aside === saved) aside = null; return; }
+    }
+    return aside;
+  }
   async function finishSpeech(offset, text, completed = true) {
     clearTimeout(nativeStartTimer);
     stopEdge?.(); stopEdge = null; output = null; utterance = null;
     if (completed && speech?.track && playback) playback.heardCharacters = Math.min(5000, offset + text.length);
     if (completed && speech?.track && speech.diagramId) lastExplained = { id: speech.diagramId, title: speech.title };
     savePlayback(); detector?.reset(); lastActivity = Date.now();
+    // Continuations keep the playback profile; reopening iOS capture between lecture segments interrupts audio.
+    if (active && speech?.after) { const after = speech.after; speech.after = null; await after(); return; }
+    if (active && lecture?.running && lecture.consent && !quotaBlocked()) { lectureTimer = setTimeout(() => lectureTurn(true), 0); return; }
     if (separateCapture && active && !release && !quotaBlocked()) {
       const token = epoch;
       starting = true; setStatus(t("Activando el micrófono…"));
@@ -234,8 +270,9 @@ if (root) {
       clearTimeout(nativeStartTimer); speech.started = true; setStatus(t("Hablando. Puedes interrumpir."));
     };
     utterance.onboundary = event => { if (speech.track && playback && Number.isInteger(event.charIndex)) playback.heardCharacters = Math.min(5000, offset + pronunciation.sourceIndex(event.charIndex)); };
-    utterance.onend = () => { diagnostics.record("speech", { native_event: "end" }); return finishSpeech(offset, text); };
+    utterance.onend = () => { if (utterance !== current || token !== epoch || !active) return; diagnostics.record("speech", { native_event: "end" }); return finishSpeech(offset, text); };
     utterance.onerror = event => {
+      if (utterance !== current || token !== epoch || !active) return;
       const codes = ["not-allowed", "audio-busy", "audio-hardware", "network", "synthesis-unavailable", "synthesis-failed", "language-unavailable", "voice-unavailable", "text-too-long", "invalid-argument", "canceled", "interrupted"];
       diagnostics.record("speech", { native_event: "error", native_error: codes.includes(event?.error) ? event.error : "unknown" });
       if (separateCapture) pause(t("La respuesta está disponible como texto. El audio no está disponible."), true);
@@ -287,6 +324,8 @@ if (root) {
         restoreVoiceHome(); if (edge) document.body.append(edge);
       }
       diagnostics.record("action", { ...(result.action?.name ? { action: result.action.name } : {}), request_id: result.requestId });
+      if (result.action) aside = null;
+      const explanation = result.educational === true && !result.action ? await explainAside(result, token) : null;
       const action = await performVoiceAction(result.action);
       if (token !== epoch || !active) return;
       if (action.error && lecture) lecture.running = false;
@@ -311,6 +350,10 @@ if (root) {
       if (result.playbackRequestId && (playback?.requestId !== result.playbackRequestId || !voiceMemoryFresh(playback.createdAt))) throw new Error(t("No se pudo completar la consulta de voz."));
       const progress = action.error || action.confirmation ? null : result.playbackRequestId ? { requestId: result.playbackRequestId, offset: result.playbackOffset, answer: playback.answer } : result.educational && (!lecture?.consent || result.lecture) ? { requestId: result.requestId, answer: result.answer } : null;
       await say(text, action.error || action.confirmation ? null : result.audio, progress, token);
+      if (explanation && token === epoch && active) {
+        if (output || utterance) speech.after = () => returnFromAside(explanation, token);
+        else await returnFromAside(explanation, token);
+      }
     } catch (error) {
       if (token !== epoch) return;
       const wait = error.retryAfter ? t(" Vuelve a intentarlo en {seconds} segundos.", { seconds: Math.ceil(error.retryAfter) }) : "";
@@ -357,7 +400,7 @@ if (root) {
     if (lecture) lecture.running = false; clearTimeout(lectureTimer);
     interrupt("page_navigation"); dismissVideo(); videoLocked = false; lastExplained = null; detector?.reset(); release?.setMuted(true);
     if (quotaBlocked()) { release?.stop(); release = null; }
-    if (event.detail.source !== "voice") { epoch++; controller?.abort(); controller = null; clearPending(); emit("certivoice:busy", false); }
+    if (event.detail.source !== "voice") { aside = null; epoch++; controller?.abort(); controller = null; clearPending(); emit("certivoice:busy", false); }
     setStatus(t("Abriendo la página…"));
   });
   window.addEventListener("site:did-navigate", event => {
@@ -375,7 +418,7 @@ if (root) {
       if (token !== epoch || !active) return;
       release?.setMuted(muted); detector?.reset();
       if (quotaBlocked()) { release?.stop(); release = null; setStatus(t("Se alcanzó un límite de uso. Inténtalo más tarde.")); return; }
-      if (!release) await finishSpeech(0, "", false);
+      if (!release && !controller && !aside) await finishSpeech(0, "", false);
       else setStatus(muted ? t("Micrófono silenciado.") : t("Te escucho…"));
     })();
   });
@@ -398,8 +441,8 @@ if (root) {
       const event = detector.push(chunk, Boolean(output || utterance));
       if (event.started) {
         diagnostics.record("action", { action: "speech_detected", phase: output || utterance ? "speaking" : controller ? "thinking" : "listening", muted });
-        if (controller) { pause(t("Consulta interrumpida. Pulsa Reintentar para recuperar su resultado.")); return; }
-        if (lecture) lecture.running = false; clearTimeout(lectureTimer);
+        if (controller) { pause(t("Consulta interrumpida. Pulsa Reintentar para recuperar su resultado."), false, true, "request_interrupted"); return; }
+        if (lecture) { lecture.interrupted = lecture.running; lecture.running = false; } clearTimeout(lectureTimer);
         interrupt("microphone_interrupt"); lastActivity = Date.now(); setStatus(t("Te escucho…"));
       }
       if (event.chunks) { lastActivity = Date.now(); send(event.chunks).catch(() => pause(t("No se pudo preparar el audio."), true)); }
@@ -491,8 +534,8 @@ if (root) {
     const url = validVoiceNavigation(link.href, location.href, siteBase);
     if (url && new URL(url).pathname !== location.pathname) saveNavigation(url);
   }, true);
-  window.addEventListener("pagehide", () => { pause(undefined, false, true); void diagnostics.flush(true); });
-  document.addEventListener("visibilitychange", () => { if (document.hidden) pause(undefined, false, true); });
+  window.addEventListener("pagehide", () => { pause(undefined, false, true, "page_hidden"); void diagnostics.flush(true); });
+  document.addEventListener("visibilitychange", () => { if (document.hidden) pause(undefined, false, true, "document_hidden"); });
   new MutationObserver(() => { if (session) applySession(session); }).observe(config, { attributes: true, attributeFilter: ["hidden"] });
   setInterval(expireMemory, 5000);
   const viewer = document.querySelector("#diagram-viewer");

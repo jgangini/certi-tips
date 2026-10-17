@@ -23,3 +23,6 @@ __pycache__/
 data/en/
 data/pt/
 data/it/
+
+# Public build context packaged into the API image; generated from dist.
+services/certichat/app/published/

@@ -577,6 +577,33 @@ def local_diagram_artifacts(path):
     return manifest
 
 
+@pytest.mark.parametrize("clients", [{"mode": "VPS", "public_origin": ORIGIN, "voice_enabled": True}], indirect=True)
+def test_published_build_supplies_verified_diagrams_without_reindexing(clients, tmp_path, monkeypatch):
+    import app.main as main
+    make, app, calls, _, knowledge = clients
+    directory = tmp_path / "published"
+    monkeypatch.setattr(main, "PUBLISHED_CONTEXT_DIRECTORY", directory)
+    client = session(make)
+    app.state.voice = FakeVoice("lecture_start")
+    initial = client.post("/api/voice", json=body()).json()
+    missing = client.post("/api/voice", json=lecture(initial["requestId"]))
+    assert missing.json()["code"] == "voice_context_unindexed"
+    directory.mkdir()
+    manifest = local_diagram_artifacts(directory)
+    indexed_version = knowledge["version"]
+    response = client.post("/api/voice", json=lecture(initial["requestId"]))
+    assert response.status_code == 200, response.text
+    result = response.json()
+    assert result["contentVersion"] == manifest["contentHash"] and knowledge["version"] == indexed_version
+    assert result["provenance"] == "verified_local_corpus" and result["graphTrace"]["nodes"] == []
+    assert result["sources"][0]["url"].endswith("#diagram")
+    (directory / "corpus.json").write_bytes(b"changed")
+    before = sum(call.url.host == "openrouter.ai" for call in calls)
+    rejected = client.post("/api/voice", json=lecture(result["requestId"]))
+    assert rejected.status_code == 503 and rejected.json()["code"] == "voice_context_unavailable"
+    assert sum(call.url.host == "openrouter.ai" for call in calls) == before
+
+
 def test_verified_local_corpus_requires_hash_and_exact_context_page(tmp_path):
     from app.corpus import verified_local_context
     manifest = local_diagram_artifacts(tmp_path)
@@ -953,6 +980,7 @@ def test_browser_answer_preserves_requested_detail_and_completed_presentation_co
     result = response.json()
     assert bool(result["sources"]) is not final_slide and result["audio"] is None and "audioError" not in result
     assert result["answer"].startswith("The presentation is complete." if final_slide else "Oracle stores")
+    assert result.get("expanded", False) is expand
 
 
 @pytest.mark.parametrize("locale,transcript", [("es", "Quiero que amplíes con más detalle la explicación de este diagrama."),
