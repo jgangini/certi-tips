@@ -629,17 +629,21 @@ function closeViewer() {
   dialog.classList.add("is-closing");
   animation.finished.then(finish, finish);
 }
-document.querySelectorAll("[data-diagram]").forEach((button) =>
-  button.addEventListener("click", async () => {
+document.querySelectorAll("[data-diagram]").forEach(button => {
+  const openDiagram = async () => {
     delete dialog.dataset.voiceReturn;
     opener = button;
     restoreDiagram();
     dialog.showModal();
-    if (!present.hidden && matchMedia("(max-width: 800px)").matches) await togglePresentation();
+    if (!present.hidden && matchMedia("(max-width: 800px)").matches && !await togglePresentation()) return false;
+    if (signal.aborted || !dialog.open) return false;
     animateViewer();
     dialog.querySelector("[data-close-diagram]").focus();
-  }, { signal }),
-);
+    return true;
+  };
+  button.addEventListener("click", openDiagram, { signal });
+  button.addEventListener("certivoice:activate", event => { event.detail.completion = openDiagram(); }, { signal });
+});
 dialog
   .querySelector("[data-close-diagram]")
   .addEventListener("click", closeViewer, { signal });

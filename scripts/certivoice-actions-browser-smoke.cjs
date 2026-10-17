@@ -68,6 +68,8 @@ async (page) => {
       for (let i = 0; i < 3; i++) emit(.1);
       for (let i = 0; i < 8; i++) emit(0);
     };
+    const nativeScroll = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function(options) { if (this.closest('.prose')) window.__studyScroll = options; return nativeScroll.call(this, options); };
     window.__ytCalls = [];
     let fullscreen;
     Object.defineProperty(document, 'fullscreenElement', { configurable: true, get: () => fullscreen || null });
@@ -98,6 +100,7 @@ async (page) => {
     await require('node:fs/promises').writeFile('output/voice-api-registry.json', JSON.stringify(registries, null, 2));
   };
   const checkPhrase = async phrase => {
+    await page.locator('mark[data-voice-highlight]').evaluateAll(marks => Promise.all(marks.flatMap(mark => mark.getAnimations().map(animation => animation.finished))));
     const highlight = await page.evaluate(() => {
       const ranges = window.CSS?.highlights?.get('certivoice-phrase');
       if (ranges) return { text: [...ranges].map(range => range.toString()).join(''), yellow: document.querySelector('#certivoice-highlight-style')?.textContent.includes('background:#ffd54f') };
@@ -509,8 +512,10 @@ async (page) => {
   };
   const sendChat = async text => {
     if (await page.locator("#certichat-panel").isHidden()) await page.locator("[data-chat-open]").click();
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent('certichat:activity')));
+    await page.waitForFunction(text => document.querySelector('deep-chat')?.validateInput?.(text), text);
     const response = page.waitForResponse(value => new URL(value.url()).pathname === '/api/chat');
-    await page.locator('deep-chat').evaluate((chat, text) => { window.dispatchEvent(new CustomEvent('certichat:activity')); chat.submitUserMessage({ text }); }, text); await response;
+    await page.locator('deep-chat').evaluate((chat, text) => chat.submitUserMessage({ text }), text); await response;
     await page.waitForFunction(() => !document.querySelector('[data-chat-clear]').disabled && document.querySelector('deep-chat').getMessages().at(-1)?.role === 'ai');
     return calls.filter(call => call.path === '/api/chat').at(-1).body;
   };
@@ -571,11 +576,11 @@ async (page) => {
   await page.waitForURL('**/es/1Z0-1085-26/iam/#*'); await phase('speaking');
   assert(await page.locator('#diagram-viewer').evaluate(viewer => !viewer.open) && await page.locator('.prose').isVisible(), 'Expanded explanation did not reveal its cited document');
   assert(await page.evaluate(() => Boolean(window.CSS?.highlights?.get('certivoice-phrase')?.size || document.querySelector('mark[data-voice-highlight]'))), 'Expanded explanation did not highlight actual guide text');
-  const firstHighlight = await page.evaluate(() => [...CSS.highlights.get('certivoice-phrase')].map(range => range.toString()).join(''));
+  const firstHighlight = await page.locator('mark[data-voice-highlight]').allTextContents().then(parts => parts.join(''));
   assert(firstHighlight.includes('administradora'), 'Narration did not align its initial highlight with the real explanation');
   await page.evaluate(() => window.__utterance.onend());
   await page.waitForFunction(() => window.__utterance?.text.startsWith('La autorización'));
-  const nextHighlight = await page.evaluate(() => [...CSS.highlights.get('certivoice-phrase')].map(range => range.toString()).join(''));
+  const nextHighlight = await page.locator('mark[data-voice-highlight]').allTextContents().then(parts => parts.join(''));
   assert(nextHighlight !== firstHighlight && nextHighlight.includes('Autorización'), 'The highlight did not advance to the related real paragraph');
   await page.evaluate(() => window.__finishNative());
   await page.waitForURL('**/es/1Z0-1085-26/oci-architecture/#diagram-*'); await phase('listening');
@@ -607,22 +612,55 @@ async (page) => {
   await phase('speaking');
   await page.evaluate(() => { window.__backgroundOriginal = window.__utterance; Object.defineProperty(document, 'hidden', { configurable: true, value: true }); document.dispatchEvent(new Event('visibilitychange')); });
   assert(await page.evaluate(() => window.__voiceState.active && window.__voiceState.phase === 'speaking' && !window.__backgroundOriginal.canceled && window.__voiceTrack.stopped), 'Backgrounding canceled narration or retained microphone capture');
-  await page.evaluate(() => window.__utterance.onend());
-  await page.waitForFunction(() => window.__utterance?.text === 'sass');
-  assert(await page.evaluate(() => window.__utterance.lang.startsWith('en')), 'An English acronym used the Spanish voice');
+  assert(await page.evaluate(() => window.__utterance.text.includes('sás') && window.__utterance.lang.startsWith('es') && window.__utterance.voice.name.includes('Sabina')), 'Narration changed the selected speaker for an English term');
   await page.evaluate(() => window.__finishNative());
   assert(await page.evaluate(() => window.__voiceState.active && window.__voiceTrack.stopped), 'Background narration reopened the microphone');
   await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: false }); document.dispatchEvent(new Event('visibilitychange')); });
   await phase('listening');
   assert(await page.evaluate(() => !window.__voiceTrack.stopped), 'Foreground return did not restore listening');
-  checks.push('background playback keeps mixed-language narration alive, stops capture and restores listening on return');
-  await turn(null, { expanded: true, educational: true, answer: 'Otro paréntesis que se cancela.', sources: [asideSource] });
+  checks.push('background playback keeps the selected speaker and narration alive, stops capture and restores listening on return');
+  await turn(null, { expanded: true, educational: true, answer: 'La administradora organiza las identidades, operadores y desarrolladores de la tienda.', sources: [asideSource] });
   await page.waitForURL('**/es/1Z0-1085-26/iam/#*'); await phase('speaking');
+  assert(await page.locator('mark[data-voice-highlight]').count() > 0, 'Exit regression needs an actual visible highlight');
   await page.evaluate(() => { window.__asideEnd = window.__utterance.onend; });
   await exit.click(); await page.locator('#certichat-panel').waitFor({ state: 'hidden' });
   await page.evaluate(() => window.__asideEnd());
   assert(page.url().includes('/iam/') && await page.evaluate(() => !window.__voiceState.active && !document.querySelector('#diagram-viewer').open), 'A canceled aside returned to presentation or revived voice');
-  checks.push('Exit cancels an expanded aside and ignores its late native speech completion');
+  assert(await page.evaluate(() => !document.querySelector('mark[data-voice-highlight]') && !CSS.highlights?.has('certivoice-phrase')), 'Exit retained yellow highlighting');
+  checks.push('Exit clears yellow highlighting, cancels an expanded aside and ignores its late native speech completion');
+
+  for (const reduced of [false, true]) {
+    await page.emulateMedia({ reducedMotion: reduced ? 'reduce' : 'no-preference' });
+    for (const theme of ['light', 'dark']) {
+      const evidence = await page.evaluate(async ({ reduced, theme }) => {
+        document.documentElement.dataset.theme = theme;
+        const study = await import(document.querySelector('script[src*="/assets/site.js"]').src.replace('site.js', 'certivoice-study.js'));
+        const prose = document.querySelector('.prose'), before = prose.innerHTML;
+        const phrase = [...prose.querySelectorAll('p')].map(node => node.textContent.match(/[^\r\n]{20,100}/)?.[0].trim()).find(Boolean), ok = study.highlightPhrase(phrase);
+        const animations = [...prose.querySelectorAll('mark[data-voice-highlight]')].flatMap(mark => mark.getAnimations());
+        const duration = animations.map(animation => animation.effect.getTiming().duration);
+        await Promise.all(animations.map(animation => animation.finished));
+        const visible = CSS.highlights?.has('certivoice-phrase') || [...prose.querySelectorAll('mark[data-voice-highlight]')].every(mark => getComputedStyle(mark).backgroundColor === 'rgb(255, 213, 79)');
+        study.clearVoiceHighlight();
+        return { ok, duration, visible, scroll: window.__studyScroll, clean: prose.innerHTML === before && !CSS.highlights?.has('certivoice-phrase') };
+      }, { reduced, theme });
+      assert(evidence.ok && evidence.visible && evidence.clean && evidence.scroll.behavior === (reduced ? 'instant' : 'smooth') && (reduced ? evidence.duration.length === 0 : evidence.duration.every(duration => duration === 300) && evidence.duration.length > 0), `Highlight motion/cleanup failed: ${JSON.stringify({ reduced, theme, evidence })}`);
+    }
+  }
+  checks.push('highlight fades in for 300ms, scrolls smoothly and cleans without changing inline markup in both themes; reduced motion stays immediate');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  const delayedGallery = async route => { await new Promise(resolve => setTimeout(resolve, 120)); await route.fallback(); };
+  await page.route('**/1Z0-1085-26/gallery.json', delayedGallery);
+  for (const width of [394, 1440]) {
+    await page.setViewportSize({ width, height: 900 }); await open('es/1Z0-1085-26/oci-architecture/');
+    const result = await page.evaluate(async () => {
+      const actions = await import(document.querySelector('script[src*="/assets/site.js"]').src.replace('site.js', 'certivoice-actions.js'));
+      return actions.performVoiceAction({ name: 'start_presentation', targetId: document.querySelector('[data-diagram]').dataset.sourceId });
+    });
+    assert(!result.error && await page.locator('#diagram-viewer').evaluate(viewer => viewer.open && viewer.classList.contains('is-presenting')), `Presentation opened but falsely reported failure at ${width}px: ${JSON.stringify(result)}`);
+  }
+  await page.unroute('**/1Z0-1085-26/gallery.json', delayedGallery);
+  checks.push('voice awaits delayed mobile thumbnail auto-presentation before confirming; desktop also reports its final open state');
 
   assert(replies.length === 0 && errors.length === 0, `Unconsumed responses or browser errors: ${JSON.stringify({ remaining: replies.length, errors })}`);
   assert(voices().every(call => call.body.pageUrl.startsWith('https://jgangini.github.io/certitips/') && !/\/certitips\/(es|en|pt|it)\//.test(call.body.pageUrl)), 'Voice or lecture sent a nonpublic page URL');

@@ -2,6 +2,7 @@ import { navigateSite } from "./site-navigation.js";
 import { t, locale, language, canonicalURL, localizedURL, siteBase } from "./i18n.js";
 import { animateVoiceEdge, captureVoice, encodeVoiceWav, heardCharacters, nativeSpeechSegments, preferredNativeVoice, restoreVoicePlayback, voiceMemoryFresh, VoiceActivity } from "./certivoice-audio.js";
 import { performVoiceAction, explanationSource, voiceContext, voicePageURL, pendingNavigation, shouldResumeNavigation, validVoiceNavigation } from "./certivoice-actions.js";
+import { clearVoiceHighlight } from "./certivoice-study.js";
 import { activityTrail } from "./certichat-activity.js";
 import { voiceDiagnostics } from "./certivoice-telemetry.js";
 
@@ -57,7 +58,7 @@ if (root) {
   }
   function pause(message = t("Voz pausada. Pulsa Activar voz para continuar."), error = false, preserveMode = true, reason = "session_pause") {
     if (active || starting) diagnostics.record("action", { action: reason, phase: reportedPhase || "listening", muted });
-    aside = null; clearTimeout(lectureTimer); if (lecture) lecture.running = false;
+    clearVoiceHighlight(); aside = null; clearTimeout(lectureTimer); if (lecture) lecture.running = false;
     if (!preserveMode) { clearNavigation(); dismissVideo(); lecture = null; }
     epoch++; active = false; starting = false; checkingSession = false; muted = false; interrupt(error ? "error_pause" : reason); controller?.abort(); controller = null;
     rejectVerification?.(new Error("Cancelled")); rejectVerification = null; verification.hidden = true;
@@ -266,7 +267,7 @@ if (root) {
     }
     const textStatus = `${text} ${t("Respuesta disponible como texto. Te escucho…")}`;
     if (!nativeVoice) { if (lecture && progress) lecture.running = false; if (separateCapture) await finishSpeech(offset, text, false); if (token === epoch && active) setStatus(textStatus); return; }
-    const parts = nativeSpeechSegments(text, nativeVoice, speechSynthesis.getVoices(), Boolean(speech.follow));
+    const parts = nativeSpeechSegments(text, nativeVoice, Boolean(speech.follow));
     function speakPart(index) {
       const part = parts[index];
       if (token !== epoch || !active) return;

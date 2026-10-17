@@ -69,25 +69,24 @@ test("the reported Oracle AI pronunciation changes only speech and maps interrup
   assert.equal(spoken.sourceIndex(spoken.text.length), original.length);
   for (const other of [{ name: "Microsoft Zira", lang: "en-US" }, { ...voice, name: "Microsoft Elvira Online (Natural)" }, { ...voice, name: "Microsoft Dalia Multilingual" }, { ...voice, name: "Monica" }]) assert.equal(nativePronunciation(original, other).text, original);
   assert.equal(nativePronunciation("AI, OpenAI, Oracle Database y myOracle AI2.", voice).text, "AI, OpenAI, Oracle Database y myOracle AI2.");
+  assert.equal(nativePronunciation("Oracle AI", { name: "Mónica", lang: "es-ES" }).sourceIndex(4), 4, "Unchanged terms retain their exact boundary positions");
 });
 
-test("mixed Spanish/Portuguese speech uses English terms and retains original interruption offsets", () => {
-  const english = { name: "Samantha", lang: "en-US" };
+test("Spanish/Portuguese narration keeps one speaker, pronunciation aliases and original interruption offsets", () => {
   for (const voice of [{ name: "Mónica", lang: "es-ES" }, { name: "Luciana", lang: "pt-BR" }]) {
-    const original = "Usa SaaS e IaaS na tenancy. Software as a Service. Después continúa con almacenamiento.";
-    const parts = nativeSpeechSegments(original, voice, [voice, english]);
-    for (const term of ["SaaS", "IaaS", "tenancy", "Software as a Service"]) {
-      const part = parts.find(item => item.start <= original.indexOf(term) && item.end > original.indexOf(term));
-      assert.equal(part.voice, english);
-      assert.equal(part.sourceIndex(part.text.indexOf({ SaaS: "sass", IaaS: "eye ass" }[term] || term)), original.indexOf(term));
-    }
-    assert(parts.some(item => item.text === "sass"));
-    assert(parts.some(item => item.text === "eye ass"));
-    assert.equal(parts.at(-1).voice, voice);
+    const original = "Usa SaaS e IaaS na tenancy. Después continúa con almacenamiento.";
+    const parts = nativeSpeechSegments(original, voice, true);
+    assert.equal(parts.length, 2);
+    assert(parts.every(part => part.voice === voice));
+    assert(parts[0].text.includes("sás"));
+    assert(parts[0].text.includes(voice.lang === "es-ES" ? "ténansi" : "tênanci"));
+    assert.equal(parts[0].sourceIndex(parts[0].text.indexOf("ái")), original.indexOf("IaaS"));
+    assert.equal(parts[1].sourceIndex(0), original.indexOf("Después"));
     assert.equal(parts.at(-1).sourceIndex(parts.at(-1).text.length), original.length);
-    assert.equal(nativeSpeechSegments("No cambies miSaaS ni tenancyId.", voice, [voice, english]).length, 1);
-    assert.equal(nativeSpeechSegments(original, voice, [voice])[0].text, original);
-    assert.equal(nativeSpeechSegments("Primera frase. Segunda frase.", voice, [voice], true).length, 2);
+    assert.equal(nativeSpeechSegments("No cambies miSaaS ni tenancyId.", voice)[0].text, "No cambies miSaaS ni tenancyId.");
+    assert.equal(nativeSpeechSegments(original, voice).length, 1);
+    const multilingual = { ...voice, name: "Multilingual" };
+    assert.equal(nativeSpeechSegments(original, multilingual)[0].text, original);
   }
 });
 
@@ -468,10 +467,11 @@ test("study return expires without renewal and exact highlighting preserves inli
   const activity = [], headings = ["first", "second", "after"].map((id, index) => ({ dataset: { sourceId: `course/lesson#${id}` }, compareDocumentPosition: () => index === 2 ? 2 : 4 }));
   const prose = { querySelectorAll: selector => selector === ":is(h2,h3)[data-source-id]" ? headings : [] };
   const doc = {
+    querySelectorAll: () => [],
     querySelector: selector => selector === ".prose" ? prose : null, getElementById: () => styles[0], head: { append: style => styles.push(style) }, createElement: () => ({}),
     createTreeWalker() { let index = 0; return { nextNode: () => nodes[index++] }; },
     createRange() { const range = { setStart(node, offset) { this.start = [node, offset]; }, setEnd(node, offset) { this.end = [node, offset]; } }; ranges.push(range); return range; },
-    defaultView: { CSS: { highlights }, Highlight: class { constructor(range) { this.range = range; } }, dispatchEvent: event => activity.push(event.detail) },
+    defaultView: { matchMedia: () => ({ matches: true }), CSS: { highlights }, Highlight: class { constructor(range) { this.range = range; } }, dispatchEvent: event => activity.push(event.detail) },
   };
   assert.equal(highlightPhrase("Oracle Cloud", doc), true);
   assert.equal(highlights.get("certivoice-phrase").range.start[0], nodes[0]);
@@ -506,6 +506,7 @@ function voiceController(api = "http://127.0.0.1:18741", options = {}) {
     MutationObserver: class { constructor(callback) { this.callback = callback; } observe(target) { observers.set(target, this.callback); } },
     sessionStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, String(value)), removeItem: key => storage.delete(key) },
     setInterval: callback => intervals.push(callback), setTimeout() {}, clearTimeout() {}, clearInterval() {},
+    clearVoiceHighlight() {},
     voiceDiagnostics: () => ({ record() {}, headers: () => ({}), enable() {}, flush() {} }),
     t: text => text, locale: "es", siteBase: "/", voiceContext: () => ({}), restoreVoicePlayback: value => restoreVoicePlayback(value, clock.now),
     pendingNavigation: (value, current, base) => pendingNavigation(value, current, base, clock.now), shouldResumeNavigation: (value, current, base) => shouldResumeNavigation(value, current, base, clock.now), validVoiceNavigation, voiceMemoryFresh: value => voiceMemoryFresh(value, clock.now), VoiceActivity,

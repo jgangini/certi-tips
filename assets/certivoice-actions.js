@@ -316,8 +316,7 @@ export async function performVoiceAction(action, doc = document) {
       if (!viewer.classList.contains("is-presenting") || !await activateDiagram(slide)) return { error: t("No se pudo abrir ese diagrama.") };
     } else if (!viewer.open) {
       const button = [...doc.querySelectorAll("[data-diagram][data-source-id]")].find(item => item.dataset.sourceId === target.id);
-      if (!button) return { error: t("No se pudo abrir ese diagrama.") };
-      button.click();
+      if (!await activateDiagram(button)) return { error: t("No se pudo abrir ese diagrama.") };
     }
     if (!viewer.open) return { error: t("No se pudo abrir ese diagrama.") };
     if (action.name !== "open_diagram" && !viewer.classList.contains("is-presenting") && !await activateDiagram(viewer.querySelector("[data-diagram-present]"))) return { error: t("No se pudo abrir ese diagrama.") };

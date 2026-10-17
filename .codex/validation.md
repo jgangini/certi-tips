@@ -81,6 +81,8 @@ npx.cmd --yes --package @playwright/cli playwright-cli -s=qa run-code --filename
 npx.cmd --yes --package @playwright/cli playwright-cli -s=qa close
 ```
 
+En pruebas que alternan voz y texto, una fase Listening no garantiza que haya terminado el bloque finally de la consulta de voz. Antes de submitUserMessage, emitir la actividad real del chat y esperar a que su validateInput(text) acepte el texto; no simular disponibilidad ni repetir envíos rechazados.
+
 Elegir el archivo según el cambio y usar una sesión nueva por comprobación:
 
 | Archivo en `scripts/` | Cuándo ejecutarlo |

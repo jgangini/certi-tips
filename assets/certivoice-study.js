@@ -34,12 +34,16 @@ export async function studyResults(query, doc = document) {
   return dialog.open && dialog.getAttribute("aria-busy") !== "true" ? [...dialog.querySelectorAll('#search-results [data-search-kind="topic"]:not([hidden]) a[href]')] : [];
 }
 
+export function clearVoiceHighlight(doc = document) {
+  for (const mark of doc.querySelectorAll("mark[data-voice-highlight]")) { mark.getAnimations?.().forEach(animation => animation.cancel()); mark.replaceWith(...mark.childNodes); }
+  (doc.defaultView || window).CSS?.highlights?.delete("certivoice-phrase");
+}
+
 export function highlightPhrase(phrase, doc = document) {
   const prose = doc.querySelector(".prose");
   if (!prose || doc.querySelector("dialog[open]") || typeof phrase !== "string" || !phrase.trim() || phrase.length > 200 || /[\u0000-\u001f]/.test(phrase)) return false;
-  for (const mark of prose.querySelectorAll("mark[data-voice-highlight]")) mark.replaceWith(...mark.childNodes);
-  const view = doc.defaultView || window;
-  view.CSS?.highlights?.delete("certivoice-phrase");
+  clearVoiceHighlight(doc);
+  const view = doc.defaultView || window, reduced = view.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const walker = doc.createTreeWalker(prose, 4), nodes = [];
   let node;
   while ((node = walker.nextNode())) {
@@ -53,7 +57,7 @@ export function highlightPhrase(phrase, doc = document) {
   if (!matching.length) return false;
   const first = matching[0], last = matching.at(-1), range = doc.createRange(), scrollTarget = first.node.parentElement;
   range.setStart(first.node, index - first.start); range.setEnd(last.node, index + phrase.length - last.start);
-  if (view.CSS?.highlights && view.Highlight) {
+  if (reduced && view.CSS?.highlights && view.Highlight) {
     if (!doc.getElementById("certivoice-highlight-style")) {
       const style = doc.createElement("style"); style.id = "certivoice-highlight-style";
       style.textContent = "::highlight(certivoice-phrase){background:#ffd54f;color:#111}"; doc.head.append(style);
@@ -64,9 +68,10 @@ export function highlightPhrase(phrase, doc = document) {
     for (const item of matching.reverse()) {
       const part = doc.createRange(); part.setStart(item.node, Math.max(0, index - item.start)); part.setEnd(item.node, Math.min(item.node.textContent.length, index + phrase.length - item.start));
       const mark = doc.createElement("mark"); mark.dataset.voiceHighlight = ""; mark.style.backgroundColor = "#ffd54f"; mark.style.color = "#111"; part.surroundContents(mark);
+      if (!reduced) mark.animate?.([{ backgroundColor: "transparent" }, { backgroundColor: "#ffd54f" }], { duration: 300, easing: "ease-out" });
     }
   }
-  scrollTarget?.scrollIntoView({ block: "center", behavior: "instant" });
+  scrollTarget?.scrollIntoView({ block: "center", behavior: reduced ? "instant" : "smooth" });
   const heading = [...prose.querySelectorAll(":is(h2,h3)[data-source-id]")].filter(element => element.compareDocumentPosition(first.node) & 4).at(-1);
   if (heading) view.dispatchEvent(new CustomEvent("certichat:activity-result", { detail: { kind: "section", state: "highlighted", targetId: heading.dataset.sourceId } }));
   return true;

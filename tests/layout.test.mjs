@@ -12,7 +12,7 @@ test("the image viewer refreshes its group, source heading and description when 
   const dialog = {
     dataset: {},
     querySelector: selector => ({ "img": enlarged, ".dialog-content img": enlarged, ".dialog-content": enlarged, "[data-diagram-present]": close, "[data-diagram-menu]": close, ".diagram-presentation-nav": {}, ".diagram-slide-count": {}, button: close, "[data-close-diagram]": close, "#diagram-description": description })[selector],
-    showModal() {}, addEventListener() {},
+    showModal() { this.open = true; }, addEventListener() {},
   };
   const buttons = [
     { src: "https://example.test/course/overview/img/pyramid.svg", alt: "Pirámide Dorada de Peter Aiken", description: "Las once áreas de gestión de datos." },
@@ -21,7 +21,7 @@ test("the image viewer refreshes its group, source heading and description when 
     dataset: { diagramHeading: image.heading, sourceId: `course#${image.src.split('/').at(-1)}` },
     image: { ...image, getAttribute: name => name === 'src' ? image.src : null },
     querySelector(selector) { return selector === "img" ? this.image : { firstChild: { textContent: `${image.description} ` }, textContent: `${image.description} ↗` }; },
-    addEventListener(type, callback) { this.click = callback; },
+    addEventListener(type, callback) { this[type] = callback; },
   }));
   const links = [
     { pathname: "/course/overview/", number: "00", title: "Empieza Aquí" },
