@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
-import { animateVoiceEdge, encodeVoiceWav, heardCharacters, nativePronunciation, preferredNativeVoice, restoreVoicePlayback, voiceMemoryFresh, VoiceActivity } from "../assets/certivoice-audio.js";
+import { animateVoiceEdge, encodeVoiceWav, heardCharacters, nativePronunciation, nativeSpeechSegments, preferredNativeVoice, restoreVoicePlayback, voiceMemoryFresh, VoiceActivity } from "../assets/certivoice-audio.js";
 import { validVoiceNavigation, pendingNavigation, shouldResumeNavigation, performVoiceAction, voiceContext, voicePageURL } from "../assets/certivoice-actions.js";
 import { mountPlayer } from "../assets/certitube.js";
 import { practiceTargets, performPracticeAction, guardPracticeNavigation } from "../assets/certivoice-practice.js";
@@ -69,6 +69,26 @@ test("the reported Oracle AI pronunciation changes only speech and maps interrup
   assert.equal(spoken.sourceIndex(spoken.text.length), original.length);
   for (const other of [{ name: "Microsoft Zira", lang: "en-US" }, { ...voice, name: "Microsoft Elvira Online (Natural)" }, { ...voice, name: "Microsoft Dalia Multilingual" }, { ...voice, name: "Monica" }]) assert.equal(nativePronunciation(original, other).text, original);
   assert.equal(nativePronunciation("AI, OpenAI, Oracle Database y myOracle AI2.", voice).text, "AI, OpenAI, Oracle Database y myOracle AI2.");
+});
+
+test("mixed Spanish/Portuguese speech uses English terms and retains original interruption offsets", () => {
+  const english = { name: "Samantha", lang: "en-US" };
+  for (const voice of [{ name: "Mónica", lang: "es-ES" }, { name: "Luciana", lang: "pt-BR" }]) {
+    const original = "Usa SaaS e IaaS na tenancy. Software as a Service. Después continúa con almacenamiento.";
+    const parts = nativeSpeechSegments(original, voice, [voice, english]);
+    for (const term of ["SaaS", "IaaS", "tenancy", "Software as a Service"]) {
+      const part = parts.find(item => item.start <= original.indexOf(term) && item.end > original.indexOf(term));
+      assert.equal(part.voice, english);
+      assert.equal(part.sourceIndex(part.text.indexOf({ SaaS: "sass", IaaS: "eye ass" }[term] || term)), original.indexOf(term));
+    }
+    assert(parts.some(item => item.text === "sass"));
+    assert(parts.some(item => item.text === "eye ass"));
+    assert.equal(parts.at(-1).voice, voice);
+    assert.equal(parts.at(-1).sourceIndex(parts.at(-1).text.length), original.length);
+    assert.equal(nativeSpeechSegments("No cambies miSaaS ni tenancyId.", voice, [voice, english]).length, 1);
+    assert.equal(nativeSpeechSegments(original, voice, [voice])[0].text, original);
+    assert.equal(nativeSpeechSegments("Primera frase. Segunda frase.", voice, [voice], true).length, 2);
+  }
 });
 
 test("speech edge follows decoded amplitude, decays in silence and cleans up for stop or reduced motion", () => {
@@ -485,7 +505,7 @@ function voiceController(api = "http://127.0.0.1:18741", options = {}) {
     AbortSignal: { timeout() {} }, CustomEvent: class { constructor(type, options = {}) { this.type = type; this.detail = options.detail; } },
     MutationObserver: class { constructor(callback) { this.callback = callback; } observe(target) { observers.set(target, this.callback); } },
     sessionStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, String(value)), removeItem: key => storage.delete(key) },
-    setInterval: callback => intervals.push(callback), setTimeout() {}, clearTimeout() {},
+    setInterval: callback => intervals.push(callback), setTimeout() {}, clearTimeout() {}, clearInterval() {},
     voiceDiagnostics: () => ({ record() {}, headers: () => ({}), enable() {}, flush() {} }),
     t: text => text, locale: "es", siteBase: "/", voiceContext: () => ({}), restoreVoicePlayback: value => restoreVoicePlayback(value, clock.now),
     pendingNavigation: (value, current, base) => pendingNavigation(value, current, base, clock.now), shouldResumeNavigation: (value, current, base) => shouldResumeNavigation(value, current, base, clock.now), validVoiceNavigation, voiceMemoryFresh: value => voiceMemoryFresh(value, clock.now), VoiceActivity,
@@ -512,6 +532,22 @@ const settleVoice = () => new Promise(setImmediate);
 const unavailableVoice = { authenticated: true, available: true };
 const enabledVoice = { ...unavailableVoice, voice: { enabled: true } };
 
+test("background playback preserves the output and restores a suspended provider context on return", async () => {
+  const source = readFileSync(new URL("../assets/certivoice.js", import.meta.url), "utf8");
+  const handler = source.slice(source.indexOf('  document.addEventListener("visibilitychange"'), source.indexOf('  new MutationObserver(() => { if (session)'));
+  const calls = []; let visible;
+  const env = { active: true, starting: false, reportedPhase: "speaking", muted: false, output: {}, nativeVoice: false,
+    release: { stop: () => calls.push("stop-capture") }, detector: { reset() {} }, navigator: { audioSession: { type: "auto" } },
+    document: { hidden: true, addEventListener: (_name, callback) => { visible = callback; } },
+    context: { resume: async () => calls.push("resume-output") }, diagnostics: { record() {}, flush() {} },
+    pause: () => calls.push("unexpected-pause") };
+  vm.runInNewContext(handler, env); visible();
+  assert.deepEqual(calls, ["stop-capture"]);
+  assert.equal(env.active, true); assert.equal(env.release, null); assert.equal(env.navigator.audioSession.type, "playback");
+  env.document.hidden = false; visible(); await Promise.resolve();
+  assert.deepEqual(calls, ["stop-capture", "resume-output"]);
+});
+
 test("microphone mute preserves narration, scheduled lecture and subsequent slides", async () => {
   const source = readFileSync(new URL("../assets/certivoice.js", import.meta.url), "utf8");
   const mute = source.slice(source.indexOf("  function toggleMute("), source.indexOf('  window.addEventListener("certichat:activity"'));
@@ -523,7 +559,7 @@ test("microphone mute preserves narration, scheduled lecture and subsequent slid
     release: { setMuted: value => calls.push(["mic", value]) }, detector: { reset() {} }, lastActivity: 0,
     diagnostics: { record: (name, fields) => calls.push([name, fields.action]) }, t: text => text, setStatus() {},
     lectureTimer: "existing", clearTimeout: value => calls.push(["clear", value]), setTimeout: fn => timers.push(fn),
-    nativeStartTimer: null, stopEdge: null, speech: {}, playback: null, savePlayback() {}, separateCapture: false,
+    nativeStartTimer: null, followTimer: null, clearInterval() {}, stopEdge: null, speech: {}, playback: null, savePlayback() {}, separateCapture: false,
     quotaBlocked: () => false, epoch: 1, pending: null, pendingSince: 0, pendingExpiry: null, expireMemory() {},
     crypto, locale: "es", voicePageURL: () => "https://site.test/course/module/", activityTrail: () => [],
     document: { querySelector: () => ({ dataset: { sourceId: "course/module#first" }, querySelectorAll: () => [
@@ -552,7 +588,7 @@ test("iOS keeps playback unlocked between the lecture transition and its subsequ
   const finish = source.slice(source.indexOf("  async function finishSpeech("), source.indexOf("  async function lectureTurn("));
   const calls = [], timers = [];
   const context = { active: true, speech: { after: () => calls.push("continuation") }, playback: null, output: {}, utterance: {},
-    stopEdge: null, nativeStartTimer: null, clearTimeout() {}, savePlayback() {}, detector: { reset() {} }, lastActivity: 0,
+    stopEdge: null, nativeStartTimer: null, followTimer: null, clearTimeout() {}, clearInterval() {}, savePlayback() {}, detector: { reset() {} }, lastActivity: 0,
     separateCapture: true, release: null, lecture: null, quotaBlocked: () => false, openCapture: () => { throw new Error("Unexpected capture"); },
     setTimeout: fn => timers.push(fn), lectureTurn: advance => calls.push(advance), setStatus() {}, t: text => text };
   vm.createContext(context);

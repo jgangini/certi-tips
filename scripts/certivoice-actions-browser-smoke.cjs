@@ -50,6 +50,14 @@ async (page) => {
       window.__voiceTrack = track; return { getTracks: () => [track], getAudioTracks: () => [track] };
     } } });
     Object.defineProperty(navigator, 'permissions', { configurable: true, value: { query: async () => ({ state: 'prompt' }) } });
+    window.__finishNative = async () => {
+      for (let i = 0; i < 100; i++) {
+        const current = window.__utterance;
+        if (!current) break;
+        current.onend?.(); await Promise.resolve();
+        if (window.__utterance === current || !window.__voiceState.active) break;
+      }
+    };
     window.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; } };
     Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: {
       getVoices: () => ['es', 'en', 'pt', 'it'].map(lang => ({ name: 'Microsoft Sabina', lang })),
@@ -217,7 +225,7 @@ async (page) => {
   await turn(null, { educational: true, transcript: 'Explica esta lámina.', answer: completedAnswer, audio: { format: 'wav', data: 'UklGRg==' } });
   await page.waitForFunction(text => window.__utterance?.text === text, completedAnswer);
   assert(await page.evaluate(() => window.__utterance.voice.name === 'Microsoft Sabina' && window.__voiceOutputs.length === 0), 'Educational answer did not prefer the same native female voice as navigation');
-  await page.evaluate(() => window.__utterance.onend()); await phase('listening');
+  await page.evaluate(() => window.__finishNative()); await phase('listening');
   const nextSlide = await page.locator('#diagram-viewer .diagram-presentation-nav').evaluate(nav => { const buttons = [...nav.querySelectorAll('button[data-source-id]')]; return buttons[buttons.findIndex(button => button.getAttribute('aria-current') === 'true') + 1].dataset.sourceId; });
   const previousTitle = await page.locator('#diagram-caption').textContent();
   const startedAt = Math.floor(Date.now() / 1000), courseId = 'agentic-ai-foundations-2026';
@@ -230,7 +238,7 @@ async (page) => {
   assert(requestStart.context.completedDiagramId === firstSlide && requestStart.context.nextDiagramId === nextSlide && requestStart.audioOutput === 'browser', 'Whole-presentation request omitted completion, next diagram or native-output preference');
   assert(transition.includes(previousTitle) && transition.includes(nextTitle) && await page.locator('#diagram-viewer').getAttribute('data-source-id') === nextSlide, 'Lecture did not explain its transition to the next registered diagram');
   assert(voices().at(-1).body.mode !== 'lecture' && replies.length === 1 && await page.locator('[data-voice-lecture-start]').count() === 0, 'Spoken lecture consent repeated an extra button or generated before its transition ended');
-  await page.evaluate(() => window.__utterance.onend());
+  await page.evaluate(() => window.__finishNative());
   await page.waitForFunction(() => window.__utterance?.text === 'Contenido educativo del segmento 1.');
   await phase('speaking');
   const firstLecture = voices().at(-1).body, lectureCount = voices().length;
@@ -242,25 +250,25 @@ async (page) => {
   await turn(null, { educational: true, transcript: '¿Qué significa este concepto?', answer: 'Respuesta educativa a la pregunta intermedia.', audio: { format: 'wav', data: 'UklGRg==' } });
   await page.waitForFunction(() => window.__utterance?.text === 'Respuesta educativa a la pregunta intermedia.');
   assert(await page.evaluate(() => window.__firstLectureUtterance.canceled), 'Question did not interrupt the current lecture speech');
-  await page.evaluate(() => window.__utterance.onend()); await phase('listening');
+  await page.evaluate(() => window.__finishNative()); await phase('listening');
   assert(voices().length === lectureCount + 1 && await page.locator('#diagram-viewer').getAttribute('data-source-id') === nextSlide, 'Answering a question advanced the interrupted lecture');
   await turn(null, { educational: true, transcript: 'Amplía esta explicación con un ejemplo.', answer: 'Ampliación simulada del concepto de esta misma lámina.' });
   await page.waitForFunction(() => window.__utterance?.text === 'Ampliación simulada del concepto de esta misma lámina.');
   assert(voices().at(-1).body.context.diagramId === nextSlide && await page.locator('#diagram-viewer').getAttribute('data-source-id') === nextSlide, 'Asking for more detail lost the current slide');
-  await page.evaluate(() => window.__utterance.onend()); await phase('listening');
+  await page.evaluate(() => window.__finishNative()); await phase('listening');
   await turn({ name: 'continue' }, { answer: 'Resto validado del primer segmento.', playbackRequestId: firstLecture.requestId, playbackOffset: 0, audio: { format: 'wav', data: 'UklGRg==' } });
   await page.waitForFunction(() => window.__utterance?.text === 'Resto validado del primer segmento.');
   assert(voices().at(-1).body.playback?.requestId === firstLecture.requestId && await page.locator('#diagram-viewer').getAttribute('data-source-id') === nextSlide, 'Continue lost the original lecture playback or advanced before its remaining speech');
   replies.push(segment(2));
   await mute.click();
   assert(await page.evaluate(() => window.__voiceState.muted && window.__voiceState.phase === 'speaking' && !window.__voiceTrack.enabled), 'Lecture mute stopped the ongoing explanation');
-  await page.evaluate(() => window.__utterance.onend());
+  await page.evaluate(() => window.__finishNative());
   await page.waitForFunction(() => window.__utterance?.text === 'Contenido educativo del segmento 2.');
   assert(await page.evaluate(() => window.__voiceState.muted && window.__voiceState.phase === 'speaking' && !window.__voiceTrack.enabled), 'A muted microphone prevented the next lecture segment or reopened capture');
   await mute.click();
   const secondLecture = voices().at(-1).body;
   assert(secondLecture.mode === 'lecture' && secondLecture.previousRequestId === firstLecture.requestId && secondLecture.context.diagramId !== nextSlide, 'Lecture did not move once to the next registered slide');
-  await page.evaluate(() => window.__utterance.onend());
+  await page.evaluate(() => window.__finishNative());
   await phase('listening');
   assert(voices().length === lectureCount + 4, 'Finished lecture started another segment');
   assert(await page.locator('deep-chat').evaluate(chat => chat.getMessages().filter(message => /Contenido educativo del segmento/.test(message.text)).length === 2 && !chat.getMessages().some(message => message.role === 'user' && !message.text)), 'Lecture lost content or invented an empty user transcript');
@@ -268,7 +276,7 @@ async (page) => {
   checks.push('a question interrupts lecture, more detail keeps the same SVG, and Continue resumes original audio before advancing');
   const currentSlide = await page.locator('#diagram-viewer').getAttribute('data-source-id');
   await turn({ name: 'lecture_start', targetId: currentSlide }, { lecture: { step: 0, startedAt, courseId, done: false } }, [segment(1)]);
-  await phase('speaking'); await page.evaluate(() => window.__utterance.onend());
+  await phase('speaking'); await page.evaluate(() => window.__finishNative());
   await page.waitForFunction(() => window.__utterance?.text === 'Contenido educativo del segmento 1.');
   const beforeCancel = voices().length;
   await page.evaluate(() => { window.__canceledAudio = window.__utterance; window.__canceledEnd = window.__utterance.onend; });
@@ -290,15 +298,15 @@ async (page) => {
     const metadata = { startedAt, courseId, done: false, ...(scope === 'module' ? { moduleId } : {}) };
     const finalAnswer = `Última lámina de agents en modo ${scope}.`;
     await turn({ name: 'lecture_start', targetId: lastModuleSlide, text: scope }, { lecture: { ...metadata, step: 0 } }, [{ ...segment(1), answer: finalAnswer, sources: [{ id: lastModuleSlide, title: 'Última lámina de agents', url: modulePageUrl }], lecture: { ...metadata, step: 1 } }]);
-    await phase('speaking'); await page.evaluate(() => window.__utterance.onend());
+    await phase('speaking'); await page.evaluate(() => window.__finishNative());
     await page.waitForFunction(text => window.__utterance?.text === text, finalAnswer);
     const beforeBoundary = voices().length;
     if (scope === 'presentation') replies.push({ ...segment(2), answer: 'Primera lámina del siguiente módulo.', sources: [{ id: outsideSlide, title: 'LangChain', url: 'https://jgangini.github.io/certitips/1Z0-1157-26/langchain/' }], lecture: { ...metadata, step: 2, done: true } });
-    await page.evaluate(() => window.__utterance.onend());
+    await page.evaluate(() => window.__finishNative());
     if (scope === 'presentation') {
       await page.waitForFunction(() => window.__utterance?.text === 'Primera lámina del siguiente módulo.');
       assert(voices().length === beforeBoundary + 1 && voices().at(-1).body.mode === 'lecture' && voices().at(-1).body.context.diagramId === outsideSlide, 'A full presentation did not continue across the native gallery group boundary');
-      await page.evaluate(() => window.__utterance.onend());
+      await page.evaluate(() => window.__finishNative());
     }
     await phase('listening');
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
@@ -377,7 +385,9 @@ async (page) => {
   await page.locator('#quiz [data-start]').waitFor({ state: 'visible' });
   const practiceHistory = await history();
   const practice = async (name, wait = true) => {
-    const targetId = await page.evaluate(async name => (await import(document.querySelector('script[src*="/assets/site.js"]').src.replace('site.js', 'certivoice-actions.js'))).voiceContext().targets.find(target => target.action === name)?.id, name);
+    await page.evaluate(async () => { window.__practiceActions = await import(document.querySelector('script[src*="/assets/site.js"]').src.replace('site.js', 'certivoice-actions.js')); });
+    const handle = await page.waitForFunction(name => window.__practiceActions.voiceContext().targets.find(target => target.action === name)?.id || false, name);
+    const targetId = await handle.jsonValue(); await handle.dispose();
     assert(targetId, `Native practice target missing: ${name}`);
     await turn({ name, targetId }); if (wait) await phase('listening');
     return targetId;
@@ -385,22 +395,25 @@ async (page) => {
   await practice('practice_start'); await page.locator('#question-form').waitFor();
   await snapshot('practiceQuestion'); await snapshot('practiceReset');
   const question = await page.locator('.quiz-question').textContent();
+  let spokenStart = await page.evaluate(() => window.__spoken.length);
   await practice('practice_read');
-  assert(await page.evaluate(text => window.__spoken.at(-1).includes(text), question), 'Practice reading did not use the visible question');
+  assert(await page.evaluate(({ start, text }) => window.__spoken.slice(start).join('').includes(text), { start: spokenStart, text: question }), 'Practice reading did not use the visible question');
   await practice('practice_select');
   await snapshot('practiceSelected');
   assert(await page.locator('#question-form input:checked').count() === 1 && await page.locator('#quiz .feedback').count() === 0, 'Selecting an option submitted without confirmation');
   await practice('practice_cancel');
   assert(await page.locator('#question-form input:checked').count() === 0 && await page.locator('#question-form button[type="submit"]').isDisabled(), 'Cancel did not clear the unconfirmed answer');
   const staleOption = await practice('practice_select');
+  spokenStart = await page.evaluate(() => window.__spoken.length);
   await practice('practice_confirm'); await page.locator('#quiz .feedback').waitFor({ state: 'visible' });
   const feedback = (await page.locator('#quiz .feedback p').textContent()).replace(/\s+/g, ' ').trim();
-  assert(await page.evaluate(text => window.__spoken.at(-1).includes(text), feedback), 'Practice confirmation did not read native feedback');
+  assert(await page.evaluate(({ start, text }) => window.__spoken.slice(start).join('').includes(text), { start: spokenStart, text: feedback }), 'Practice confirmation did not read native feedback');
   const attempt = await page.evaluate(() => localStorage.getItem(`certitips:quiz:v1:${document.body.dataset.course}`));
   await turn({ name: 'practice_select', targetId: staleOption }); await phase('listening');
   assert(await page.evaluate(() => localStorage.getItem(`certitips:quiz:v1:${document.body.dataset.course}`)) === attempt, 'A stale practice nonce changed the recorded answer');
+  spokenStart = await page.evaluate(() => window.__spoken.length);
   await practice('practice_explanation');
-  assert(await page.evaluate(text => window.__spoken.at(-1).includes(text) && window.__spoken.at(-1).includes('¿Quieres continuar?'), feedback), 'Practice explanation diverged from the existing feedback');
+  assert(await page.evaluate(({ start, text }) => { const spoken = window.__spoken.slice(start).join(''); return spoken.includes(text) && spoken.includes('¿Quieres continuar?'); }, { start: spokenStart, text: feedback }), 'Practice explanation diverged from the existing feedback');
   await practice('practice_next');
   assert(await page.locator('.quiz-question').getAttribute('data-question-number') === '2. ', 'Practice did not advance to the next native question');
   const practiceURL = page.url();
@@ -496,11 +509,8 @@ async (page) => {
   };
   const sendChat = async text => {
     if (await page.locator("#certichat-panel").isHidden()) await page.locator("[data-chat-open]").click();
-    const input = page.locator('deep-chat [role="textbox"]');
-    await input.fill(text);
-    await page.waitForFunction(() => document.querySelector('deep-chat').shadowRoot.querySelector('.input-button.inside-end:not(.custom-button)')?.getAttribute('aria-disabled') !== 'true');
     const response = page.waitForResponse(value => new URL(value.url()).pathname === '/api/chat');
-    await input.press('Enter'); await response;
+    await page.locator('deep-chat').evaluate((chat, text) => { window.dispatchEvent(new CustomEvent('certichat:activity')); chat.submitUserMessage({ text }); }, text); await response;
     await page.waitForFunction(() => !document.querySelector('[data-chat-clear]').disabled && document.querySelector('deep-chat').getMessages().at(-1)?.role === 'ai');
     return calls.filter(call => call.path === '/api/chat').at(-1).body;
   };
@@ -548,7 +558,7 @@ async (page) => {
   await turn({ name: 'start_presentation' });
   await page.waitForURL('**/es/1Z0-1085-26/oci-architecture/#diagram-*');
   await page.waitForFunction(() => document.querySelector('#diagram-viewer').classList.contains('is-presenting'));
-  await phase('speaking'); await page.evaluate(() => window.__utterance.onend()); await phase('listening');
+  await phase('speaking'); await page.evaluate(() => window.__finishNative()); await phase('listening');
   checks.push('image-less course overview starts the nearest registered presentation without a second activation');
   const originSlide = await page.locator('#diagram-viewer').getAttribute('data-source-id');
   const asideSource = await page.evaluate(async () => {
@@ -557,11 +567,17 @@ async (page) => {
     const heading = doc.querySelector('.prose h2[id]');
     return { id: heading.dataset.sourceId, title: heading.textContent, url: 'https://jgangini.github.io/certitips/1Z0-1085-26/iam/#' + heading.id };
   });
-  await turn(null, { expanded: true, educational: true, transcript: 'Profundiza y relaciona este concepto con la lámina.', answer: 'Ampliación con una sección verificada del curso.', sources: [asideSource] });
+  await turn(null, { expanded: true, educational: true, transcript: 'Profundiza y relaciona este concepto con la lámina.', answer: 'La administradora organiza las identidades, operadores y desarrolladores de la tienda. La autorización determina las operaciones que puede realizar cada identidad.', sources: [asideSource] });
   await page.waitForURL('**/es/1Z0-1085-26/iam/#*'); await phase('speaking');
   assert(await page.locator('#diagram-viewer').evaluate(viewer => !viewer.open) && await page.locator('.prose').isVisible(), 'Expanded explanation did not reveal its cited document');
   assert(await page.evaluate(() => Boolean(window.CSS?.highlights?.get('certivoice-phrase')?.size || document.querySelector('mark[data-voice-highlight]'))), 'Expanded explanation did not highlight actual guide text');
+  const firstHighlight = await page.evaluate(() => [...CSS.highlights.get('certivoice-phrase')].map(range => range.toString()).join(''));
+  assert(firstHighlight.includes('administradora'), 'Narration did not align its initial highlight with the real explanation');
   await page.evaluate(() => window.__utterance.onend());
+  await page.waitForFunction(() => window.__utterance?.text.startsWith('La autorización'));
+  const nextHighlight = await page.evaluate(() => [...CSS.highlights.get('certivoice-phrase')].map(range => range.toString()).join(''));
+  assert(nextHighlight !== firstHighlight && nextHighlight.includes('Autorización'), 'The highlight did not advance to the related real paragraph');
+  await page.evaluate(() => window.__finishNative());
   await page.waitForURL('**/es/1Z0-1085-26/oci-architecture/#diagram-*'); await phase('listening');
   assert(await page.locator('#diagram-viewer').evaluate((viewer, id) => viewer.open && viewer.classList.contains('is-presenting') && viewer.dataset.sourceId === id, originSlide), 'Expanded explanation did not return to its original slide');
   assert(await page.evaluate(() => document.querySelector('deep-chat') === window.__asideChat), 'Document aside replaced the live chat');
@@ -569,24 +585,37 @@ async (page) => {
   const asideLectureText = 'Texto original de la charla que continúa después del paréntesis.';
   const asideLectureSegment = (step, done) => ({ educational: true, transcript: '', answer: step === 1 ? asideLectureText : 'Siguiente lámina después del paréntesis.', sources: [], contentVersion: 'test', lecture: { step, startedAt: Date.now() / 1000, done, courseId: 'oci-foundations-2026' } });
   await turn({ name: 'lecture_start', targetId: originSlide }, { lecture: { step: 0, startedAt: Date.now() / 1000, done: false } }, [asideLectureSegment(1, false)]);
-  await phase('speaking'); await page.evaluate(() => window.__utterance.onend());
+  await phase('speaking'); await page.evaluate(() => window.__finishNative());
   await page.waitForFunction(text => window.__utterance?.text === text, asideLectureText);
   await page.evaluate(() => window.__utterance.onboundary({ charIndex: 12 }));
   const originalAsideLifetime = await page.evaluate(() => JSON.parse(sessionStorage.getItem('certivoice:https://jgangini.github.io/certitips/:playback')).createdAt);
   await turn(null, { expanded: true, educational: true, answer: 'Detalle intermedio sobre la sección citada.', sources: [asideSource] });
   await page.waitForURL('**/es/1Z0-1085-26/iam/#*'); await phase('speaking');
   const beforeAsideReturn = voices().length;
-  await page.evaluate(() => window.__utterance.onend());
+  await page.evaluate(() => window.__finishNative());
   await page.waitForURL('**/es/1Z0-1085-26/oci-architecture/#diagram-*');
   await page.waitForFunction(text => window.__utterance?.text === text, asideLectureText.slice(12));
   assert(voices().length === beforeAsideReturn, 'Returning from an aside requested or regenerated already verified narration');
   assert(await page.evaluate(() => JSON.parse(sessionStorage.getItem('certivoice:https://jgangini.github.io/certitips/:playback')).createdAt) === originalAsideLifetime, 'Returning from an aside renewed the original narration lifetime');
   replies.push(asideLectureSegment(2, true));
-  await page.evaluate(() => window.__utterance.onend());
+  await page.evaluate(() => window.__finishNative());
   await page.waitForFunction(() => window.__utterance?.text === 'Siguiente lámina después del paréntesis.');
   assert(voices().at(-1).body.context.diagramId !== originSlide && voices().at(-1).body.mode === 'lecture', 'Lecture did not continue to the next slide after finishing the interrupted narration');
-  await page.evaluate(() => window.__utterance.onend()); await phase('listening');
+  await page.evaluate(() => window.__finishNative()); await phase('listening');
   checks.push('an expanded aside resumes the original validated narration offset and then continues the authorized lecture');
+  await turn(null, { educational: true, answer: 'Escucha SaaS y tenancy, luego seguimos.' });
+  await phase('speaking');
+  await page.evaluate(() => { window.__backgroundOriginal = window.__utterance; Object.defineProperty(document, 'hidden', { configurable: true, value: true }); document.dispatchEvent(new Event('visibilitychange')); });
+  assert(await page.evaluate(() => window.__voiceState.active && window.__voiceState.phase === 'speaking' && !window.__backgroundOriginal.canceled && window.__voiceTrack.stopped), 'Backgrounding canceled narration or retained microphone capture');
+  await page.evaluate(() => window.__utterance.onend());
+  await page.waitForFunction(() => window.__utterance?.text === 'sass');
+  assert(await page.evaluate(() => window.__utterance.lang.startsWith('en')), 'An English acronym used the Spanish voice');
+  await page.evaluate(() => window.__finishNative());
+  assert(await page.evaluate(() => window.__voiceState.active && window.__voiceTrack.stopped), 'Background narration reopened the microphone');
+  await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: false }); document.dispatchEvent(new Event('visibilitychange')); });
+  await phase('listening');
+  assert(await page.evaluate(() => !window.__voiceTrack.stopped), 'Foreground return did not restore listening');
+  checks.push('background playback keeps mixed-language narration alive, stops capture and restores listening on return');
   await turn(null, { expanded: true, educational: true, answer: 'Otro paréntesis que se cancela.', sources: [asideSource] });
   await page.waitForURL('**/es/1Z0-1085-26/iam/#*'); await phase('speaking');
   await page.evaluate(() => { window.__asideEnd = window.__utterance.onend; });

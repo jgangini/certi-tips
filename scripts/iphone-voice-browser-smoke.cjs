@@ -48,6 +48,14 @@ async (page) => {
       window.__voiceTrack = track; window.__tracks.push(track);
       return { getTracks: () => [track], getAudioTracks: () => [track] };
     } } });
+    window.__finishNative = async () => {
+      for (let i = 0; i < 100; i++) {
+        const current = window.__utterance;
+        if (!current) break;
+        current.onend?.(); await Promise.resolve();
+        if (window.__utterance === current || !window.__voiceState.active) break;
+      }
+    };
     window.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; this.volume = 1; } };
     Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: {
       getVoices: () => window.__noNative ? [] : [{ name: 'Mónica', lang: 'es-ES' }, { name: 'Samantha', lang: 'en-US' }, { name: 'Luciana', lang: 'pt-BR' }, { name: 'Elsa', lang: 'it-IT' }],
@@ -107,7 +115,7 @@ async (page) => {
     };
     const finishSpeech = async () => {
       await phone.waitForFunction(() => window.__utterance && window.__voiceState.phase === 'speaking');
-      await phone.evaluate(() => { const utterance = window.__utterance; window.__utterance = null; utterance.onend(); });
+      await phone.evaluate(() => window.__finishNative());
       await phone.waitForFunction(() => window.__voiceState.phase === 'listening' && !window.__voiceTrack.stopped);
     };
     const spokenMove = async (name, path) => {
@@ -224,10 +232,15 @@ async (page) => {
     const captureCount = await phone.evaluate(() => window.__microphones);
     nextAction = { name: 'lecture_start', targetId: diagram }; await phone.evaluate(() => window.__speakTurn());
     await phone.waitForFunction(() => window.__voiceState.phase === 'speaking');
-    await phone.evaluate(() => window.__utterance.onend());
+    await phone.evaluate(() => window.__finishNative());
     await phone.waitForFunction(() => window.__utterance?.text === 'Explicación automática de la primera lámina.');
     assert(await phone.evaluate(count => window.__voiceState.phase === 'speaking' && window.__microphones === count, captureCount), 'Lecture transition reacquired iPhone capture or required Resume');
-    await phone.evaluate(() => window.__utterance.onend()); await phone.waitForFunction(() => window.__voiceState.phase === 'listening');
+    await phone.evaluate(() => { window.__hiddenSpeech = window.__utterance; Object.defineProperty(document, 'hidden', { configurable: true, value: true }); document.dispatchEvent(new Event('visibilitychange')); window.__voiceContext.state = 'interrupted'; window.__voiceContext.onstatechange(); });
+    assert(await phone.evaluate(() => window.__voiceState.active && window.__voiceState.phase === 'speaking' && window.__utterance === window.__hiddenSpeech), 'Backgrounding the iPhone simulation interrupted its native explanation');
+    await phone.evaluate(() => window.__finishNative());
+    assert(await phone.evaluate(count => window.__voiceState.active && window.__microphones === count && window.__voiceTrack.stopped, captureCount), 'Native speech completion reopened iPhone capture in the background');
+    await phone.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: false }); document.dispatchEvent(new Event('visibilitychange')); });
+    await phone.waitForFunction(() => window.__voiceState.phase === 'listening' && !window.__voiceTrack.stopped);
     await phone.locator('#diagram-viewer [data-close-diagram]').tap(); await phone.locator('#diagram-viewer').waitFor({ state: 'hidden' });
     await phone.locator('.site-header .brand').tap(); await arrived('es/');
   };
@@ -264,12 +277,12 @@ async (page) => {
       assert(await phone.evaluate(() => window.__utterance.volume === 1 && window.__utterance.voice.name === 'Mónica'), 'The delayed answer was muted or changed the selected voice');
       assert(calls.at(-1).body.audioOutput === 'browser', 'Native speech unexpectedly requested paid output');
       assert(await phone.evaluate(() => window.__outputProfiles.every(profile => profile.type === 'playback' && !profile.concurrentCapture)), 'Native iPhone speech kept a live microphone or failed to request the playback profile');
-      await phone.evaluate(() => window.__utterance.onend());
+      await phone.evaluate(() => window.__finishNative());
       await phone.waitForFunction(() => window.__voiceState.phase === 'listening' && window.__microphones === 2);
       for (let turn = 0; turn < 2; turn++) {
         await phone.evaluate(() => { window.__utterance = null; window.__speakTurn(); });
         await phone.waitForFunction(() => window.__utterance && window.__voiceState.phase === 'speaking');
-        await phone.evaluate(() => window.__utterance.onend());
+        await phone.evaluate(() => window.__finishNative());
         await phone.waitForFunction(expected => window.__voiceState.phase === 'listening' && window.__microphones === expected, turn + 3);
       }
       assert(await phone.evaluate(() => window.__spoken.length === 3 && window.__outputProfiles.every(profile => profile.type === 'playback' && !profile.concurrentCapture) && navigator.audioSession.type === 'play-and-record'), 'Second/third voice turns did not renew iPhone capture');
@@ -341,7 +354,7 @@ async (page) => {
     if (await phone.locator('[data-chat-open]').isVisible()) await phone.locator('[data-chat-open]').tap();
     await phone.locator('deep-chat [data-voice-command="start"]').tap();
     await phone.waitForFunction(() => window.__voiceState.phase === 'speaking');
-    await phone.evaluate(() => window.__utterance.onend());
+    await phone.evaluate(() => window.__finishNative());
     await phone.waitForFunction(() => window.__voiceState.phase === 'listening');
     await phone.locator('deep-chat [data-voice-command="exit"]').tap();
     await phone.goto(base + 'es/1Z0-1085-26/oci-architecture/');

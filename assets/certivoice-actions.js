@@ -1,6 +1,6 @@
 import { t, canonicalURL, localizedURL, siteBase } from "./i18n.js";
 import { practiceTargets, performPracticeAction, guardPracticeNavigation } from "./certivoice-practice.js";
-import { studyResults, practiceReturnURL, rememberPracticeReturn, highlightPhrase } from "./certivoice-study.js";
+import { studyResults, practiceReturnURL, rememberPracticeReturn, highlightPhrase, explanationHighlights } from "./certivoice-study.js";
 
 function nextPresentationSlide(doc) {
   const slides = [...doc.querySelectorAll('#diagram-viewer[open].is-presenting .diagram-presentation-nav button[data-slide-number][data-source-id]')];
@@ -122,7 +122,6 @@ export function explanationSource(sources, doc = document) {
   const course = doc.body?.dataset.courseRoute, page = new URL(voicePageURL(doc));
   if (!/^[\w-]+$/.test(course || "") || !Array.isArray(sources)) return;
   const prefix = `${siteBase}${course}/`;
-  // ponytail: one cited section per aside; a tour of several sections needs an explicit narration plan.
   // Prefer an actual guide citation; SVG citations fall back to their containing section.
   const candidates = sources.slice(0, 8).map(source => {
     try {
@@ -140,17 +139,10 @@ export function explanationSource(sources, doc = document) {
   }).filter(Boolean).sort((a, b) => Number(a.svg) - Number(b.svg));
   const target = candidates[0];
   if (!target) return;
-  return { navigation: target.navigation, reveal() {
+  return { navigation: target.navigation, reveal(answer) {
     const viewer = doc.querySelector("#diagram-viewer[open]");
     viewer?.dispatchEvent(new CustomEvent("certivoice:visibility", { detail: { name: "suspend" } }));
-    const anchor = doc.getElementById(decodeURIComponent(new URL(target.navigation).hash.slice(1)));
-    const headings = [...doc.querySelectorAll(".prose :is(h2,h3)[id]")];
-    const heading = anchor?.matches("h2,h3") ? anchor : headings.filter(item => anchor && item.compareDocumentPosition(anchor) & 4).at(-1) || headings[0];
-    if (!heading) return false;
-    let paragraph = heading.nextElementSibling;
-    while (paragraph && !paragraph.matches("p, h2, h3")) paragraph = paragraph.nextElementSibling;
-    const text = (paragraph?.matches("p") ? paragraph : heading).textContent.trim().split(/[\r\n]/)[0].slice(0, 200);
-    return highlightPhrase(text, doc);
+    const follow = explanationHighlights(answer, doc); follow(0); return follow;
   } };
 }
 

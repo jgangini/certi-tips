@@ -38,8 +38,10 @@ export function nativePronunciation(text, voice) {
   let shift = 0;
   // ponytail: one reported product alias for legacy Microsoft ES voices, not a general English pronunciation engine.
   const legacySpanish = /^es(?:-|$)/i.test(voice?.lang || "") && /Microsoft/i.test(voice?.name || "") && !/Multilingual|Natural|Neural/i.test(voice.name);
-  const spoken = legacySpanish ? text.replace(/(?<![\p{L}\p{N}_])Oracle\s+AI(?![\p{L}\p{N}_])/giu, (word, at) => {
-    const replacement = "Órakol éi ái", start = at + shift;
+  const english = /^en(?:-|$)/i.test(voice?.lang || "");
+  const pattern = english ? /(?<![\p{L}\p{N}_])(?:SaaS|IaaS|PaaS|FaaS)(?![\p{L}\p{N}_])/giu : /(?<![\p{L}\p{N}_])Oracle\s+AI(?![\p{L}\p{N}_])/giu;
+  const spoken = legacySpanish || english ? text.replace(pattern, (word, at) => {
+    const replacement = english ? { saas: "sass", iaas: "eye ass", paas: "pass", faas: "fass" }[word.toLowerCase()] : "Órakol éi ái", start = at + shift;
     shift += replacement.length - word.length;
     changes.push({ start, end: start + replacement.length, original: at, shift });
     return replacement;
@@ -53,6 +55,32 @@ export function nativePronunciation(text, voice) {
     }
     return Math.max(0, Math.min(text.length, position - difference));
   } };
+}
+
+export function nativeSpeechSegments(text, voice, voices, followSentences = false) {
+  const english = preferredNativeVoice(voices, "en") || voices.find(item => /^en(?:-|$)/i.test(item.lang));
+  // ponytail: reviewed cloud vocabulary only; extend it for new terms rather than guessing a word's language from casing.
+  const terms = /(?<![\p{L}\p{N}_])(?:(?:Software|Infrastructure|Platform|Functions?)\s+as\s+a\s+Service|Oracle(?:\s+(?:Cloud(?:\s+Infrastructure)?|AI))?|OpenAI|LangChain|LangGraph|GitHub|YouTube|Docker|Kubernetes|tenancy|tenancies|identity\s+domains?|compartments?|availability\s+domains?|fault\s+domains?|Object\s+Storage|Block\s+Volume|File\s+Storage|load\s+balancer|bare\s+metal|serverless|cloud|compute|storage|networking|buckets?|subnets?|endpoints?|regions?|shapes?|ingress|egress|prompts?|tokens?|embeddings?|fine[- ]tuning|machine\s+learning|deep\s+learning|SaaS|IaaS|PaaS|FaaS|AI|OCI|OCID|API|SDK|MCP|RAG|LLM|IAM|VCN|VNIC|VM|OKE|NLP|OCR|ML|CPU|GPU|HTTP|HTTPS|URL|DNS|CIDR|NAT|DRG|NSG|RPO|RTO|SQL|JSON)(?![\p{L}\p{N}_])/giu;
+  const parts = [];
+  const append = (start, end, selected) => {
+    if (start === end) return;
+    const previous = parts.at(-1);
+    if (previous && (previous.voice === selected || !/[\p{L}\p{N}]/u.test(text.slice(start, end)))) { previous.end = end; return; }
+    parts.push({ start, end, voice: selected });
+  };
+  let start = 0;
+  if (english && !/^en(?:-|$)/i.test(voice.lang)) for (const match of text.matchAll(terms)) {
+    append(start, match.index, voice); append(match.index, match.index + match[0].length, english); start = match.index + match[0].length;
+  }
+  append(start, text.length, voice);
+  const sentences = followSentences ? [...new Intl.Segmenter(voice.lang, { granularity: "sentence" }).segment(text)].map(item => item.index) : [];
+  return parts.flatMap(part => {
+    const boundaries = [part.start, ...sentences.filter(index => index > part.start && index < part.end), part.end];
+    return boundaries.slice(0, -1).map((index, i) => {
+      const end = boundaries[i + 1], original = text.slice(index, end), pronunciation = nativePronunciation(original, part.voice);
+      return { text: pronunciation.text, voice: part.voice, start: index, end, sourceIndex: position => index + pronunciation.sourceIndex(position) };
+    }).filter(part => part.text.trim());
+  });
 }
 
 export function animateVoiceEdge(context, buffer, edge) {

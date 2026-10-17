@@ -71,3 +71,22 @@ export function highlightPhrase(phrase, doc = document) {
   if (heading) view.dispatchEvent(new CustomEvent("certichat:activity-result", { detail: { kind: "section", state: "highlighted", targetId: heading.dataset.sourceId } }));
   return true;
 }
+
+export function explanationHighlights(answer, doc = document) {
+  const prose = doc.querySelector(".prose"), segmenter = new Intl.Segmenter(doc.documentElement.lang || "es", { granularity: "sentence" });
+  const words = text => new Set((text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().match(/\p{L}[\p{L}\p{N}]{2,}/gu) || []).filter(word => !/^(?:para|como|este|esta|estos|estas|desde|entre|sobre|cada|cuando|puede|pueden|porque|tambien|tiene|tienen|with|this|that|from|which|have|your|these|there|uma|com|sao|por|que|del|los|las|sus|una|uno|the|and|for|not|you|are|con|per|della|delle|sono)$/.test(word)));
+  // ponytail: bounded lexical alignment to real visible text; semantic or cross-document tours need an explicit cited plan.
+  const candidates = [...(prose?.querySelectorAll("p,li,td,h2,h3") || [])].slice(0, 500).filter(element => element.getClientRects().length && !element.querySelector("p,li,td") && !element.closest('[hidden],[aria-hidden="true"],button')).flatMap(element => [...segmenter.segment(element.textContent)].flatMap(item => item.segment.split(/[\r\n]/).map(text => text.trim()).filter(text => text.length >= 12 && text.length <= 200))).map(text => ({ text, words: words(text) }));
+  let previous;
+  const plan = [...segmenter.segment(answer)].map(item => {
+    const tokens = words(item.segment);
+    const scored = candidates.map(candidate => ({ ...candidate, score: [...candidate.words].filter(word => tokens.has(word)).length })).sort((a, b) => b.score - a.score);
+    return { start: item.index, text: scored[0]?.score >= 2 ? scored[0].text : null };
+  });
+  return position => {
+    const next = plan.findLast(item => item.start <= position)?.text;
+    if (!next || next === previous || !prose?.isConnected) return false;
+    if (!highlightPhrase(next, doc)) return false;
+    previous = next; return true;
+  };
+}

@@ -1,6 +1,6 @@
 import { navigateSite } from "./site-navigation.js";
 import { t, locale, language, canonicalURL, localizedURL, siteBase } from "./i18n.js";
-import { animateVoiceEdge, captureVoice, encodeVoiceWav, heardCharacters, nativePronunciation, preferredNativeVoice, restoreVoicePlayback, voiceMemoryFresh, VoiceActivity } from "./certivoice-audio.js";
+import { animateVoiceEdge, captureVoice, encodeVoiceWav, heardCharacters, nativeSpeechSegments, preferredNativeVoice, restoreVoicePlayback, voiceMemoryFresh, VoiceActivity } from "./certivoice-audio.js";
 import { performVoiceAction, explanationSource, voiceContext, voicePageURL, pendingNavigation, shouldResumeNavigation, validVoiceNavigation } from "./certivoice-actions.js";
 import { activityTrail } from "./certichat-activity.js";
 import { voiceDiagnostics } from "./certivoice-telemetry.js";
@@ -17,7 +17,7 @@ if (root) {
   let session, voiceError = "", active = false, muted = false, context, release, detector, controller, playback = readPlayback(), speech, output, utterance, epoch = 0, widget, pending, pendingSent = false, pendingSince, pendingExpiry, lastActivity = 0, starting = false, checkingSession = false, rejectVerification;
   const edge = document.querySelector("[data-voice-edge]");
   let lecture, lectureTimer, nativeVoice, nativeVoiceLocale = locale, lastExplained, aside;
-  let stopEdge, nativeStartTimer, videoLocked = false, videoConfirmation, navigating = false;
+  let stopEdge, nativeStartTimer, followTimer, videoLocked = false, videoConfirmation, navigating = false;
   const separateCapture = /iPhone|iPad|iPod/.test(navigator.userAgent) || navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
   const originalAudioType = navigator.audioSession?.type;
   const restoreVoiceHome = () => (document.querySelector("[data-explorer-chat-slot]") || document.body).append(config);
@@ -48,7 +48,7 @@ if (root) {
     stopEdge?.(); stopEdge = null;
     if (output && playback && speech?.track) playback.heardCharacters = Math.min(5000, speech.offset + heardCharacters(speech.text, context.currentTime - speech.started, speech.duration));
     if (output) { output.onended = null; try { output.stop(); } catch { /* Already ended. */ } output = null; }
-    clearTimeout(nativeStartTimer);
+    clearTimeout(nativeStartTimer); clearInterval(followTimer);
     const nativePending = utterance || window.speechSynthesis?.speaking || window.speechSynthesis?.pending;
     if (utterance) { utterance.onstart = null; utterance.onend = null; utterance.onerror = null; utterance.onboundary = null; utterance = null; }
     // Clear the silent iOS primer too; idle WebKit cancellations can swallow the next speak.
@@ -175,13 +175,15 @@ if (root) {
       const saved = aside;
       try {
         if (!await navigateSite(target.navigation, { source: "voice" }) || token !== epoch || !active || aside !== saved) { if (aside === saved) aside = null; return; }
-        if (target.reveal()) diagnostics.record("action", { action: "explanation_document" });
+        saved.source = target;
+        diagnostics.record("action", { action: "explanation_document" });
       } catch { if (aside === saved) aside = null; return; }
     }
+    if (aside?.source) aside.follow = aside.source.reveal(result.answer);
     return aside;
   }
   async function finishSpeech(offset, text, completed = true) {
-    clearTimeout(nativeStartTimer);
+    clearTimeout(nativeStartTimer); clearInterval(followTimer);
     stopEdge?.(); stopEdge = null; output = null; utterance = null;
     if (completed && speech?.track && playback) playback.heardCharacters = Math.min(5000, offset + text.length);
     if (completed && speech?.track && speech.diagramId) lastExplained = { id: speech.diagramId, title: speech.title };
@@ -189,12 +191,12 @@ if (root) {
     // Continuations keep the playback profile; reopening iOS capture between lecture segments interrupts audio.
     if (active && speech?.after) { const after = speech.after; speech.after = null; await after(); return; }
     if (active && lecture?.running && lecture.consent && !quotaBlocked()) { lectureTimer = setTimeout(() => lectureTurn(true), 0); return; }
-    if (separateCapture && active && !release && !quotaBlocked()) {
+    if (active && !release && !document.hidden && !quotaBlocked()) {
       const token = epoch;
       starting = true; setStatus(t("Activando el micrófono…"));
       try {
         const capture = await openCapture();
-        if (token !== epoch || !active) { capture.stop(); return; }
+        if (token !== epoch || !active || document.hidden) { capture.stop(); if (token === epoch) { starting = false; setStatus(t("Micrófono silenciado.")); } return; }
         release = capture; release.setMuted(muted);
         await context.resume();
         if (token !== epoch || !active) return;
@@ -239,13 +241,13 @@ if (root) {
     if (!voiceMemoryFresh(createdAt)) { pause(); return; }
     const offset = Number.isInteger(progress?.offset) ? Math.max(0, Math.min(5000, progress.offset)) : 0;
     if (progress?.requestId) playback = { requestId: progress.requestId, answer: progress.answer || text, heardCharacters: offset, createdAt };
-    speech = { text, offset, track: Boolean(progress?.requestId), diagramId: voiceContext().diagramId, title: document.querySelector("#diagram-caption")?.textContent || document.title }; savePlayback();
+    speech = { text, offset, follow: aside?.follow, track: Boolean(progress?.requestId), diagramId: voiceContext().diagramId, title: document.querySelector("#diagram-caption")?.textContent || document.title }; savePlayback();
     diagnostics.record("speech", { native_event: "request", ...(nativeVoice ? {} : { audio_session: navigator.audioSession?.type }) });
     if (separateCapture) {
       // ponytail: iOS speech can permanently mute a live capture; use explicit turn-taking there.
       release?.stop(); release = null;
       if (navigator.audioSession) navigator.audioSession.type = "playback";
-      await context.resume();
+      if (!nativeVoice || !document.hidden) await context.resume();
       if (token !== epoch || !active) return;
     }
     if (!nativeVoice && audio?.format === "wav" && typeof audio.data === "string" && audio.data.length <= 14000000) {
@@ -257,32 +259,51 @@ if (root) {
         output = context.createBufferSource(); output.buffer = decoded; output.connect(context.destination);
         speech.started = context.currentTime; speech.duration = decoded.duration;
         output.onended = () => finishSpeech(offset, text);
-        output.start(); stopEdge = animateVoiceEdge(context, decoded, edge); setStatus(t("Hablando. Puedes interrumpir.")); return;
+        output.start();
+        if (speech.follow) { speech.follow(0); followTimer = setInterval(() => speech.follow(heardCharacters(text, context.currentTime - speech.started, speech.duration)), 250); }
+        stopEdge = animateVoiceEdge(context, decoded, edge); setStatus(t("Hablando. Puedes interrumpir.")); return;
       } catch { /* A valid text response remains usable if audio decoding fails. */ }
     }
     const textStatus = `${text} ${t("Respuesta disponible como texto. Te escucho…")}`;
     if (!nativeVoice) { if (lecture && progress) lecture.running = false; if (separateCapture) await finishSpeech(offset, text, false); if (token === epoch && active) setStatus(textStatus); return; }
-    const pronunciation = nativePronunciation(text, nativeVoice);
-    const current = utterance = new SpeechSynthesisUtterance(pronunciation.text); utterance.voice = nativeVoice; utterance.lang = nativeVoice.lang;
-    utterance.onstart = () => {
-      if (utterance !== current || token !== epoch || !active) return;
-      diagnostics.record("speech", { native_event: "start", audio_session: navigator.audioSession?.type });
-      clearTimeout(nativeStartTimer); speech.started = true; setStatus(t("Hablando. Puedes interrumpir."));
-    };
-    utterance.onboundary = event => { if (speech.track && playback && Number.isInteger(event.charIndex)) playback.heardCharacters = Math.min(5000, offset + pronunciation.sourceIndex(event.charIndex)); };
-    utterance.onend = () => { if (utterance !== current || token !== epoch || !active) return; diagnostics.record("speech", { native_event: "end" }); return finishSpeech(offset, text); };
-    utterance.onerror = event => {
-      if (utterance !== current || token !== epoch || !active) return;
-      const codes = ["not-allowed", "audio-busy", "audio-hardware", "network", "synthesis-unavailable", "synthesis-failed", "language-unavailable", "voice-unavailable", "text-too-long", "invalid-argument", "canceled", "interrupted"];
-      diagnostics.record("speech", { native_event: "error", native_error: codes.includes(event?.error) ? event.error : "unknown" });
-      if (separateCapture) pause(t("La respuesta está disponible como texto. El audio no está disponible."), true);
-      else { clearTimeout(nativeStartTimer); utterance = null; if (lecture) lecture.running = false; if (speech.after) { const after = speech.after; speech.after = null; after(); } else if (quotaBlocked()) pause(t("Se alcanzó un límite de uso. Inténtalo más tarde.")); else setStatus(textStatus); }
-    };
-    nativeStartTimer = setTimeout(() => {
-      if (utterance === current && !speech.started) { diagnostics.record("speech", { native_event: "timeout" }); pause(t("La respuesta está disponible como texto. El audio no está disponible."), true); }
-    }, 5000);
-    setStatus(t("Preparando la respuesta…"));
-    speechSynthesis.speak(utterance);
+    const parts = nativeSpeechSegments(text, nativeVoice, speechSynthesis.getVoices(), Boolean(speech.follow));
+    function speakPart(index) {
+      const part = parts[index];
+      if (token !== epoch || !active) return;
+      if (!part) return finishSpeech(offset, text);
+      const current = utterance = new SpeechSynthesisUtterance(part.text);
+      current.voice = part.voice; current.lang = part.voice.lang;
+      let started = false;
+      const progressAt = position => {
+        const at = part.sourceIndex(position);
+        if (speech.track && playback) playback.heardCharacters = Math.min(5000, offset + at);
+        speech.follow?.(at);
+      };
+      current.onstart = () => {
+        if (utterance !== current || token !== epoch || !active) return;
+        diagnostics.record("speech", { native_event: "start", audio_session: navigator.audioSession?.type });
+        clearTimeout(nativeStartTimer); started = speech.started = true; progressAt(0); setStatus(t("Hablando. Puedes interrumpir."));
+      };
+      current.onboundary = event => { if (utterance === current && token === epoch && active && Number.isInteger(event.charIndex)) progressAt(event.charIndex); };
+      current.onend = () => {
+        if (utterance !== current || token !== epoch || !active) return;
+        clearTimeout(nativeStartTimer); diagnostics.record("speech", { native_event: "end" });
+        if (speech.track && playback) playback.heardCharacters = Math.min(5000, offset + part.end);
+        return speakPart(index + 1);
+      };
+      current.onerror = event => {
+        if (utterance !== current || token !== epoch || !active) return;
+        const codes = ["not-allowed", "audio-busy", "audio-hardware", "network", "synthesis-unavailable", "synthesis-failed", "language-unavailable", "voice-unavailable", "text-too-long", "invalid-argument", "canceled", "interrupted"];
+        diagnostics.record("speech", { native_event: "error", native_error: codes.includes(event?.error) ? event.error : "unknown" });
+        if (separateCapture) pause(t("La respuesta está disponible como texto. El audio no está disponible."), true);
+        else { clearTimeout(nativeStartTimer); utterance = null; if (lecture) lecture.running = false; if (speech.after) { const after = speech.after; speech.after = null; after(); } else if (quotaBlocked()) pause(t("Se alcanzó un límite de uso. Inténtalo más tarde.")); else setStatus(textStatus); }
+      };
+      nativeStartTimer = setTimeout(() => {
+        if (utterance === current && !started) { diagnostics.record("speech", { native_event: "timeout" }); pause(t("La respuesta está disponible como texto. El audio no está disponible."), true); }
+      }, 5000);
+      setStatus(t("Preparando la respuesta…")); speechSynthesis.speak(current);
+    }
+    speakPart(0);
   }
   async function selectNativeVoice() {
     if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
@@ -437,7 +458,7 @@ if (root) {
     if (separateCapture && navigator.audioSession) navigator.audioSession.type = "play-and-record";
     diagnostics.record("capture", { audio_session: navigator.audioSession?.type });
     return captureVoice(context, chunk => {
-      if (!active || muted || navigating) return;
+      if (!active || muted || navigating || document.hidden) return;
       const event = detector.push(chunk, Boolean(output || utterance));
       if (event.started) {
         diagnostics.record("action", { action: "speech_detected", phase: output || utterance ? "speaking" : controller ? "thinking" : "listening", muted });
@@ -446,7 +467,7 @@ if (root) {
         interrupt("microphone_interrupt"); lastActivity = Date.now(); setStatus(t("Te escucho…"));
       }
       if (event.chunks) { lastActivity = Date.now(); send(event.chunks).catch(() => pause(t("No se pudo preparar el audio."), true)); }
-    }, event => { diagnostics.record("capture", { track_state: event?.target?.readyState, track_muted: event?.target?.muted }); pause(t("El micrófono se desconectó. Vuelve a activar la voz."), true); });
+    }, event => { diagnostics.record("capture", { track_state: event?.target?.readyState, track_muted: event?.target?.muted }); if (!document.hidden) pause(t("El micrófono se desconectó. Vuelve a activar la voz."), true); });
   }
   async function start(retry = false, automatic = false) {
     if (starting) return;
@@ -464,7 +485,7 @@ if (root) {
         const warmup = new SpeechSynthesisUtterance(""); warmup.volume = 0; speechSynthesis.speak(warmup);
       }
       context ||= new AudioEngine();
-      context.onstatechange = () => { diagnostics.record("context", { context_state: context.state, audio_session: navigator.audioSession?.type }); if (active && release && !starting && context.state !== "running") pause(t("El micrófono se desconectó. Vuelve a activar la voz."), true); };
+      context.onstatechange = () => { diagnostics.record("context", { context_state: context.state, audio_session: navigator.audioSession?.type }); if (active && release && !starting && !document.hidden && context.state !== "running") pause(t("El micrófono se desconectó. Vuelve a activar la voz."), true); };
       if (!automatic) await context.resume();
       interrupt();
       const currentSession = await api("session", undefined, "GET");
@@ -487,6 +508,7 @@ if (root) {
       detector = new VoiceActivity(context.sampleRate);
       const stopCapture = await openCapture();
       if (token !== epoch || quotaBlocked()) { stopCapture.stop(); if (token === epoch) pause(t("Se alcanzó un límite de uso. Inténtalo más tarde.")); return; }
+      if (document.hidden) { stopCapture.stop(); active = true; starting = false; setStatus(t("Micrófono silenciado.")); return; }
       release = stopCapture;
       if (automatic) {
         // Capture permission is already granted; bound browsers that still require a playback gesture.
@@ -535,7 +557,17 @@ if (root) {
     if (url && new URL(url).pathname !== location.pathname) saveNavigation(url);
   }, true);
   window.addEventListener("pagehide", () => { pause(undefined, false, true, "page_hidden"); void diagnostics.flush(true); });
-  document.addEventListener("visibilitychange", () => { if (document.hidden) pause(undefined, false, true, "document_hidden"); });
+  document.addEventListener("visibilitychange", () => {
+    if (!active && !starting) return;
+    diagnostics.record("action", { action: document.hidden ? "background_playback" : "foreground_playback", phase: reportedPhase, muted });
+    if (document.hidden) {
+      // Keep authorized narration/requests alive; capture resumes only after returning to the visible page.
+      const capture = release; release = null; capture?.stop(); detector?.reset();
+      if (navigator.audioSession) navigator.audioSession.type = "playback";
+      void diagnostics.flush(true);
+    } else if (output) void context.resume().catch(() => pause(t("La respuesta está disponible como texto. El audio no está disponible."), true));
+    else if (active && !starting && !utterance && !output && !controller && !lecture?.running && !aside && !navigating) void finishSpeech(0, "", false);
+  });
   new MutationObserver(() => { if (session) applySession(session); }).observe(config, { attributes: true, attributeFilter: ["hidden"] });
   setInterval(expireMemory, 5000);
   const viewer = document.querySelector("#diagram-viewer");
