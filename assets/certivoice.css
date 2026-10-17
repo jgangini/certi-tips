@@ -1,11 +1,9 @@
 .certivoice-verification { margin-top: 8px; }
 .certivoice-edge {
   --voice-level: 0;
-  --voice-spread: calc(18.2px + 23.8px * var(--voice-level));
+  --voice-spread: calc(15.47px + 20.23px * var(--voice-level));
   --voice-corner: calc(52px + 30px * var(--voice-level));
   position: fixed; inset: 0; z-index: 10000; pointer-events: none; opacity: 0; border-radius: 0;
-  background: conic-gradient(from 45deg, #05d9ff, #3972ff, #a646ff, #ff35ad, #ff665c, #ffd84f, #05d9ff);
-  background-size: 150% 150%;
   transition: opacity .2s;
 }
 .certivoice-edge .voice-edge-cutout { x: var(--voice-spread); y: var(--voice-spread); width: calc(100% - 2 * var(--voice-spread)); height: calc(100% - 2 * var(--voice-spread)); rx: var(--voice-corner); }
@@ -14,5 +12,5 @@
 .certivoice-edge[data-state="processing"] { animation-duration: 3s; }
 .certivoice-edge[data-state="speaking"] { opacity: calc(.8 + .2 * var(--voice-level)); animation-duration: 2.5s; }
 .certivoice-edge[data-state="muted"] { opacity: .4; }
-@keyframes certivoice-glow { from { background-position: 0% 20%; } to { background-position: 100% 80%; } }
+@keyframes certivoice-glow { from { filter: brightness(1); } to { filter: brightness(1.12); } }
 @media (prefers-reduced-motion: reduce) { .certivoice-edge { --voice-level: 0 !important; transition: none; } .certivoice-edge:is([data-state]) { animation: none; } }
