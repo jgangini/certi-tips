@@ -50,7 +50,7 @@ class BrowserEvent(BaseModel):
     track_muted: bool | None = None
     native_event: Literal["request", "start", "end", "error", "timeout"] | None = None
     native_error: Literal["not-allowed", "audio-busy", "audio-hardware", "network", "synthesis-unavailable", "synthesis-failed", "language-unavailable", "voice-unavailable", "text-too-long", "invalid-argument", "canceled", "interrupted", "unknown"] | None = None
-    operation: Literal["session", "voice", "conversation"] | None = None
+    operation: Literal["session", "voice", "speech", "conversation"] | None = None
     status: int | None = Field(default=None, ge=100, le=599)
     request_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$")
     action: str | None = Field(default=None, pattern=r"^[a-z_]{1,40}$")

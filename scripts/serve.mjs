@@ -24,7 +24,7 @@ if (!Number.isInteger(chatProxyPort) || chatProxyPort < 0 || chatProxyPort > 655
 const chatRoutes = {
   "/api/health": ["GET"], "/api/session": ["GET", "POST"],
   "/api/graph": ["GET"], "/api/chat": ["POST"],
-  "/api/events": ["POST"], "/api/voice": ["POST"], "/api/conversation": ["DELETE"],
+  "/api/events": ["POST"], "/api/speech": ["POST"], "/api/voice": ["POST"], "/api/conversation": ["DELETE"],
 };
 
 function proxyChat(request, response, url, origin) {
@@ -44,7 +44,7 @@ function proxyChat(request, response, url, origin) {
     response.writeHead(415).end("JSON required");
     return;
   }
-  const limit = url.pathname === "/api/voice" ? 1350000 : url.pathname === "/api/chat" ? 16384 : 8192;
+  const limit = url.pathname === "/api/voice" ? 1350000 : url.pathname === "/api/speech" ? 32768 : url.pathname === "/api/chat" ? 16384 : 8192;
   if (Number(request.headers["content-length"] || 0) > limit) {
     response.writeHead(413).end("Request too large");
     return;

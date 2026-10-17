@@ -104,7 +104,7 @@ test("the opt-in preview proxy preserves local sessions and rejects other caller
     assert.equal(limited.headers["retry-after"], "17");
     assert.equal(limited.headers["cache-control"], "no-store");
     assert.deepEqual(JSON.parse(limited.body), { detail: "mock quota" });
-    for (const [pathname, method] of [["/api/health", "GET"], ["/api/graph", "GET"], ["/api/voice", "POST"], ["/api/conversation", "DELETE"]]) {
+    for (const [pathname, method] of [["/api/health", "GET"], ["/api/graph", "GET"], ["/api/voice", "POST"], ["/api/speech", "POST"], ["/api/conversation", "DELETE"]]) {
       const result = await request(page, pathname, { method, headers: method === "GET" ? pathname.endsWith("health") ? { "Sec-Fetch-Site": "same-origin" } : get : { ...valid, "Content-Type": "application/json" }, chunks: method === "GET" ? [] : ["{}"] });
       assert.equal(result.status, 200, pathname);
     }
@@ -151,6 +151,7 @@ test("the opt-in preview proxy preserves local sessions and rejects other caller
       ["/api/session", { method: "PATCH", headers: valid }, 404],
       // ponytail: reject declared sizes before uploading; chunked tests below exercise actual bytes.
       ["/api/chat", { method: "POST", headers: { ...valid, "Content-Type": "application/json", "Content-Length": "16385" } }, 413],
+      ["/api/speech", { method: "POST", headers: { ...valid, "Content-Type": "application/json", "Content-Length": "32769" } }, 413],
       ["/api/voice", { method: "POST", headers: { ...valid, "Content-Type": "application/json", "Content-Length": "1350001" } }, 413],
     ];
     for (const [pathname, options, expected] of cases) assert.equal((await request(page, pathname, options)).status, expected, `${options.method || "GET"} ${pathname} ${JSON.stringify(options.headers)}`);

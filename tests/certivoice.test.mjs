@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
-import { animateVoiceEdge, encodeVoiceWav, heardCharacters, nativePronunciation, nativeSpeechSegments, preferredNativeVoice, restoreVoicePlayback, voiceMemoryFresh, VoiceActivity } from "../assets/certivoice-audio.js";
+import { animateVoiceEdge, encodeVoiceWav, heardCharacters, nativeSpeechSegments, preferredNativeVoice, restoreVoicePlayback, voiceMemoryFresh, VoiceActivity } from "../assets/certivoice-audio.js";
 import { validVoiceNavigation, pendingNavigation, shouldResumeNavigation, performVoiceAction, voiceContext, voicePageURL } from "../assets/certivoice-actions.js";
 import { mountPlayer } from "../assets/certitube.js";
 import { practiceTargets, performPracticeAction, guardPracticeNavigation } from "../assets/certivoice-practice.js";
@@ -56,37 +56,14 @@ test("native voice keeps the UI language and prioritizes explicit multilingual t
   assert.equal(preferredNativeVoice([english], "es"), undefined);
 });
 
-test("the reported Oracle AI pronunciation changes only speech and maps interruption back to original text", () => {
-  const voice = { name: "Microsoft Sabina", lang: "es-MX" }, original = "Abre Oracle AI. Luego explica Oracle AI con ejemplos.";
-  const spoken = nativePronunciation(original, voice);
-  assert.equal(spoken.text, "Abre Órakol éi ái. Luego explica Órakol éi ái con ejemplos.");
-  assert.equal(original, "Abre Oracle AI. Luego explica Oracle AI con ejemplos.");
-  assert.equal(spoken.sourceIndex(spoken.text.indexOf("éi")), original.indexOf("Oracle"), "An interrupted alias resumes conservatively from its original start");
-  const resumedAt = spoken.sourceIndex(spoken.text.indexOf("Luego"));
-  assert.equal(original.slice(resumedAt), "Luego explica Oracle AI con ejemplos.");
-  const resumed = nativePronunciation(original.slice(resumedAt), voice);
-  assert.equal(resumedAt + resumed.sourceIndex(resumed.text.indexOf("con ejemplos")), original.indexOf("con ejemplos"));
-  assert.equal(spoken.sourceIndex(spoken.text.length), original.length);
-  for (const other of [{ name: "Microsoft Zira", lang: "en-US" }, { ...voice, name: "Microsoft Elvira Online (Natural)" }, { ...voice, name: "Microsoft Dalia Multilingual" }, { ...voice, name: "Monica" }]) assert.equal(nativePronunciation(original, other).text, original);
-  assert.equal(nativePronunciation("AI, OpenAI, Oracle Database y myOracle AI2.", voice).text, "AI, OpenAI, Oracle Database y myOracle AI2.");
-  assert.equal(nativePronunciation("Oracle AI", { name: "Mónica", lang: "es-ES" }).sourceIndex(4), 4, "Unchanged terms retain their exact boundary positions");
-});
-
-test("Spanish/Portuguese narration keeps one speaker, pronunciation aliases and original interruption offsets", () => {
-  for (const voice of [{ name: "Mónica", lang: "es-ES" }, { name: "Luciana", lang: "pt-BR" }]) {
-    const original = "Usa SaaS e IaaS na tenancy. Después continúa con almacenamiento.";
+test("legacy narration keeps literal terms and original offsets without phonetic dictionaries", () => {
+  for (const lang of ["es-ES", "pt-BR", "en-US", "it-IT"]) {
+    const voice = { name: "Mónica", lang }, original = "Usa SaaS e IaaS na tenancy. Después continúa con Oracle AI.";
     const parts = nativeSpeechSegments(original, voice, true);
-    assert.equal(parts.length, 2);
+    assert.equal(parts.map(part => part.text).join(""), original);
     assert(parts.every(part => part.voice === voice));
-    assert(parts[0].text.includes("sás"));
-    assert(parts[0].text.includes(voice.lang === "es-ES" ? "ténansi" : "tênanci"));
-    assert.equal(parts[0].sourceIndex(parts[0].text.indexOf("ái")), original.indexOf("IaaS"));
     assert.equal(parts[1].sourceIndex(0), original.indexOf("Después"));
     assert.equal(parts.at(-1).sourceIndex(parts.at(-1).text.length), original.length);
-    assert.equal(nativeSpeechSegments("No cambies miSaaS ni tenancyId.", voice)[0].text, "No cambies miSaaS ni tenancyId.");
-    assert.equal(nativeSpeechSegments(original, voice).length, 1);
-    const multilingual = { ...voice, name: "Multilingual" };
-    assert.equal(nativeSpeechSegments(original, multilingual)[0].text, original);
   }
 });
 
@@ -561,7 +538,7 @@ test("microphone mute preserves narration, scheduled lecture and subsequent slid
     diagnostics: { record: (name, fields) => calls.push([name, fields.action]) }, t: text => text, setStatus() {},
     lectureTimer: "existing", clearTimeout: value => calls.push(["clear", value]), setTimeout: fn => timers.push(fn),
     nativeStartTimer: null, followTimer: null, clearInterval() {}, stopEdge: null, speech: {}, playback: null, savePlayback() {}, separateCapture: false,
-    quotaBlocked: () => false, epoch: 1, pending: null, pendingSince: 0, pendingExpiry: null, expireMemory() {},
+    cloudSpeech: () => false, quotaBlocked: () => false, epoch: 1, pending: null, pendingSince: 0, pendingExpiry: null, expireMemory() {},
     crypto, locale: "es", voicePageURL: () => "https://site.test/course/module/", activityTrail: () => [],
     document: { querySelector: () => ({ dataset: { sourceId: "course/module#first" }, querySelectorAll: () => [
       { getAttribute: () => "true" }, { dataset: { sourceId: "course/module#second" } },

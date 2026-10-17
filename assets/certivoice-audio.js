@@ -33,43 +33,13 @@ export function preferredNativeVoice(voices, language) {
   return candidates.find(voice => /Multilingual/i.test(voice.name)) || candidates.find(voice => /Natural|Neural/i.test(voice.name)) || candidates[0];
 }
 
-export function nativePronunciation(text, voice) {
-  const changes = [];
-  let shift = 0;
-  // ponytail: one reported product alias for legacy Microsoft ES voices, not a general English pronunciation engine.
-  const legacySpanish = /^es(?:-|$)/i.test(voice?.lang || "") && /Microsoft/i.test(voice?.name || "") && !/Multilingual|Natural|Neural/i.test(voice.name);
-  // ponytail: reviewed phonetic aliases approximate these terms in one voice; calibrate new aliases on the actual device.
-  const aliases = /Multilingual/i.test(voice?.name || "") ? {} : ({
-    es: { saas: "sás", iaas: "ái as", paas: "pás", faas: "fás", tenancy: "ténansi" },
-    pt: { saas: "sás", iaas: "ái és", paas: "pás", faas: "fás", tenancy: "tênanci" },
-    en: { saas: "sass", iaas: "eye ass", paas: "pass", faas: "fass" },
-  }[voice?.lang?.split("-")[0]] || {});
-  const pattern = /(?<![\p{L}\p{N}_])(?:Oracle\s+AI|SaaS|IaaS|PaaS|FaaS|tenancy)(?![\p{L}\p{N}_])/giu;
-  const spoken = text.replace(pattern, (word, at) => {
-    const replacement = aliases[word.toLowerCase()] || (legacySpanish && /^Oracle\s+AI$/i.test(word) ? "Órakol éi ái" : word), start = at + shift;
-    if (replacement === word) return word;
-    shift += replacement.length - word.length;
-    changes.push({ start, end: start + replacement.length, original: at, shift });
-    return replacement;
-  });
-  return { text: spoken, sourceIndex(position) {
-    let difference = 0;
-    for (const change of changes) {
-      if (position < change.start) break;
-      if (position < change.end) return change.original;
-      difference = change.shift;
-    }
-    return Math.max(0, Math.min(text.length, position - difference));
-  } };
-}
-
 export function nativeSpeechSegments(text, voice, followSentences = false) {
   // ponytail: keep the selected speaker; sentence chunks exist only for engines without word boundaries.
   const parts = followSentences ? [...new Intl.Segmenter(voice.lang, { granularity: "sentence" }).segment(text)] : [{ segment: text, index: 0 }];
-  return parts.filter(part => part.segment.trim()).map(({ segment, index }) => {
-    const pronunciation = nativePronunciation(segment, voice);
-    return { text: pronunciation.text, voice, start: index, end: index + segment.length, sourceIndex: position => index + pronunciation.sourceIndex(position) };
-  });
+  return parts.filter(part => part.segment.trim()).map(({ segment, index }) => ({
+    text: segment, voice, start: index, end: index + segment.length,
+    sourceIndex: position => index + Math.max(0, Math.min(segment.length, position)),
+  }));
 }
 
 export function animateVoiceEdge(context, buffer, edge) {

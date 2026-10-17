@@ -106,9 +106,11 @@ class Store:
         with self.pool.connection() as connection:
             return self.quota_in(connection, token_hash, channel)
 
-    def begin_request(self, token_hash, request_id, input_hash, network, channel="chat"):
+    def begin_request(self, token_hash, request_id, input_hash, network, channel="chat", count_question=True):
         if channel not in ("chat", "voice"):
             raise ValueError("Invalid conversation channel.")
+        if not count_question and channel != "voice":
+            raise ValueError("Only narration can skip question counting.")
         self.cleanup()
         with self.pool.connection() as connection:
             # ponytail: one short admission lock suits four concurrent chats; use per-subject locks above that ceiling.
@@ -132,8 +134,8 @@ class Store:
                     code = "request_expired"
                 raise ChatError("Esta consulta ya fue recibida; envía una nueva si necesitas continuar.", 409, code=code)
             quota = self.quota_in(connection, token_hash, channel)
-            if quota["retryAfter"]:
-                raise ChatError("Alcanzaste tu límite de consultas. Vuelve más tarde.", 429, quota["retryAfter"])
+            if (count_question and quota["retryAfter"]) or quota["minuteRemaining"] == 0:
+                raise ChatError("Alcanzaste tu límite de consultas. Vuelve más tarde.", 429, quota["retryAfter"] if count_question else 60)
             for seconds, maximum in ((60, 60), (3600, 600)):
                 count = connection.execute("SELECT count(*) AS n FROM cc_requests WHERE network_hash=%s "
                                            "AND created_at>now()-%s*interval '1 second'", (network, seconds)).fetchone()["n"]
@@ -146,11 +148,12 @@ class Store:
             connection.execute("INSERT INTO cc_requests(session_hash,request_id,input_hash,network_hash,channel,active_until) "
                                "VALUES (%s,%s,%s,%s,%s,now()+%s*interval '1 second')",
                                (token_hash, request_id, input_hash, network, channel, 180 if channel == "voice" else 50))
-            connection.execute("INSERT INTO cc_rate_limits(bucket,hits,expires_at) VALUES (%s,1,now()+%s*interval '1 hour') "
-                               "ON CONFLICT(bucket) DO UPDATE SET "
-                               "hits=CASE WHEN cc_rate_limits.expires_at<=now() THEN 1 ELSE cc_rate_limits.hits+1 END, "
-                               "expires_at=CASE WHEN cc_rate_limits.expires_at<=now() THEN EXCLUDED.expires_at ELSE cc_rate_limits.expires_at END",
-                               (f"chat:{token_hash}", self.refresh_hours))
+            if count_question:
+                connection.execute("INSERT INTO cc_rate_limits(bucket,hits,expires_at) VALUES (%s,1,now()+%s*interval '1 hour') "
+                                   "ON CONFLICT(bucket) DO UPDATE SET "
+                                   "hits=CASE WHEN cc_rate_limits.expires_at<=now() THEN 1 ELSE cc_rate_limits.hits+1 END, "
+                                   "expires_at=CASE WHEN cc_rate_limits.expires_at<=now() THEN EXCLUDED.expires_at ELSE cc_rate_limits.expires_at END",
+                                   (f"chat:{token_hash}", self.refresh_hours))
         return None
 
     def finish_request(self, token_hash, request_id, result=None, question=None, channel="chat", continuity=None, continuity_since=None):

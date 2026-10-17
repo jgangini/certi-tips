@@ -12,7 +12,7 @@ import httpx
 import pytest
 
 from app.security import COOKIE, ChatError, token_digest
-from app.voice import VoiceBody, VoiceProvider, speech_text, wav_seconds
+from app.voice import VoiceBody, VoiceProvider, wav_seconds
 from test_api import clients, database_url, session, question, FRAGMENT, VERSION, ORIGIN
 
 
@@ -37,15 +37,6 @@ def test_reject_audio_before_provider(audio):
         wav_seconds(audio)
 
 
-def test_spoken_match_preserves_word_boundaries_numbers_and_signs():
-    assert speech_text("a probar") != speech_text("aprobar")
-    assert speech_text("-5") != speech_text("5")
-    assert speech_text("1.0") != speech_text("10")
-    assert speech_text("- Una red conecta dispositivos.\n- Un router conecta redes.") == speech_text("Una red conecta dispositivos. Un router conecta redes.")
-    assert speech_text("1. Una red.\n2. Un router.") == speech_text("Una red. Un router.")
-    assert speech_text("- 5") != speech_text("5")
-
-
 class Ledger:
     def __init__(self):
         self.reservations, self.settlements = [], []
@@ -65,60 +56,14 @@ def run(handler, operation):
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
             provider = VoiceProvider(SimpleNamespace(voice_model="openai/gpt-audio-mini", openrouter_api_key="fake",
                                                      site_url="https://site.test/"), ledger, client)
-            return await operation(provider)
+            try:
+                result = await operation(provider)
+                await asyncio.gather(*provider.speech_tasks)
+                return result
+            finally:
+                await provider.close()
 
     return asyncio.run(execute()), ledger
-
-
-def stream(transcript, *, done=True, cost=0.0001, parts=None):
-    # Real OpenRouter audio has no finish_reason; base64 chunks may cut through quartets.
-    data = base64.b64encode(b"\x00\x00" * 24).decode()
-    parts = parts or (data[:5], data[5:])
-    events = [{"choices": [{"delta": {"audio": {"data": parts[0], "transcript": transcript}}}]},
-              {"choices": [{"delta": {"audio": {"data": parts[1]}}}]},
-              {"choices": [], "usage": {"cost": cost}}]
-    text = "".join("data:" + json.dumps(event) + "\n\n" for event in events)
-    return text + ("data: [DONE]\n\n" if done else "")
-
-
-def test_audio_is_buffered_and_exact_transcript_is_required():
-    def handler(request):
-        payload = json.loads(request.content)
-        assert payload["audio"] == {"voice": "coral", "format": "pcm16"}
-        assert "pronunciación inglesa, conservando el idioma de la narración, la voz y el texto literal" in payload["messages"][0]["content"]
-        assert payload["messages"][-1]["content"] == "Una **red** conecta dispositivos."
-        return httpx.Response(200, text=stream("Una red conecta dispositivos."))
-    result, ledger = run(handler, lambda p: p.speak("Una **red** conecta dispositivos."))
-    assert base64.b64decode(result["data"])[:4] == b"RIFF" and result["format"] == "wav"
-    assert ledger.reservations[0][0::2] == ("chat", "voice") and ledger.settlements == [(1, 100)]
-
-    async def rejected(provider):
-        with pytest.raises(ChatError, match="no coincide"):
-            await provider.speak("Una red conecta dispositivos.")
-    _, ledger = run(lambda _: httpx.Response(200, text=stream("Entendido. Una red conecta dispositivos.")), rejected)
-    assert ledger.settlements == [(1, 100)]  # A rejected answer was still billed.
-
-
-def test_audio_accepts_individually_padded_deltas_without_losing_bytes():
-    response = stream("Texto", parts=("YWI=", "Y2Q="))
-    audio, _ = run(lambda _: httpx.Response(200, text=response), lambda p: p.speak("Texto"))
-    with wave.open(io.BytesIO(base64.b64decode(audio["data"])), "rb") as reader:
-        assert reader.readframes(reader.getnframes()) == b"abcd"
-
-
-@pytest.mark.parametrize("response", [stream("Texto", done=False), stream("Texto", cost=None)])
-def test_incomplete_or_uncertain_audio_keeps_reservation_without_retry(response):
-    calls = []
-
-    def handler(request):
-        calls.append(request)
-        return httpx.Response(200, text=response)
-
-    async def operation(provider):
-        with pytest.raises(ChatError):
-            await provider.speak("Texto")
-    _, ledger = run(handler, operation)
-    assert len(calls) == len(ledger.reservations) == 1 and not ledger.settlements
 
 
 def test_grounded_turn_uses_original_audio_and_blocks_unknown_citations():
@@ -757,6 +702,13 @@ def test_english_ui_answer_keeps_spanish_input_but_narrates_verified_english():
     spoken_question = "¿Qué almacena Oracle?"
     data = {**body(), "locale": "en"}
     def handler(request):
+        from app.speech import MODEL, VOICE
+        if request.method == "GET":
+            return httpx.Response(200, json={"data": {"id":"gen-english", "model":MODEL, "total_cost":.00001}})
+        if request.url.path == "/api/v1/audio/speech":
+            assert json.loads(request.content)["input"] == answer
+            assert json.loads(request.content)["voice"] == VOICE
+            return httpx.Response(200, content=b"ID3"+bytes(20), headers={"Content-Type":"audio/mpeg", "X-Generation-Id":"gen-english"})
         payload = json.loads(request.content)
         if payload.get("tools"):
             system = payload["messages"][0]["content"]
@@ -766,14 +718,13 @@ def test_english_ui_answer_keeps_spanish_input_but_narrates_verified_english():
             return httpx.Response(200, json={"usage": {"cost": .0001}, "choices": [{"finish_reason": "tool_calls", "message": {
                 "tool_calls": [{"function": {"name": "voice_answer", "arguments": json.dumps({"kind": "grounded", "answer": answer,
                     "citations": ["S1"], "continuity": "Topic: Oracle data."})}}]}}]})
-        assert payload["messages"][-1]["content"] == answer
-        return httpx.Response(200, text=stream(answer))
+        raise AssertionError("Unexpected speech route")
     async def operation(provider):
         text, sources, _ = await provider.answer(VoiceBody(**data), spoken_question, [FRAGMENT], [], "")
         assert text == answer and sources == [{key: FRAGMENT[key] for key in ("id", "title", "url")}]
         return await provider.speak(text)
     audio, ledger = run(handler, operation)
-    assert audio["format"] == "wav" and len(ledger.reservations) == 2
+    assert audio["format"] == "mp3" and len(ledger.reservations) == 2
 
 @pytest.mark.parametrize("clients", [{"public_origin": ORIGIN, "voice_enabled": True}], indirect=True)
 def test_browser_output_keeps_verified_answer_resume_and_lecture_without_provider_speech(clients):

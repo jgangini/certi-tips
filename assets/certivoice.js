@@ -15,13 +15,14 @@ if (root) {
   const navigationKey = `certivoice:${config.dataset.siteRoot}:navigation`;
   const playbackKey = `certivoice:${config.dataset.siteRoot}:playback`;
   const local = ["localhost", "127.0.0.1", "[::1]"], preview = local.includes(location.hostname) && !local.includes(new URL(config.dataset.api).hostname);
-  let session, voiceError = "", active = false, muted = false, context, release, detector, controller, playback = readPlayback(), speech, output, utterance, epoch = 0, widget, pending, pendingSent = false, pendingSince, pendingExpiry, lastActivity = 0, starting = false, checkingSession = false, rejectVerification;
+  let session, voiceError = "", active = false, muted = false, context, release, detector, controller, playback = readPlayback(), speech, output, utterance, epoch = 0, speechEpoch = 0, widget, pending, pendingSent = false, pendingSince, pendingExpiry, lastActivity = 0, starting = false, checkingSession = false, rejectVerification;
   const edge = document.querySelector("[data-voice-edge]");
   let lecture, lectureTimer, nativeVoice, nativeVoiceLocale = locale, lastExplained, aside;
-  let stopEdge, nativeStartTimer, followTimer, videoLocked = false, videoConfirmation, navigating = false;
+  let speechController, stopEdge, nativeStartTimer, followTimer, videoLocked = false, videoConfirmation, navigating = false;
   const separateCapture = /iPhone|iPad|iPod/.test(navigator.userAgent) || navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
   const originalAudioType = navigator.audioSession?.type;
   const restoreVoiceHome = () => (document.querySelector("[data-explorer-chat-slot]") || document.body).append(config);
+  const cloudSpeech = () => Boolean(session?.voice?.tts);
   const quotaBlocked = () => Number.isFinite(session?.quota?.remaining) && session.quota.remaining <= 0;
   const emit = (name, detail) => window.dispatchEvent(new CustomEvent(name, { detail }));
   function setStatus(text, error = false) {
@@ -29,7 +30,7 @@ if (root) {
     if (error) { voiceError = text; if (lecture) lecture.running = false; }
     const enabled = session?.voice?.enabled === true && session.available !== false && !config.hidden;
     const resume = enabled && !active && !starting && Boolean(pendingNavigation(readNavigation(), location.href, siteBase));
-    const phase = starting ? "connecting" : !active ? resume ? "paused" : "off" : navigating ? "thinking" : output || utterance && speech?.started ? "speaking" : controller || utterance ? "thinking" : muted ? "paused" : "listening";
+    const phase = starting ? "connecting" : !active ? resume ? "paused" : "off" : navigating ? "thinking" : output || utterance && speech?.started ? "speaking" : controller || speechController || utterance ? "thinking" : muted ? "paused" : "listening";
     if ((phase !== reportedPhase || error) && diagnostics.record("state", { phase, active: active || starting, muted, error: Boolean(voiceError), platform: separateCapture ? "ios" : "other" })) reportedPhase = phase;
     status.setAttribute("aria-live", (active || starting || resume) && (!voiceError || starting) ? "off" : "polite");
     status.textContent = text;
@@ -44,7 +45,9 @@ if (root) {
     emit("certivoice:state", { enabled, quotaBlocked: quotaBlocked(), active: active || starting, phase, error: voiceError, muted, locked: videoLocked, retry: Boolean(pending && pendingSent), resume });
   }
   function interrupt(reason = "speech_replaced") {
+    speechEpoch++;
     if (output || utterance) diagnostics.record("action", { action: reason, phase: "speaking", muted });
+    speechController?.abort(); speechController = null;
     if (speech) speech.after = null;
     stopEdge?.(); stopEdge = null;
     if (output && playback && speech?.track) playback.heardCharacters = Math.min(5000, speech.offset + heardCharacters(speech.text, context.currentTime - speech.started, speech.duration));
@@ -80,7 +83,7 @@ if (root) {
     return data;
   }
   function applySession(value) {
-    session = value; voiceError = ""; diagnostics.enable(value.authenticated && value.voice?.enabled);
+    session = value; if (cloudSpeech()) nativeVoice = undefined; voiceError = ""; diagnostics.enable(value.authenticated && value.voice?.enabled);
     root.hidden = value.voice?.enabled !== true || value.available === false || config.hidden;
     if (root.hidden && (!checkingSession || config.hidden)) clearNavigation();
     if (root.hidden && (active || starting && (!checkingSession || config.hidden))) pause(t("La voz no está disponible en este momento."), false, false);
@@ -229,7 +232,7 @@ if (root) {
       const { sectionId, diagramId } = voiceContext();
       if (!diagramId) throw new Error(t("No se pudo identificar el diagrama actual."));
       clearPending();
-      pending = { mode: "lecture", requestId: crypto.randomUUID(), previousRequestId: lecture.requestId, pageUrl: voicePageURL(), locale, audioOutput: nativeVoice ? "browser" : "provider", context: { ...(sectionId ? { sectionId } : {}), diagramId }, activityTrail: activityTrail() };
+      pending = { mode: "lecture", requestId: crypto.randomUUID(), previousRequestId: lecture.requestId, pageUrl: voicePageURL(), locale, audioOutput: cloudSpeech() || nativeVoice ? "browser" : "provider", context: { ...(sectionId ? { sectionId } : {}), diagramId }, activityTrail: activityTrail() };
       pendingSince = Date.now(); pendingExpiry = setTimeout(expireMemory, 86400000);
       await submitPending(token);
     } catch (error) { if (token === epoch) { if (lecture) lecture.running = false; setStatus(error.message, true); } }
@@ -238,7 +241,8 @@ if (root) {
     const createdAt = progress?.requestId && progress.requestId === playback?.requestId ? playback.createdAt : Date.now();
     expireMemory();
     interrupt();
-    if (!text || token !== epoch || !active) return;
+    const generation = speechEpoch;
+    if (!text || token !== epoch || generation !== speechEpoch || !active) return;
     if (!voiceMemoryFresh(createdAt)) { pause(); return; }
     const offset = Number.isInteger(progress?.offset) ? Math.max(0, Math.min(5000, progress.offset)) : 0;
     if (progress?.requestId) playback = { requestId: progress.requestId, answer: progress.answer || text, heardCharacters: offset, createdAt };
@@ -249,28 +253,40 @@ if (root) {
       release?.stop(); release = null;
       if (navigator.audioSession) navigator.audioSession.type = "playback";
       if (!nativeVoice || !document.hidden) await context.resume();
-      if (token !== epoch || !active) return;
+      if (token !== epoch || generation !== speechEpoch || !active) return;
     }
-    if (!nativeVoice && audio?.format === "wav" && typeof audio.data === "string" && audio.data.length <= 14000000) {
+    if (cloudSpeech() && !audio) {
+      const abort = speechController = new AbortController();
+      setStatus(t("Preparando la respuesta…"));
+      try {
+        const result = await api("speech", { requestId: crypto.randomUUID(), text }, "POST", AbortSignal.any([abort.signal, AbortSignal.timeout(60000)]));
+        if (token !== epoch || generation !== speechEpoch || !active || abort.signal.aborted) return;
+        audio = result.audio;
+        if (audio?.model !== session.voice.tts.model || audio?.voice !== session.voice.tts.voice) throw new Error(t("La respuesta de voz no es válida."));
+      } catch (error) { if (!abort.signal.aborted && token === epoch) pause(error.message, true); return; }
+      finally { if (speechController === abort) speechController = null; }
+    }
+    if (!nativeVoice && ["wav", "mp3"].includes(audio?.format) && typeof audio.data === "string" && audio.data.length <= 14000000) {
       try {
         const bytes = Uint8Array.from(atob(audio.data), character => character.charCodeAt(0));
-        if (String.fromCharCode(...bytes.subarray(0, 4)) !== "RIFF") throw new Error("Invalid audio");
+        if (audio.format === "wav" ? String.fromCharCode(...bytes.subarray(0, 4)) !== "RIFF" : !(String.fromCharCode(...bytes.subarray(0, 3)) === "ID3" || bytes[0] === 255 && (bytes[1] & 224) === 224)) throw new Error("Invalid audio");
         const decoded = await context.decodeAudioData(bytes.buffer);
-        if (token !== epoch || !active) return;
+        if (token !== epoch || generation !== speechEpoch || !active) return;
         output = context.createBufferSource(); output.buffer = decoded; output.connect(context.destination);
         speech.started = context.currentTime; speech.duration = decoded.duration;
         output.onended = () => finishSpeech(offset, text);
-        output.start();
+        output.start(); diagnostics.record("speech", { native_event: "start" });
         if (speech.follow) { speech.follow(0); followTimer = setInterval(() => speech.follow(heardCharacters(text, context.currentTime - speech.started, speech.duration)), 250); }
         stopEdge = animateVoiceEdge(context, decoded, edge); setStatus(t("Hablando. Puedes interrumpir.")); return;
-      } catch { /* A valid text response remains usable if audio decoding fails. */ }
+      } catch { if (cloudSpeech()) { pause(t("La respuesta está disponible como texto. El audio no está disponible."), true); return; } }
     }
+    if (cloudSpeech()) { pause(t("La respuesta está disponible como texto. El audio no está disponible."), true); return; }
     const textStatus = `${text} ${t("Respuesta disponible como texto. Te escucho…")}`;
     if (!nativeVoice) { if (lecture && progress) lecture.running = false; if (separateCapture) await finishSpeech(offset, text, false); if (token === epoch && active) setStatus(textStatus); return; }
     const parts = nativeSpeechSegments(text, nativeVoice, Boolean(speech.follow));
     function speakPart(index) {
       const part = parts[index];
-      if (token !== epoch || !active) return;
+      if (token !== epoch || generation !== speechEpoch || !active) return;
       if (!part) return finishSpeech(offset, text);
       const current = utterance = new SpeechSynthesisUtterance(part.text);
       current.voice = part.voice; current.lang = part.voice.lang;
@@ -281,19 +297,19 @@ if (root) {
         speech.follow?.(at);
       };
       current.onstart = () => {
-        if (utterance !== current || token !== epoch || !active) return;
+        if (utterance !== current || token !== epoch || generation !== speechEpoch || !active) return;
         diagnostics.record("speech", { native_event: "start", audio_session: navigator.audioSession?.type });
         clearTimeout(nativeStartTimer); started = speech.started = true; progressAt(0); setStatus(t("Hablando. Puedes interrumpir."));
       };
       current.onboundary = event => { if (utterance === current && token === epoch && active && Number.isInteger(event.charIndex)) progressAt(event.charIndex); };
       current.onend = () => {
-        if (utterance !== current || token !== epoch || !active) return;
+        if (utterance !== current || token !== epoch || generation !== speechEpoch || !active) return;
         clearTimeout(nativeStartTimer); diagnostics.record("speech", { native_event: "end" });
         if (speech.track && playback) playback.heardCharacters = Math.min(5000, offset + part.end);
         return speakPart(index + 1);
       };
       current.onerror = event => {
-        if (utterance !== current || token !== epoch || !active) return;
+        if (utterance !== current || token !== epoch || generation !== speechEpoch || !active) return;
         const codes = ["not-allowed", "audio-busy", "audio-hardware", "network", "synthesis-unavailable", "synthesis-failed", "language-unavailable", "voice-unavailable", "text-too-long", "invalid-argument", "canceled", "interrupted"];
         diagnostics.record("speech", { native_event: "error", native_error: codes.includes(event?.error) ? event.error : "unknown" });
         if (separateCapture) pause(t("La respuesta está disponible como texto. El audio no está disponible."), true);
@@ -307,7 +323,7 @@ if (root) {
     speakPart(0);
   }
   async function selectNativeVoice() {
-    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+    if (cloudSpeech() || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
     if (!speechSynthesis.getVoices().length) await new Promise(resolve => {
       const ready = () => { clearTimeout(timer); speechSynthesis.removeEventListener?.("voiceschanged", ready); resolve(); };
       const timer = setTimeout(ready, 700); speechSynthesis.addEventListener?.("voiceschanged", ready, { once: true });
@@ -319,7 +335,7 @@ if (root) {
     expireMemory(); clearPending();
     const token = epoch;
     // A failed transport retains its UUID and audio in memory only, until explicit retry or a new utterance.
-    pending = { requestId: crypto.randomUUID(), audio: encodeVoiceWav(chunks, context.sampleRate), pageUrl: voicePageURL(), locale, audioOutput: nativeVoice ? "browser" : "provider", context: voiceContext(document, lastExplained?.id), activityTrail: activityTrail(), ...(playback?.requestId ? { playback: { requestId: playback.requestId, heardCharacters: playback.heardCharacters } } : {}) };
+    pending = { requestId: crypto.randomUUID(), audio: encodeVoiceWav(chunks, context.sampleRate), pageUrl: voicePageURL(), locale, audioOutput: cloudSpeech() || nativeVoice ? "browser" : "provider", context: voiceContext(document, lastExplained?.id), activityTrail: activityTrail(), ...(playback?.requestId ? { playback: { requestId: playback.requestId, heardCharacters: playback.heardCharacters } } : {}) };
     pendingSince = Date.now(); pendingExpiry = setTimeout(expireMemory, 86400000);
     await submitPending(token);
   }
@@ -463,7 +479,7 @@ if (root) {
       const event = detector.push(chunk, Boolean(output || utterance));
       if (event.started) {
         diagnostics.record("action", { action: "speech_detected", phase: output || utterance ? "speaking" : controller ? "thinking" : "listening", muted });
-        if (controller) { pause(t("Consulta interrumpida. Pulsa Reintentar para recuperar su resultado."), false, true, "request_interrupted"); return; }
+        if (controller || speechController) { pause(t("Consulta interrumpida. Pulsa Reintentar para recuperar su resultado."), false, true, "request_interrupted"); return; }
         if (lecture) { lecture.interrupted = lecture.running; lecture.running = false; } clearTimeout(lectureTimer);
         interrupt("microphone_interrupt"); lastActivity = Date.now(); setStatus(t("Te escucho…"));
       }
@@ -482,7 +498,7 @@ if (root) {
       const AudioEngine = window.AudioContext || window.webkitAudioContext;
       if (!AudioEngine || !navigator.mediaDevices?.getUserMedia || !window.AudioWorkletNode) throw new Error(t("La voz no está disponible en este navegador. Puedes usar el chat."));
       // iOS gates speech separately from Web Audio: unlock it within the original tap.
-      if (!automatic && window.speechSynthesis && window.SpeechSynthesisUtterance) {
+      if (!automatic && !cloudSpeech() && window.speechSynthesis && window.SpeechSynthesisUtterance) {
         const warmup = new SpeechSynthesisUtterance(""); warmup.volume = 0; speechSynthesis.speak(warmup);
       }
       context ||= new AudioEngine();

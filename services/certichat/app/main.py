@@ -29,7 +29,9 @@ from .settings import Settings, Locale
 from .decisions import answer_with_decisions
 from .store import Store
 from .telemetry import BrowserBatch, EventMiddleware, emit
-from .voice import LectureBody, PageActivity, VoiceBody, VoiceProvider, wav_seconds
+from .voice import LectureBody, PageActivity, SpeechBody, VoiceBody, VoiceProvider, wav_seconds
+
+from .speech import SPEECH
 
 PUBLISHED_CONTEXT_DIRECTORY = Path(__file__).with_name("published")
 
@@ -298,11 +300,12 @@ def create_app(settings=None, *, transport=None):
             ):
                 application.state.client = client
                 application.state.provider = Provider(configured, application.state.store, client, index_client)
-                application.state.voice = VoiceProvider(configured, application.state.store, client)
+                voice_provider = application.state.voice = VoiceProvider(configured, application.state.store, client)
                 cleanup = asyncio.create_task(maintain_retention(application.state.store))
                 try:
                     yield
                 finally:
+                    await voice_provider.close()
                     cleanup.cancel()
                     with suppress(asyncio.CancelledError):
                         await cleanup
@@ -377,7 +380,7 @@ def create_app(settings=None, *, transport=None):
                 "authenticated": row is not None, "verificationRequired": not row or not row["verified"],
                 "quota": await db(store.quota, row["token_hash"]) if row else None,
                 "voice": {"enabled": request.app.state.settings.voice_enabled,
-                          "model": request.app.state.settings.voice_model, "maxSeconds": 30},
+                          "model": request.app.state.settings.voice_model, "maxSeconds": 30, "tts": SPEECH},
                 "available": await service_available(request)}
 
     @application.get("/api/session")
@@ -408,7 +411,7 @@ def create_app(settings=None, *, transport=None):
         await db(store.verify_session, token_digest(token))
         set_cookie(response, token, settings)
         return {"mode": settings.mode, "authenticated": True, "verificationRequired": False,
-                "voice": {"enabled": settings.voice_enabled, "model": settings.voice_model, "maxSeconds": 30},
+                "voice": {"enabled": settings.voice_enabled, "model": settings.voice_model, "maxSeconds": 30, "tts": SPEECH},
                 "quota": await db(store.quota, token_digest(token)), "available": await service_available(request)}
 
     @application.delete("/api/conversation")
@@ -472,6 +475,23 @@ def create_app(settings=None, *, transport=None):
         for event in body.events:
             emit("browser." + event.name, source="browser", **event.model_dump(exclude_none=True, exclude={"name"}))
         return Response(status_code=204)
+
+    @application.post("/api/speech")
+    async def narrate(body: SpeechBody, request: Request):
+        if not request.app.state.settings.voice_enabled:
+            raise ChatError("El modo voz no está habilitado.", 503)
+        token_hash = await identity(request)
+        store = request.app.state.store
+        input_hash = hashlib.sha256(json.dumps(["speech", SPEECH, body.text], sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+        previous = await db(store.begin_request, token_hash, body.requestId, input_hash, network(request), "voice", False)
+        if previous:
+            return previous
+        try:
+            result = {"requestId": body.requestId, "audio": await request.app.state.voice.speak(body.text), "educational": False}
+            await db(store.finish_request, token_hash, body.requestId, result, None, "voice")
+            return result
+        finally:
+            await db(store.finish_request, token_hash, body.requestId, None, None, "voice")
 
     @application.post("/api/voice")
     async def voice(body: VoiceBody | LectureBody, request: Request):

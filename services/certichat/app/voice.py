@@ -1,5 +1,6 @@
 """Bounded audio contract. Nothing is spoken until evidence and transcript agree."""
 
+import asyncio
 import base64
 import binascii
 import io
@@ -17,6 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from .provider import ACTIVITY_INSTRUCTIONS, MEMORY_SYSTEM, SYSTEM, conversation_context, validate_answer
 from .security import ChatError
+from .speech import synthesize, settle_speech
 from .settings import LANGUAGES, Locale
 
 ACTIONS = ("home", "catalog", "videos", "next_section", "previous_section", "next_page", "previous_page",
@@ -120,6 +122,17 @@ class Playback(Identified):
     heardCharacters: int = Field(ge=0, le=5000)
 
 
+class SpeechBody(Identified):
+    text: str = Field(min_length=1, max_length=5000)
+
+    @field_validator("text")
+    @classmethod
+    def literal_text(cls, value):
+        if not value.strip() or any(ord(c) < 32 and c not in "\n\t" for c in value):
+            raise ValueError("Invalid narration")
+        return value
+
+
 class VoiceBody(Identified):
     audio: str = Field(min_length=64, max_length=1280060)
     pageUrl: str = Field(min_length=1, max_length=1024)
@@ -206,26 +219,19 @@ def tool_value(result, contract):
         raise ChatError("El modelo de voz no cumple el contrato requerido.", 502, code="voice_contract") from None
 
 
-def speech_text(value):
-    # Formatting is not spoken; words must still match the validated answer in their original order.
-    value = re.sub(r"(?m)^[ \t]*(?:[-*+]\s+(?=[A-Za-zÁÉÍÓÚÜÑáéíóúüñ])|\d+[.)]\s+|>\s+)", "", value)
-    return re.findall(r"\w+(?:[.,]\d+)*|[+−%/=<>-]", re.sub(r"[*_`#]", "", value.casefold()), flags=re.UNICODE)
-
-
 class VoiceProvider:
     def __init__(self, settings, store, client):
         self.settings, self.store, self.client = settings, store, client
+        self.speech_tasks, self.speech_price_changed = set(), False
 
-    async def request(self, messages, contract=None, *, seconds=0, speak=False, memory=None):
+    async def request(self, messages, contract=None, *, seconds=0, memory=None):
         model = self.settings.voice_model
         prompt, completion, audio_in, audio_out = map(Decimal, MODELS[model])
         maximum = 2048
         payload = {"model": model, "messages": messages, "max_tokens": maximum,
-                   "modalities": ["text", "audio"] if speak else ["text"], "stream": speak,
+                   "modalities": ["text"], "stream": False,
                    "provider": {"only": ["openai"], "allow_fallbacks": False, "require_parameters": True,
                                 "data_collection": "deny", "max_price": {"prompt": float(prompt), "completion": float(completion)}}}
-        if speak:
-            payload.update(audio={"voice": "coral", "format": "pcm16"}, stream_options={"include_usage": True})
         if contract:
             payload.update(tools=[contract], tool_choice={"type": "function", "function": {"name": contract["function"]["name"]}})
         memory = {key: list(value) if isinstance(value, (list, tuple)) else value for key, value in (memory or {}).items()}
@@ -251,24 +257,21 @@ class VoiceProvider:
                 memory[key] = ""
         # ponytail: 100 audio tokens/s is a conservative input ceiling for these pinned models.
         cost = int((tokens * prompt + Decimal(str(seconds * 100 + 64)) * audio_in
-                    + maximum * max(completion, audio_out if speak else completion)).to_integral_value(rounding=ROUND_CEILING))
+                    + maximum * completion).to_integral_value(rounding=ROUND_CEILING))
         reservation = await anyio.to_thread.run_sync(self.store.reserve, "chat", cost, "voice")
         headers = {"Authorization": f"Bearer {self.settings.openrouter_api_key}",
                    "HTTP-Referer": self.settings.site_url, "X-Title": "CertiTips voice pilot"}
         try:
             with anyio.fail_after(40):
-                if speak:
-                    result = await self.audio_response(payload, headers)
-                else:
-                    response = await self.client.post("https://openrouter.ai/api/v1/chat/completions",
-                                                       json=payload, headers=headers, timeout=40)
-                    response.raise_for_status()
-                    result = response.json()
+                response = await self.client.post("https://openrouter.ai/api/v1/chat/completions",
+                                                  json=payload, headers=headers, timeout=40)
+                response.raise_for_status()
+                result = response.json()
                 if not isinstance(result, dict) or result.get("error"):
                     raise ValueError("Provider error")
         except (httpx.HTTPError, ValueError, TimeoutError, KeyError, TypeError, AttributeError) as error:
             logging.getLogger(__name__).warning("Voice provider failed: model=%s phase=%s status=%s error=%s", model,
-                "speech" if speak else contract["function"]["name"] if contract else "text",
+                contract["function"]["name"] if contract else "text",
                 error.response.status_code if isinstance(error, httpx.HTTPStatusError) else None, type(error).__name__)
             raise ChatError("El proveedor de voz no está disponible.", 502, code="voice_provider") from None
         try:
@@ -283,45 +286,6 @@ class VoiceProvider:
         if actual > cost:
             raise ChatError("El precio de voz cambió; el piloto requiere revisión.", 503, code="voice_price_changed")
         return result
-
-    async def audio_response(self, payload, headers):
-        chunks, transcript, usage, finished, size = [], "", None, False, 0
-        async with self.client.stream("POST", "https://openrouter.ai/api/v1/chat/completions",
-                                      json=payload, headers=headers, timeout=40) as response:
-            response.raise_for_status()
-            async for line in response.aiter_lines():
-                size += len(line)
-                if size > 8000000:
-                    raise ValueError("Audio response too large")
-                if not line.startswith("data:"):
-                    continue
-                event = line[5:].strip()
-                if event == "[DONE]":
-                    finished = True
-                    continue
-                value = json.loads(event)
-                if value.get("error"):
-                    raise ValueError("Audio generation failed")
-                usage = value.get("usage") or usage
-                for choice in value.get("choices", []):
-                    if choice.get("finish_reason") not in (None, "stop"):
-                        raise ValueError("Incomplete speech")
-                    audio = choice.get("delta", {}).get("audio", {})
-                    chunks.append(audio.get("data", ""))
-                    transcript += audio.get("transcript", "")
-        # Both quartet-split streams and separately padded deltas occur across providers.
-        parts = re.split(r"(?<==)(?=[A-Za-z0-9+/])", "".join(chunks))
-        data = b"".join(base64.b64decode(part, validate=True) for part in parts)
-        if not finished or not data or len(data) % 2 or not transcript:
-            raise ValueError("Incomplete audio")
-        output = io.BytesIO()
-        with wave.open(output, "wb") as wav:
-            wav.setnchannels(1)
-            wav.setsampwidth(2)
-            wav.setframerate(24000)
-            wav.writeframes(data)
-        return {"usage": usage, "transcript": transcript,
-                "audio": {"data": base64.b64encode(output.getvalue()).decode(), "format": "wav"}}
 
     async def intent(self, body, history=(), continuity="", activity=()):
         seconds = wav_seconds(body.audio)
@@ -470,8 +434,21 @@ class VoiceProvider:
         return answer, citations, card
 
     async def speak(self, text):
-        result = await self.request([{"role": "system", "content": "Eres un lector de texto. Reproduce literalmente y únicamente el texto del usuario. No añadas introducción, confirmación, explicación, despedida ni ninguna palabra. No cambies el texto. No leas símbolos de Markdown. Pronuncia los nombres de productos y siglas en inglés con su pronunciación inglesa, conservando el idioma de la narración, la voz y el texto literal."},
-                                     {"role": "user", "content": text}], speak=True)
-        if speech_text(result["transcript"]) != speech_text(text):
-            raise ChatError("La narración no coincide con la respuesta validada.", 502, code="voice_transcript")
-        return result["audio"]
+        if self.speech_price_changed or len(self.speech_tasks) >= 32:
+            raise ChatError("La narración requiere revisión o está ocupada.", 503, code="voice_speech")
+        audio, billing = await synthesize(self.settings, self.store, self.client, text)
+        task = asyncio.create_task(settle_speech(self.settings, self.store, self.client, *billing))
+        self.speech_tasks.add(task)
+        task.add_done_callback(self.speech_settled)
+        return audio
+
+    def speech_settled(self, task):
+        self.speech_tasks.discard(task)
+        if not task.cancelled() and task.result() is False:
+            self.speech_price_changed = True
+
+    async def close(self):
+        tasks = list(self.speech_tasks)
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)

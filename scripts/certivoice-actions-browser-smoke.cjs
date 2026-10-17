@@ -612,7 +612,7 @@ async (page) => {
   await phase('speaking');
   await page.evaluate(() => { window.__backgroundOriginal = window.__utterance; Object.defineProperty(document, 'hidden', { configurable: true, value: true }); document.dispatchEvent(new Event('visibilitychange')); });
   assert(await page.evaluate(() => window.__voiceState.active && window.__voiceState.phase === 'speaking' && !window.__backgroundOriginal.canceled && window.__voiceTrack.stopped), 'Backgrounding canceled narration or retained microphone capture');
-  assert(await page.evaluate(() => window.__utterance.text.includes('sás') && window.__utterance.lang.startsWith('es') && window.__utterance.voice.name.includes('Sabina')), 'Narration changed the selected speaker for an English term');
+  assert(await page.evaluate(() => window.__utterance.text.includes('SaaS') && window.__utterance.lang.startsWith('es') && window.__utterance.voice.name.includes('Sabina')), 'Narration changed the selected speaker for an English term');
   await page.evaluate(() => window.__finishNative());
   assert(await page.evaluate(() => window.__voiceState.active && window.__voiceTrack.stopped), 'Background narration reopened the microphone');
   await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: false }); document.dispatchEvent(new Event('visibilitychange')); });
