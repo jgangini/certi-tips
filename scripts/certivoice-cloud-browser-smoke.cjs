@@ -72,8 +72,8 @@ async (page) => {
       const design=await page.locator('deep-chat').evaluate(chat=>{
         const shadow=chat.shadowRoot,panel=getComputedStyle(chat.closest('#certichat-panel')),phase=getComputedStyle(shadow.querySelector('#certivoice-phase')),search=getComputedStyle(document.querySelector('.site-header .search-toggle'));
         const mic=shadow.querySelector('[data-voice-command="mute"]'),exit=shadow.querySelector('[data-voice-command="exit"]'),m=getComputedStyle(mic),e=getComputedStyle(exit),dark=document.documentElement.dataset.theme==='dark';
-        const size=parseFloat(getComputedStyle(document.querySelector('.site-header .header-app-link svg')).width);
-        return {surface:panel.backgroundColor===search.backgroundColor&&panel.backgroundImage==='none'&&(innerWidth<=800||panel.borderTopColor===search.borderTopColor),font:phase.font===search.font&&phase.fontWeight==='400'&&phase.color===search.color,
+        const size=parseFloat(getComputedStyle(document.querySelector('.site-header .search-toggle svg')).width);
+        return {height:innerWidth<=800||parseFloat(panel.height)===parseFloat(search.height),buttons:[mic,exit].every(button=>{const box=button.getBoundingClientRect();return box.width===(innerWidth<=480?31:innerWidth<=800?44:32)&&box.width===box.height;}),surface:panel.backgroundColor===search.backgroundColor&&panel.backgroundImage==='none'&&(innerWidth<=800||panel.borderTopColor===search.borderTopColor),font:phase.font===search.font&&phase.fontWeight==='400'&&phase.color===search.color,
           mic:m.borderRadius==='50%'&&m.backgroundColor===getComputedStyle(document.querySelector('.brand-accent')).color&&getComputedStyle(mic.querySelector('svg')).color==='rgb(255, 255, 255)',
           exit:e.borderRadius==='50%'&&e.backgroundColor===(dark?'rgb(255, 255, 255)':'rgb(17, 17, 17)')&&getComputedStyle(exit.querySelector('svg')).color===(dark?'rgb(17, 17, 17)':'rgb(255, 255, 255)'),
           icons:[mic,exit].every(button=>{const box=button.querySelector('svg').getBoundingClientRect();return box.width===size&&box.height===size;})};
