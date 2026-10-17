@@ -1,3 +1,4 @@
+import { navigateSite } from "./site-navigation.js";
 import { t, locale, language, localizedURL, siteBase } from "./i18n.js";
 import { readStored, writeStored } from "./storage.js";
 import { normalizeTrace, publishTrace, safeSourceURL, sourcePath } from "./certichat-trace.js";
@@ -82,17 +83,17 @@ export function restoreChat(value, siteRoot, now = Date.now()) {
 const root = typeof document === "undefined" ? null : document.querySelector("[data-certichat]");
 if (root) {
   const panel = root.querySelector("#certichat-panel"), launcher = root.querySelector("[data-chat-open]");
-  const dock = document.querySelector("[data-explorer-chat-slot]");
+  let dock = document.querySelector("[data-explorer-chat-slot]");
   if (dock) {
     dock.append(root);
     panel.setAttribute("role", "region");
     root.querySelector("[data-chat-close]").hidden = true;
     root.querySelector('.certichat-actions a').hidden = true;
   }
-  const viewer = document.querySelector("#diagram-viewer"), homeParent = root.parentNode, homeNext = root.nextSibling;
+  const viewer = document.querySelector("#diagram-viewer"), homeParent = document.body;
   let presenting = false, launcherVoiceState = {};
   const mobileChat = matchMedia("(max-width: 800px)");
-  const launcherContent = document.querySelector(".tube-detail, [data-group-carousel]") || document.querySelector(".course-page .course-main");
+  let launcherContent = document.querySelector(".tube-detail, [data-group-carousel]") || document.querySelector(".course-page .course-main");
   function positionLauncher() {
     if (presenting || !launcherContent || !panel.hidden) return;
     const content = launcherContent.querySelector(".path-section.is-active, .tube-player") || launcherContent;
@@ -109,18 +110,19 @@ if (root) {
       launcher.style.top = `${Math.min(0, center - (origin.top + origin.bottom) / 2)}px`;
     } else launcher.style.removeProperty("top");
   }
-  if (launcherContent) {
-    let frame;
-    const schedule = () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; positionLauncher(); }); };
-    addEventListener("scroll", schedule, { passive: true });
-    addEventListener("resize", schedule);
-    mobileChat.addEventListener("change", schedule);
-    const observer = new ResizeObserver(schedule);
-    observer.observe(launcherContent);
-    const footer = document.querySelector(".site-footer");
-    if (footer) observer.observe(footer);
-    schedule();
+  let launcherFrame;
+  const scheduleLauncher = () => { if (!launcherFrame) launcherFrame = requestAnimationFrame(() => { launcherFrame = 0; positionLauncher(); }); };
+  addEventListener("scroll", scheduleLauncher, { passive: true }); addEventListener("resize", scheduleLauncher);
+  mobileChat.addEventListener("change", scheduleLauncher);
+  const launcherSize = new ResizeObserver(scheduleLauncher);
+  function observeLauncher() {
+    launcherSize.disconnect();
+    launcherContent = document.querySelector(".tube-detail, [data-group-carousel]") || document.querySelector(".course-page .course-main");
+    if (launcherContent) launcherSize.observe(launcherContent);
+    const footer = document.querySelector(".site-footer"); if (footer) launcherSize.observe(footer);
+    root.classList.remove("is-beside-content"); launcher.style.removeProperty("top"); scheduleLauncher();
   }
+  observeLauncher();
   function fitMobileViewport() {
     const viewport = window.visualViewport;
     // ponytail: track the keyboard viewport, while preserving deliberate pinch zoom.
@@ -173,7 +175,7 @@ if (root) {
   const responseTraces = saved.messages.filter(message => message.role === "ai").map(message => message.graphTrace);
   const responseSelector = ".outer-message-container:not(.deep-chat-intro) .ai-message:not(.deep-chat-loading-message-bubble)";
   const quotaNotice = document.createElement("div");
-  quotaNotice.id = "certichat-quota";
+  quotaNotice.id = "certichat-quota"; quotaNotice.setAttribute("role", "status");
   quotaNotice.hidden = true;
   let quotaRefresh, quotaRefreshAfter = 0;
   function updateQuota(value = quota) {
@@ -219,7 +221,9 @@ if (root) {
     persist();
     try { sessionStorage.setItem(`${storageKey}:open`, "true"); sessionStorage.setItem(`${storageKey}:reference`, result.navigation); } catch { /* Navigation also works without storage. */ }
     textNavigating = true;
-    location.assign(result.navigation);
+    try { if (!await navigateSite(result.navigation, { source: "text" })) location.assign(result.navigation); }
+    catch { setStatus(t("Sin conexión. Vuelve a intentarlo."), true); }
+    finally { textNavigating = false; }
   }
   window.addEventListener("certivoice:state", event => { if (event.detail?.active) textNavigation = undefined; });
   window.addEventListener("certivoice:practice-followup", event => {
@@ -243,7 +247,7 @@ if (root) {
 
   function bindResponse(bubble) {
     // Non-bubbling pointer events need a listener on the real bubble inside Deep Chat's shadow root.
-    bubble.tabIndex = 0; bubble.onpointerenter = focusResponse; bubble.onpointerleave = focusResponse;
+    bubble.tabIndex = dock ? 0 : -1; bubble.onpointerenter = focusResponse; bubble.onpointerleave = focusResponse;
   }
 
   function setStatus(message, error = false) {
@@ -350,7 +354,8 @@ if (root) {
         .ai-message:not(.streamed-message) a::before { content: ""; display: inline-block; width: 16px; height: 16px; margin-right: 6px; vertical-align: -3px; background-color: currentColor; mask: url("${new URL("./icons/resource-link.svg", import.meta.url).href}") center / contain no-repeat; }
         .ai-message:not(.streamed-message) a[data-link-kind="certitips"]::before { mask-image: url("${new URL("./icons/certitips-course.svg", import.meta.url).href}"); }
         .ai-message:not(.streamed-message) a[data-link-kind="certitube"]::before { mask-image: url("${new URL("./icons/certitube.svg", import.meta.url).href}"); }`;
-      if (dock) chat.auxiliaryStyle += `${responseSelector}:not(.streamed-message) { border: 1px solid transparent; cursor: pointer; } ${responseSelector}:not(.streamed-message):hover { border-color: var(--red); } ${responseSelector}:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }`;
+      chat.auxiliaryStyle += `:host([data-graph-dock="true"]) ${responseSelector}:not(.streamed-message) { border: 1px solid transparent; cursor: pointer; } :host([data-graph-dock="true"]) ${responseSelector}:not(.streamed-message):hover { border-color: var(--red); } :host([data-graph-dock="true"]) ${responseSelector}:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }`;
+      chat.dataset.graphDock = String(Boolean(dock));
       refreshVoice = installVoiceChatControls(chat);
       chat.onInput = () => refreshVoice(busy);
       chat.introMessage = { text: t("Hola. Resuelve tus dudas sobre las guías y prácticas del sitio.") };
@@ -359,7 +364,7 @@ if (root) {
         if (isHistory) return;
         if (message.role === "ai") {
           responseTraces.push(completedTrace); completedTrace = undefined;
-          if (dock) chat.shadowRoot.querySelectorAll(responseSelector).forEach(bindResponse);
+          chat.shadowRoot.querySelectorAll(responseSelector).forEach(bindResponse);
           if (pendingRequest?.requestId === completedRequest) pendingRequest = undefined;
           completedRequest = undefined;
           busy = false; clear.disabled = false;
@@ -387,7 +392,7 @@ if (root) {
         input?.setAttribute("aria-label", t("Escribe tu consulta"));
         input?.setAttribute("enterkeyhint", "send");
         chat.shadowRoot.querySelector('.input-button.inside-end:not(.custom-button)')?.setAttribute("aria-label", t("Enviar consulta"));
-        if (dock) {
+        {
           chat.shadowRoot.addEventListener("click", focusResponse);
           chat.shadowRoot.addEventListener("keydown", focusResponse);
           chat.shadowRoot.querySelectorAll(responseSelector).forEach(bindResponse);
@@ -570,8 +575,10 @@ if (root) {
     if (!panelAnimation) return finish();
     panelAnimation.finished.then(finish, finish);
   }
-  if (viewer && !dock) {
-    const syncPresentation = () => {
+  let syncPresentation = () => {};
+  if (viewer) {
+    syncPresentation = () => {
+      if (dock) { presenting = false; return; }
       const active = viewer.open && (viewer.classList.contains("is-presenting") || root.dataset.voiceMode === "true" || root.parentNode === viewer);
       const voiceLauncher = active && mobileChat.matches;
       launcher.setAttribute("aria-label", voiceLauncher ? t("Activar voz") : "CertiChat");
@@ -584,7 +591,7 @@ if (root) {
       for (const name of ["top", "left", "width", "height"]) panel.style.removeProperty(`--chat-${name}`);
       // ponytail: move the live instance; rebuilding Deep Chat would lose an in-flight response.
       if (active) viewer.append(root);
-      else homeParent.insertBefore(root, homeNext?.parentNode === homeParent ? homeNext : null);
+      else (dock || homeParent).append(root);
       panel.setAttribute("role", active ? "region" : "dialog");
       if (!active && viewer.open) viewer.querySelector("[data-diagram-present]").focus({ preventScroll: true });
       positionLauncher();
@@ -601,6 +608,29 @@ if (root) {
     window.dispatchEvent(new CustomEvent("certivoice:state-request"));
     syncPresentation();
   }
+  window.addEventListener("site:page", () => {
+    const previousDock = dock;
+    dock = document.querySelector("[data-explorer-chat-slot]");
+    presenting = false;
+    (dock || homeParent).append(root);
+    panel.setAttribute("role", dock ? "region" : "dialog");
+    root.querySelector("[data-chat-close]").hidden = Boolean(dock);
+    root.querySelector('.certichat-actions a').hidden = Boolean(dock);
+    for (const name of ["top", "left", "width", "height"]) panel.style.removeProperty(`--chat-${name}`);
+    if (chat) {
+      chat.dataset.graphDock = String(Boolean(dock));
+      chat.shadowRoot?.querySelectorAll(responseSelector).forEach(bindResponse);
+      const input = chat.shadowRoot?.querySelector('[role="textbox"]');
+      input?.setAttribute("aria-label", t("Escribe tu consulta"));
+      input?.setAttribute("deep-chat-placeholder-text", t("Escribe tu consulta"));
+      const intro = chat.shadowRoot?.querySelector('.deep-chat-intro .ai-message');
+      if (intro) intro.textContent = t("Hola. Resuelve tus dudas sobre las guías y prácticas del sitio.");
+      chat.shadowRoot?.querySelector('.input-button.inside-end:not(.custom-button)')?.setAttribute("aria-label", t(busy ? "Detener respuesta" : "Enviar consulta"));
+      refreshVoice(busy);
+    }
+    if (previousDock && !dock && root.dataset.voiceMode !== "true") closePanel(false, false);
+    observeLauncher(); syncPresentation(); fitMobileViewport();
+  });
   function syncQuizLock() {
     quizCode = readQuizLock();
     if (quizCode) {

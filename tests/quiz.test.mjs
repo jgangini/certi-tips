@@ -45,7 +45,7 @@ function finish(initial, isCorrect = () => true) {
 }
 
 test('practice keeps storage identity and presents the concise intro and result controls for every course', async () => {
-  const script = readFileSync(new URL('../assets/quiz.js', import.meta.url), 'utf8').replace(/^import .*;\r?\n/gm, '').replace(/^load\(\);$/m, 'globalThis.loaded = load();');
+  const script = readFileSync(new URL('../assets/quiz.js', import.meta.url), 'utf8').replace(/^import .*;\r?\n/gm, '').replace(/^export /gm, '') + '\nglobalThis.loaded = mountQuiz({ aborted: false });';
   for (const hasExam of [true, false]) {
     for (const saved of [null, finish(attempt()), finish(attempt(), () => false), finishAttempt(attempt())]) {
       const courseRoute = hasExam ? 'EXAM-1' : 'data-governance';

@@ -9,9 +9,17 @@ export function voiceDiagnostics(config) {
   trace ||= crypto.randomUUID().replaceAll("-", "");
   try { sessionStorage.setItem(key, JSON.stringify({ id: trace, at: createdAt })); } catch { /* Optional continuity. */ }
   config.dataset.voiceTrace = trace;
-  const headers = requestId => ({ traceparent: `00-${trace}-${crypto.randomUUID().replaceAll("-", "").slice(0, 16)}-01`, "X-Request-ID": requestId || crypto.randomUUID() });
+  const headers = requestId => { renewTrace(); return { traceparent: `00-${trace}-${crypto.randomUUID().replaceAll("-", "").slice(0, 16)}-01`, "X-Request-ID": requestId || crypto.randomUUID() }; };
   let queue = [], timer, enabled = false, blocked = false, sending = false;
+  function renewTrace() {
+    const now = Date.now();
+    if (now >= createdAt && now - createdAt < 86400000) return;
+    trace = crypto.randomUUID().replaceAll("-", ""); createdAt = now; queue = [];
+    config.dataset.voiceTrace = trace;
+    try { sessionStorage.setItem(key, JSON.stringify({ id: trace, at: createdAt })); } catch { /* Optional continuity. */ }
+  }
   async function flush(force = false) {
+    renewTrace();
     clearTimeout(timer); timer = undefined;
     if (sending && !force || blocked || !queue.length) return;
     const events = queue.splice(0, 12); sending = true;
@@ -26,6 +34,7 @@ export function voiceDiagnostics(config) {
     headers,
     enable(value) { enabled = value === true; },
     record(name, fields = {}) {
+      renewTrace();
       if (!enabled || blocked) return;
       const allowed = ["phase", "active", "muted", "error", "context_state", "audio_session", "track_state", "track_muted", "native_event", "native_error", "operation", "status", "request_id", "action", "automatic", "platform"];
       queue.push({ name, at: Date.now(), page: location.pathname, ...Object.fromEntries(allowed.filter(key => fields[key] !== undefined).map(key => [key, fields[key]])) });

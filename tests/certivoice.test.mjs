@@ -487,7 +487,7 @@ function voiceController(api = "http://127.0.0.1:18741", options = {}) {
     sessionStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, String(value)), removeItem: key => storage.delete(key) },
     setInterval: callback => intervals.push(callback), setTimeout() {}, clearTimeout() {},
     voiceDiagnostics: () => ({ record() {}, headers: () => ({}), enable() {}, flush() {} }),
-    t: text => text, siteBase: "/", voiceContext: () => ({}), restoreVoicePlayback: value => restoreVoicePlayback(value, clock.now),
+    t: text => text, locale: "es", siteBase: "/", voiceContext: () => ({}), restoreVoicePlayback: value => restoreVoicePlayback(value, clock.now),
     pendingNavigation: (value, current, base) => pendingNavigation(value, current, base, clock.now), shouldResumeNavigation: (value, current, base) => shouldResumeNavigation(value, current, base, clock.now), validVoiceNavigation, voiceMemoryFresh: value => voiceMemoryFresh(value, clock.now), VoiceActivity,
     captureVoice: async (_, onChunk, onDisconnect) => { state.microphones++; state.disconnect = onDisconnect; return { stop() { state.stopped++; }, setMuted() {} }; },
     fetch: () => new Promise(resolve => requests.push(value => resolve({ ok: true, json: async () => value }))),
@@ -511,6 +511,41 @@ function voiceController(api = "http://127.0.0.1:18741", options = {}) {
 const settleVoice = () => new Promise(setImmediate);
 const unavailableVoice = { authenticated: true, available: true };
 const enabledVoice = { ...unavailableVoice, voice: { enabled: true } };
+
+test("microphone mute preserves narration, scheduled lecture and subsequent slides", async () => {
+  const source = readFileSync(new URL("../assets/certivoice.js", import.meta.url), "utf8");
+  const mute = source.slice(source.indexOf("  function toggleMute("), source.indexOf('  window.addEventListener("certichat:activity"'));
+  const finish = source.slice(source.indexOf("  async function finishSpeech("), source.indexOf("  async function lectureTurn("));
+  const turn = source.slice(source.indexOf("  async function lectureTurn("), source.indexOf("  async function say("));
+  const calls = [], timers = [], lecture = { running: true, consent: true, moduleId: "course/module", requestId: "previous" }, narration = {};
+  const context = {
+    lecture, active: true, muted: false, videoLocked: false, starting: false, controller: null, output: narration, utterance: null,
+    release: { setMuted: value => calls.push(["mic", value]) }, detector: { reset() {} }, lastActivity: 0,
+    diagnostics: { record: (name, fields) => calls.push([name, fields.action]) }, t: text => text, setStatus() {},
+    lectureTimer: "existing", clearTimeout: value => calls.push(["clear", value]), setTimeout: fn => timers.push(fn),
+    nativeStartTimer: null, stopEdge: null, speech: {}, playback: null, savePlayback() {}, separateCapture: false,
+    quotaBlocked: () => false, epoch: 1, pending: null, pendingSince: 0, pendingExpiry: null, expireMemory() {},
+    crypto, locale: "es", voicePageURL: () => "https://site.test/course/module/", activityTrail: () => [],
+    document: { querySelector: () => ({ dataset: { sourceId: "course/module#first" }, querySelectorAll: () => [
+      { getAttribute: () => "true" }, { dataset: { sourceId: "course/module#second" } },
+    ] }) },
+    performVoiceAction: async action => { calls.push(["slide", action.name]); return {}; },
+    clearPending() {}, voiceContext: () => ({ diagramId: "course/module#second" }), nativeVoice: {},
+    submitPending: async () => calls.push(["submit"]),
+  };
+  vm.createContext(context);
+  vm.runInContext(`${mute}\ntoggleMute()`, context);
+  assert.equal(context.muted, true); assert.equal(context.output, narration); assert.equal(lecture.running, true);
+  assert.equal(context.lectureTimer, "existing"); assert(!calls.some(([name]) => name === "clear"));
+  await vm.runInContext(`${finish}\n${turn}\nfinishSpeech(0, "complete")`, context);
+  assert.equal(timers.length, 1, "A muted microphone must not prevent the next lecture segment");
+  await timers.shift()();
+  assert(calls.some(([name]) => name === "submit")); assert(calls.some(([name]) => name === "slide"));
+  assert.equal(context.pending.mode, "lecture");
+  vm.runInContext("toggleMute()", context);
+  assert.equal(context.muted, false); assert.equal(lecture.running, true);
+  assert.deepEqual(calls.filter(([name]) => name === "mic"), [["mic", true], ["mic", false]]);
+});
 
 test("an exhausted lecture pauses before advancing or requesting another segment", async () => {
   const source = readFileSync(new URL("../assets/certivoice.js", import.meta.url), "utf8");

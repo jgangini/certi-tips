@@ -1,7 +1,8 @@
 // Local, zero-cost regression: model Safari's separate speech gesture gate and mobile input.
 async (page) => {
   const assert = (condition, message) => { if (!condition) throw new Error(message); };
-  const base = new URL('/certitips/', page.url()).href, origin = new URL(base).origin, calls = [], errors = [], results = [];
+  const base = new URL('/certitips/', page.url()).href, origin = new URL(base).origin, calls = [], errors = [], results = [], navigationChecks = [];
+  let nextAction;
   const context = await page.context().browser().newContext({ viewport: { width: 394, height: 852 }, isMobile: true, hasTouch: true, userAgent: "iPhone Safari (isolated audio regression)" });
   const phone = await context.newPage();
   phone.on('pageerror', error => errors.push(error.message));
@@ -16,7 +17,8 @@ async (page) => {
     if (path === '/api/voice') {
       // The real answer arrives after network/permission work, outside the original tap.
       await new Promise(resolve => setTimeout(resolve, 40));
-      return route.fulfill({ headers, json: { requestId: body.requestId, answer: 'Respuesta de audio después de la red.', transcript: 'Explica este tema.', educational: true, sources: [], contentVersion: 'test', quota } });
+      const action = nextAction; nextAction = undefined;
+      return route.fulfill({ headers, json: { requestId: body.requestId, answer: 'Respuesta de audio después de la red.', transcript: 'Explica este tema.', educational: !action, ...(action ? { action } : {}), sources: [], contentVersion: 'test', quota } });
     }
     return route.fulfill({ headers, json: { mode: 'LOCAL', authenticated: true, verificationRequired: false, available: true, voice: { enabled: true, maxSeconds: 30 }, quota } });
   });
@@ -47,7 +49,7 @@ async (page) => {
     } } });
     window.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; this.volume = 1; } };
     Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: {
-      getVoices: () => window.__noNative ? [] : [{ name: 'Mónica', lang: 'es-ES' }],
+      getVoices: () => window.__noNative ? [] : [{ name: 'Mónica', lang: 'es-ES' }, { name: 'Samantha', lang: 'en-US' }, { name: 'Luciana', lang: 'pt-BR' }, { name: 'Elsa', lang: 'it-IT' }],
       get speaking() { return Boolean(window.__warmupPending || window.__utterance); },
       speak(utterance) {
         if (window.__speechGesture) window.__speechUnlocked = true;
@@ -92,6 +94,127 @@ async (page) => {
     if (presentation) assert(await phone.locator('#diagram-viewer').evaluate(node => node.classList.contains('is-presenting')), 'Voice left the presentation');
     return geometry;
   };
+  const checkContinuousNavigation = async () => {
+    await phone.evaluate(() => { window.__navigationDocument = document; window.__navigationChat = document.querySelector('deep-chat'); window.__navigationAudio = window.__voiceContext; window.__navigationTrace = document.querySelector('[data-certichat]').dataset.voiceTrace; });
+    const arrived = async (path, active = true) => {
+      await phone.waitForURL(base + path);
+      await phone.waitForFunction(() => document.body.dataset.pageReady === 'true' && !document.documentElement.classList.contains('is-page-loading'));
+      await phone.waitForFunction(value => window.__voiceState.active === value && (!value || window.__voiceState.phase === 'listening' || window.__voiceState.phase === 'speaking'), active);
+      assert(await phone.evaluate(() => document === window.__navigationDocument && document.querySelector('deep-chat') === window.__navigationChat && window.__voiceContext === window.__navigationAudio && window.__speechUnlocked && document.querySelectorAll('deep-chat').length === 1 && document.querySelector('[data-certichat]').dataset.voiceTrace === window.__navigationTrace && document.querySelector('deep-chat').getMessages().some(message => message.text === 'Pregunta conservada antes de la presentación.')), `Navigation rebuilt the audio document/chat: ${path}`);
+      if (active) await measure();
+      navigationChecks.push(path);
+    };
+    const finishSpeech = async () => {
+      await phone.waitForFunction(() => window.__utterance && window.__voiceState.phase === 'speaking');
+      await phone.evaluate(() => { const utterance = window.__utterance; window.__utterance = null; utterance.onend(); });
+      await phone.waitForFunction(() => window.__voiceState.phase === 'listening' && !window.__voiceTrack.stopped);
+    };
+    const spokenMove = async (name, path) => {
+      nextAction = { name };
+      await phone.evaluate(() => { window.__utterance = null; window.__speakTurn(); });
+      await arrived(path); await finishSpeech();
+    };
+    await spokenMove('videos', 'es/certitube/');
+    await phone.evaluate(() => window.__speakTurn()); await finishSpeech();
+    assert(calls.filter(call => call.path === '/api/voice').at(-1).body.pageUrl.includes('/certitips/certitube/'), 'The next question used the previous page context: ' + calls.filter(call => call.path === '/api/voice').at(-1).body.pageUrl);
+    await phone.locator('.site-header .brand').tap(); await arrived('es/');
+    await phone.locator('.site-header .brand').tap(); await arrived('es/');
+    await phone.locator('.header-app-link[href$="/courses/"]').tap(); await arrived('es/courses/');
+    await phone.locator('main a[href$="/1Z0-1085-26/overview/"]').first().tap(); await arrived('es/1Z0-1085-26/overview/');
+    await phone.locator('.menu-toggle').tap();
+    await phone.locator('#course-section-list a[href$="/oci-architecture/"]').tap(); await arrived('es/1Z0-1085-26/oci-architecture/');
+    const complete = phone.locator('[data-mark-complete]'), before = await complete.getAttribute('aria-checked');
+    await complete.tap(); assert(await complete.getAttribute('aria-checked') !== before, 'Completion handler was missing or duplicated');
+    await complete.tap(); assert(await complete.getAttribute('aria-checked') === before, 'Completion did not restore');
+    await phone.locator('[data-diagram]').first().tap();
+    await phone.waitForFunction(() => document.querySelector('#diagram-viewer').matches('[open].is-presenting'));
+    await spokenMove('home', 'es/');
+    assert(await phone.locator('#diagram-viewer').isHidden(), 'Navigating from presentation left a modal open');
+    await phone.locator('.header-app-link[href$="/courses/"]').tap(); await arrived('es/courses/');
+    await phone.locator('main a[href$="/1Z0-1085-26/overview/"]').first().tap(); await arrived('es/1Z0-1085-26/overview/');
+    await phone.locator('.menu-toggle').tap();
+    await phone.locator('#course-section-list a[href$="/practice/"]').tap(); await arrived('es/1Z0-1085-26/practice/');
+    await phone.locator('#quiz [data-start]').tap(); await phone.locator('#question-form').waitFor();
+    await phone.locator('#quiz [data-finish]').tap(); await finishSpeech();
+    await phone.locator('#quiz [data-finish-no]').tap();
+    await phone.locator('#quiz dialog.confirmation').waitFor({ state: 'detached' });
+    assert(await phone.locator('#question-form').isVisible() && await phone.evaluate(() => window.__navigationChat.isConnected), 'Canceling a new practice dialog detached the chat or lost the attempt');
+    await phone.locator('#quiz [data-finish]').tap(); await finishSpeech(); await phone.locator('#quiz [data-finish-yes]').tap();
+    await phone.locator('#quiz .quiz-summary').waitFor();
+    await phone.evaluate(() => {
+      window.__tubeDestroyed = 0;
+      window.YT = { Player: function(id, options) {
+        const player = { time: 0, getDuration: () => 4000, getCurrentTime() { return this.time; }, getPlayerState: () => 2, getIframe: () => document.createElement('iframe'), seekTo(time) { this.time = time; }, playVideo() {}, pauseVideo() {}, destroy() { window.__tubeDestroyed++; } };
+        window.__testTube = player; queueMicrotask(() => options.events.onReady({ target: player })); return player;
+      } };
+    });
+    await phone.locator('.header-app-link[href$="/certitube/"]').tap(); await arrived('es/certitube/');
+    await phone.waitForFunction(() => window.__testTube);
+    const chapter = phone.locator('[data-tube-time]').last(); await chapter.tap();
+    assert(await phone.evaluate(() => window.__testTube.time > 0), 'Chapter controls were not mounted in the new video');
+    await phone.evaluate(() => window.dispatchEvent(new CustomEvent('certitube:playback', { detail: { playing: true } })));
+    await phone.waitForFunction(() => window.__voiceState.locked && window.__voiceState.muted);
+    await phone.locator('.header-app-link[href$="/certichat/"]').tap();
+    await phone.waitForURL(base + 'es/certichat/');
+    await phone.waitForFunction(() => !window.__voiceState.locked && window.__voiceState.muted && !document.documentElement.classList.contains('is-page-loading'));
+    await phone.locator('deep-chat [data-voice-command="mute"]').tap(); await arrived('es/certichat/');
+    assert(await phone.evaluate(() => window.__tubeDestroyed === 1), 'Leaving a video did not destroy its player');
+    await phone.locator('[data-graph-workspace]').waitFor({ state: 'visible' });
+    const zoom = await phone.locator('[data-graph-zoom]').textContent();
+    await phone.locator('[data-graph-zoom-in]').tap();
+    await phone.waitForFunction(value => document.querySelector('[data-graph-zoom]').value !== value, zoom);
+    await phone.locator('.site-header .brand').tap(); await arrived('es/');
+    await phone.goBack(); await arrived('es/certichat/');
+    await phone.goForward(); await arrived('es/');
+    const theme = await phone.evaluate(() => document.documentElement.dataset.theme);
+    await phone.locator('[data-theme-toggle]').tap(); assert(await phone.evaluate(() => document.documentElement.dataset.theme) !== theme, 'A theme toggle was duplicated after history navigation');
+    await phone.locator('.language-toggle').tap(); await phone.locator('[data-language-link="en"]').tap(); await arrived('en/');
+    await phone.evaluate(() => window.__speakTurn()); await finishSpeech();
+    const english = calls.filter(call => call.path === '/api/voice').at(-1).body;
+    assert(english.locale === 'en' && await phone.evaluate(() => window.__spoken.at(-1) && document.documentElement.lang === 'en'), 'Language navigation kept the previous locale');
+    await phone.goBack(); await arrived('es/');
+    for (const locale of ['pt', 'it']) {
+      await phone.locator('.language-toggle').tap(); await phone.locator(`[data-language-link="${locale}"]`).tap(); await arrived(`${locale}/`);
+      await phone.evaluate(() => window.__speakTurn()); await finishSpeech();
+      assert(calls.filter(call => call.path === '/api/voice').at(-1).body.locale === locale, `A continuous ${locale} question used the previous language`);
+    }
+    await phone.locator('.language-toggle').tap(); await phone.locator('[data-language-link="es"]').tap(); await arrived('es/');
+    assert(await phone.evaluate(() => window.__warmups.length === 1), 'Internal navigation required another speech-unlocking tap');
+    await phone.route(base + 'es/courses/?network-failure=1', route => route.abort());
+    await phone.locator('.header-app-link[href$="/courses/"]').evaluate(link => { link.search = '?network-failure=1'; });
+    await phone.locator('.header-app-link[href*="/courses/"]').tap();
+    await phone.locator('[data-navigation-error]').waitFor();
+    await phone.waitForFunction(() => window.__voiceState.phase === 'listening');
+    assert(phone.url() === base + 'es/' && await phone.evaluate(() => window.__voiceState.active && !window.__voiceTrack.stopped), 'A failed page fetch discarded the current page or voice session');
+    await phone.locator('.header-app-link[href*="/courses/"]').evaluate(link => { link.search = ''; });
+    await phone.route(base + 'es/courses/?slow=1', async route => { await new Promise(resolve => setTimeout(resolve, 250)); try { await route.continue(); } catch { /* A superseded navigation is deliberately aborted. */ } });
+    await phone.evaluate(() => {
+      const courses = document.querySelector('.header-app-link[href*="/courses/"]'); courses.search = '?slow=1'; courses.click();
+      document.querySelector('.site-header .brand').click();
+    });
+    await phone.waitForFunction(() => !document.documentElement.classList.contains('is-page-loading') && window.__voiceState.phase === 'listening');
+    await phone.waitForTimeout(300); // The aborted route must remain canceled after its delayed response.
+    assert(phone.url() === base + 'es/', 'Selecting the current page did not cancel an outstanding navigation');
+    await phone.evaluate(() => {
+      const courses = document.querySelector('.header-app-link[href*="/courses/"]'); courses.search = '?slow=1'; courses.click();
+      document.querySelector('.header-app-link[href$="/certitube/"]').click();
+    });
+    await arrived('es/certitube/');
+    assert(await phone.locator('[data-navigation-error]').count() === 0, 'A superseded fetch produced an error in the new page');
+    await phone.locator('.site-header .brand').tap(); await arrived('es/');
+    await phone.locator('.header-app-link[href$="/courses/"]').evaluate(link => { link.search = '?slow=1'; });
+    await phone.locator('.header-app-link[href*="/courses/"]').tap();
+    await phone.locator('deep-chat [data-voice-command="exit"]').tap();
+    await arrived('es/courses/?slow=1', false);
+    assert(await phone.evaluate(() => window.__tracks.every(track => track.stopped) && document.querySelector('#certichat-panel').hidden), 'Closing voice during a page fetch revived capture or opened the text chat');
+    await phone.locator('.site-header .brand').tap(); await arrived('es/', false);
+    await phone.locator('[data-chat-open]').tap();
+    await phone.locator('deep-chat [data-voice-command="start"]').tap();
+    await phone.waitForFunction(() => window.__voiceState.phase === 'listening');
+
+    await phone.locator('.header-app-link[href$="/certitube/"]').tap(); await arrived('es/certitube/');
+    await phone.locator('.site-header .brand').tap(); await arrived('es/');
+  };
   try {
     for (const route of ['es/', 'es/courses/', 'es/certitube/', 'es/certichat/', 'es/1Z0-1085-26/overview/']) {
       await phone.goto(base + route);
@@ -134,6 +257,7 @@ async (page) => {
         await phone.waitForFunction(expected => window.__voiceState.phase === 'listening' && window.__microphones === expected, turn + 3);
       }
       assert(await phone.evaluate(() => window.__spoken.length === 3 && window.__outputProfiles.every(profile => profile.type === 'playback' && !profile.concurrentCapture) && navigator.audioSession.type === 'play-and-record'), 'Second/third voice turns did not renew iPhone capture');
+      if (route === 'es/') await checkContinuousNavigation();
       await phone.locator('deep-chat [data-voice-command="mute"]').tap();
       await phone.waitForFunction(() => window.__voiceState?.phase === 'paused');
       await measure();
@@ -245,6 +369,6 @@ async (page) => {
     await viewer.waitFor({ state: 'hidden' });
     assert(await phone.locator('[data-diagram]').first().evaluate(node => document.activeElement === node), 'Closing mobile presentation did not restore focus to its image');
     assert(errors.length === 0, errors.join('\n'));
-    return { passed: true, routes: results, delayedNativeSpeechAfterGesture: true, silentPrimerCanceled: true, truthfulNativeStartAndTimeout: true, threeSequentialIPhoneTurns: true, captureMuteAndContextRecovery: true, missingOutputRestoresCapture: true, lateCaptureAfterExitStopped: true, globalVoiceExitClosesChat: true, continuousEdgeMask: true, navigationRequiresExplicitIPhoneResume: true, diagnosticTraceSurvivesNavigation: true, exclusivePlaybackProfile: true, footerDockOutsideLightBorder: true, compactHeaderSizedControls: true, touchHintsDisabled: true, directPresentationAudio: true, mobileVoiceExitFoldsChat: true, screenshots: 0, paidCalls: 0 };
+    return { passed: true, routes: results, continuousNavigation: navigationChecks, delayedNativeSpeechAfterGesture: true, silentPrimerCanceled: true, truthfulNativeStartAndTimeout: true, threeSequentialIPhoneTurns: true, captureMuteAndContextRecovery: true, missingOutputRestoresCapture: true, lateCaptureAfterExitStopped: true, globalVoiceExitClosesChat: true, continuousEdgeMask: true, navigationRequiresExplicitIPhoneResume: true, diagnosticTraceSurvivesNavigation: true, exclusivePlaybackProfile: true, footerDockOutsideLightBorder: true, compactHeaderSizedControls: true, touchHintsDisabled: true, directPresentationAudio: true, mobileVoiceExitFoldsChat: true, screenshots: 0, paidCalls: 0 };
   } finally { await context.close(); }
 }

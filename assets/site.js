@@ -1,3 +1,4 @@
+import { installPageNavigation, navigateSite } from "./site-navigation.js";
 import { t, locale, localizedURL, siteBase } from "./i18n.js";
 import { readStored, writeStored } from "./storage.js";
 import { indexSearchEntry, searchContent, corpusSearchEntries, searchExcerpt } from "./site-search.js";
@@ -10,10 +11,11 @@ if (!/^(?:es|en|pt|it)\//.test(location.pathname.slice(siteBase.length))) {
   } catch { /* URLs remain usable without storage. */ }
 }
 
+function mountNavigation(signal) {
 const languageMenu = document.querySelector('.language-menu');
 const languageTransition = document.getElementById('language-transition');
 let languageTransitionTimer;
-languageTransition?.addEventListener('cancel', event => event.preventDefault());
+languageTransition?.addEventListener('cancel', event => event.preventDefault(), { signal });
 function showLanguageTransition(value) {
   const target = new URL(value, location.href);
   if (!languageTransition || target.origin !== location.origin || !target.pathname.startsWith(siteBase) || !/\/$|\.html$/.test(target.pathname) || target.pathname === location.pathname && target.search === location.search) return false;
@@ -36,11 +38,12 @@ if (languageTransition?.open) {
     languageTransitionTimer = setTimeout(clearLanguageTransition, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : Math.max(0, 700 - performance.now()));
   };
   const observer = new MutationObserver(ready);
+  signal.addEventListener("abort", () => observer.disconnect(), { once: true });
   observer.observe(document.querySelector('main'), { subtree: true, childList: true, attributes: true, attributeFilter: ['aria-busy'] });
-  document.addEventListener('DOMContentLoaded', ready, { once: true });
+  document.addEventListener('DOMContentLoaded', ready, { ...({ once: true }), signal });
   ready();
 }
-addEventListener('pageshow', event => { if (event.persisted) clearLanguageTransition(); });
+addEventListener('pageshow', event => { if (event.persisted) clearLanguageTransition(); }, { signal });
 function updateLanguageLink(link) {
   const target = new URL(link.href);
   if (document.body.dataset.page === '404') target.pathname = new URL(localizedURL(location.href, link.dataset.languageLink)).pathname;
@@ -53,9 +56,9 @@ for (const link of document.querySelectorAll('[data-language-link]')) {
   link.addEventListener('click', event => {
     updateLanguageLink(link);
     try { localStorage.setItem('certitips:locale', link.dataset.languageLink); } catch { /* Navigation works without storage. */ }
-  });
+  }, { signal });
 }
-// The same glass covers normal links and native programmatic navigation; no client router.
+// Native full loads retain the glass; continuous navigation intercepts supported internal links first.
 window.addEventListener('click', event => {
   if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
   const link = event.composedPath().find(node => node.matches?.('a[href]'));
@@ -63,46 +66,50 @@ window.addEventListener('click', event => {
   event.preventDefault();
   if (languageMenu) languageMenu.open = false;
   requestAnimationFrame(() => requestAnimationFrame(() => location.assign(link.href)));
-});
+}, { signal });
 window.navigation?.addEventListener('navigate', event => {
   if (event.defaultPrevented || event.destination.sameDocument || event.hashChange || event.downloadRequest !== null || event.formData || !showLanguageTransition(event.destination.url)) return;
   event.signal.addEventListener('abort', clearLanguageTransition, { once: true });
-});
+}, { signal });
 languageMenu?.addEventListener('toggle', () => {
   if (languageMenu.open) {
     for (const link of languageMenu.querySelectorAll('[data-language-link]')) updateLanguageLink(link);
     for (const group of document.querySelectorAll(".path-group")) group.open = false;
   }
-});
-document.addEventListener('click', event => { if (languageMenu?.open && !languageMenu.contains(event.target)) languageMenu.open = false; });
-document.addEventListener('keydown', event => { if (event.key === 'Escape' && languageMenu?.open) { languageMenu.open = false; languageMenu.querySelector('summary').focus(); } });
+}, { signal });
+document.addEventListener('click', event => { if (languageMenu?.open && !languageMenu.contains(event.target)) languageMenu.open = false; }, { signal });
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && languageMenu?.open) { languageMenu.open = false; languageMenu.querySelector('summary').focus(); } }, { signal });
 
 
+
+signal.addEventListener("abort", () => clearTimeout(languageTransitionTimer), { once: true });
+}
+
+function mountLayout(signal) {
 let resizeTimer;
 addEventListener("resize", () => {
   document.documentElement.classList.add("is-resizing");
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => document.documentElement.classList.remove("is-resizing"), 120);
-});
+}, { signal });
 
 const footer = document.querySelector(".site-footer");
 const footerCredit = footer?.querySelector(".footer-credit");
 // Measure one line before hiding the credit; its visibility cannot resize the footer.
-if (footer) new ResizeObserver(() => {
+if (footer) { const observer = new ResizeObserver(() => {
   if (footerCredit) {
     footerCredit.hidden = false;
     footerCredit.hidden = footerCredit.parentElement.scrollWidth > footerCredit.parentElement.clientWidth;
   }
   document.documentElement.style.setProperty("--footer-height", `${footer.getBoundingClientRect().height}px`);
-}).observe(footer, { box: "border-box" });
+}); observer.observe(footer, { box: "border-box" }); signal.addEventListener("abort", () => observer.disconnect(), { once: true }); }
 
 const courseGroups = document.querySelector(".course-groups");
-if (courseGroups) new ResizeObserver(() => {
+if (courseGroups) { const observer = new ResizeObserver(() => {
   courseGroups.classList.toggle("is-compact-groups", courseGroups.getBoundingClientRect().width <= 800);
   document.documentElement.style.setProperty("--course-groups-height", `${courseGroups.getBoundingClientRect().height + 44}px`);
-}).observe(courseGroups, { box: "border-box" });
+}); observer.observe(courseGroups, { box: "border-box" }); signal.addEventListener("abort", () => observer.disconnect(), { once: true }); }
 
-const course = document.body.dataset.course;
 const heroFlow = document.querySelector("[data-hero-flow]");
 const syncHeroFlowTheme = () => {
   const source = heroFlow?.querySelector("source");
@@ -117,10 +124,32 @@ if (heroFlow) {
   if (reducedMotion.matches) heroFlow.removeAttribute("autoplay");
   heroFlow.addEventListener("loadedmetadata", () => {
     if (reducedMotion.matches) heroFlow.currentTime = Math.max(0, heroFlow.duration - 0.1);
-  });
-  heroFlow.addEventListener("error", () => heroFlow.closest(".hero-flow").classList.add("is-unavailable"));
-  heroFlow.querySelector("source")?.addEventListener("error", () => heroFlow.closest(".hero-flow").classList.add("is-unavailable"));
+  }, { signal });
+  heroFlow.addEventListener("error", () => heroFlow.closest(".hero-flow").classList.add("is-unavailable"), { signal });
+  heroFlow.querySelector("source")?.addEventListener("error", () => heroFlow.closest(".hero-flow").classList.add("is-unavailable"), { signal });
 }
+const themeToggle = document.querySelector("[data-theme-toggle]");
+function syncTheme() {
+  const dark = document.documentElement.dataset.theme === "dark";
+  themeToggle?.setAttribute("aria-pressed", String(dark));
+  themeToggle?.setAttribute("aria-label", dark ? t("Activar modo claro") : t("Activar modo oscuro"));
+  syncHeroFlowTheme();
+}
+themeToggle?.addEventListener("click", () => {
+  const dark = document.documentElement.dataset.theme !== "dark";
+  if (dark) document.documentElement.dataset.theme = "dark";
+  else delete document.documentElement.dataset.theme;
+  try { localStorage.setItem("certitips:theme", dark ? "dark" : "light"); } catch { /* Session still works if storage is blocked. */ }
+  syncTheme();
+}, { signal });
+syncTheme();
+
+
+signal.addEventListener("abort", () => { clearTimeout(resizeTimer); heroFlow?.pause(); }, { once: true });
+}
+
+function mountCourse(signal) {
+const course = document.body.dataset.course;
 const key = `certitips:progress:v1:${course}`;
 const stored = readStored(key, []);
 const completed = new Set(
@@ -158,7 +187,7 @@ document
     else completed.add(slug);
     writeStored(key, [...completed]);
     showProgress();
-  });
+  }, { signal });
 showProgress();
 
 const toggle = document.querySelector(".menu-toggle");
@@ -175,33 +204,72 @@ function syncCourseMenu() {
 }
 if (toggle && navigation) {
   syncCourseMenu();
-  courseNavMedia.addEventListener("change", () => { navigation.classList.remove("is-open"); syncCourseMenu(); });
+  courseNavMedia.addEventListener("change", () => { navigation.classList.remove("is-open"); syncCourseMenu(); }, { signal });
   const main = document.querySelector(".course-main"), chat = document.querySelector("#certichat-panel");
   if (main && chat) {
     const observer = new ResizeObserver(() => requestAnimationFrame(() => {
       if (!courseNavMedia.matches && !chat.hidden && !document.body.classList.contains("is-compact-nav") && main.getBoundingClientRect().width < chat.offsetWidth) setDesktopCourseMenu(true);
     }));
+    signal.addEventListener("abort", () => observer.disconnect(), { once: true });
     observer.observe(main);
     observer.observe(chat);
   }
 }
 const pathMenu = document.querySelector(".path-nav-mobile");
-const themeToggle = document.querySelector("[data-theme-toggle]");
-function syncTheme() {
-  const dark = document.documentElement.dataset.theme === "dark";
-  themeToggle?.setAttribute("aria-pressed", String(dark));
-  themeToggle?.setAttribute("aria-label", dark ? t("Activar modo claro") : t("Activar modo oscuro"));
-  syncHeroFlowTheme();
+const pathGroups = [...document.querySelectorAll(".path-group")];
+for (const group of pathGroups) group.addEventListener("toggle", () => {
+  if (group.open) for (const other of pathGroups) if (other !== group && other.parentElement === group.parentElement) other.open = false;
+}, { signal });
+pathMenu?.addEventListener("click", (event) => {
+  if (event.target.closest("a")) pathMenu.open = false;
+}, { signal });
+function setDesktopCourseMenu(compact) {
+  if (!navigation) return;
+  if (compact && navigation.contains(document.activeElement)) toggle?.focus({ preventScroll: true });
+  document.body.classList.toggle("is-compact-nav", compact);
+  try { sessionStorage.setItem("certitips:course-nav:compact", String(compact)); } catch { /* Keep the current page usable without storage. */ }
+  syncCourseMenu();
 }
-themeToggle?.addEventListener("click", () => {
-  const dark = document.documentElement.dataset.theme !== "dark";
-  if (dark) document.documentElement.dataset.theme = "dark";
-  else delete document.documentElement.dataset.theme;
-  try { localStorage.setItem("certitips:theme", dark ? "dark" : "light"); } catch { /* Session still works if storage is blocked. */ }
-  syncTheme();
-});
-syncTheme();
+function closeMenu() {
+  navigation?.classList.remove("is-open");
+  syncCourseMenu();
+}
+toggle?.addEventListener("click", () => {
+  if (courseNavMedia.matches) navigation.classList.toggle("is-open");
+  else setDesktopCourseMenu(!document.body.classList.contains("is-compact-nav"));
+  syncCourseMenu();
+}, { signal });
+navigation?.addEventListener("click", (event) => {
+  if (event.target.closest("a") && navigation.classList.contains("is-open")) {
+    closeMenu();
+    document.querySelector("#main").focus({ preventScroll: true });
+  }
+}, { signal });
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") for (const group of pathGroups) if (group.open) {
+    group.open = false;
+    group.querySelector("summary").focus();
+  }
+  if (event.key === "Escape" && pathMenu?.open) {
+    pathMenu.open = false;
+    pathMenu.querySelector("summary").focus();
+  }
+  if (event.key === "Escape" && navigation?.classList.contains("is-open")) {
+    closeMenu();
+    toggle.focus();
+  }
+}, { signal });
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".path-nav, .path-nav-mobile")) {
+    for (const group of pathGroups) group.open = false;
+    if (pathMenu) pathMenu.open = false;
+  }
+  if (!navigation?.contains(event.target) && !toggle?.contains(event.target))
+    closeMenu();
+}, { signal });
+}
 
+function mountSearch(signal) {
 const searchDialog = document.querySelector("#site-search");
 const searchButton = document.querySelector("[data-search-open]");
 const searchInput = searchDialog?.querySelector("#search-query");
@@ -271,21 +339,21 @@ function openSearch() {
   searchInput.focus();
   loadSearchContent();
 }
-searchButton?.addEventListener("click", openSearch);
+searchButton?.addEventListener("click", openSearch, { signal });
 searchClose?.addEventListener("click", () => {
   if (!searchInput.value) return searchDialog.close();
   searchInput.value = "";
   updateSearch();
   searchInput.focus();
-});
+}, { signal });
 searchDialog?.addEventListener("close", () => {
   if (searchDialog.open) return;
   searchInput.value = "";
   updateSearch();
   searchButton.focus();
-});
-searchDialog?.addEventListener("click", (event) => { if (event.target === searchDialog) searchDialog.close(); });
-searchDialog?.addEventListener("click", (event) => { if (event.target.closest(".search-results a")) searchDialog.close(); });
+}, { signal });
+searchDialog?.addEventListener("click", (event) => { if (event.target === searchDialog) searchDialog.close(); }, { signal });
+searchDialog?.addEventListener("click", (event) => { if (event.target.closest(".search-results a")) searchDialog.close(); }, { signal });
 searchDialog?.addEventListener("keydown", (event) => {
   if (event.key === "Escape") { event.preventDefault(); searchDialog.close(); }
   if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
@@ -297,73 +365,23 @@ searchDialog?.addEventListener("keydown", (event) => {
     event.preventDefault();
     (next || searchInput).focus();
   }
-});
-searchInput?.addEventListener("input", updateSearch);
+}, { signal });
+searchInput?.addEventListener("input", updateSearch, { signal });
 searchInput?.addEventListener("keydown", (event) => {
   if (event.key === "ArrowDown") {
     const first = searchDialog.querySelector(".search-results li:not([hidden]) a");
     if (first) { event.preventDefault(); first.focus(); }
   }
-});
+}, { signal });
 document.addEventListener("keydown", (event) => {
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
     event.preventDefault();
     openSearch();
   }
-});
-
-const pathGroups = [...document.querySelectorAll(".path-group")];
-for (const group of pathGroups) group.addEventListener("toggle", () => {
-  if (group.open) for (const other of pathGroups) if (other !== group && other.parentElement === group.parentElement) other.open = false;
-});
-pathMenu?.addEventListener("click", (event) => {
-  if (event.target.closest("a")) pathMenu.open = false;
-});
-function setDesktopCourseMenu(compact) {
-  if (!navigation) return;
-  if (compact && navigation.contains(document.activeElement)) toggle?.focus({ preventScroll: true });
-  document.body.classList.toggle("is-compact-nav", compact);
-  try { sessionStorage.setItem("certitips:course-nav:compact", String(compact)); } catch { /* Keep the current page usable without storage. */ }
-  syncCourseMenu();
+}, { signal });
 }
-function closeMenu() {
-  navigation?.classList.remove("is-open");
-  syncCourseMenu();
-}
-toggle?.addEventListener("click", () => {
-  if (courseNavMedia.matches) navigation.classList.toggle("is-open");
-  else setDesktopCourseMenu(!document.body.classList.contains("is-compact-nav"));
-  syncCourseMenu();
-});
-navigation?.addEventListener("click", (event) => {
-  if (event.target.closest("a") && navigation.classList.contains("is-open")) {
-    closeMenu();
-    document.querySelector("#main").focus({ preventScroll: true });
-  }
-});
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") for (const group of pathGroups) if (group.open) {
-    group.open = false;
-    group.querySelector("summary").focus();
-  }
-  if (event.key === "Escape" && pathMenu?.open) {
-    pathMenu.open = false;
-    pathMenu.querySelector("summary").focus();
-  }
-  if (event.key === "Escape" && navigation?.classList.contains("is-open")) {
-    closeMenu();
-    toggle.focus();
-  }
-});
-document.addEventListener("click", (event) => {
-  if (!event.target.closest(".path-nav, .path-nav-mobile")) {
-    for (const group of pathGroups) group.open = false;
-    if (pathMenu) pathMenu.open = false;
-  }
-  if (!navigation?.contains(event.target) && !toggle?.contains(event.target))
-    closeMenu();
-});
 
+function mountCatalog(signal) {
 const groupCarousel = document.querySelector("[data-group-carousel]");
 if (groupCarousel) {
   const groups = [...groupCarousel.querySelectorAll(":scope > .path-section")];
@@ -387,8 +405,8 @@ if (groupCarousel) {
     activate(index + step, true);
     history.replaceState(null, "", `#${groups[index].id}`);
   };
-  previous.addEventListener("click", () => move(-1));
-  next.addEventListener("click", () => move(1));
+  previous.addEventListener("click", () => move(-1), { signal });
+  next.addEventListener("click", () => move(1), { signal });
   const fromHash = () => {
     let id;
     try { id = decodeURIComponent(location.hash.slice(1)); } catch { return; }
@@ -398,12 +416,12 @@ if (groupCarousel) {
     activate(groups.indexOf(group));
     requestAnimationFrame(() => target.scrollIntoView({ block: "start" }));
   };
-  window.addEventListener("hashchange", fromHash);
+  window.addEventListener("hashchange", fromHash, { signal });
   fromHash();
   let touchStart;
   groupCarousel.addEventListener("touchstart", (event) => {
     touchStart = { x: event.changedTouches[0].screenX, y: event.changedTouches[0].screenY };
-  }, { passive: true });
+  }, { ...({ passive: true }), signal });
   groupCarousel.addEventListener("touchend", (event) => {
     if (!touchStart) return;
     const dx = event.changedTouches[0].screenX - touchStart.x;
@@ -413,9 +431,11 @@ if (groupCarousel) {
       move(dx < 0 ? 1 : -1);
     }
     touchStart = undefined;
-  }, { passive: false });
+  }, { ...({ passive: false }), signal });
+}
 }
 
+function mountViewer(signal) {
 const dialog = document.querySelector("#diagram-viewer");
 let opener;
 let viewerAnimation;
@@ -438,7 +458,7 @@ function setPresentationMenu(open) {
   menu.setAttribute("aria-label", open ? t("Ocultar imágenes") : t("Mostrar imágenes"));
   if (dialog.classList.contains("is-presenting")) dialog.querySelector(".dialog-content").setAttribute("aria-label", open ? t("Diagrama en presentación; haz clic para ocultar imágenes") : t("Diagrama en presentación; haz clic para avanzar"));
 }
-menu.addEventListener("click", () => setPresentationMenu(!filmstrip.classList.contains("is-open")));
+menu.addEventListener("click", () => setPresentationMenu(!filmstrip.classList.contains("is-open")), { signal });
 function restoreDiagram() {
   dialog.dataset.sourceId = opener.dataset.sourceId || "";
   const image = opener.querySelector("img"), enlarged = dialog.querySelector(".dialog-content img");
@@ -467,7 +487,7 @@ async function showSlide(index) {
   const item = gallery[index], preload = new Image();
   preload.src = item.src;
   try { await preload.decode(); } catch { return; }
-  if (token !== slideToken || !dialog.open || !dialog.classList.contains("is-presenting")) return;
+  if (signal.aborted || token !== slideToken || !dialog.open || !dialog.classList.contains("is-presenting")) return;
   slideIndex = index;
   dialog.dataset.sourceId = typeof item.sourceId === "string" ? item.sourceId : "";
   const image = dialog.querySelector(".dialog-content img");
@@ -506,7 +526,7 @@ async function togglePresentation() {
     if (description) description.textContent = t("No se pudieron cargar los diagramas del curso. Inténtalo de nuevo.");
     return;
   }
-  if (!dialog.open || dialog.classList.contains("is-presenting")) return;
+  if (signal.aborted || !dialog.open || dialog.classList.contains("is-presenting")) return;
   const groups = [];
   let group, module;
   gallery.forEach((item, index) => {
@@ -530,8 +550,8 @@ async function togglePresentation() {
     button.setAttribute("aria-label", t('Imagen {current} de {total}: {module}: {alt}', {current: index + 1, total: gallery.length, module: item.module, alt: item.alt}));
     image.src = item.src; image.alt = ""; image.loading = "lazy";
     button.append(image);
-    button.addEventListener("click", () => showSlide(index));
-    button.addEventListener("certivoice:activate", event => { event.detail.completion = showSlide(index); });
+    button.addEventListener("click", () => showSlide(index), { signal });
+    button.addEventListener("certivoice:activate", event => { event.detail.completion = showSlide(index); }, { signal });
     group.append(button);
   });
   filmstrip.replaceChildren(...groups);
@@ -544,9 +564,9 @@ async function togglePresentation() {
   const current = gallery.findIndex(item => new URL(item.src, location.href).href === dialog.querySelector(".dialog-content img").src);
   return await showSlide(Math.max(0, current));
 }
-present.addEventListener("click", togglePresentation);
-present.addEventListener("certivoice:activate", event => { event.detail.completion = togglePresentation(); });
-window.addEventListener("certichat:cleared", () => { delete dialog.dataset.voiceReturn; });
+present.addEventListener("click", togglePresentation, { signal });
+present.addEventListener("certivoice:activate", event => { event.detail.completion = togglePresentation(); }, { signal });
+window.addEventListener("certichat:cleared", () => { delete dialog.dataset.voiceReturn; }, { signal });
 dialog.addEventListener("certivoice:visibility", event => {
   const request = event.detail;
   if (request?.name === "suspend" && dialog.open) {
@@ -556,20 +576,20 @@ dialog.addEventListener("certivoice:visibility", event => {
     delete dialog.dataset.voiceReturn;
     dialog.showModal(); request.completion = togglePresentation();
   }
-});
+}, { signal });
 dialog.querySelector(".dialog-content").addEventListener("click", () => {
   if (dialog.classList.contains("is-presenting")) {
     if (filmstrip.classList.contains("is-open")) { slideToken++; setPresentationMenu(false); }
     else showSlide(slideIndex + 1);
   }
   else if (!present.hidden) present.click();
-});
+}, { signal });
 dialog.addEventListener("keydown", event => {
   if (!dialog.classList.contains("is-presenting") || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
   if (event.defaultPrevented || event.composedPath().some(node => node.matches?.("[data-certichat], .certivoice, input, textarea, [contenteditable]"))) return;
   event.preventDefault();
   showSlide(slideIndex + (event.key === "ArrowRight" ? 1 : -1));
-});
+}, { signal });
 function animateViewer(closing = false, from) {
   if (reduceViewerMotion.matches || !dialog.animate || !from && !opener?.getBoundingClientRect) return;
   const source = from || opener.getBoundingClientRect(), target = dialog.getBoundingClientRect();
@@ -601,7 +621,7 @@ function closeViewer() {
     if (target) {
       target.scrollIntoView({ block: "center" });
       target.focus({ preventScroll: true });
-    } else if (page) location.assign(`${page.href}#${diagramIdForImage(src)}`);
+    } else if (page) void navigateSite(`${page.href}#${diagramIdForImage(src)}`).then(moved => { if (!moved) location.assign(`${page.href}#${diagramIdForImage(src)}`); }).catch(() => {});
     else opener?.focus();
   };
   const animation = target ? animateViewer(true) : undefined;
@@ -618,20 +638,28 @@ document.querySelectorAll("[data-diagram]").forEach((button) =>
     if (!present.hidden && matchMedia("(max-width: 800px)").matches) await togglePresentation();
     animateViewer();
     dialog.querySelector("[data-close-diagram]").focus();
-  }),
+  }, { signal }),
 );
 dialog
   .querySelector("[data-close-diagram]")
-  .addEventListener("click", closeViewer);
+  .addEventListener("click", closeViewer, { signal });
 dialog.addEventListener("click", (event) => {
   if (event.target !== dialog) return;
   if (filmstrip.classList.contains("is-open")) { slideToken++; setPresentationMenu(false); }
   else closeViewer();
-});
+}, { signal });
 dialog.addEventListener("cancel", event => {
   if (event.target !== dialog) return;
   event.preventDefault();
   const chatClose = dialog.querySelector("#certichat-panel:not([hidden]) [data-chat-close]");
   if (chatClose) chatClose.click();
   else closeViewer();
-});
+}, { signal });
+
+signal.addEventListener("abort", () => { slideToken++; clearTimeout(countTimer); viewerAnimation?.cancel(); }, { once: true });
+}
+
+function mountSitePage(signal) {
+  mountNavigation(signal); mountLayout(signal); mountCourse(signal); mountSearch(signal); mountCatalog(signal); mountViewer(signal);
+}
+installPageNavigation(mountSitePage);

@@ -1,3 +1,4 @@
+import { navigateSite } from "./site-navigation.js";
 import { t, locale, language, canonicalURL, siteBase } from "./i18n.js";
 import { animateVoiceEdge, captureVoice, encodeVoiceWav, heardCharacters, nativePronunciation, preferredNativeVoice, restoreVoicePlayback, voiceMemoryFresh, VoiceActivity } from "./certivoice-audio.js";
 import { performVoiceAction, voiceContext, voicePageURL, pendingNavigation, shouldResumeNavigation, validVoiceNavigation } from "./certivoice-actions.js";
@@ -15,11 +16,11 @@ if (root) {
   const local = ["localhost", "127.0.0.1", "[::1]"], preview = local.includes(location.hostname) && !local.includes(new URL(config.dataset.api).hostname);
   let session, voiceError = "", active = false, muted = false, context, release, detector, controller, playback = readPlayback(), speech, output, utterance, epoch = 0, widget, pending, pendingSent = false, pendingSince, pendingExpiry, lastActivity = 0, starting = false, checkingSession = false, rejectVerification;
   const edge = document.querySelector("[data-voice-edge]");
-  let lecture, lectureTimer, nativeVoice, lastExplained;
-  let stopEdge, nativeStartTimer, videoLocked = false, videoConfirmation;
+  let lecture, lectureTimer, nativeVoice, nativeVoiceLocale = locale, lastExplained;
+  let stopEdge, nativeStartTimer, videoLocked = false, videoConfirmation, navigating = false;
   const separateCapture = /iPhone|iPad|iPod/.test(navigator.userAgent) || navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
   const originalAudioType = navigator.audioSession?.type;
-  const chatParent = config.parentNode, chatNext = config.nextSibling;
+  const restoreVoiceHome = () => (document.querySelector("[data-explorer-chat-slot]") || document.body).append(config);
   const quotaBlocked = () => Number.isFinite(session?.quota?.remaining) && session.quota.remaining <= 0;
   const emit = (name, detail) => window.dispatchEvent(new CustomEvent(name, { detail }));
   function setStatus(text, error = false) {
@@ -27,7 +28,7 @@ if (root) {
     if (error) { voiceError = text; if (lecture) lecture.running = false; }
     const enabled = session?.voice?.enabled === true && session.available !== false && !config.hidden;
     const resume = enabled && !active && !starting && Boolean(pendingNavigation(readNavigation(), location.href, siteBase));
-    const phase = starting ? "connecting" : !active ? resume ? "paused" : "off" : output || utterance && speech?.started ? "speaking" : controller || utterance ? "thinking" : muted ? "paused" : "listening";
+    const phase = starting ? "connecting" : !active ? resume ? "paused" : "off" : navigating ? "thinking" : output || utterance && speech?.started ? "speaking" : controller || utterance ? "thinking" : muted ? "paused" : "listening";
     if ((phase !== reportedPhase || error) && diagnostics.record("state", { phase, active: active || starting, muted, error: Boolean(voiceError), platform: separateCapture ? "ios" : "other" })) reportedPhase = phase;
     status.setAttribute("aria-live", (active || starting || resume) && (!voiceError || starting) ? "off" : "polite");
     status.textContent = text;
@@ -41,7 +42,8 @@ if (root) {
     config.dataset.voiceMode = String(Boolean(active || starting || resume));
     emit("certivoice:state", { enabled, quotaBlocked: quotaBlocked(), active: active || starting, phase, error: voiceError, muted, locked: videoLocked, retry: Boolean(pending && pendingSent), resume });
   }
-  function interrupt() {
+  function interrupt(reason = "speech_replaced") {
+    if (output || utterance) diagnostics.record("action", { action: reason, phase: "speaking", muted });
     if (speech) speech.after = null;
     stopEdge?.(); stopEdge = null;
     if (output && playback && speech?.track) playback.heardCharacters = Math.min(5000, speech.offset + heardCharacters(speech.text, context.currentTime - speech.started, speech.duration));
@@ -56,7 +58,7 @@ if (root) {
   function pause(message = t("Voz pausada. Pulsa Activar voz para continuar."), error = false, preserveMode = true) {
     clearTimeout(lectureTimer); if (lecture) lecture.running = false;
     if (!preserveMode) { clearNavigation(); dismissVideo(); lecture = null; }
-    epoch++; active = false; starting = false; checkingSession = false; muted = false; interrupt(); controller?.abort(); controller = null;
+    epoch++; active = false; starting = false; checkingSession = false; muted = false; interrupt(error ? "error_pause" : "session_pause"); controller?.abort(); controller = null;
     rejectVerification?.(new Error("Cancelled")); rejectVerification = null; verification.hidden = true;
     if (widget !== undefined && window.turnstile) { window.turnstile.remove(widget); widget = undefined; }
     release?.stop(); release = null; detector?.reset();
@@ -109,7 +111,7 @@ if (root) {
     const player = document.querySelector('[data-tube-player][data-voice-confirm="true"]');
     if (!player || !active || videoLocked) return;
     if (lecture) lecture.running = false; clearTimeout(lectureTimer);
-    interrupt(); muted = true; release?.setMuted(true); detector?.reset();
+    interrupt("video_playback"); muted = true; release?.setMuted(true); detector?.reset();
     const command = { name: "play", accepted: false };
     player.dispatchEvent(new CustomEvent("certitube:command", { detail: command }));
     videoLocked = true; setStatus(t("Micrófono silenciado durante el video."));
@@ -167,10 +169,10 @@ if (root) {
     setStatus(muted ? t("Micrófono silenciado.") : t("Te escucho…"));
     if (speech?.after) { const after = speech.after; speech.after = null; after(); return; }
     if (quotaBlocked()) { pause(t("Se alcanzó un límite de uso. Inténtalo más tarde.")); return; }
-    if (lecture?.running && lecture.consent && !muted) lectureTimer = setTimeout(() => lectureTurn(true), 0);
+    if (lecture?.running && lecture.consent) lectureTimer = setTimeout(() => lectureTurn(true), 0);
   }
   async function lectureTurn(advance = false) {
-    if (!lecture?.running || !lecture.consent || !active || muted || controller || videoLocked) return;
+    if (!lecture?.running || !lecture.consent || !active || controller || videoLocked) return;
     if (quotaBlocked()) { pause(t("Se alcanzó un límite de uso. Inténtalo más tarde.")); return; }
     const token = epoch;
     try {
@@ -184,7 +186,7 @@ if (root) {
         const result = await performVoiceAction({ name: "next_slide" });
         if (result.error) throw new Error(result.error);
       }
-      if (token !== epoch || !lecture?.running || !active || muted) return;
+      if (token !== epoch || !lecture?.running || !active) return;
       const { sectionId, diagramId } = voiceContext();
       if (!diagramId) throw new Error(t("No se pudo identificar el diagrama actual."));
       clearPending();
@@ -282,7 +284,7 @@ if (root) {
       emit("certichat:session", { ...session, quota: result.quota });
       // Practice rerenders remove their dialogs; move the live chat instance out before that happens.
       if (result.action?.name?.startsWith("practice_") && config.closest("#quiz dialog")) {
-        chatParent.insertBefore(config, chatNext?.parentNode === chatParent ? chatNext : null); if (edge) document.body.append(edge);
+        restoreVoiceHome(); if (edge) document.body.append(edge);
       }
       diagnostics.record("action", { ...(result.action?.name ? { action: result.action.name } : {}), request_id: result.requestId });
       const action = await performVoiceAction(result.action);
@@ -327,7 +329,19 @@ if (root) {
   }
   async function navigate(action) {
     const token = epoch;
-    const move = () => {
+    const move = async () => {
+      if (token !== epoch || !active) return;
+      try {
+        if (await navigateSite(action.navigation, { source: "voice" })) {
+          if (token !== epoch || !active) return;
+          const next = action.afterNavigation && await performVoiceAction(action.afterNavigation);
+          await say(next?.error || t("Página abierta: {title}", { title: document.querySelector("h1")?.textContent || document.title }), null, undefined, token);
+          return;
+        }
+      } catch (error) {
+        if (token === epoch && active && error.name !== "AbortError") await say(t("Sin conexión. Vuelve a intentarlo."), null, undefined, token);
+        return;
+      }
       if (token !== epoch || !active) return;
       saveNavigation(action.navigation, action.afterNavigation);
       pause(t("Abriendo la página…"), false, true); if (action.activate) action.activate(); else location.assign(action.navigation);
@@ -335,8 +349,36 @@ if (root) {
     if (action.confirmation) await say(action.confirmation, null, undefined, token);
     if (token !== epoch || !active) return;
     if (action.confirmation && (output || utterance)) speech.after = move;
-    else move();
+    else await move();
   }
+  window.addEventListener("site:will-navigate", event => {
+    navigating = true;
+    diagnostics.record("navigation", { automatic: true, phase: active ? "thinking" : "off" });
+    if (lecture) lecture.running = false; clearTimeout(lectureTimer);
+    interrupt("page_navigation"); dismissVideo(); videoLocked = false; lastExplained = null; detector?.reset(); release?.setMuted(true);
+    if (quotaBlocked()) { release?.stop(); release = null; }
+    if (event.detail.source !== "voice") { epoch++; controller?.abort(); controller = null; clearPending(); emit("certivoice:busy", false); }
+    setStatus(t("Abriendo la página…"));
+  });
+  window.addEventListener("site:did-navigate", event => {
+    event.detail.completion = (async () => {
+      navigating = false;
+      diagnostics.record("navigation", { automatic: true, phase: active ? muted ? "paused" : "listening" : "off" });
+      const saved = readNavigation();
+      if (saved && voiceMemoryFresh(saved.createdAt)) {
+        try { sessionStorage.setItem(navigationKey, JSON.stringify({ url: location.href, createdAt: saved.createdAt, session: true, ...(!active ? { pending: true } : {}) })); } catch { /* Optional continuation storage. */ }
+      }
+      if (nativeVoiceLocale !== locale) { nativeVoice = undefined; nativeVoiceLocale = locale; }
+      if (!active) { setStatus(status.textContent); return; }
+      const token = epoch;
+      nativeVoice ||= await selectNativeVoice();
+      if (token !== epoch || !active) return;
+      release?.setMuted(muted); detector?.reset();
+      if (quotaBlocked()) { release?.stop(); release = null; setStatus(t("Se alcanzó un límite de uso. Inténtalo más tarde.")); return; }
+      if (!release) await finishSpeech(0, "", false);
+      else setStatus(muted ? t("Micrófono silenciado.") : t("Te escucho…"));
+    })();
+  });
   window.addEventListener("certivoice:practice-followup", async event => {
     if (!active || !event.detail?.action) return;
     const token = epoch, action = await performVoiceAction(event.detail.action);
@@ -352,12 +394,13 @@ if (root) {
     if (separateCapture && navigator.audioSession) navigator.audioSession.type = "play-and-record";
     diagnostics.record("capture", { audio_session: navigator.audioSession?.type });
     return captureVoice(context, chunk => {
-      if (!active || muted) return;
+      if (!active || muted || navigating) return;
       const event = detector.push(chunk, Boolean(output || utterance));
       if (event.started) {
+        diagnostics.record("action", { action: "speech_detected", phase: output || utterance ? "speaking" : controller ? "thinking" : "listening", muted });
         if (controller) { pause(t("Consulta interrumpida. Pulsa Reintentar para recuperar su resultado.")); return; }
         if (lecture) lecture.running = false; clearTimeout(lectureTimer);
-        interrupt(); lastActivity = Date.now(); setStatus(t("Te escucho…"));
+        interrupt("microphone_interrupt"); lastActivity = Date.now(); setStatus(t("Te escucho…"));
       }
       if (event.chunks) { lastActivity = Date.now(); send(event.chunks).catch(() => pause(t("No se pudo preparar el audio."), true)); }
     }, event => { diagnostics.record("capture", { track_state: event?.target?.readyState, track_muted: event?.target?.muted }); pause(t("El micrófono se desconectó. Vuelve a activar la voz."), true); });
@@ -428,7 +471,7 @@ if (root) {
   function savePlayback() { playback = restoreVoicePlayback(playback); try { if (playback) sessionStorage.setItem(playbackKey, JSON.stringify(playback)); else sessionStorage.removeItem(playbackKey); } catch { /* Playback also works without continuity storage. */ } }
   function clearPending() { pending = null; pendingSent = false; pendingSince = undefined; clearTimeout(pendingExpiry); setStatus(status.textContent); }
   function expireMemory() { const saved = readNavigation(); if (saved && !voiceMemoryFresh(saved.createdAt)) pause(t("Voz pausada por inactividad."), false, false); if (pending && !voiceMemoryFresh(pendingSince)) clearPending(); if (playback && !voiceMemoryFresh(playback.createdAt)) { playback = null; savePlayback(); } }
-  function toggleMute() { if (videoLocked || !active && !starting) return; if (lecture) lecture.running = false; clearTimeout(lectureTimer); muted = !muted; release?.setMuted(muted); detector?.reset(); lastActivity = Date.now(); setStatus(muted ? t("Micrófono silenciado.") : t("Te escucho…")); }
+  function toggleMute() { if (videoLocked || !active && !starting) return; muted = !muted; diagnostics.record("action", { action: muted ? "microphone_muted" : "microphone_unmuted", muted }); release?.setMuted(muted); detector?.reset(); lastActivity = Date.now(); setStatus(muted ? t("Micrófono silenciado.") : t("Te escucho…")); }
   window.addEventListener("certichat:activity", () => { if (active || starting || readNavigation()) pause(t("Voz pausada mientras usas el chat."), false, false); });
   window.addEventListener("certichat:session", event => { if (event.detail) applySession(event.detail); });
   window.addEventListener("certichat:quota", event => {
@@ -439,7 +482,7 @@ if (root) {
     setStatus(status.textContent);
   });
   window.addEventListener("certivoice:state-request", () => setStatus(status.textContent));
-  window.addEventListener("certivoice:command", event => { if (event.detail === "exit") pause(undefined, false, false); else if (event.detail === "mute") toggleMute(); else if (event.detail === "interrupt" && active) { if (lecture) lecture.running = false; clearTimeout(lectureTimer); interrupt(); detector?.reset(); void finishSpeech(0, "", false); } else if (event.detail === "start" && !config.hidden && !active && !starting) start(Boolean(pending)); });
+  window.addEventListener("certivoice:command", event => { if (event.detail === "exit") pause(undefined, false, false); else if (event.detail === "mute") toggleMute(); else if (event.detail === "interrupt" && active) { if (lecture) lecture.running = false; clearTimeout(lectureTimer); interrupt("explicit_interrupt"); detector?.reset(); void finishSpeech(0, "", false); } else if (event.detail === "start" && !config.hidden && !active && !starting) start(Boolean(pending)); });
   window.addEventListener("certichat:cleared", () => { pause(undefined, false, false); clearPending(); playback = null; speech = null; lastExplained = null; clearNavigation(); try { sessionStorage.removeItem(playbackKey); } catch { /* Optional continuity. */ } });
   document.addEventListener("click", event => {
     if (!active || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
@@ -457,26 +500,32 @@ if (root) {
     if (dialog === viewer) { const parent = viewer.open ? viewer : document.body; if (edge) parent.append(edge); if (!viewer.open && lecture) lecture.running = false; }
     else if (dialog.id === "site-search") {
       if (dialog.open && (active || starting)) { dialog.append(config); if (edge) dialog.append(edge); }
-      else if (!dialog.open && config.parentNode === dialog) { chatParent.insertBefore(config, chatNext?.parentNode === chatParent ? chatNext : null); if (edge) document.body.append(edge); }
+      else if (!dialog.open && config.parentNode === dialog) { restoreVoiceHome(); if (edge) document.body.append(edge); }
     } else if (dialog.open && dialog.id !== "language-transition" && !dialog.closest("#quiz") && (active || starting)) pause();
   }).observe(dialog, { attributes: true, attributeFilter: ["open"] }));
-  const quiz = document.querySelector("#quiz");
+  let quizObserver;
+  function observePractice() {
+    quizObserver?.disconnect();
+    const quiz = document.querySelector("#quiz");
   if (quiz) {
     let currentDialog;
-    new MutationObserver(() => {
+    quizObserver = new MutationObserver(() => {
       const dialog = quiz.querySelector('dialog.confirmation[open]:is([data-finish-confirm], [data-reset-confirm], [data-exit-confirm])');
       if (dialog && (active || starting)) {
         if (!dialog.contains(config)) { dialog.append(config); if (edge) dialog.append(edge); }
         if (dialog !== currentDialog && !controller) void say(dialog.querySelector(".confirmation-body")?.textContent || "", null, undefined, epoch);
       } else if (!config.isConnected || config.closest("#quiz dialog")) {
-        chatParent.insertBefore(config, chatNext?.parentNode === chatParent ? chatNext : null); if (edge) document.body.append(edge);
+        restoreVoiceHome(); if (edge) document.body.append(edge);
       }
       currentDialog = dialog;
-    }).observe(quiz, { subtree: true, childList: true, attributes: true, attributeFilter: ["open"] });
+    }); quizObserver.observe(quiz, { subtree: true, childList: true, attributes: true, attributeFilter: ["open"] });
   }
+  }
+  observePractice();
+  window.addEventListener("site:page", observePractice);
   window.addEventListener("certitube:playback", event => {
     videoLocked = event.detail?.playing === true;
-    if (videoLocked) { if (lecture) lecture.running = false; clearTimeout(lectureTimer); muted = true; release?.setMuted(true); detector?.reset(); interrupt(); }
+    if (videoLocked) { if (lecture) lecture.running = false; clearTimeout(lectureTimer); muted = true; release?.setMuted(true); detector?.reset(); interrupt("video_playback"); }
     setStatus(videoLocked ? t("Micrófono silenciado durante el video.") : t("Video detenido. Activa el micrófono para continuar."));
   });
   expireMemory();

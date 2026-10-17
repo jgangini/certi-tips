@@ -24,6 +24,14 @@ test("voice diagnostics correlate navigation, expire absolutely, bound batches a
     assert(!JSON.stringify(calls).includes("SECRET") && !JSON.stringify(calls).includes("PRIVATE"));
     const key = [...saved.keys()][0], originalTime = JSON.parse(saved.get(key)).at;
     voiceDiagnostics(config); assert.equal(config.dataset.voiceTrace, trace); assert.equal(JSON.parse(saved.get(key)).at, originalTime);
+    const clock = Date.now;
+    try {
+      Date.now = () => originalTime + 86400001;
+      const header = events.headers().traceparent;
+      assert.notEqual(config.dataset.voiceTrace, trace, "A document kept alive by navigation must also expire its trace");
+      assert(header.includes(config.dataset.voiceTrace));
+      assert.equal(JSON.parse(saved.get(key)).at, Date.now());
+    } finally { Date.now = clock; }
     saved.set(key, JSON.stringify({ id: trace, at: Date.now() - 86400001 })); voiceDiagnostics(config); assert.notEqual(config.dataset.voiceTrace, trace);
     globalThis.fetch = async () => ({ ok: false });
     const failed = voiceDiagnostics(config); failed.enable(true); failed.record("state", { phase: "paused" }); await failed.flush();

@@ -11,7 +11,7 @@ async (page) => {
   const activityKey = `certichat:${new URL(base).pathname}:activity`;
   const activity = () => page.evaluate(key => JSON.parse(sessionStorage.getItem(key) || '[]'), activityKey);
   page.on('pageerror', error => errors.push(error.message));
-  page.on('request', request => { if (request.isNavigationRequest() && request.frame() === page.mainFrame()) documents.push(request.url()); });
+  page.on('request', request => { if (request.frame() === page.mainFrame() && (request.isNavigationRequest() || request.resourceType() === 'fetch' && request.headers().accept === 'text/html')) documents.push(request.url()); });
   await page.route('**/*', route => {
     if (new URL(route.request().url()).origin === origin) return route.continue();
     blocked.push(route.request().url()); return route.abort();
@@ -85,7 +85,7 @@ async (page) => {
   const phase = value => page.waitForFunction(expected => window.__voiceState?.phase === expected, value);
   const history = () => page.locator('deep-chat').evaluate(chat => JSON.stringify(chat.getMessages()));
   const snapshot = async name => {
-    registries[name] = await page.evaluate(async () => { const module = await import('/certitips/assets/certivoice-actions.js'); return { pageUrl: module.voicePageURL(), targets: module.voiceContext().targets }; });
+    registries[name] = await page.evaluate(async () => { const module = await import(document.querySelector('script[src*="/assets/site.js"]').src.replace('site.js', 'certivoice-actions.js')); return { pageUrl: module.voicePageURL(), targets: module.voiceContext().targets }; });
     assert(registries[name].pageUrl.startsWith('https://jgangini.github.io/certitips/') && !/\/certitips\/(es|en|pt|it)\//.test(registries[name].pageUrl), 'DOM registry has a local or localized page URL that the backend rejects');
     await require('node:fs/promises').writeFile('output/voice-api-registry.json', JSON.stringify(registries, null, 2));
   };
@@ -104,20 +104,26 @@ async (page) => {
     if (await page.locator('#certichat-panel').isHidden()) await page.locator('[data-chat-open]').click();
     await wave.waitFor({ state: 'visible' });
   };
-  const listen = async () => { if (await page.locator('#certichat-panel').isHidden()) await page.locator('[data-chat-open]').click(); await wave.click(); await phase('listening'); };
+  const listen = async () => { if (await page.evaluate(() => window.__voiceState?.active)) { await phase('listening'); return; } if (await page.locator('#certichat-panel').isHidden()) await page.locator('[data-chat-open]').click(); await wave.click(); await phase('listening'); };
   const turn = async (action, extra = {}, followups = []) => {
     replies.push({ answer: '', transcript: 'Una orden de navegación.', educational: false, sources: [], contentVersion: 'test', action, ...extra }, ...followups);
     const response = page.waitForResponse(value => new URL(value.url()).pathname === '/api/voice');
     await page.evaluate(() => window.__speakTurn()); await response;
   };
-  const paused = async () => {
+  const continued = async () => {
+    await page.waitForFunction(() => !document.documentElement.classList.contains('is-page-loading'));
+    if (await page.evaluate(() => window.__voiceState?.active)) {
+      await phase('listening');
+      assert(await page.evaluate(() => !window.__voiceState.resume && !window.__voiceTrack.stopped) && await mute.isVisible() && await exit.isVisible(), 'Continuous navigation lost live capture or controls');
+      return;
+    }
     await phase('paused');
     await wave.waitFor({ state: 'visible' }); await exit.waitFor({ state: 'visible' });
     assert(await page.evaluate(() => window.__voiceState.resume && !window.__voiceState.active && window.__voiceMicRequests === 0), 'Navigation restarted microphone without a gesture');
     assert(await wave.isVisible() && await exit.isVisible() && await mute.isHidden(), 'Navigation lost Resume/Exit');
     assert(await page.locator('[data-voice-edge]').getAttribute('data-state') === 'paused', 'Navigation lost its voice edge');
   };
-  const navigation = async (action, target) => { await turn(action); await page.waitForURL(target); await paused(); };
+  const navigation = async (action, target) => { await turn(action); await page.waitForURL(target); await continued(); };
 
   await open('es/1Z0-1157-26/agents/'); await listen();
   await snapshot('module');
@@ -135,7 +141,7 @@ async (page) => {
   await navigation({ name: 'home' }, new URL('es/', base).href);
   await listen();
   await navigation({ name: 'videos' }, new URL('es/certitube/', base).href);
-  checks.push('localized catalog, home and videos preserve paused voice without command messages');
+  checks.push('localized catalog, home and videos preserve continuous voice without command messages');
 
   await listen();
   await navigation({ name: 'open_course', targetId: 'course:1Z0-1157-26' }, new URL('es/1Z0-1157-26/overview/', base).href);
@@ -147,7 +153,7 @@ async (page) => {
   await listen();
   await turn({ name: 'course_presentation', targetId: 'course:1Z0-1157-26' });
   await page.waitForURL(new URL('es/1Z0-1157-26/agents/#diagram-agent-loop.svg', base).href);
-  await paused(); await listen();
+  await continued(); await listen();
   await page.waitForFunction(() => document.querySelector('#diagram-viewer')?.classList.contains('is-presenting'));
   const firstSlide = await page.locator('#diagram-viewer').getAttribute('data-source-id');
   assert(firstSlide, 'Presentation has no registered source ID');
@@ -160,7 +166,7 @@ async (page) => {
     await page.waitForFunction(id => document.querySelector('#diagram-viewer').dataset.sourceId === id, sourceId);
     await page.locator('#diagram-viewer .dialog-content img').evaluate(image => image.decode());
     const registered = await page.evaluate(async id => {
-      const actions = await import('/certitips/assets/certivoice-actions.js');
+      const actions = await import(document.querySelector('script[src*="/assets/site.js"]').src.replace('site.js', 'certivoice-actions.js'));
       const image = document.querySelector('#diagram-viewer .dialog-content img');
       return { sourceId: id, title: document.querySelector('#diagram-caption').textContent, pageUrl: actions.voicePageURL(), context: actions.voiceContext(), completed: actions.voiceContext(document, id), decoded: image.complete && image.naturalWidth > 0 };
     }, sourceId);
@@ -185,12 +191,12 @@ async (page) => {
   await turn({ name: 'highlight_section', targetId: section.sourceId });
   await page.waitForFunction(id => !document.querySelector('#diagram-viewer').open && location.hash === `#${encodeURIComponent(id)}`, section.id);
   await page.waitForFunction(({ key, id }) => JSON.parse(sessionStorage.getItem(key) || '[]').some(item => item.kind === 'section' && item.state === 'highlighted' && item.targetId === id), { key: activityKey, id: section.sourceId });
-  moduleRegistry.contexts.highlight = await page.evaluate(async () => (await import('/certitips/assets/certivoice-actions.js')).voiceContext());
+  moduleRegistry.contexts.highlight = await page.evaluate(async () => (await import(document.querySelector('script[src*="/assets/site.js"]').src.replace('site.js', 'certivoice-actions.js'))).voiceContext());
   assert(await page.locator('.prose :is(h2,h3)[data-source-id]').first().evaluate(heading => heading.getBoundingClientRect().top < innerHeight && heading.getAnimations().some(animation => animation.effect.getKeyframes().some(frame => frame.backgroundColor?.includes('255, 213, 79')))), 'Voice highlight did not reveal a yellow-highlighted registered heading');
   await phase('listening'); await turn({ name: 'return_presentation', targetId: firstSlide });
   await page.waitForFunction(id => document.querySelector('#diagram-viewer').open && document.querySelector('#diagram-viewer').classList.contains('is-presenting') && document.querySelector('#diagram-viewer').dataset.sourceId === id, firstSlide);
   await phase('listening');
-  moduleRegistry.contexts.returned = await page.evaluate(async () => (await import('/certitips/assets/certivoice-actions.js')).voiceContext());
+  moduleRegistry.contexts.returned = await page.evaluate(async () => (await import(document.querySelector('script[src*="/assets/site.js"]').src.replace('site.js', 'certivoice-actions.js'))).voiceContext());
   assert(voices().at(-1).body.activityTrail.some(item => item.kind === 'section' && item.state === 'highlighted' && item.targetId === section.sourceId), 'The next voice turn lost the real highlighted section');
   const modulePageUrl = moduleRegistry.slides[0].pageUrl;
   const moduleEvidence = { module: { courseId: 'agentic-ai-foundations-2026', locale: 'es', pageUrl: modulePageUrl, slides: moduleRegistry.slides }, highlightTargetId: section.sourceId,
@@ -246,8 +252,12 @@ async (page) => {
   await page.waitForFunction(() => window.__utterance?.text === 'Resto validado del primer segmento.');
   assert(voices().at(-1).body.playback?.requestId === firstLecture.requestId && await page.locator('#diagram-viewer').getAttribute('data-source-id') === nextSlide, 'Continue lost the original lecture playback or advanced before its remaining speech');
   replies.push(segment(2));
+  await mute.click();
+  assert(await page.evaluate(() => window.__voiceState.muted && window.__voiceState.phase === 'speaking' && !window.__voiceTrack.enabled), 'Lecture mute stopped the ongoing explanation');
   await page.evaluate(() => window.__utterance.onend());
   await page.waitForFunction(() => window.__utterance?.text === 'Contenido educativo del segmento 2.');
+  assert(await page.evaluate(() => window.__voiceState.muted && window.__voiceState.phase === 'speaking' && !window.__voiceTrack.enabled), 'A muted microphone prevented the next lecture segment or reopened capture');
+  await mute.click();
   const secondLecture = voices().at(-1).body;
   assert(secondLecture.mode === 'lecture' && secondLecture.previousRequestId === firstLecture.requestId && secondLecture.context.diagramId !== nextSlide, 'Lecture did not move once to the next registered slide');
   await page.evaluate(() => window.__utterance.onend());
@@ -367,7 +377,7 @@ async (page) => {
   await page.locator('#quiz [data-start]').waitFor({ state: 'visible' });
   const practiceHistory = await history();
   const practice = async (name, wait = true) => {
-    const targetId = await page.evaluate(async name => (await import('/certitips/assets/certivoice-actions.js')).voiceContext().targets.find(target => target.action === name)?.id, name);
+    const targetId = await page.evaluate(async name => (await import(document.querySelector('script[src*="/assets/site.js"]').src.replace('site.js', 'certivoice-actions.js'))).voiceContext().targets.find(target => target.action === name)?.id, name);
     assert(targetId, `Native practice target missing: ${name}`);
     await turn({ name, targetId }); if (wait) await phase('listening');
     return targetId;
@@ -408,7 +418,7 @@ async (page) => {
   assert(page.url() === practiceURL && await page.evaluate(() => window.__spoken.at(-1) === 'Pausaré la práctica para consultar este contenido. Tu intento se conserva y puedes volver después.'), 'Study detour did not finish explaining how to preserve and return to practice');
   await page.evaluate(() => { window.__holdSpeech = false; window.__utterance.onend(); });
   await page.waitForURL(url => url.pathname.startsWith('/certitips/es/1Z0-1157-26/') && !url.pathname.endsWith('/practice/'));
-  await paused();
+  await continued();
   assert(await page.evaluate(() => localStorage.getItem(`certitips:quiz:v1:${document.body.dataset.course}`)) === beforeDetour, 'Study detour changed the unfinished attempt');
   await listen(); await navigation({ name: 'return_practice' }, practiceURL); await listen();
   assert(await page.locator('.quiz-question').getAttribute('data-question-number') === '2. ' && await page.evaluate(() => localStorage.getItem(`certitips:quiz:v1:${document.body.dataset.course}`)) === beforeDetour, 'Returning from study did not preserve the same question and answers');
@@ -444,7 +454,7 @@ async (page) => {
     const callsBeforeAccept = voices().length;
     if (method === 'voice') await practice('practice_accept', false);
     else await page.locator('#quiz [data-finish-confirm][open] [data-finish-yes]').click();
-    await page.waitForURL(homeURL); await paused();
+    await page.waitForURL(homeURL); await continued();
     assert(documents.filter(url => url === homeURL).length === homeLoads + 1 && await page.evaluate(() => Number(sessionStorage.getItem('__practiceFollowups') || 0)) === followups + 1, `${method} acceptance did not navigate exactly once`);
     assert(voices().length === callsBeforeAccept + (method === 'voice' ? 1 : 0), `${method} acceptance triggered an extra inference`);
     const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('certitips:quiz:v1:agentic-ai-foundations-2026')));
@@ -472,7 +482,7 @@ async (page) => {
   checks.push('all eight OCI Foundations module pages load, and overview reports no images without leaving its route');
 
   await open('en/1Z0-1085-26/overview/');
-  outputRegistry.overviewEn = await page.evaluate(async () => { const module = await import('/certitips/assets/certivoice-actions.js'); return { pageUrl: module.voicePageURL(), context: module.voiceContext() }; });
+  outputRegistry.overviewEn = await page.evaluate(async () => { const module = await import(document.querySelector('script[src*="/assets/site.js"]').src.replace('site.js', 'certivoice-actions.js')); return { pageUrl: module.voicePageURL(), context: module.voiceContext() }; });
   await require('node:fs/promises').writeFile('output/voice-browser-output-registry.json', JSON.stringify(outputRegistry, null, 2));
 
   await open('es/1Z0-1157-26/agents/'); if (await exit.isVisible()) await exit.click();

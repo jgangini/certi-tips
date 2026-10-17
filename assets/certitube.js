@@ -12,7 +12,7 @@ function loadYouTube() {
     script.src = "https://www.youtube.com/iframe_api";
     script.onerror = fail;
     document.head.append(script);
-  });
+  }).catch(error => { youtubeReady = undefined; throw error; });
   return youtubeReady;
 }
 
@@ -60,7 +60,7 @@ function showChapter(root, seconds, reveal) {
   }
 }
 
-function trackPlayback(root, player, moments, duration, external) {
+function trackPlayback(root, player, moments, duration, external, signal) {
   let timer, stopped = false;
   function sync() {
     const moment = playbackMoment(player.getCurrentTime(), moments, duration);
@@ -74,18 +74,19 @@ function trackPlayback(root, player, moments, duration, external) {
     if ([0, 1, 2].includes(value)) sync();
     if (value === 1) timer = window.setInterval(sync, 500);
   }
-  document.addEventListener("visibilitychange", () => state(player.getPlayerState()));
-  window.addEventListener("pagehide", () => window.clearInterval(timer));
+  document.addEventListener("visibilitychange", () => state(player.getPlayerState()), { signal });
+  window.addEventListener("pagehide", () => window.clearInterval(timer), { signal });
   return { state, stop() { stopped = true; window.clearInterval(timer); } };
 }
 
-export function mountPlayer(root) {
+export function mountPlayer(root, signal = new AbortController().signal) {
   const external = root.querySelector("[data-tube-external]"), status = root.querySelector("[data-tube-status]"), message = root.querySelector("[data-tube-message]");
   const spinner = root.querySelector("[data-tube-loading]");
   const duration = Number(root.dataset.duration), videoId = root.dataset.videoId;
   const moments = new Map([...document.querySelectorAll("[data-tube-time]")].map(link => [Number(link.dataset.tubeTime), { seconds: Number(link.dataset.tubeTime), label: link.querySelector("span").textContent }]));
   let player, playback, ready = false, pending, wanted = false, failed = false, autoplay = true, voiceFullscreen = false;
   const announcePlayback = playing => {
+    if (signal.aborted) return;
     if (!playing && voiceFullscreen) {
       voiceFullscreen = false;
       if (document.fullscreenElement && root.contains(document.fullscreenElement)) document.exitFullscreen?.().catch(() => {});
@@ -126,9 +127,10 @@ export function mountPlayer(root) {
 
   const events = {
     onReady(event) {
+      if (signal.aborted) { event.target.destroy?.(); return; }
       clearTimeout(loading); spinner.hidden = true; failed = false;
       player = event.target; ready = true;
-      playback = trackPlayback(root, player, moments, duration, external);
+      playback = trackPlayback(root, player, moments, duration, external, signal);
       player.getIframe().title = t("Video del caso en YouTube");
       inform("");
       playMoment();
@@ -164,44 +166,48 @@ export function mountPlayer(root) {
         } catch { player.pauseVideo(); announcePlayback(false); return false; }
       })();
     }
-  });
-  document.addEventListener("click", event => onMomentLink(event, moments, fromHash));
-  window.addEventListener("hashchange", fromHash);
+  }, { signal });
+  document.addEventListener("click", event => onMomentLink(event, moments, fromHash), { signal });
+  window.addEventListener("hashchange", fromHash, { signal });
   // Native initial-fragment/history scrolling happens after module initialization.
   window.addEventListener("pageshow", event => {
     if (event.persisted || selectedMoment(location.hash, moments)) window.requestAnimationFrame(fromHash);
-  });
-  window.addEventListener("pagehide", () => { if (ready) player.pauseVideo(); });
+  }, { signal });
+  window.addEventListener("pagehide", () => { if (ready) player.pauseVideo(); }, { signal });
+  signal.addEventListener("abort", () => { clearTimeout(loading); playback?.stop(); player?.destroy?.(); }, { once: true });
   fromHash();
   loadYouTube().then(YT => {
+    if (signal.aborted) return;
     player = new YT.Player("tube-youtube", {
       videoId, width: "100%", height: "100%",
       playerVars: { origin: location.origin, playsinline: 1, autoplay: 0, hl: language }, events,
     });
-  }).catch(() => fallback(t("No se pudo conectar con YouTube. Usa el enlace para abrir el video.")));
+  }).catch(() => { if (!signal.aborted) fallback(t("No se pudo conectar con YouTube. Usa el enlace para abrir el video.")); });
 }
 
-function mountChapterScroll(root) {
+function mountChapterScroll(root, signal) {
   const list = root.querySelector(".tube-chapter-list"), buttons = [...root.querySelectorAll("[data-tube-scroll]")];
   function update() {
     const { scrollLeft, scrollWidth, clientWidth } = list;
     buttons[0].disabled = scrollLeft <= 4;
     buttons[1].disabled = scrollLeft >= scrollWidth - clientWidth - 4;
   }
-  for (const button of buttons) button.addEventListener("click", () => list.scrollBy({ left: Number(button.dataset.tubeScroll) * list.clientWidth * .8, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" }));
-  list.addEventListener("scroll", update, { passive: true });
-  new ResizeObserver(update).observe(list);
+  for (const button of buttons) button.addEventListener("click", () => list.scrollBy({ left: Number(button.dataset.tubeScroll) * list.clientWidth * .8, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" }), { signal });
+  list.addEventListener("scroll", update, { ...({ passive: true }), signal });
+  const observer = new ResizeObserver(update); observer.observe(list);
+  signal.addEventListener("abort", () => observer.disconnect(), { once: true });
   update();
 }
 
-function mountMobileLayout(root) {
+function mountMobileLayout(root, signal) {
   const mobile = matchMedia("(max-width: 1000px)");
   const videos = root.parentElement.querySelector(".tube-videos");
   const content = [...root.children].filter(node => !node.matches(".tube-watch"));
   const browse = document.createElement("div");
   browse.className = "tube-browse";
   const watch = root.querySelector(".tube-watch");
-  new ResizeObserver(() => root.style.setProperty("--tube-watch-height", `${watch.getBoundingClientRect().height}px`)).observe(watch);
+  const observer = new ResizeObserver(() => root.style.setProperty("--tube-watch-height", `${watch.getBoundingClientRect().height}px`)); observer.observe(watch);
+  signal.addEventListener("abort", () => observer.disconnect(), { once: true });
   function sync() {
     if (mobile.matches) {
       root.append(browse);
@@ -212,11 +218,11 @@ function mountMobileLayout(root) {
       browse.remove();
     }
   }
-  mobile.addEventListener("change", sync);
+  mobile.addEventListener("change", sync, { signal });
   sync();
 }
 
-if (typeof document !== "undefined") {
+export function mountTube(signal) {
   const root = document.querySelector("[data-tube-player]");
-  if (root) { mountMobileLayout(root); mountChapterScroll(root); mountPlayer(root); }
+  if (root) { mountMobileLayout(root, signal); mountChapterScroll(root, signal); mountPlayer(root, signal); }
 }

@@ -67,18 +67,21 @@ if (doc?.querySelector("[data-certichat]")) {
     if (current !== practiceSignature) record({ ...value, pageUrl: voicePageURL(doc) });
     practiceSignature = current;
   };
+  let observers = [];
   const ready = () => {
+    observers.forEach(observer => observer.disconnect()); observers = []; previousDiagram = undefined; practiceSignature = "";
     const viewer = doc.querySelector("#diagram-viewer"), quiz = doc.querySelector("#quiz");
     if (viewer) {
-      new MutationObserver(captureDiagram).observe(viewer, { attributes: true, attributeFilter: ["open", "class", "data-source-id"] });
+      const observer = new MutationObserver(captureDiagram); observers.push(observer); observer.observe(viewer, { attributes: true, attributeFilter: ["open", "class", "data-source-id"] });
       viewer.querySelector(".dialog-content img")?.addEventListener("load", captureDiagram);
     }
-    if (quiz) new MutationObserver(capturePractice).observe(quiz, { subtree: true, childList: true, attributes: true, attributeFilter: ["open"] });
+    if (quiz) { const observer = new MutationObserver(capturePractice); observers.push(observer); observer.observe(quiz, { subtree: true, childList: true, attributes: true, attributeFilter: ["open"] }); }
     record({ kind: "page", state: "arrived", pageUrl: doc.querySelector('link[rel="canonical"]')?.href });
     captureDiagram(); capturePractice();
   };
   // ponytail: observe completed native UI states, not clicks, scrolling, answer text or option selections.
   if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", ready, { once: true }); else ready();
+  window.addEventListener("site:page", ready);
   window.addEventListener("pageshow", event => { if (event.persisted) record({ kind: "page", state: "arrived", pageUrl: doc.querySelector('link[rel="canonical"]')?.href }); });
   doc.addEventListener("close", event => {
     const dialog = event.target;

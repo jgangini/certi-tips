@@ -2,6 +2,7 @@ import { t } from './i18n.js';
 import { newAttempt, confirmAnswer, advance, previous, finishAttempt, results, restoreAttempt } from './quiz-core.js';
 import { readStored, writeStored } from './storage.js';
 
+export async function mountQuiz(signal) {
 const root = document.querySelector('#quiz');
 const course = document.body.dataset.course;
 const base = document.body.dataset.base;
@@ -22,7 +23,7 @@ function notice() { return persisted ? '' : `<p class="quiz-notice" role="status
 
 function intro(moveFocus = false) {
   root.innerHTML = `<div class="quiz-shell quiz-intro"><div class="quiz-heading"><div class="eyebrow">${escape(t("PRÁCTICA"))}</div><h2>${escape(t("Un paso más cerca de tenerlo claro."))}</h2></div><p>${escape(t("Selecciona una alternativa y pulsa"))} <strong>${escape(t("Siguiente"))}</strong> ${escape(t("para ver la explicación. Pulsa otra vez para continuar."))}</p><div class="quiz-facts"><div><strong>${questionCount}</strong><span>${escape(t("preguntas por intento"))}</span></div><div><strong>${String(domains.length).padStart(2, "0")}</strong><span>${escape(t("áreas de estudio"))}</span></div><div><strong>∞</strong><span>${escape(t("sin límite de tiempo"))}</span></div></div><div class="quiz-start-action"><button class="button" data-start>${escape(t("Comenzar"))}</button></div></div>`;
-  root.querySelector('[data-start]').addEventListener('click', start);
+  root.querySelector('[data-start]').addEventListener('click', start, { signal });
   if (!persisted) root.insertAdjacentHTML('beforeend', `<p class="quiz-notice" role="status">${escape(t("El test se reinició en esta sesión, pero no se pudo borrar el avance guardado. Al recargar podría reaparecer el intento anterior."))}</p>`);
   if (moveFocus) root.querySelector('[data-start]').focus();
 }
@@ -39,13 +40,13 @@ function confirmAction(action) {
   dialog.setAttribute('aria-labelledby', `${action}-confirm-title`); dialog.setAttribute('aria-describedby', `${action}-confirm-message`);
   dialog.innerHTML = `<div class="confirmation-body"><h2 id="${action}-confirm-title" tabindex="-1" autofocus>${escape(title)}</h2><p id="${action}-confirm-message">${escape(message)}</p></div><div class="confirmation-actions"><button class="button button-secondary" type="button" data-${action}-no>${escape(t("Cancelar"))}</button><button class="button" type="button" data-${action}-yes>${escape(t("Aceptar"))}</button></div>`;
   root.append(dialog);
-  dialog.querySelector(`[data-${action}-no]`).addEventListener('click', () => dialog.close());
-  dialog.querySelector(`[data-${action}-yes]`).addEventListener('click', () => dialog.close(action));
+  dialog.querySelector(`[data-${action}-no]`).addEventListener('click', () => dialog.close(), { signal });
+  dialog.querySelector(`[data-${action}-yes]`).addEventListener('click', () => dialog.close(action), { signal });
   dialog.addEventListener('click', event => {
     if (event.target !== dialog) return;
     const bounds = dialog.getBoundingClientRect();
     if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
-  });
+  }, { signal });
   dialog.addEventListener('close', () => {
     const accepted = dialog.returnValue === action;
     Promise.allSettled(dialog.getAnimations().map(animation => animation.finished)).then(() => {
@@ -55,7 +56,7 @@ function confirmAction(action) {
       else reset(true);
     });
     if (!accepted) root.querySelector(`[data-${action}]`)?.focus();
-  });
+  }, { signal });
   dialog.showModal();
 }
 
@@ -129,40 +130,42 @@ function render(moveFocus = false) {
   form.addEventListener('change', () => {
     const submit = form.querySelector('button[type="submit"]');
     if (submit) submit.disabled = !form.querySelector('input[name="answer"]:checked');
-  });
+  }, { signal });
   form.addEventListener('submit', event => {
     event.preventDefault();
     if (completed) return;
     const answer = new FormData(event.currentTarget).get('answer');
     attempt = confirmAnswer(attempt, bank, answer);
     save(); render(); root.querySelector('#feedback-title')?.focus();
-  });
+  }, { signal });
   root.querySelector('[data-next]')?.addEventListener('click', () => {
     if (completed) resultIndex = Math.min(index + 1, attempt.ids.length - 1);
     else { attempt = advance(attempt); save(); }
     render(true);
-  });
+  }, { signal });
   root.querySelector('[data-previous]').addEventListener('click', () => {
     if (completed) resultIndex = Math.max(index - 1, 0);
     else { attempt = previous(attempt); save(); }
     render(true);
-  });
+  }, { signal });
   if (moveFocus) root.querySelector('.quiz-question').focus();
 }
 
 async function load() {
   try {
-    const response = await fetch(`${base}assets/${document.body.dataset.questionBank}.json`);
+    const response = await fetch(`${base}assets/${document.body.dataset.questionBank}.json`, { signal });
     if (!response.ok) throw new Error(t("No se pudo cargar el banco."));
     bank = await response.json();
+    if (signal.aborted) return;
     attempt = restoreAttempt(readStored(key, null), bank, domains);
     if (attempt) render(); else intro();
   } catch {
+    if (signal.aborted) return;
     root.innerHTML = `<div class="quiz-error"><h2>${escape(t("No pudimos cargar la práctica."))}</h2><p>${escape(t("Comprueba tu conexión y vuelve a intentarlo. La guía sigue disponible."))}</p><button class="button button-secondary" data-retry>${escape(t("Volver a cargar"))}</button></div>`;
-    root.querySelector('[data-retry]').addEventListener('click', load);
+    root.querySelector('[data-retry]').addEventListener('click', load, { signal });
   }
 }
-load();
+await load();
 root.addEventListener('click', event => {
   if (event.target.closest('[data-reset]')) reset();
   if (event.target.closest('[data-finish]')) confirmAction('finish');
@@ -170,4 +173,6 @@ root.addEventListener('click', event => {
   if (event.target.closest('[data-results]')) { resultIndex = null; render(true); }
   const question = event.target.closest('[data-question-index]');
   if (question) { resultIndex = Number(question.dataset.questionIndex); render(true); }
-});
+}, { signal });
+
+}

@@ -32,7 +32,7 @@ test("the image viewer refreshes its group, source heading and description when 
     querySelectorAll: selector => selector === '.sidebar .nav-link' ? links : buttons,
   };
   const script = readFileSync(new URL("../assets/site.js", import.meta.url), "utf8");
-  vm.runInNewContext(script.slice(script.indexOf('const dialog = document.querySelector("#diagram-viewer");')), { document, matchMedia: () => ({ matches: false }), window: { addEventListener() {} }, t, URL, location: { href: "https://example.test/course/overview/" } });
+  vm.runInNewContext(script.slice(script.indexOf('function mountViewer(signal)'), script.indexOf('function mountSitePage(signal)')) + '\nmountViewer(signal);', { document, signal: new AbortController().signal, matchMedia: () => ({ matches: false }), window: { addEventListener() {} }, t, URL, location: { href: "https://example.test/course/overview/" } });
   for (const [index, button] of buttons.entries()) {
     await button.click();
     assert.equal(enlarged.src, button.image.src);

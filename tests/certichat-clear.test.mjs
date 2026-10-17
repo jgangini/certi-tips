@@ -34,7 +34,7 @@ test("clear removes stored activity and the prior diagram observation without ch
 
 test("clear removes practice and presentation return memory without resetting practice progress", () => {
   const window = new EventTarget(), sessionStorage = storage(), dialog = { dataset: { voiceReturn: "course/lesson#diagram-one.svg", sourceId: "course/lesson#diagram-two.svg" } };
-  const context = { window, sessionStorage, dialog, siteBase: "/certitips/" };
+  const context = { window, sessionStorage, dialog, signal: new AbortController().signal, siteBase: "/certitips/" };
   sessionStorage.setItem("certitips:quiz:v1:course", "preserved-attempt");
   runInNewContext(script("certivoice-study"), context);
   runInNewContext(source("site").split("\n").find(line => line.includes('window.addEventListener("certichat:cleared"')), context);

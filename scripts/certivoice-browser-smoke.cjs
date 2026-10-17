@@ -78,7 +78,9 @@ async (page) => {
     assert(label ? view.text === label && view.visibleText === label.replace('…', '...') && !view.hidden && view.lang === 'en' && view.live === 'polite' && view.mode && view.inert && view.aria === 'true' && view.messagesDisplay === 'none' && view.headingHidden && view.headingInert && view.headingAria === 'true' && view.readonly === 'true' && !view.editable && view.textboxHidden && view.quotaHidden && view.geometry && view.compactStyle && view.dots && view.liveStatus === (view.error ? 'polite' : 'off') && view.title === (view.error || '')
       : view.hidden && !view.mode && !view.inert && view.aria === null && view.messagesDisplay !== 'none' && !view.headingHidden && !view.headingInert && view.headingAria === null && view.readonly === 'false' && view.editable && !view.textboxHidden, `Incorrect compact voice composer: ${JSON.stringify(view)}`);
   };
-  const checkResume = async expectedHistory => {
+  const checkFreshDocumentResume = async expectedHistory => {
+    // Internal navigation keeps voice alive; this helper deliberately tests a fresh document's gesture gate.
+    await page.reload();
     await page.waitForFunction(() => window.__voiceState?.resume === true && window.__voiceState.phase === 'paused' && document.querySelector('deep-chat')?.shadowRoot?.querySelector('#certivoice-phase')?.getAttribute('aria-label') === 'Paused…');
     await checkPhase('Paused…');
     assert(await page.evaluate(() => !window.__voiceState.active && !window.__voicePort && !window.__voiceTrack && window.__voiceMicRequests === 0 && !window.__voiceUtterance), 'Paused destination opened a microphone or spoke without a gesture');
@@ -176,10 +178,10 @@ async (page) => {
   const modeCreatedAt = await page.evaluate(() => JSON.parse(sessionStorage.getItem('certivoice:https://jgangini.github.io/certitips/:navigation')).createdAt);
   await page.evaluate(() => window.__speakTurn());
   await page.waitForURL(new URL(firstVideoURL, base).href);
-  await checkResume(emptyHistory);
+  await checkFreshDocumentResume(emptyHistory);
   const firstCommandCount = calls.filter(call => call.path === '/api/voice').length;
   await page.reload();
-  await checkResume(emptyHistory);
+  await checkFreshDocumentResume(emptyHistory);
   assert(await page.evaluate(() => JSON.parse(sessionStorage.getItem('certivoice:https://jgangini.github.io/certitips/:navigation')).createdAt) === modeCreatedAt, 'Navigation or reload extended the voice mode lifetime');
   assert(calls.filter(call => call.path === '/api/voice').length === firstCommandCount, 'Reload retried the first navigation command');
   await closeVoice();
@@ -217,6 +219,10 @@ async (page) => {
   await page.waitForFunction(() => document.querySelector('[data-voice-edge]').dataset.state === 'speaking');
   await checkPhase('Speaking…');
   assert(await page.evaluate(() => window.__voiceUtterance?.voice?.name === 'Microsoft Sabina'), 'Local confirmation did not select the available female voice');
+  await mute.click();
+  assert(await page.evaluate(() => window.__voiceState.muted && window.__voiceState.phase === 'speaking' && !window.__voiceTrack.enabled && window.__voiceUtterance), 'Muting the microphone interrupted the native answer');
+  await mute.click();
+  assert(await page.evaluate(() => !window.__voiceState.muted && window.__voiceState.phase === 'speaking' && window.__voiceTrack.enabled), 'Unmuting restarted or stopped the native answer');
   assert(await page.evaluate(() => sessionStorage.getItem('certivoice:https://jgangini.github.io/certitips/:playback') === null), 'Command before a lesson created educational playback');
   await page.evaluate(() => window.dispatchEvent(new CustomEvent('certivoice:command', { detail: 'interrupt' })));
   await page.evaluate(() => { window.__voiceOptions = [{ name: 'Microsoft Pablo', lang: 'es-ES' }]; });
@@ -300,9 +306,9 @@ async (page) => {
   reply = { ...reply, action: { name: 'next_page' } };
   await page.evaluate(() => window.__speakTurn());
   await page.waitForURL('**/langchain/');
-  await checkResume();
+  await checkFreshDocumentResume();
   await wave.click();
-  await page.waitForFunction(() => window.__voiceUtterance?.text.startsWith('Página abierta:'));
+  await page.waitForFunction(() => window.__voiceState.phase === 'listening');
   assert(await page.evaluate(() => JSON.parse(sessionStorage.getItem('certivoice:https://jgangini.github.io/certitips/:playback')).requestId) === voice.body.requestId, 'Navigation confirmation replaced educational playback');
   await page.evaluate(() => window.dispatchEvent(new CustomEvent('certivoice:command', { detail: 'interrupt' })));
   reply = { ...reply, answer: 'Continuación validada.', action: { name: 'continue' }, playbackRequestId: voice.body.requestId, playbackOffset: 3 };
@@ -729,7 +735,7 @@ async (page) => {
   await page.waitForFunction(() => window.__voiceState?.phase === 'listening');
   await page.evaluate(() => window.__speakTurn());
   await page.waitForURL(new URL(videoURL, base).href);
-  await checkResume(beforeVideoCommand);
+  await checkFreshDocumentResume(beforeVideoCommand);
   assert(calls.filter(call => call.path === '/api/voice').at(-1).body.locale === 'en', 'Video command lost the current language');
   await wave.click();
   await page.waitForFunction(() => window.__voiceState?.phase === 'listening');
@@ -743,12 +749,12 @@ async (page) => {
   const normalURL = new URL(await normalLink.getAttribute('href'), base).href;
   await normalLink.click();
   await page.waitForURL(normalURL);
-  await checkResume(beforeVideoCommand);
+  await checkFreshDocumentResume(beforeVideoCommand);
   for (const width of [1418, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
     for (const theme of ['light', 'dark']) {
       await page.evaluate(value => { document.documentElement.dataset.theme = value; return new Promise(requestAnimationFrame); }, theme);
-      await checkResume(beforeVideoCommand);
+      await checkFreshDocumentResume(beforeVideoCommand);
     }
   }
   await page.setViewportSize({ width: 1280, height: 900 });
@@ -756,7 +762,7 @@ async (page) => {
   await page.waitForFunction(() => window.__voiceState?.phase === 'listening');
   assert(await page.evaluate(() => window.__voiceMicRequests === 1), 'Resume did not request one microphone after its gesture');
   await page.reload();
-  await checkResume(beforeVideoCommand);
+  await checkFreshDocumentResume(beforeVideoCommand);
   assert(calls.filter(call => call.path === '/api/voice').length === navigationCalls, 'Normal navigation or reload submitted/retried audio');
   await closeVoice();
   await checkPhase(null);
@@ -843,13 +849,17 @@ async (page) => {
   quota = { remaining: 1, limit: 20, resetAt: new Date(await page.evaluate(() => Date.now()) + 60000).toISOString() };
   await refreshSession(); await restartVoice();
   const beforeLastNavigation = calls.filter(call => call.path === '/api/voice').length;
+  const beforeLastCapture = await page.evaluate(() => window.__voiceMicRequests);
   reply = { answer: '', transcript: 'Abre CertiTips.', educational: false, action: { name: 'catalog' }, sources: [], contentVersion: 'test' };
   quota = { ...quota, remaining: 0 };
   await page.evaluate(() => window.__speakTurn());
   await page.waitForURL(`${base}en/courses/`);
   await page.waitForFunction(() => window.__voiceState?.enabled && window.__voiceState.quotaBlocked && window.__voiceState.phase === 'paused');
-  assert(await wave.getAttribute('aria-disabled') === 'true' && await page.evaluate(() => !window.__voiceState.active && window.__voiceMicRequests === 0), 'The last navigation did not complete safely without destination auto-capture');
+  assert(await wave.getAttribute('aria-disabled') === 'true' && await page.evaluate(count => !window.__voiceState.active && window.__voiceMicRequests === count && window.__voiceTrack.stopped, beforeLastCapture), 'The last navigation did not stop capture or acquired another microphone');
   assert(calls.filter(call => call.path === '/api/voice').length === beforeLastNavigation + 1, 'Last-quota navigation repeated its request');
+  const quotaNotice = page.locator('deep-chat #certichat-quota');
+  assert(await quotaNotice.isVisible() && /[0-9]{2}:[0-9]{2}:[0-9]{2}/.test(await quotaNotice.textContent()), 'Paused voice hid the reason and renewal time for its disabled audio button');
+  assert(await wave.getAttribute('title') === await quotaNotice.textContent() && await exit.getAttribute('aria-disabled') === 'false', 'Quota did not explain Resume or disabled Exit');
   await closeVoice();
   quota = { remaining: 1, limit: 20, resetAt: new Date(await page.evaluate(() => Date.now()) + 60000).toISOString() };
   await refreshSession(); await restartVoice();

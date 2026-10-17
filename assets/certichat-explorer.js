@@ -22,6 +22,7 @@ export function indexGraph(data) {
   return { byId, neighbors, edges, nodes: [...byId.values()].sort((a, b) => a.label.localeCompare(b.label, language, { numeric: true, sensitivity: "base" })) };
 }
 
+export function mountExplorer(signal) {
 const root = typeof document === "undefined" ? null : document.querySelector("[data-knowledge-graph]");
 if (root?.dataset.knowledgeGraph) {
   const status = root.querySelector("[data-graph-status]"), workspace = root.querySelector("[data-graph-workspace]");
@@ -51,9 +52,11 @@ if (root?.dataset.knowledgeGraph) {
     scrollButtons[0].disabled = scrollLeft <= 4;
     scrollButtons[1].disabled = scrollLeft >= scrollWidth - clientWidth - 4;
   }
-  for (const button of scrollButtons) button.addEventListener("click", () => active.scrollBy({ left: Number(button.dataset.graphScroll) * active.clientWidth * .8, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" }));
-  active.addEventListener("scroll", updateScroll, { passive: true });
-  new ResizeObserver(updateScroll).observe(active);
+  for (const button of scrollButtons) button.addEventListener("click", () => active.scrollBy({ left: Number(button.dataset.graphScroll) * active.clientWidth * .8, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" }), { signal });
+  active.addEventListener("scroll", updateScroll, { ...({ passive: true }), signal });
+  const resize = new ResizeObserver(updateScroll); resize.observe(active);
+  let refreshTimer;
+  signal.addEventListener("abort", () => { resize.disconnect(); clearInterval(refreshTimer); network?.destroy(); }, { once: true });
 
   async function refreshVersionStatus() {
     if (!apiOrigin || document.hidden) return;
@@ -83,7 +86,7 @@ if (root?.dataset.knowledgeGraph) {
     button.dataset.source = source;
     button.setAttribute("aria-pressed", "false");
     button.setAttribute("aria-label", `${position}. ${label}`);
-    button.addEventListener("click", () => select(id, true));
+    button.addEventListener("click", () => select(id, true), { signal });
     return button;
   }
 
@@ -106,7 +109,7 @@ if (root?.dataset.knowledgeGraph) {
         if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
           try { sessionStorage.setItem(`certichat:${siteRoot}:reference`, link.href); } catch { /* Guide navigation also works without storage. */ }
         }
-      });
+      }, { signal });
       cardSources.append(link);
     }
   }
@@ -163,21 +166,22 @@ if (root?.dataset.knowledgeGraph) {
     if (mismatch) refreshGraph();
   }
 
-  window.addEventListener("certichat:trace", event => { latest = event.detail; updateTrace(); });
+  window.addEventListener("certichat:trace", event => { latest = event.detail; updateTrace(); }, { signal });
   window.addEventListener("certichat:hover", event => {
     hoveredTrace = event.detail;
     if (!hoveredTrace) { network?.stopPulse(); return; }
     focusAfterRefresh = false;
     latest = { status: "ready", trace: hoveredTrace }; updateTrace();
     if (currentTrace?.nodes.length) network.pulse(true);
-  });
+  }, { signal });
   window.addEventListener("certichat:focus", event => {
     focusAfterRefresh = true;
     latest = { status: "ready", trace: event.detail }; updateTrace();
     if (currentTrace?.nodes.length) { network.fit(true); network.pulse(Boolean(hoveredTrace && hoveredTrace === event.detail)); focusAfterRefresh = false; }
-  });
+  }, { signal });
 
   function showGraph(data) {
+    if (signal.aborted) return;
     const indexed = indexGraph(data);
     if (!indexed.nodes.length || !/^[a-f0-9]{64}$/.test(data.version)) throw new Error("Invalid graph");
     network?.destroy();
@@ -217,22 +221,27 @@ if (root?.dataset.knowledgeGraph) {
     try {
       const response = await fetch(root.dataset.knowledgeGraph, { signal: AbortSignal.timeout(15000) });
       if (!response.ok) throw new Error("Graph unavailable");
-      showGraph(await response.json());
-      root.querySelector("[data-graph-zoom-in]").addEventListener("click", () => network.zoom(1.4));
-      root.querySelector("[data-graph-zoom-out]").addEventListener("click", () => network.zoom(1 / 1.4));
-      root.querySelector("[data-graph-fit]").addEventListener("click", () => network.fit());
-      activeFit.addEventListener("click", () => network.fit(true));
+      const data = await response.json();
+      if (signal.aborted) return;
+      showGraph(data);
+      root.querySelector("[data-graph-zoom-in]").addEventListener("click", () => network.zoom(1.4), { signal });
+      root.querySelector("[data-graph-zoom-out]").addEventListener("click", () => network.zoom(1 / 1.4), { signal });
+      root.querySelector("[data-graph-fit]").addEventListener("click", () => network.fit(), { signal });
+      activeFit.addEventListener("click", () => network.fit(true), { signal });
       refreshVersionStatus();
-      setInterval(refreshVersionStatus, 30000);
+      refreshTimer = setInterval(refreshVersionStatus, 30000);
       document.addEventListener("visibilitychange", () => {
         if (document.hidden) { hoveredTrace = null; network.stopPulse(); }
         else refreshVersionStatus();
-      });
+      }, { signal });
     } catch {
+      if (signal.aborted) return;
       status.classList.remove("is-loading"); status.removeAttribute("aria-label");
       status.textContent = t("No se pudo cargar la instantánea del mapa. Actualiza la página para volver a intentarlo.");
       status.hidden = false; workspace.hidden = true;
     }
   }
   load();
+}
+
 }
