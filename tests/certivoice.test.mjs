@@ -483,7 +483,7 @@ function voiceController(api = "http://127.0.0.1:18741", options = {}) {
     MutationObserver: class { constructor(callback) { this.callback = callback; } observe(target) { observers.set(target, this.callback); } },
     sessionStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, String(value)), removeItem: key => storage.delete(key) },
     setInterval: callback => intervals.push(callback), setTimeout() {}, clearTimeout() {}, clearInterval() {},
-    clearVoiceHighlight() {},
+    clearVoiceHighlight() {}, diagramPointer: async () => undefined,
     voiceDiagnostics: () => ({ record() {}, headers: () => ({}), enable() {}, flush() {} }),
     t: text => text, locale: "es", siteBase: "/", voiceContext: () => ({}), restoreVoicePlayback: value => restoreVoicePlayback(value, clock.now),
     pendingNavigation: (value, current, base) => pendingNavigation(value, current, base, clock.now), shouldResumeNavigation: (value, current, base) => shouldResumeNavigation(value, current, base, clock.now), validVoiceNavigation, voiceMemoryFresh: value => voiceMemoryFresh(value, clock.now), VoiceActivity,
@@ -870,5 +870,21 @@ test("chat shows native send when voice is unavailable and never stores voice er
   } finally {
     if (originalWindow === undefined) delete globalThis.window; else globalThis.window = originalWindow;
     if (originalEvent === undefined) delete globalThis.CustomEvent; else globalThis.CustomEvent = originalEvent;
+  }
+});
+
+
+test("returning from a document aside resumes verified cloud narration at its previous offset", async () => {
+  const source = readFileSync(new URL("../assets/certivoice.js", import.meta.url), "utf8");
+  const body = source.slice(source.indexOf("  async function returnFromAside("), source.indexOf("  async function explainAside("));
+  for (const cloud of [false, true]) {
+    const calls = [], saved = { url: "https://site.test/course/#diagram", diagramId: "course#diagram", playback: { requestId: "12345678-1234-4234-8234-123456789abc", answer: "Ya visto. Queda esta parte.", heardCharacters: 10, createdAt: Date.now() } };
+    const env = { aside: saved, epoch: 7, active: true, nativeVoice: !cloud, cloudSpeech: () => cloud,
+      navigateSite: async () => true, performVoiceAction: async () => ({}), diagnostics: { record() {} },
+      restoreVoicePlayback, say: async (...args) => calls.push(args), finishSpeech: () => { throw new Error("Skipped pending narration"); } };
+    await vm.runInNewContext(`${body}\nreturnFromAside(aside, 7)`, env);
+    assert.equal(calls.length, 1); assert.equal(calls[0][0], saved.playback.answer.slice(10));
+    assert.equal(calls[0][2].requestId, saved.playback.requestId); assert.equal(calls[0][2].offset, 10);
+    assert.equal(env.playback.createdAt, saved.playback.createdAt);
   }
 });

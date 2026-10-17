@@ -2,6 +2,7 @@ import { navigateSite } from "./site-navigation.js";
 import { t, locale, language, canonicalURL, localizedURL, siteBase } from "./i18n.js";
 import { animateVoiceEdge, captureVoice, encodeVoiceWav, heardCharacters, nativeSpeechSegments, preferredNativeVoice, restoreVoicePlayback, voiceMemoryFresh, VoiceActivity } from "./certivoice-audio.js";
 import { performVoiceAction, explanationSource, voiceContext, voicePageURL, pendingNavigation, shouldResumeNavigation, validVoiceNavigation } from "./certivoice-actions.js";
+import { diagramPointer } from "./certivoice-pointer.js";
 import { clearVoiceHighlight } from "./certivoice-study.js";
 import { activityTrail } from "./certichat-activity.js";
 import { voiceDiagnostics } from "./certivoice-telemetry.js";
@@ -48,7 +49,7 @@ if (root) {
     speechEpoch++;
     if (output || utterance) diagnostics.record("action", { action: reason, phase: "speaking", muted });
     speechController?.abort(); speechController = null;
-    if (speech) speech.after = null;
+    if (speech) { speech.after = null; speech.follow?.stop?.(); }
     stopEdge?.(); stopEdge = null;
     if (output && playback && speech?.track) playback.heardCharacters = Math.min(5000, speech.offset + heardCharacters(speech.text, context.currentTime - speech.started, speech.duration));
     if (output) { output.onended = null; try { output.stop(); } catch { /* Already ended. */ } output = null; }
@@ -64,6 +65,7 @@ if (root) {
     clearVoiceHighlight(); aside = null; clearTimeout(lectureTimer); if (lecture) lecture.running = false;
     if (!preserveMode) { clearNavigation(); dismissVideo(); lecture = null; }
     epoch++; active = false; starting = false; checkingSession = false; muted = false; interrupt(error ? "error_pause" : reason); controller?.abort(); controller = null;
+    if (!preserveMode) clearPending();
     rejectVerification?.(new Error("Cancelled")); rejectVerification = null; verification.hidden = true;
     if (widget !== undefined && window.turnstile) { window.turnstile.remove(widget); widget = undefined; }
     release?.stop(); release = null; detector?.reset();
@@ -162,7 +164,7 @@ if (root) {
       diagnostics.record("action", { action: "explanation_returned" });
       aside = null; lecture = saved.lecture; lastExplained = saved.lastExplained;
       const previous = restoreVoicePlayback(saved.playback);
-      if (nativeVoice && previous && previous.heardCharacters < previous.answer.length) {
+      if ((cloudSpeech() || nativeVoice) && previous && previous.heardCharacters < previous.answer.length) {
         playback = previous;
         await say(previous.answer.slice(previous.heardCharacters), null, { requestId: previous.requestId, answer: previous.answer, offset: previous.heardCharacters }, token);
       } else if (lecture?.running && !quotaBlocked()) await lectureTurn();
@@ -171,7 +173,7 @@ if (root) {
   }
   async function explainAside(result, token) {
     const viewer = document.querySelector("#diagram-viewer[open].is-presenting[data-source-id]");
-    if (result.expanded === true && viewer && !aside) {
+    if (result.consultDocument === true && viewer && !aside) {
       const target = explanationSource(result.sources);
       if (!target) return;
       const url = new URL(localizedURL(voicePageURL())); url.host = location.host; url.protocol = location.protocol; url.hash = viewer.dataset.sourceId.split("#")[1];
@@ -187,7 +189,7 @@ if (root) {
     return aside;
   }
   async function finishSpeech(offset, text, completed = true) {
-    clearTimeout(nativeStartTimer); clearInterval(followTimer);
+    clearTimeout(nativeStartTimer); clearInterval(followTimer); speech?.follow?.stop?.();
     stopEdge?.(); stopEdge = null; output = null; utterance = null;
     if (completed && speech?.track && playback) playback.heardCharacters = Math.min(5000, offset + text.length);
     if (completed && speech?.track && speech.diagramId) lastExplained = { id: speech.diagramId, title: speech.title };
@@ -246,7 +248,9 @@ if (root) {
     if (!voiceMemoryFresh(createdAt)) { pause(); return; }
     const offset = Number.isInteger(progress?.offset) ? Math.max(0, Math.min(5000, progress.offset)) : 0;
     if (progress?.requestId) playback = { requestId: progress.requestId, answer: progress.answer || text, heardCharacters: offset, createdAt };
-    speech = { text, offset, follow: aside?.follow, track: Boolean(progress?.requestId), diagramId: voiceContext().diagramId, title: document.querySelector("#diagram-caption")?.textContent || document.title }; savePlayback();
+    const follow = aside?.follow || await diagramPointer(text);
+    if (token !== epoch || generation !== speechEpoch || !active) { follow?.stop?.(); return; }
+    speech = { text, offset, follow, track: Boolean(progress?.requestId), diagramId: voiceContext().diagramId, title: document.querySelector("#diagram-caption")?.textContent || document.title }; savePlayback();
     diagnostics.record("speech", { native_event: "request", ...(nativeVoice ? {} : { audio_session: navigator.audioSession?.type }) });
     if (separateCapture) {
       // ponytail: iOS speech can permanently mute a live capture; use explicit turn-taking there.
@@ -348,7 +352,16 @@ if (root) {
     setStatus(t("Preparando la respuesta…")); emit("certivoice:busy", true);
     try {
       pendingSent = true;
-      const result = await api("voice", pending, "POST", abort.signal);
+      let result;
+      // Only replay a server-owned pending UUID; the total deadline and Exit still cancel recovery.
+      for (;;) {
+        try { result = await api("voice", pending, "POST", abort.signal); break; }
+        catch (error) {
+          if (error.status !== 409 || error.code !== "request_pending") throw error;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          abort.signal.throwIfAborted();
+        }
+      }
       if (token !== epoch || !active) return;
       if (result.requestId !== pending.requestId || typeof result.answer !== "string" || result.answer.length > 12000 || typeof result.transcript !== "string" || result.transcript.length > 1500) throw new Error(t("La respuesta de voz no es válida."));
       clearPending();
@@ -520,7 +533,7 @@ if (root) {
       nativeVoice ||= await selectNativeVoice();
       if (token !== epoch) return;
       // Recover the already submitted UUID without opening another microphone session.
-      if (quotaBlocked() && recovery) { active = true; starting = false; await submitPending(token); return; }
+      if (recovery) { detector = new VoiceActivity(context.sampleRate); active = true; starting = false; await submitPending(token); return; }
       if (quotaBlocked()) throw new Error(t("Se alcanzó un límite de uso. Inténtalo más tarde."));
       detector = new VoiceActivity(context.sampleRate);
       const stopCapture = await openCapture();

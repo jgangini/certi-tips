@@ -513,7 +513,10 @@ async (page) => {
   const sendChat = async text => {
     if (await page.locator("#certichat-panel").isHidden()) await page.locator("[data-chat-open]").click();
     await page.evaluate(() => window.dispatchEvent(new CustomEvent('certichat:activity')));
-    await page.waitForFunction(text => document.querySelector('deep-chat')?.validateInput?.(text), text);
+    await page.waitForFunction(text => {
+      const chat = document.querySelector('deep-chat'), submit = chat?.shadowRoot?.querySelector('.input-button.inside-end:not(.custom-button)');
+      return chat?.validateInput?.(text) && (submit?.classList.contains('submit-button') || submit?.classList.contains('disabled-button'));
+    }, text);
     const response = page.waitForResponse(value => new URL(value.url()).pathname === '/api/chat');
     await page.locator('deep-chat').evaluate((chat, text) => chat.submitUserMessage({ text }), text); await response;
     await page.waitForFunction(() => !document.querySelector('[data-chat-clear]').disabled && document.querySelector('deep-chat').getMessages().at(-1)?.role === 'ai');
@@ -572,7 +575,47 @@ async (page) => {
     const heading = doc.querySelector('.prose h2[id]');
     return { id: heading.dataset.sourceId, title: heading.textContent, url: 'https://jgangini.github.io/certitips/1Z0-1085-26/iam/#' + heading.id };
   });
-  await turn(null, { expanded: true, educational: true, transcript: 'Profundiza y relaciona este concepto con la lámina.', answer: 'La administradora organiza las identidades, operadores y desarrolladores de la tienda. La autorización determina las operaciones que puede realizar cada identidad.', sources: [asideSource] });
+  const diagramAnswer = 'IaaS permite administrar la aplicación; PaaS gestiona su plataforma. SaaS deja la infraestructura al proveedor.';
+  const diagramURL = page.url();
+  await turn(null, { expanded: true, educational: true, transcript: 'Explica esta lámina en detalle.', answer: diagramAnswer, sources: [asideSource] });
+  await phase('speaking');
+  assert(page.url() === diagramURL && await page.locator('#diagram-viewer').evaluate(viewer => viewer.open && viewer.classList.contains('is-presenting')), 'Explaining a detailed slide opened documentation without consent');
+  const pointer = page.locator('.certivoice-pointer');
+  await pointer.waitFor({state:'visible'});
+  assert(await pointer.getAttribute('data-label') === 'iaas', 'Laser did not identify the literal first SVG label');
+  const firstPoint = await pointer.boundingBox();
+  await page.evaluate(at => window.__utterance.onboundary({charIndex:at}), diagramAnswer.indexOf('PaaS'));
+  assert(await pointer.getAttribute('data-label') === 'paas', 'Laser ignored a second label in the same sentence');
+  await page.evaluate(() => window.__utterance.onend());
+  await page.waitForFunction(() => document.querySelector('.certivoice-pointer')?.dataset.label === 'saas');
+  await page.waitForFunction(x => document.querySelector('.certivoice-pointer').getBoundingClientRect().x > x + 100, firstPoint.x);
+  const secondPoint = await pointer.boundingBox();
+  assert(secondPoint.x > firstPoint.x + 100 && page.url() === diagramURL, 'Laser did not follow the next actual label within the slide');
+  const originalViewport = page.viewportSize();
+  for (const width of [1440]) for (const theme of ['light','dark']) for (const reduced of [false,true]) {
+    await page.setViewportSize({width,height:900});await page.emulateMedia({reducedMotion:reduced?'reduce':'no-preference'});
+    await page.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);
+    await page.waitForFunction(()=>{
+      const image=document.querySelector('#diagram-viewer .dialog-content img').getBoundingClientRect(),dot=document.querySelector('.certivoice-pointer').getBoundingClientRect();
+      const scale=Math.min(image.width/1200,image.height/660),expected=image.left+(image.width-1200*scale)/2+981*scale;
+      return Math.abs(dot.x+dot.width/2-expected)<2 && dot.top>=image.top && dot.bottom<=image.bottom;
+    });
+    assert(await pointer.evaluate((dot,reduced)=>getComputedStyle(dot).transitionDuration.split(',').every(value=>value.trim()===(reduced?'0s':'0.35s')),reduced),'Laser ignored reduced motion');
+  }
+  await page.setViewportSize(originalViewport);await page.emulateMedia({reducedMotion:'no-preference'});
+  await page.evaluate(() => window.__finishNative());await phase('listening');
+  assert(await pointer.count() === 0, 'Narration completion retained the laser');
+  await turn(null,{educational:true,answer:'SaaS se ocupa de la infraestructura.'});await phase('speaking');await pointer.waitFor({state:'visible'});
+  await page.setViewportSize({width:394,height:852});
+  await page.waitForFunction(()=>!document.querySelector('.certivoice-pointer'));
+  await page.evaluate(() => window.__finishNative());await phase('listening');
+  await turn(null,{educational:true,answer:'IaaS permite administrar la aplicación.'});await phase('speaking');
+  assert(await pointer.count()===0&&await page.locator('#diagram-viewer').evaluate(viewer=>viewer.open&&viewer.classList.contains('is-presenting')), 'Mobile explanation created a laser or left presentation');
+  await page.evaluate(() => window.__finishNative());await phase('listening');await page.setViewportSize(originalViewport);
+  await turn(null,{educational:true,answer:'SaaS se ocupa de la infraestructura.'});await phase('speaking');await pointer.waitFor({state:'visible'});
+  await exit.click();assert(await pointer.count()===0,'Exit retained the laser');await listen();
+  checks.push('detailed slide explanation stays in presentation and desktop laser follows literal SVG labels; mobile never creates it and resizing removes it without document navigation');
+  await turn(null, { expanded: true, consultDocument: true, educational: true, transcript: 'Profundiza y relaciona este concepto con la lámina.', answer: 'La administradora organiza las identidades, operadores y desarrolladores de la tienda. La autorización determina las operaciones que puede realizar cada identidad.', sources: [asideSource] });
   await page.waitForURL('**/es/1Z0-1085-26/iam/#*'); await phase('speaking');
   assert(await page.locator('#diagram-viewer').evaluate(viewer => !viewer.open) && await page.locator('.prose').isVisible(), 'Expanded explanation did not reveal its cited document');
   assert(await page.evaluate(() => Boolean(window.CSS?.highlights?.get('certivoice-phrase')?.size || document.querySelector('mark[data-voice-highlight]'))), 'Expanded explanation did not highlight actual guide text');
@@ -594,7 +637,7 @@ async (page) => {
   await page.waitForFunction(text => window.__utterance?.text === text, asideLectureText);
   await page.evaluate(() => window.__utterance.onboundary({ charIndex: 12 }));
   const originalAsideLifetime = await page.evaluate(() => JSON.parse(sessionStorage.getItem('certivoice:https://jgangini.github.io/certitips/:playback')).createdAt);
-  await turn(null, { expanded: true, educational: true, answer: 'Detalle intermedio sobre la sección citada.', sources: [asideSource] });
+  await turn(null, { expanded: true, consultDocument: true, educational: true, answer: 'Detalle intermedio sobre la sección citada.', sources: [asideSource] });
   await page.waitForURL('**/es/1Z0-1085-26/iam/#*'); await phase('speaking');
   const beforeAsideReturn = voices().length;
   await page.evaluate(() => window.__finishNative());
@@ -619,7 +662,7 @@ async (page) => {
   await phase('listening');
   assert(await page.evaluate(() => !window.__voiceTrack.stopped), 'Foreground return did not restore listening');
   checks.push('background playback keeps the selected speaker and narration alive, stops capture and restores listening on return');
-  await turn(null, { expanded: true, educational: true, answer: 'La administradora organiza las identidades, operadores y desarrolladores de la tienda.', sources: [asideSource] });
+  await turn(null, { expanded: true, consultDocument: true, educational: true, answer: 'La administradora organiza las identidades, operadores y desarrolladores de la tienda.', sources: [asideSource] });
   await page.waitForURL('**/es/1Z0-1085-26/iam/#*'); await phase('speaking');
   assert(await page.locator('mark[data-voice-highlight]').count() > 0, 'Exit regression needs an actual visible highlight');
   await page.evaluate(() => { window.__asideEnd = window.__utterance.onend; });

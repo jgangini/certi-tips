@@ -353,11 +353,11 @@ async (page) => {
   await restartVoice();
   conflictCode = 'request_pending';
   await page.evaluate(() => window.__speakTurn());
-  await page.waitForFunction(() => window.__voiceState?.retry === true);
+  await page.waitForFunction(() => window.__voiceState?.active && window.__voiceState.phase === 'thinking');
+  await page.waitForTimeout(1100);
   const pendingId = calls.filter(call => call.path === '/api/voice').at(-1).body.requestId;
   conflictCode = 'request_expired';
   const terminalResponse = page.waitForResponse(response => new URL(response.url()).pathname === '/api/voice' && response.status() === 409);
-  await wave.click();
   await terminalResponse;
   await page.waitForFunction(() => window.__voiceState?.active === false);
   assert(calls.filter(call => call.path === '/api/voice').at(-1).body.requestId === pendingId, 'Pending-result retry changed the request UUID');

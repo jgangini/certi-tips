@@ -90,7 +90,7 @@ class FakeVoice:
     async def intent(self, body, history=(), continuity="", activity=()):
         self.intent_history, self.intent_continuity, self.intent_activity = history, continuity, activity
         self.calls.append("intent")
-        return {"transcript": "Explica Oracle", "action": self.action, "targetId": "guide#diagram" if self.action == "lecture_start" else "", "text": "", "expand": False}
+        return {"transcript": "Explica Oracle", "action": self.action, "targetId": "guide#diagram" if self.action == "lecture_start" else "", "text": "", "expand": False, "consultDocument": False}
 
     async def answer(self, body, transcript, fragments, history, continuity, expand):
         self.calls.append(("answer", fragments, history, continuity))
@@ -219,9 +219,9 @@ def test_navigation_intent_distinguishes_home_catalog_videos_and_educational_que
                                                           "usan catalog", "distinto de la portada"))
         return httpx.Response(200, json={"usage": {"cost": .0001}, "choices": [{"finish_reason": "tool_calls",
             "message": {"tool_calls": [{"function": {"name": "voice_intent", "arguments": json.dumps({
-                "transcript": transcript, "action": action, "targetId": "", "text": "", "expand": False})}}]}}]})
+                "transcript": transcript, "action": action, "targetId": "", "text": "", "expand": False, "consultDocument": False})}}]}}]})
     result, ledger = run(handler, lambda provider: provider.intent(VoiceBody(**body())))
-    assert result == {"transcript": transcript, "action": action, "targetId": "", "text": "", "expand": False}
+    assert result == {"transcript": transcript, "action": action, "targetId": "", "text": "", "expand": False, "consultDocument": False}
     assert len(ledger.reservations) == 1 and ledger.settlements == [(1, 100)]
 
 
@@ -229,7 +229,7 @@ def test_navigation_intent_distinguishes_home_catalog_videos_and_educational_que
 def test_intent_rejects_actions_outside_closed_navigation_contract(action):
     response = {"usage": {"cost": .0001}, "choices": [{"finish_reason": "tool_calls", "message": {"tool_calls": [
         {"function": {"name": "voice_intent", "arguments": json.dumps({"transcript": "Abre inicio", "action": action,
-                                                                     "targetId": "", "text": "", "expand": False})}}]}}]}
+                                                                     "targetId": "", "text": "", "expand": False, "consultDocument": False})}}]}}]}
 
     async def operation(provider):
         with pytest.raises(ChatError) as caught:
@@ -312,7 +312,7 @@ def test_voice_endpoint_failure_logs_only_request_metadata(clients, phase, caplo
         "practice_confirm", "practice_next", "practice_explanation", "practice_finish", "practice_reset",
         "practice_exit", "practice_accept", "practice_cancel")])
 def test_extended_actions_use_only_the_exact_registry_pair(action, target, text):
-    value = {"transcript": "Solicitud explícita.", "action": action, "targetId": target, "text": text, "expand": False}
+    value = {"transcript": "Solicitud explícita.", "action": action, "targetId": target, "text": text, "expand": False, "consultDocument": False}
     data = body()
     data["context"]["targets"] = [{"id": target, "label": "Destino disponible", "action": action}] if target else []
     response = {"usage": {"cost": .0001}, "choices": [{"finish_reason": "tool_calls", "message": {"tool_calls": [
@@ -327,7 +327,7 @@ def test_extended_actions_use_only_the_exact_registry_pair(action, target, text)
     + [(action, target, text) for action in ("search", "study_concept", "highlight_phrase")
        for target, text in (("", ""), ("", "  "), ("", "x" * 201), ("", "bad\ncommand"), ("course:known", "query"))])
 def test_intent_rejects_missing_mismatched_targets_and_unbounded_text(action, target, text):
-    value = {"transcript": "Solicitud", "action": action, "targetId": target, "text": text, "expand": False}
+    value = {"transcript": "Solicitud", "action": action, "targetId": target, "text": text, "expand": False, "consultDocument": False}
     data = body()
     data["context"]["targets"] = [{"id": "course:known", "label": "Curso", "action": "open_course"},
                                     {"id": "language:en", "label": "English", "action": "set_language"}]
@@ -654,7 +654,7 @@ def test_spanish_request_on_english_ui_only_offers_available_practice_controls(o
             "context": {"targets": [{"action": "practice_start", "id": target, "label": "Start practice"}] if on_practice else []}}
     action = "practice_start" if on_practice else "practice"
     value = {"transcript": "Quiero empezar una práctica.", "action": action,
-             "targetId": target if on_practice else "", "text": "", "expand": False}
+             "targetId": target if on_practice else "", "text": "", "expand": False, "consultDocument": False}
     def handler(request):
         payload = json.loads(request.content)
         properties = payload["tools"][0]["function"]["parameters"]["properties"]
@@ -682,7 +682,7 @@ def test_spanish_request_on_english_ui_only_offers_available_practice_controls(o
     ("tool_fields", {"extra": "PRIVATE_EXTRA"}),
 ])
 def test_intent_contract_diagnostic_contains_only_safe_reason(reason, patch, caplog):
-    value = {"transcript": "PRIVATE_TRANSCRIPT", "action": "home", "targetId": "", "text": "", "expand": False} | patch
+    value = {"transcript": "PRIVATE_TRANSCRIPT", "action": "home", "targetId": "", "text": "", "expand": False, "consultDocument": False} | patch
     data = body()
     data["context"]["targets"] = [{"action": "set_theme", "id": "theme:dark", "label": "PRIVATE_LABEL"}]
     response = {"usage": {"cost": .0001}, "choices": [{"finish_reason": "tool_calls", "message": {"tool_calls": [
@@ -795,7 +795,7 @@ def test_continue_presentation_uses_only_next_registered_diagram_in_english_ui(h
     data = {**body(), "locale": "en", "context": {"diagramId": current, "completedDiagramId": current,
         "nextDiagramId": following if has_next else None, "targets": targets}}
     expected = {"transcript": "Continúa con toda la presentación.", "action": "lecture_start" if has_next else "",
-                "targetId": following if has_next else "", "text": "", "expand": False}
+                "targetId": following if has_next else "", "text": "", "expand": False, "consultDocument": False}
     def handler(request):
         payload = json.loads(request.content)
         properties = payload["tools"][0]["function"]["parameters"]["properties"]
@@ -816,7 +816,7 @@ def test_completed_diagram_cannot_be_selected_again_for_continuous_narration():
     data = {**body(), "context": {"diagramId": "guide#one", "completedDiagramId": "guide#one", "nextDiagramId": "guide#two",
         "targets": [{"action": "lecture_start", "id": "guide#one", "label": "Current"},
                     {"action": "lecture_start", "id": "guide#two", "label": "Next"}]}}
-    value = {"transcript": "Sigue explicando las siguientes láminas.", "action": "lecture_start", "targetId": "guide#one", "text": "", "expand": False}
+    value = {"transcript": "Sigue explicando las siguientes láminas.", "action": "lecture_start", "targetId": "guide#one", "text": "", "expand": False, "consultDocument": False}
     response = {"usage": {"cost": .0001}, "choices": [{"finish_reason": "tool_calls", "message": {
         "tool_calls": [{"function": {"name": "voice_intent", "arguments": json.dumps(value)}}]}}]}
     async def operation(provider):
@@ -882,7 +882,7 @@ def test_browser_answer_uses_text_provider_in_ui_language_with_shared_memory_and
                                                ("Quiero hacer una práctica", "practice")])
 def test_certiquiz_navigation_is_distinct_from_individual_practice(transcript, action):
     data = {**body(), "locale": "en", "context": {"targets": []}}
-    value = {"transcript": transcript, "action": action, "targetId": "", "text": "", "expand": False}
+    value = {"transcript": transcript, "action": action, "targetId": "", "text": "", "expand": False, "consultDocument": False}
     def handler(request):
         payload = json.loads(request.content)
         instructions = payload["messages"][0]["content"]
@@ -897,14 +897,14 @@ def test_certiquiz_navigation_is_distinct_from_individual_practice(transcript, a
 
 
 @pytest.mark.parametrize("clients", [{"public_origin": ORIGIN, "voice_enabled": True}], indirect=True)
-@pytest.mark.parametrize("expand,final_slide", [(False, False), (True, False), (False, True)])
-def test_browser_answer_preserves_requested_detail_and_completed_presentation_context(clients, monkeypatch, expand, final_slide):
+@pytest.mark.parametrize("expand,final_slide,consult_document", [(False, False, False), (True, False, False), (False, True, False), (True, False, True), (False, False, True)])
+def test_browser_answer_preserves_requested_detail_and_completed_presentation_context(clients, monkeypatch, expand, final_slide, consult_document):
     make, app, _, _, _ = clients
     client = session(make)
     app.state.voice = FakeVoice(fail_audio=True)
     async def intent(_body, *_memory):
         return {"transcript": "Continúa toda la presentación" if final_slide else "Explica Oracle",
-                "action": "", "targetId": "", "text": "", "expand": expand}
+                "action": "", "targetId": "", "text": "", "expand": expand, "consultDocument": consult_document}
     monkeypatch.setattr(app.state.voice, "intent", intent)
     original_send = app.state.provider.client.send
     async def send(request, **kwargs):
@@ -932,6 +932,7 @@ def test_browser_answer_preserves_requested_detail_and_completed_presentation_co
     assert bool(result["sources"]) is not final_slide and result["audio"] is None and "audioError" not in result
     assert result["answer"].startswith("The presentation is complete." if final_slide else "Oracle stores")
     assert result.get("expanded", False) is expand
+    assert result.get("consultDocument", False) is consult_document
 
 
 @pytest.mark.parametrize("locale,transcript", [("es", "Quiero que amplíes con más detalle la explicación de este diagrama."),
@@ -941,7 +942,7 @@ def test_expanding_current_diagram_is_educational_even_with_registered_lecture_a
     source = "guide#diagram"
     data = {**body(), "locale": locale, "playback": {"requestId": str(uuid4()), "heardCharacters": 120},
             "context": {"diagramId": source, "targets": [{"id": source, "action": "lecture_start", "label": "Current diagram"}]}}
-    value = {"transcript": transcript, "action": "", "targetId": "", "text": "", "expand": True}
+    value = {"transcript": transcript, "action": "", "targetId": "", "text": "", "expand": True, "consultDocument": False}
     def handler(request):
         payload = json.loads(request.content)
         instructions = payload["messages"][0]["content"]
@@ -950,6 +951,8 @@ def test_expanding_current_diagram_is_educational_even_with_registered_lecture_a
         assert "son consultas educativas: action y targetId vacíos, expand=true" in instructions
         assert "no inicia lecture_start ni continue, aunque haya una narración pendiente" in instructions
         assert "expand=true si pide ampliar, profundizar, más detalle" in instructions
+        assert "Explicar una lámina, gráfico o imagen, incluso en detalle o con ejemplos, conserva consultDocument=false" in instructions
+        assert "No heredes consultDocument de un turno anterior" in instructions
         return httpx.Response(200, json={"usage": {"cost": .0001}, "choices": [{"finish_reason": "tool_calls", "message": {
             "tool_calls": [{"function": {"name": "voice_intent", "arguments": json.dumps(value)}}]}}]})
     result, _ = run(handler, lambda provider: provider.intent(VoiceBody(**data)))
@@ -961,7 +964,7 @@ def test_lecture_scope_contract_rejects_unrecognized_text(scope):
     data = {**body(), "context": {"diagramId": "guide#diagram", "targets": [
         {"id": "guide#diagram", "action": "lecture_start", "label": "Diagram"}]}}
     value = {"transcript": "Explica todas las imágenes de este módulo.", "action": "lecture_start",
-             "targetId": "guide#diagram", "text": scope, "expand": False}
+             "targetId": "guide#diagram", "text": scope, "expand": False, "consultDocument": False}
     def handler(request):
         instructions = json.loads(request.content)["messages"][0]["content"]
         assert "text solo admite module si pide este módulo" in instructions
@@ -983,7 +986,7 @@ def test_module_lecture_scope_persists_and_blocks_crossing_before_retrieval_or_s
     app.state.voice = fake = FakeVoice("lecture_start")
     async def intent(_body, *_memory):
         return {"transcript": "Explica las imágenes.", "action": "lecture_start", "targetId": "guide#diagram",
-                "text": scope, "expand": False}
+                "text": scope, "expand": False, "consultDocument": False}
     monkeypatch.setattr(fake, "intent", intent)
     initial = client.post("/api/voice", json={**body(), "audioOutput": "browser"}).json()
     assert initial["lecture"].get("moduleId") == ("guide" if scope == "module" else None)
@@ -1015,7 +1018,7 @@ def test_completed_module_cannot_start_next_module_from_new_this_module_request(
     data = {**body(), "context": {"diagramId": current, "completedDiagramId": current, "nextDiagramId": following,
             "targets": [{"id": following, "label": "Next module", "action": "lecture_start"}]}}
     value = {"transcript": "Continúa las imágenes de este módulo.", "action": "lecture_start" if proposed else "",
-             "targetId": following if proposed else "", "text": "module" if proposed else "", "expand": False}
+             "targetId": following if proposed else "", "text": "module" if proposed else "", "expand": False, "consultDocument": False}
     def handler(request):
         assert "ese módulo terminó" in json.loads(request.content)["messages"][0]["content"]
         return httpx.Response(200, json={"usage": {"cost": .0001}, "choices": [{"finish_reason": "tool_calls", "message": {
@@ -1038,7 +1041,7 @@ def test_intent_uses_bounded_conversation_and_activity_only_as_untrusted_referen
     history = [{"question": "Explica el ciclo del agente.", "answer": "La aplicación valida la llamada.", "sources": [FRAGMENT]}]
     history += [{"question": "Contexto " * 70, "answer": "Respuesta " * 170} for _ in range(3)]
     activity = [{"at": 1, "pageUrl": FRAGMENT["url"], "kind": "page", "state": "arrived"}]
-    value = {"transcript": "Explica más esa validación.", "action": "", "targetId": "", "text": "", "expand": True}
+    value = {"transcript": "Explica más esa validación.", "action": "", "targetId": "", "text": "", "expand": True, "consultDocument": False}
     def handler(request):
         messages = json.loads(request.content)["messages"]
         prompt = messages[0]["content"]
@@ -1078,7 +1081,7 @@ def test_intent_trims_only_old_optional_memory_before_reserving(monkeypatch, lab
         return reserve(ledger, *args)
     monkeypatch.setattr(voice.json, "dumps", measure)
     monkeypatch.setattr(Ledger, "reserve", reserve_after_fit)
-    value = {"transcript": "Explica esta imagen.", "action": "", "targetId": "", "text": "", "expand": False}
+    value = {"transcript": "Explica esta imagen.", "action": "", "targetId": "", "text": "", "expand": False, "consultDocument": False}
     def handler(request):
         payload = json.loads(request.content)
         sent.append(payload)
@@ -1201,8 +1204,8 @@ def test_highlighted_section_activity_contains_only_local_id_and_no_text():
 @pytest.mark.parametrize(("name", "value", "reason", "missing", "extra"), [
     ("PRIVATE_TOOL", {}, "tool_name", "none", 0),
     ("voice_intent", ["PRIVATE_VALUE"], "tool_object", "none", 0),
-    ("voice_intent", {"transcript": "PRIVATE_VALUE", "action": "home", "targetId": "", "text": ""}, "tool_fields", "expand", 0),
-    ("voice_intent", {"transcript": "PRIVATE_VALUE", "action": "home", "targetId": "", "text": "", "expand": False, "PRIVATE_KEY": "PRIVATE_VALUE"}, "tool_fields", "none", 1),
+    ("voice_intent", {"transcript": "PRIVATE_VALUE", "action": "home", "targetId": "", "text": ""}, "tool_fields", "consultDocument,expand", 0),
+    ("voice_intent", {"transcript": "PRIVATE_VALUE", "action": "home", "targetId": "", "text": "", "expand": False, "consultDocument": False, "PRIVATE_KEY": "PRIVATE_VALUE"}, "tool_fields", "none", 1),
 ])
 def test_tool_contract_rejects_malformed_fields_with_only_schema_owned_diagnostics(name, value, reason, missing, extra, caplog):
     from app.voice import INTENT, tool_value
@@ -1217,16 +1220,16 @@ def test_tool_contract_rejects_malformed_fields_with_only_schema_owned_diagnosti
 
 
 def test_intent_prompt_requires_all_fields_and_keeps_text_actions_consistent():
-    value = {"transcript": "Busca Oracle", "action": "search", "targetId": "", "text": "Oracle", "expand": False}
+    value = {"transcript": "Busca Oracle", "action": "search", "targetId": "", "text": "Oracle", "expand": False, "consultDocument": False}
     def handler(request):
         payload = json.loads(request.content)
         prompt = payload["messages"][0]["content"]
         properties = payload["tools"][0]["function"]["parameters"]
-        assert properties["required"] == ["transcript", "action", "targetId", "text", "expand"]
+        assert properties["required"] == ["transcript", "action", "targetId", "text", "expand", "consultDocument"]
         assert properties["additionalProperties"] is False
         assert "La única petición actual es el último mensaje de audio" in prompt
-        assert "los cinco campos transcript, action, targetId, text y expand, sin otros campos" in prompt
-        assert "Incluye text y targetId aunque estén vacíos y expand como booleano" in prompt
+        assert "los seis campos transcript, action, targetId, text, expand y consultDocument, sin otros campos" in prompt
+        assert "Incluye text y targetId aunque estén vacíos y expand y consultDocument como booleanos" in prompt
         assert "Salvo search, study_concept, highlight_phrase y lecture_start" in prompt
         assert "Salvo lecture_start, en todas las demás acciones" not in prompt
         return httpx.Response(200, json={"usage": {"cost": .0001}, "choices": [{"finish_reason": "tool_calls", "message": {

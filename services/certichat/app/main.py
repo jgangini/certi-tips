@@ -563,6 +563,8 @@ def create_app(settings=None, *, transport=None):
                 else:
                     if intent["expand"]:
                         result["expanded"] = True
+                    if intent.get("consultDocument") is True:
+                        result["consultDocument"] = True
                     query = ChatBody(requestId=body.requestId, message=intent["transcript"], pageUrl=body.pageUrl, locale=body.locale)
                     phase = "retrieval"
                     version, fragments, trace = await retrieve(request.app, query, history, memory["text"] if memory else "",
